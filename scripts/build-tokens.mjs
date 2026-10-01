@@ -78,14 +78,18 @@ function isRecord(value) {
 function readSection(doc, section, required) {
   const node = doc[section];
   if (!isRecord(node) || !Array.isArray(node["tokens"])) {
-    if (required) throw new Error(`Expected "${section}.tokens" to be an array`);
+    if (required)
+      throw new Error(`Expected "${section}.tokens" to be an array`);
     return [];
   }
   return node["tokens"].map((raw, index) => {
     if (!isRecord(raw) || typeof raw["name"] !== "string") {
       throw new Error(`${section}.tokens[${index}] has no string "name"`);
     }
-    return { name: raw["name"], value: normalizeValue(raw["name"], raw["value"]) };
+    return {
+      name: raw["name"],
+      value: normalizeValue(raw["name"], raw["value"]),
+    };
   });
 }
 
@@ -97,7 +101,9 @@ function readSection(doc, section, required) {
 function normalizeValue(name, value) {
   if (typeof value === "string" && value.trim() !== "") return value.trim();
   if (!isRecord(value)) {
-    throw new Error(`Token "${name}" must have a string or { light, dark } value`);
+    throw new Error(
+      `Token "${name}" must have a string or { light, dark } value`,
+    );
   }
   for (const key of Object.keys(value)) {
     if (!THEMES.includes(/** @type {never} */ (key))) {
@@ -109,7 +115,9 @@ function normalizeValue(name, value) {
   for (const theme of THEMES) {
     const themeValue = value[theme];
     if (typeof themeValue !== "string" || themeValue.trim() === "") {
-      throw new Error(`Token "${name}" is missing a string value for theme "${theme}"`);
+      throw new Error(
+        `Token "${name}" is missing a string value for theme "${theme}"`,
+      );
     }
     themed[theme] = themeValue.trim();
   }
@@ -129,7 +137,8 @@ function resolveTokens(tokens) {
     if (!NAME_PATTERN.test(token.name)) {
       throw new Error(`Invalid token name "${token.name}" (use kebab-case)`);
     }
-    if (byName.has(token.name)) throw new Error(`Duplicate token "${token.name}"`);
+    if (byName.has(token.name))
+      throw new Error(`Duplicate token "${token.name}"`);
     byName.set(token.name, token);
   }
 
@@ -148,11 +157,16 @@ function resolveTokens(tokens) {
     // Walk the alias chain only to validate it; the emitted CSS keeps the
     // direct reference so the cascade still follows theme overrides.
     for (;;) {
-      if (seen.has(target)) throw new Error(`Circular alias detected at token "${owner}"`);
+      if (seen.has(target))
+        throw new Error(`Circular alias detected at token "${owner}"`);
       const next = byName.get(target);
-      if (!next) throw new Error(`Token "${owner}" references unknown token "${target}"`);
+      if (!next)
+        throw new Error(
+          `Token "${owner}" references unknown token "${target}"`,
+        );
       seen.add(target);
-      const nextRaw = typeof next.value === "string" ? next.value : next.value[theme];
+      const nextRaw =
+        typeof next.value === "string" ? next.value : next.value[theme];
       const nextMatch = ALIAS_PATTERN.exec(nextRaw);
       if (!nextMatch) break;
       target = /** @type {string} */ (nextMatch[1]).trim();
@@ -161,8 +175,10 @@ function resolveTokens(tokens) {
   };
 
   return tokens.map((token) => {
-    const light = typeof token.value === "string" ? token.value : token.value.light;
-    const dark = typeof token.value === "string" ? token.value : token.value.dark;
+    const light =
+      typeof token.value === "string" ? token.value : token.value.light;
+    const dark =
+      typeof token.value === "string" ? token.value : token.value.dark;
     return {
       name: token.name,
       light: resolve(token.name, light, "light"),
@@ -197,19 +213,26 @@ export function buildTokensCss(doc) {
   const colorNames = new Set(colors.map((t) => t.name));
 
   for (const name of SEMANTIC_COLORS) {
-    if (!colorNames.has(name)) throw new Error(`Missing semantic color "${name}"`);
+    if (!colorNames.has(name))
+      throw new Error(`Missing semantic color "${name}"`);
   }
   const scaleTokens = BRAND_SCALES.flatMap((scale) =>
     SCALE_STEPS.map((step) => `${scale}-${step}`),
   );
   for (const name of scaleTokens) {
-    if (!colorNames.has(name)) throw new Error(`Missing brand scale color "${name}"`);
+    if (!colorNames.has(name))
+      throw new Error(`Missing brand scale color "${name}"`);
   }
 
-  const lightLines = ["color-scheme: light;", ...all.map((t) => `--${t.name}: ${t.light};`)];
+  const lightLines = [
+    "color-scheme: light;",
+    ...all.map((t) => `--${t.name}: ${t.light};`),
+  ];
   const darkLines = [
     "color-scheme: dark;",
-    ...all.filter((t) => t.light !== t.dark).map((t) => `--${t.name}: ${t.dark};`),
+    ...all
+      .filter((t) => t.light !== t.dark)
+      .map((t) => `--${t.name}: ${t.dark};`),
   ];
 
   const type = isRecord(doc["type"]) ? doc["type"] : {};
@@ -260,7 +283,9 @@ if (isCli) {
       // A missing file is reported as stale below.
     }
     if (current !== css) {
-      console.error("src/styles/tokens.css is stale. Run `pnpm tokens` and commit the result.");
+      console.error(
+        "src/styles/tokens.css is stale. Run `pnpm tokens` and commit the result.",
+      );
       process.exit(1);
     }
     console.log("src/styles/tokens.css is up to date.");

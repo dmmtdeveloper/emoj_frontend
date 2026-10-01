@@ -28,9 +28,7 @@ function block(css: string, selector: string): string {
 }
 
 /** Minimal valid token document used to exercise edge cases. */
-function minimalTokens(
-  extraColors: unknown[] = [],
-): Record<string, unknown> {
+function minimalTokens(extraColors: unknown[] = []): Record<string, unknown> {
   const semantic = SEMANTIC_COLORS.map((name: string) => ({
     name,
     value: { light: "#FFFFFF", dark: "#000000" },
@@ -48,7 +46,10 @@ function minimalTokens(
     radius: { tokens: [{ name: "radius-sm", value: "6px" }] },
     shadow: {
       tokens: [
-        { name: "shadow-sm", value: { light: "0 1px red", dark: "0 1px blue" } },
+        {
+          name: "shadow-sm",
+          value: { light: "0 1px red", dark: "0 1px blue" },
+        },
       ],
     },
   };
@@ -66,10 +67,7 @@ describe("buildTokensCss with the EMOJ design tokens", () => {
   });
 
   it("emits dark color values for the OS preference unless light is forced", () => {
-    const media = block(
-      css,
-      "@media (prefers-color-scheme: dark)",
-    );
+    const media = block(css, "@media (prefers-color-scheme: dark)");
     const dark = block(media, ':root:not([data-theme="light"])');
     expect(dark).toContain("--surface: #170828;");
     expect(dark).toContain("--ink: #FFF8F0;");
@@ -98,7 +96,9 @@ describe("buildTokensCss with the EMOJ design tokens", () => {
   it("emits every brand scale step as a static variable", () => {
     const light = block(css, ":root");
     for (const scale of ["plum", "brick", "sage", "sand"]) {
-      for (const step of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]) {
+      for (const step of [
+        50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
+      ]) {
         expect(light).toMatch(new RegExp(`--${scale}-${step}: #[0-9A-F]{6};`));
       }
     }

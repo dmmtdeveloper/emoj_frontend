@@ -10,3 +10,4 @@ src/lib/api/schema.d.ts
 # Brand assets are copied verbatim from the design system.
 src/assets/brand/
 public/*.svg
+design/tokens.json
