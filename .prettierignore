@@ -11,3 +11,8 @@ src/lib/api/schema.d.ts
 src/assets/brand/
 public/*.svg
 design/tokens.json
+
+# Third-party agent skills installed by autoskills (kept byte-for-byte)
+.agents/
+.claude/
+skills-lock.json
