@@ -1,0 +1,95 @@
+# emoj_frontend
+
+Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean civil engineering firm. Tagline: _Humanizamos la ingeniería_.
+
+The site is built with Astro as a fully static site and deployed on Vercel. Content will come from a separate Go API, [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
+
+> Status: Phase 9 "Foundations". Tooling, design tokens, base layout and CI only. The home page is a placeholder that proves the design system in light and dark mode.
+
+## Stack
+
+| Concern         | Choice                                                                         |
+| --------------- | ------------------------------------------------------------------------------ |
+| Framework       | [Astro](https://astro.build) 7, `output: "static"`                             |
+| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties |
+| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                  |
+| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)             |
+| Language        | TypeScript, `astro/tsconfigs/strictest`                                        |
+| Tests           | Vitest                                                                         |
+| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier     |
+| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`)            |
+| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)              |
+
+## Getting started
+
+```sh
+pnpm install
+cp .env.example .env
+pnpm dev
+```
+
+## Scripts
+
+| Script              | What it does                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `pnpm dev`          | Start the dev server.                                                                  |
+| `pnpm build`        | Build the static site into `dist/` (includes the sitemap).                             |
+| `pnpm preview`      | Serve the production build locally.                                                    |
+| `pnpm check`        | Type-check `.astro` and TypeScript files (`astro check`).                              |
+| `pnpm lint`         | Run ESLint.                                                                            |
+| `pnpm format`       | Format all files with Prettier.                                                        |
+| `pnpm format:check` | Verify formatting without writing.                                                     |
+| `pnpm test`         | Run unit tests once (`vitest run`).                                                    |
+| `pnpm tokens`       | Regenerate `src/styles/tokens.css` from `design/tokens.json`.                          |
+| `pnpm tokens:check` | Fail if `src/styles/tokens.css` is out of date (used in CI).                           |
+| `pnpm api:types`    | Generate API types from `../emoj_backend/openapi.yaml` into `src/lib/api/schema.d.ts`. |
+
+## Design tokens
+
+```
+design/tokens.json  ->  scripts/build-tokens.mjs  ->  src/styles/tokens.css  ->  Tailwind theme
+```
+
+- `design/tokens.json` is the source of truth in this repo, copied verbatim from the EMOJ design system. Edit it there first, then copy it here.
+- `scripts/build-tokens.mjs` validates the document and writes `src/styles/tokens.css`:
+  - Every color, spacing, radius and shadow token as a CSS custom property (`--surface`, `--plum-950`, `--space-4`, `--radius-md`, `--shadow-sm`). Light values live in `:root`.
+  - Dark values apply under `@media (prefers-color-scheme: dark)` unless the page sets `data-theme="light"`, and always under `:root[data-theme="dark"]`.
+  - A Tailwind `@theme inline` block that exposes semantic colors (`bg-surface`, `text-ink`, `bg-brand`, `text-on-brand`, ...), brand scales (`plum|brick|sage|sand-50..950`), radii (`rounded-md`, `rounded-signature`) and `font-sans`. Tailwind's default color palette and radii are reset, so only brand values exist as utilities.
+  - Values like `"{brick-700}"` are aliases and compile to `var(--brick-700)`. Unknown or circular aliases, missing themes, invalid or duplicate names and missing semantic colors fail the build.
+- `src/styles/tokens.css` is generated but committed. Never edit it by hand: run `pnpm tokens`. A unit test and the CI step `pnpm tokens:check` fail when it is stale.
+- In components, use semantic tokens (`surface`, `ink`, `brand`, ...), not the raw scales. The signature shape is the `radius-signature` utility (`border-radius: 50px 0 0 50px`, equivalent to `rounded-l-signature`). Never use `rounded-signature` alone: the brand rule is left corners only.
+- Shadows are theme-aware variables. Use them as `shadow-(--shadow-sm)` / `shadow-(--shadow-md)`; Tailwind's own `shadow-sm` utility does not follow the dark theme.
+
+Global styles live in `src/styles/global.css` (Tailwind, tokens, fonts, base styles, focus ring, native cross-document view transitions and reduced-motion handling).
+
+## Environment variables
+
+Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the client.
+
+| Variable          | Example                 | Purpose                                         |
+| ----------------- | ----------------------- | ----------------------------------------------- |
+| `PUBLIC_SITE_URL` | `https://emoj.cl`       | Canonical origin for URLs, Open Graph, sitemap. |
+| `PUBLIC_API_URL`  | `http://localhost:8080` | Base URL of the EMOJ Go API.                    |
+
+## API contract
+
+The API is defined in `openapi.yaml` in [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend). With both repos checked out side by side, run `pnpm api:types` to generate TypeScript types in `src/lib/api/schema.d.ts`. The generated file is git-ignored; the script fails if `../emoj_backend/openapi.yaml` is missing.
+
+## Project layout
+
+```
+design/          design tokens source (tokens.json)
+public/          favicons, web manifest, robots.txt
+scripts/         build scripts (token generator)
+src/assets/      brand SVGs
+src/components/  UI components (Logo)
+src/layouts/     page layouts (BaseLayout: SEO, social, favicons, skip link)
+src/pages/       routes (placeholder home, 404)
+src/styles/      global.css and generated tokens.css
+tests/           unit tests
+```
+
+## Conventions
+
+- UI copy is Spanish (neutral, addressing the reader as "tú"). Code, comments and docs are English.
+- Conventional commits.
