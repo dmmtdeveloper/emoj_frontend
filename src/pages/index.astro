@@ -1,0 +1,38 @@
+---
+import Logo from "../components/Logo.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="EMOJ Consultora"
+  description="EMOJ Consultora: ingeniería civil sanitaria, vial, estructural y geotécnica en Chile. Humanizamos la ingeniería."
+>
+  <section class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
+    <Logo class="text-ink" size={200} />
+
+    <div class="radius-signature flex max-w-[65ch] flex-col gap-6 bg-surface-raised p-6 shadow-[var(--shadow-md)] md:p-12">
+      <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+        Humanizamos la ingeniería
+      </p>
+      <h1 class="text-[32px] leading-[38px] font-semibold tracking-[-0.015em] md:text-[44px] md:leading-[50px]">
+        Estamos construyendo nuestro nuevo sitio
+      </h1>
+      <p class="text-ink-muted">
+        Muy pronto vas a encontrar aquí nuestros servicios y proyectos. Mientras
+        tanto, escríbenos a
+        <a class="font-semibold" href="mailto:coordinacion@emoj.cl">
+          coordinacion@emoj.cl
+        </a>
+        .
+      </p>
+    </div>
+
+    <!-- Decorative swatches: a quick visual check of the theme in light and dark. -->
+    <ul class="flex flex-wrap gap-2" aria-hidden="true">
+      <li class="h-8 w-8 rounded-full bg-brand"></li>
+      <li class="h-8 w-8 rounded-full bg-accent"></li>
+      <li class="h-8 w-8 rounded-full bg-surface-sunken"></li>
+      <li class="h-8 w-8 rounded-full bg-surface-inverse"></li>
+    </ul>
+  </section>
+</BaseLayout>

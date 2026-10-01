@@ -1,0 +1,39 @@
+---
+/**
+ * EMOJ logo rendered as inline SVG that inherits `currentColor`.
+ * Set the color through the parent (e.g. `text-ink`, `text-ink-inverse`).
+ *
+ * - `variant="full"`: isotype + "Emoj Consultora" wordmark (header, footer).
+ * - `variant="isotipo"`: stroke and dots only (min 32px wide).
+ */
+import type { HTMLAttributes } from "astro/types";
+import Isotipo from "../assets/brand/emoj-isotipo-currentcolor.svg";
+import FullLogo from "../assets/brand/emoj-logo-currentcolor.svg";
+
+interface Props extends Omit<HTMLAttributes<"svg">, "width" | "height"> {
+  variant?: "full" | "isotipo";
+  /** Rendered width in pixels. Height keeps the aspect ratio. */
+  size?: number;
+  /** Accessible name. Pass an empty string when the logo is decorative. */
+  label?: string;
+}
+
+const MIN_WIDTH = { full: 120, isotipo: 32 } as const;
+
+const {
+  variant = "full",
+  size = variant === "full" ? 160 : 48,
+  label = "EMOJ Consultora",
+  ...rest
+} = Astro.props;
+
+const Svg = variant === "full" ? FullLogo : Isotipo;
+const width = Math.max(size, MIN_WIDTH[variant]);
+const height = Math.round((width * Svg.height) / Svg.width);
+const a11y =
+  label === ""
+    ? { "aria-hidden": "true" as const }
+    : { role: "img" as const, "aria-label": label };
+---
+
+<Svg width={width} height={height} {...a11y} {...rest} />

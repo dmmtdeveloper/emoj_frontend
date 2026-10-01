@@ -1,0 +1,74 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  /** Page title. Rendered as "<title> | EMOJ Consultora". */
+  title: string;
+  /** Meta description (aim for 120–160 characters). */
+  description: string;
+  /** Absolute or root-relative URL of the social share image. */
+  image?: string;
+  /** Exclude the page from search engines. */
+  noindex?: boolean;
+}
+
+const SITE_NAME = "EMOJ Consultora";
+
+const { title, description, image, noindex = false } = Astro.props;
+
+const site = Astro.site ?? new URL("https://emoj.cl");
+const canonical = new URL(Astro.url.pathname, site).href;
+const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
+const imageUrl = image ? new URL(image, site).href : undefined;
+---
+
+<!doctype html>
+<html lang="es-CL">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    <meta
+      name="twitter:card"
+      content={imageUrl ? "summary_large_image" : "summary"}
+    />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta
+      name="theme-color"
+      content="#FFF8F0"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#170828"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body class="min-h-dvh">
+    <a class="skip-link" href="#contenido">
+      Saltar al contenido
+    </a>
+    <main id="contenido" tabindex="-1">
+      <slot />
+    </main>
+  </body>
+</html>
