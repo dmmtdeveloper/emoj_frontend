@@ -69,3 +69,15 @@ export function initials(name: string): string {
     .map((word) => word.charAt(0).toLocaleUpperCase("es"))
     .join("");
 }
+
+/** Dimensions of an image scaled down (never up) to at most `max` wide. */
+export function fitWidth(
+  size: { width: number; height: number },
+  max: number,
+): { width: number; height: number } {
+  if (size.width <= max) return { width: size.width, height: size.height };
+  return {
+    width: max,
+    height: Math.max(1, Math.round((size.height * max) / size.width)),
+  };
+}

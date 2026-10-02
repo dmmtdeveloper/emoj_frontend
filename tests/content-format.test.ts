@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectSummary } from "../src/lib/api/client";
 import {
+  fitWidth,
   formatDate,
   initials,
   paginate,
@@ -105,5 +106,28 @@ describe("initials", () => {
     ["  ", ""],
   ])("%s -> %s", (name, expected) => {
     expect(initials(name)).toBe(expected);
+  });
+});
+
+describe("fitWidth", () => {
+  it("scales an image down to the maximum width, keeping the ratio", () => {
+    expect(fitWidth({ width: 2560, height: 1920 }, 800)).toEqual({
+      width: 800,
+      height: 600,
+    });
+  });
+
+  it("never scales up", () => {
+    expect(fitWidth({ width: 640, height: 480 }, 800)).toEqual({
+      width: 640,
+      height: 480,
+    });
+  });
+
+  it("rounds the height and keeps it at least 1px", () => {
+    expect(fitWidth({ width: 3000, height: 1 }, 1000)).toEqual({
+      width: 1000,
+      height: 1,
+    });
   });
 });

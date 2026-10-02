@@ -1,0 +1,97 @@
+---
+import { ArrowRight } from "@lucide/astro";
+import ProjectCard from "../../components/projects/ProjectCard.astro";
+import ProjectFilters from "../../components/projects/ProjectFilters.astro";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import ButtonLink from "../../components/ui/ButtonLink.astro";
+import CtaBlock from "../../components/ui/CtaBlock.astro";
+import EmptyState from "../../components/ui/EmptyState.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { content } from "../../lib/content";
+import { projectFacets } from "../../lib/content/format";
+import { getServiceTitles } from "../../lib/get-services";
+
+const projects = await content.getProjects();
+const serviceTitles = await getServiceTitles();
+const facets = projectFacets(projects);
+---
+
+<BaseLayout
+  title="Proyectos"
+  description="Proyectos de ingeniería civil de EMOJ Consultora en las regiones de Valparaíso y Coquimbo: obras sanitarias, viales, estructurales y geotécnicas."
+>
+  <PageHeader
+    eyebrow="Proyectos"
+    title="Proyectos de ingeniería en Valparaíso y Coquimbo"
+    lead="Plantas de tratamiento, puentes, estanques y estudios de suelo diseñados por nuestro equipo."
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Proyectos", href: "/proyectos" },
+      ]}
+    />
+  </PageHeader>
+
+  <section class="bg-surface-sunken" aria-label="Lista de proyectos">
+    <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-4 py-12 md:gap-10 md:py-24">
+      {projects.length === 0 ? (
+        <EmptyState message="Pronto publicaremos nuestros proyectos destacados. Mientras tanto, conoce nuestros servicios.">
+          <ButtonLink href="/servicios">
+            Ver servicios
+            <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+          </ButtonLink>
+          <ButtonLink href="/contacto" variant="secondary">
+            Cotizar proyecto
+          </ButtonLink>
+        </EmptyState>
+      ) : (
+        <>
+          <ProjectFilters
+            services={facets.services}
+            regions={facets.regions}
+            serviceTitles={serviceTitles}
+            total={projects.length}
+          />
+          <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+            {projects.map((project, index) => (
+              <li
+                data-project
+                data-services={project.services.join(" ")}
+                data-region={project.region.trim()}
+              >
+                <ProjectCard
+                  project={project}
+                  serviceTitles={serviceTitles}
+                  headingLevel="h2"
+                  eager={index < 2}
+                />
+              </li>
+            ))}
+          </ul>
+          <div
+            data-filter-empty
+            hidden
+            class="flex flex-col items-start gap-4 rounded-lg bg-surface-raised p-6"
+          >
+            <p>No hay proyectos con esta combinación de filtros.</p>
+            <button
+              type="button"
+              data-filter-reset
+              class="inline-flex min-h-11 items-center rounded-md border border-ink px-6 py-3 font-semibold text-ink transition-colors duration-200 hover:bg-ink hover:text-surface"
+            >
+              Ver todos los proyectos
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </section>
+
+  <CtaBlock
+    title="¿Tienes un proyecto parecido?"
+    text="Cuéntanos qué necesitas y te ayudamos a definir el alcance, los plazos y los entregables."
+  />
+</BaseLayout>

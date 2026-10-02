@@ -1,0 +1,75 @@
+---
+/**
+ * Project card: photo, title (the card's single link), location and service
+ * labels. Compact row on phones, stacked card from `sm` up.
+ * The photo is a presigned API URL downloaded and optimized at build time.
+ */
+import { MapPin } from "@lucide/astro";
+import { Image } from "astro:assets";
+import type { ProjectSummary } from "../../lib/api/client";
+import { fitWidth } from "../../lib/content/format";
+
+interface Props {
+  project: ProjectSummary;
+  serviceTitles: Record<string, string>;
+  headingLevel?: "h2" | "h3";
+  /** Load the photo eagerly (first cards above the fold). */
+  eager?: boolean;
+}
+
+const {
+  project,
+  serviceTitles,
+  headingLevel = "h3",
+  eager = false,
+} = Astro.props;
+const Heading = headingLevel;
+const place = [project.location, project.region].filter(Boolean).join(", ");
+---
+
+<article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
+  {project.cover ? (
+    <Image
+      src={project.cover.url}
+      alt={project.cover.alt}
+      {...fitWidth(project.cover, 800)}
+      widths={[208, 400, 640, 800]}
+      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
+      loading={eager ? "eager" : "lazy"}
+      class="aspect-square h-full w-full rounded-md object-cover sm:aspect-[4/3] sm:h-auto sm:rounded-none"
+    />
+  ) : (
+    <div
+      class="aspect-square h-full w-full rounded-md bg-surface-sunken sm:aspect-[4/3] sm:h-auto sm:rounded-none"
+      aria-hidden="true"
+    />
+  )}
+  <div class="flex min-w-0 flex-col gap-2 sm:flex-1 sm:gap-3 sm:p-6">
+    <Heading class="text-lg leading-6 font-semibold text-ink sm:text-[22px] sm:leading-7">
+      <a
+        href={`/proyectos/${project.slug}`}
+        class="text-ink no-underline after:absolute after:inset-0 after:rounded-[inherit] hover:text-ink focus-visible:outline-none"
+      >
+        {project.title}
+      </a>
+    </Heading>
+    {place && (
+      <p class="inline-flex items-start gap-1.5 text-sm leading-5 font-medium text-ink-muted">
+        <MapPin
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="mt-px hidden shrink-0 sm:block"
+        />
+        <span>{place}</span>
+      </p>
+    )}
+    <ul class="mt-auto flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
+      {project.services.map((service) => (
+        <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-semibold text-on-accent">
+          {serviceTitles[service] ?? service}
+        </li>
+      ))}
+    </ul>
+  </div>
+</article>

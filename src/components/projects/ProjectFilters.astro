@@ -1,0 +1,103 @@
+---
+/**
+ * Progressive filter for /proyectos. Rendered hidden: without JavaScript
+ * every project stays visible and no dead controls are shown. The script
+ * (bundled as a same-origin module, CSP-safe) reveals the chips, hides
+ * non-matching cards (`li[data-project]`) and keeps `?servicio=&region=`
+ * in the URL so filtered views can be linked.
+ */
+import type { Facet } from "../../lib/content/format";
+
+interface Props {
+  services: Facet<string>[];
+  regions: Facet<string>[];
+  serviceTitles: Record<string, string>;
+  total: number;
+}
+
+const { services, regions, serviceTitles, total } = Astro.props;
+const showServices = services.length > 1;
+const showRegions = regions.length > 1;
+const chip =
+  "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-semibold text-ink transition-colors duration-200 hover:border-border-strong aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-surface";
+const legend =
+  "mb-2 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+---
+
+{(showServices || showRegions) && (
+  <div
+    data-project-filters
+    data-services={JSON.stringify(services.map((s) => s.value))}
+    data-regions={JSON.stringify(regions.map((r) => r.value))}
+    data-total={total}
+    class="flex flex-col gap-5"
+    hidden
+  >
+    {showServices && (
+      <fieldset>
+        <legend class={legend}>Servicio</legend>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class={chip}
+            data-filter="service"
+            data-value=""
+            aria-pressed="true"
+          >
+            Todos
+          </button>
+          {services.map((s) => (
+            <button
+              type="button"
+              class={chip}
+              data-filter="service"
+              data-value={s.value}
+              aria-pressed="false"
+            >
+              {serviceTitles[s.value] ?? s.value}
+              <span class="font-medium opacity-80">({s.count})</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    )}
+    {showRegions && (
+      <fieldset>
+        <legend class={legend}>Región</legend>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class={chip}
+            data-filter="region"
+            data-value=""
+            aria-pressed="true"
+          >
+            Todas
+          </button>
+          {regions.map((r) => (
+            <button
+              type="button"
+              class={chip}
+              data-filter="region"
+              data-value={r.value}
+              aria-pressed="false"
+            >
+              {r.value}
+              <span class="font-medium opacity-80">({r.count})</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    )}
+    <p
+      data-filter-status
+      role="status"
+      class="text-sm leading-5 font-medium text-ink-muted"
+    />
+  </div>
+)}
+
+<script>
+  import { initProjectFilters } from "../../scripts/project-filter";
+  initProjectFilters();
+</script>
