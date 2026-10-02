@@ -80,6 +80,10 @@ The generated file **is committed**, because Vercel and CI only check out this r
 
 `src/lib/api/client.ts` is a small typed `fetch` wrapper built on those types. It never throws: every call resolves to `{ ok: true, data }`, a typed RFC 9457 problem (`kind: "problem"`, with `errors[]` on 422 and `retryAfter` on 429) or a network error (`kind: "network"`).
 
+## Security headers
+
+`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `connect-src` allows the origin of `PUBLIC_API_URL` when Vercel exposes it while compiling `vercel.ts`, plus the staging API as a fallback; add the production API origin there if it differs. Turnstile needs `https://challenges.cloudflare.com` in `script-src` and `frame-src`. Run `npx @vercel/config validate` after editing.
+
 ## Project layout
 
 ```
