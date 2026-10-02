@@ -1,0 +1,4 @@
+/* Loaded only inside <noscript>: hide controls that need JavaScript. */
+[data-project-filters] {
+  display: none !important;
+}

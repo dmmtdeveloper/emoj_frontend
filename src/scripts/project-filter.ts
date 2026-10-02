@@ -86,6 +86,6 @@ export function initProjectFilters(): void {
     apply(true);
   });
 
-  root.hidden = false;
+  root.classList.remove("invisible");
   apply(false);
 }

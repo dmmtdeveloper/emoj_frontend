@@ -1,7 +1,9 @@
 ---
 /**
- * Progressive filter for /proyectos. Rendered hidden: without JavaScript
- * every project stays visible and no dead controls are shown. The script
+ * Progressive filter for /proyectos. The chips take their space from the
+ * first paint (invisible, so revealing them causes no layout shift); without
+ * JavaScript /noscript.css removes them, every project stays visible and no
+ * dead controls are shown. The script
  * (bundled as a same-origin module, CSP-safe) reveals the chips, hides
  * non-matching cards (`li[data-project]`) and keeps `?servicio=&region=`
  * in the URL so filtered views can be linked.
@@ -30,8 +32,7 @@ const legend =
     data-services={JSON.stringify(services.map((s) => s.value))}
     data-regions={JSON.stringify(regions.map((r) => r.value))}
     data-total={total}
-    class="flex flex-col gap-5"
-    hidden
+    class="invisible flex flex-col gap-5"
   >
     {showServices && (
       <fieldset>
@@ -93,9 +94,15 @@ const legend =
       data-filter-status
       role="status"
       class="text-sm leading-5 font-medium text-ink-muted"
-    />
+    >
+      {total === 1 ? "1 proyecto." : `${total} proyectos.`}
+    </p>
   </div>
 )}
+
+<noscript>
+  <link rel="stylesheet" href="/noscript.css" />
+</noscript>
 
 <script>
   import { initProjectFilters } from "../../scripts/project-filter";
