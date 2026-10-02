@@ -3,6 +3,13 @@ import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
 import { Image } from "astro:assets";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
 
+interface Props {
+  /** Section background, to keep the page's surface rhythm. */
+  background?: "surface" | "surface-sunken";
+}
+
+const { background = "surface" } = Astro.props;
+
 const DIFFERENTIATORS = [
   {
     icon: CalendarCheck,
@@ -27,7 +34,10 @@ const DIFFERENTIATORS = [
 ] as const;
 ---
 
-<section aria-labelledby="por-que-emoj" class="bg-surface">
+<section
+  aria-labelledby="por-que-emoj"
+  class:list={[background === "surface" ? "bg-surface" : "bg-surface-sunken"]}
+>
   <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16">
     <div class="flex flex-col gap-6">
       <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
@@ -56,7 +66,14 @@ const DIFFERENTIATORS = [
 
     <ul class="grid gap-6 sm:grid-cols-2">
       {DIFFERENTIATORS.map(({ icon: Icon, title, text }) => (
-        <li class="radius-signature flex flex-col gap-4 bg-surface-sunken p-6 pl-8 md:p-8 md:pl-10">
+        <li
+          class:list={[
+            "radius-signature flex flex-col gap-4 p-6 pl-8 md:p-8 md:pl-10",
+            background === "surface"
+              ? "bg-surface-sunken"
+              : "bg-surface-raised",
+          ]}
+        >
           <Icon
             size={24}
             stroke-width={1.75}

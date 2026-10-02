@@ -2,6 +2,7 @@
 import AboutTeaser from "../components/home/AboutTeaser.astro";
 import ClientsStrip from "../components/home/ClientsStrip.astro";
 import FactsBand from "../components/home/FactsBand.astro";
+import FeaturedProjects from "../components/home/FeaturedProjects.astro";
 import Hero from "../components/home/Hero.astro";
 import ServicesSection from "../components/home/ServicesSection.astro";
 import WhyEmoj from "../components/home/WhyEmoj.astro";
@@ -9,6 +10,12 @@ import CtaBlock from "../components/ui/CtaBlock.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
+import { content } from "../lib/content";
+import { getServiceTitles } from "../lib/get-services";
+
+const featured = await content.getFeaturedProjects(3);
+const serviceTitles = await getServiceTitles();
+const hasFeatured = featured.length > 0;
 ---
 
 <BaseLayout
@@ -19,7 +26,10 @@ import { SITE_NAME } from "../lib/site";
   <Hero />
   <ClientsStrip />
   <ServicesSection />
-  <WhyEmoj />
+  {hasFeatured && (
+    <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
+  )}
+  <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
   <FactsBand />
   <AboutTeaser />
   <CtaBlock background="surface-sunken" />

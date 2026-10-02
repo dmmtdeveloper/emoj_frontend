@@ -1,0 +1,52 @@
+---
+/**
+ * Home: up to three featured projects from the API. The parent renders this
+ * section only when there is at least one featured project.
+ */
+import { ArrowRight } from "@lucide/astro";
+import type { ProjectSummary } from "../../lib/api/client";
+import ProjectCard from "../projects/ProjectCard.astro";
+
+interface Props {
+  projects: ProjectSummary[];
+  serviceTitles: Record<string, string>;
+}
+
+const { projects, serviceTitles } = Astro.props;
+---
+
+<section aria-labelledby="proyectos-destacados" class="bg-surface">
+  <div class="mx-auto flex max-w-[1200px] flex-col gap-10 px-4 py-16 md:gap-12 md:py-24">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="flex max-w-[60ch] flex-col gap-4">
+        <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+          Proyectos
+        </p>
+        <h2
+          id="proyectos-destacados"
+          class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
+        >
+          Proyectos destacados
+        </h2>
+        <p class="text-ink-muted">
+          Obras reales en las que hemos trabajado en las regiones de Valparaíso
+          y Coquimbo.
+        </p>
+      </div>
+      <a
+        href="/proyectos"
+        class="inline-flex min-h-11 shrink-0 items-center gap-2 font-semibold underline-offset-4 hover:underline"
+      >
+        Ver todos los proyectos
+        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+      </a>
+    </div>
+    <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+      {projects.map((project) => (
+        <li>
+          <ProjectCard project={project} serviceTitles={serviceTitles} />
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
