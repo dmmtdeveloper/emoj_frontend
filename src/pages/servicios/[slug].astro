@@ -65,7 +65,7 @@ const labelClass =
   </PageHeader>
 
   <section class="bg-surface-sunken">
-    <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
+    <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
       <div class="flex max-w-[65ch] flex-col gap-4 text-ink [&_h2]:mt-8 [&_h2]:text-[26px] [&_h2]:leading-8 [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] md:[&_h2]:text-[34px] md:[&_h2]:leading-10 [&_li]:relative [&_li]:pl-6 [&_li]:before:absolute [&_li]:before:top-[11px] [&_li]:before:left-0 [&_li]:before:size-2 [&_li]:before:rounded-full [&_li]:before:bg-brand [&_p:first-child]:text-xl [&_p:first-child]:leading-[30px] [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-3">
         <Content />
       </div>
@@ -105,7 +105,7 @@ const labelClass =
 
   {hasExamples && (
     <section class="bg-surface" aria-labelledby="proyectos-relacionados">
-      <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
+      <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
         {image && (
           <Image
             src={image}
@@ -144,7 +144,7 @@ const labelClass =
     class:list={[hasExamples ? "bg-surface-sunken" : "bg-surface"]}
     aria-labelledby="otros-servicios"
   >
-    <div class="mx-auto max-w-[1200px] px-4 py-16 md:py-24">
+    <div class="container-site py-16 md:py-24">
       <h2
         id="otros-servicios"
         class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
