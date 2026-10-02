@@ -4,7 +4,7 @@ Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean ci
 
 The site is built with Astro as a fully static site and deployed on Vercel. Content will come from a separate Go API, [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
 
-> Status: Phase 12 "Public site", slice 1. Layout, home, services (content collection), contact form wired to the API, SEO and security headers. Proyectos, Nosotros and Noticias are placeholders until slice 2.
+> Status: Phase 12 "Public site", slice 2. Layout, home, services (content collection), contact form wired to the API, projects and news read from the API at build time, the Nosotros page, SEO and security headers.
 
 ## Stack
 
@@ -69,8 +69,29 @@ Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the clie
 | Variable                    | Example                    | Purpose                                                                                               |
 | --------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `PUBLIC_SITE_URL`           | `https://emoj.cl`          | Canonical origin for URLs, Open Graph, sitemap.                                                       |
-| `PUBLIC_API_URL`            | `http://localhost:8080`    | Base URL of the EMOJ Go API.                                                                          |
+| `PUBLIC_API_URL`            | `http://localhost:8080`    | Base URL of the EMOJ Go API. Read at build time for projects and news: the build fails if it is down. |
 | `PUBLIC_TURNSTILE_SITE_KEY` | `1x00000000000000000000AA` | Cloudflare Turnstile site key for the contact form. Defaults to Cloudflare's always-passing test key. |
+
+## Content from the API (build time)
+
+Projects and news are not in this repo: the editor publishes them in the admin panel and the API serves them. The site stays fully static:
+
+```
+admin publishes -> API (Postgres + bucket) -> Vercel deploy hook -> astro build -> static HTML + optimized images
+```
+
+- `src/lib/content/source.ts` reads every page of `/v1/projects` and `/v1/news` (and each detail) with the typed client while `astro build` runs. Listings are memoized, so a build fetches each one once.
+- **Failure policy:** if the API answers with an error or is unreachable, the build fails with a `ContentFetchError` naming the URL, status and `request_id`. A broken API never publishes a silently empty site; Vercel keeps serving the previous deployment.
+- **Empty states:** a valid empty list is not an error. `/proyectos` and `/noticias` show an empty state with links to services and contact, and the home hides "Proyectos destacados" until a project is featured.
+- **Rebuilds:** the API calls the Vercel deploy hook (`VERCEL_DEPLOY_HOOK_URL` in the backend) when content is published, updated or unpublished. Local builds need `PUBLIC_API_URL` pointing at a running API (CI uses the staging API).
+- **Images:** the API returns presigned URLs that expire (6 h by default), so they are never hotlinked. `astro:assets` downloads them during the build and emits resized WebP files (and a 1200×630 JPEG for Open Graph) under `/_astro/`, so CSP `img-src 'self'` keeps working. Allowed sources are listed in `image.remotePatterns` in `astro.config.mjs`: Railway buckets (`**.t3.storageapi.dev`, virtual-hosted) and the local SeaweedFS (`http://localhost:9000`, path style). Add the production bucket host there if it differs.
+- **Rich text:** news bodies are TipTap JSON. `src/lib/content/tiptap.ts` renders the same allowlist as the API (paragraphs, headings 2-4, lists, blockquotes, breaks, rules; bold, italic, underline, strike and http/https/mailto links) with every text and attribute escaped and unknown nodes dropped. External links get `rel="noopener noreferrer"`. Body images only carry a media ID in the public API, so they are not rendered yet (backend follow-up: resolve them to URLs).
+- `/proyectos` renders every project; the service and region chips are a progressive enhancement (`src/scripts/project-filter.ts`, a same-origin module): without JavaScript all projects stay visible, with it the URL keeps `?servicio=&region=` so filtered views can be shared.
+- `/noticias` shows 12 articles per page (`/noticias/pagina/2`, ...).
+
+To build with realistic content locally, run the backend with its dev seed (`go run ./cmd/seed` in emoj_backend, see its README) and build with `PUBLIC_API_URL=http://localhost:8080 pnpm build`.
+
+The team on `/nosotros` is static data in `src/lib/team.ts` with photos in `src/assets/team/` (resized to 800px, JPEG quality 82); people without a photo get an initials avatar.
 
 ## API contract
 
@@ -90,12 +111,14 @@ The generated file **is committed**, because Vercel and CI only check out this r
 design/          design tokens source (tokens.json)
 public/          favicons, web manifest, robots.txt
 scripts/         build scripts (token generator)
-src/assets/      brand SVGs and optimized photos (rendered with astro:assets)
+src/assets/      brand SVGs, optimized photos and team portraits (rendered with astro:assets)
 src/content/     services content collection (one Markdown file per API service slug)
-src/components/  UI components (layout, home, services, contact, ui)
-src/lib/         API client and types, site facts, contact form rules, structured data
+src/components/  UI components (layout, home, services, projects, news, about, contact, ui)
+src/lib/         API client and types, build-time content fetchers, TipTap renderer, team data,
+                 site facts, contact form rules, structured data
 src/layouts/     page layouts (BaseLayout: SEO, social, favicons, skip link)
-src/pages/       routes (home, servicios, contacto, placeholders, 404)
+src/pages/       routes (home, servicios, proyectos, noticias, nosotros, contacto, 404)
+src/scripts/     small browser modules (project filter, copy link)
 src/styles/      global.css and generated tokens.css
 tests/           unit tests
 ```
