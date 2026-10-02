@@ -1,24 +1,58 @@
 ---
 /**
- * Sticky site header: logo, primary navigation and the quote CTA.
- * Below `lg` the navigation moves into a modal <dialog> (native focus
- * containment, Escape to close, focus returns to the toggle on close).
+ * Sticky site header: isotype + "EMOJ" wordmark, primary navigation and the
+ * quote CTA.
+ *
+ * - `overlay`: the page starts with a full-bleed photo hero. The header is
+ *   transparent (cream text) over it and turns into solid `surface` with a
+ *   blur and border once the page scrolls (CSS scroll timeline, with an
+ *   IntersectionObserver fallback in src/scripts/motion.ts). Without either
+ *   it stays solid.
+ * - Below `lg` the navigation moves into a full-screen modal <dialog>
+ *   (native focus containment, Escape to close, focus returns to the toggle).
  */
 import { Menu, X } from "@lucide/astro";
-import { NAV, isCurrent } from "../../lib/site";
-import Logo from "../Logo.astro";
+import { CONTACT, NAV, isCurrent } from "../../lib/site";
+import IsotipoMark from "../IsotipoMark.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
 
+interface Props {
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
 const pathname = Astro.url.pathname;
+// The mark draws itself on the home page, where the story starts.
+const drawMark = pathname === "/";
 ---
 
-<header class="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm supports-[backdrop-filter]:bg-surface/85">
-  <div class="mx-auto flex h-[76px] max-w-[1200px] items-center justify-between gap-6 px-4">
+<header
+  data-site-header
+  data-overlay={overlay ? "" : undefined}
+  class="site-header sticky top-0 z-40 isolate"
+>
+  <div
+    class="site-header__backdrop absolute inset-0 -z-10"
+    aria-hidden="true"
+  ></div>
+  <div class="container-site flex h-(--header-h) items-center justify-between gap-6">
     <a
       href="/"
-      class="-m-2 inline-flex shrink-0 items-center p-2 text-ink hover:text-ink"
+      class="mark-link -m-2 inline-flex shrink-0 items-center gap-2.5 p-2 text-current no-underline hover:text-current"
     >
-      <Logo size={120} label="EMOJ Consultora, ir al inicio" />
+      <IsotipoMark
+        label="EMOJ Consultora — Inicio"
+        draw={drawMark}
+        width="72"
+        height="26"
+        class="h-[26px] w-auto lg:h-[30px]"
+      />
+      <span
+        aria-hidden="true"
+        class="text-[19px] leading-none font-semibold tracking-[0.08em] lg:text-[21px]"
+      >
+        EMOJ
+      </span>
     </a>
 
     <nav aria-label="Principal" class="hidden lg:block">
@@ -31,9 +65,11 @@ const pathname = Astro.url.pathname;
                 href={href}
                 aria-current={current ? "page" : undefined}
                 class:list={[
-                  "relative inline-flex min-h-11 items-center px-3 text-base leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:text-brand",
-                  "after:absolute after:inset-x-3 after:bottom-2 after:h-0.5 after:rounded-full after:bg-brand after:opacity-0 after:transition-opacity",
-                  current && "after:opacity-100",
+                  "group relative inline-flex min-h-11 items-center px-3 text-base leading-5 font-medium text-current no-underline hover:text-current",
+                  "after:absolute after:inset-x-3 after:bottom-2 after:h-0.5 after:origin-left after:rounded-full after:bg-(--mark-stroke) after:transition-transform after:duration-300 after:ease-(--ease-out)",
+                  current
+                    ? "after:scale-x-100"
+                    : "after:scale-x-0 hover:after:scale-x-100 focus-visible:after:scale-x-100",
                 ]}
               >
                 {label}
@@ -50,13 +86,13 @@ const pathname = Astro.url.pathname;
       </div>
       <button
         type="button"
-        class="inline-flex size-11 items-center justify-center rounded-md text-ink hover:bg-surface-sunken lg:hidden"
+        class="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-base leading-5 font-semibold text-current transition-colors hover:bg-ink/10 lg:hidden"
         aria-expanded="false"
         aria-controls="menu-movil"
         data-menu-open
       >
         <Menu size={24} stroke-width={1.75} aria-hidden="true" />
-        <span class="sr-only">Abrir menú</span>
+        Menú
       </button>
     </div>
   </div>
@@ -65,37 +101,43 @@ const pathname = Astro.url.pathname;
 <dialog
   id="menu-movil"
   aria-label="Menú"
-  class="m-0 ml-auto h-dvh max-h-none w-full max-w-sm bg-surface p-0 text-ink backdrop:bg-plum-950/60 lg:hidden"
+  class="menu-overlay m-0 h-dvh max-h-none w-full max-w-none bg-surface-inverse p-0 text-ink-inverse lg:hidden"
   data-menu
 >
-  <div class="flex h-full flex-col">
-    <div class="flex h-[76px] items-center justify-between border-b border-border px-4">
-      <span class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
-        Menú
-      </span>
+  <div class="container-site flex h-full flex-col">
+    <div class="flex h-(--header-h) shrink-0 items-center justify-between">
+      <span class="eyebrow eyebrow-inverse">Menú</span>
       <button
         type="button"
-        class="inline-flex size-11 items-center justify-center rounded-md text-ink hover:bg-surface-sunken"
+        class="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-base leading-5 font-semibold text-ink-inverse hover:bg-ink-inverse/10"
         data-menu-close
       >
         <X size={24} stroke-width={1.75} aria-hidden="true" />
-        <span class="sr-only">Cerrar menú</span>
+        Cerrar
       </button>
     </div>
-    <nav aria-label="Principal móvil" class="flex-1 overflow-y-auto px-4 py-6">
-      <ul class="flex flex-col">
-        {NAV.map(({ label, href }) => {
+    <nav aria-label="Principal móvil" class="flex-1 overflow-y-auto py-4">
+      <ul class="menu-links flex flex-col">
+        {NAV.map(({ label, href }, index) => {
           const current = isCurrent(href, pathname);
           return (
-            <li class="border-b border-border">
+            <li>
               <a
                 href={href}
                 aria-current={current ? "page" : undefined}
                 class:list={[
-                  "flex min-h-14 items-center text-[22px] leading-7 font-semibold no-underline",
-                  current ? "text-brand" : "text-ink hover:text-brand",
+                  "flex min-h-14 items-baseline gap-4 py-1 text-[clamp(2rem,9vw,2.75rem)] leading-[1.15] font-semibold tracking-[-0.03em] text-ink-inverse no-underline hover:text-ink-inverse",
+                  current
+                    ? "underline decoration-2 underline-offset-[0.18em]"
+                    : "hover:underline hover:decoration-2 hover:underline-offset-[0.18em]",
                 ]}
               >
+                <span
+                  aria-hidden="true"
+                  class="w-7 shrink-0 text-sm leading-5 font-medium tracking-normal tabular-nums opacity-75"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 {label}
               </a>
             </li>
@@ -103,10 +145,25 @@ const pathname = Astro.url.pathname;
         })}
       </ul>
     </nav>
-    <div class="border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <ButtonLink href="/contacto" class="w-full">
+    <div class="flex shrink-0 flex-col gap-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <IsotipoMark
+        tone="mono"
+        draw
+        width="160"
+        height="58"
+        class="menu-mark h-auto w-40 self-end opacity-80"
+      />
+      <ButtonLink href="/contacto" variant="on-inverse" class="w-full">
         Cotizar proyecto
       </ButtonLink>
+      <a
+        href={CONTACT.whatsapp.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex min-h-11 items-center justify-center font-semibold text-ink-inverse underline-offset-4 hover:text-ink-inverse hover:underline"
+      >
+        WhatsApp {CONTACT.whatsapp.display}
+      </a>
     </div>
   </div>
 </dialog>
@@ -129,13 +186,40 @@ const pathname = Astro.url.pathname;
       openButton.setAttribute("aria-expanded", "false");
       openButton.focus();
     });
-    // Click on the backdrop (outside the panel) closes the menu.
-    dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) dialog.close();
-    });
     // Leaving the mobile layout with the menu open closes it.
     window.matchMedia("(min-width: 64rem)").addEventListener("change", (e) => {
       if (e.matches && dialog.open) dialog.close();
     });
   }
 </script>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .menu-overlay[open] {
+      animation: wipe-down 420ms var(--ease-out) both;
+    }
+
+    .menu-overlay[open] .menu-links > li {
+      animation: rise 520ms var(--ease-out) both;
+    }
+
+    .menu-overlay[open] .menu-links > li:nth-child(1) {
+      animation-delay: 120ms;
+    }
+    .menu-overlay[open] .menu-links > li:nth-child(2) {
+      animation-delay: 170ms;
+    }
+    .menu-overlay[open] .menu-links > li:nth-child(3) {
+      animation-delay: 220ms;
+    }
+    .menu-overlay[open] .menu-links > li:nth-child(4) {
+      animation-delay: 270ms;
+    }
+    .menu-overlay[open] .menu-links > li:nth-child(5) {
+      animation-delay: 320ms;
+    }
+    .menu-overlay[open] .menu-links > li:nth-child(6) {
+      animation-delay: 370ms;
+    }
+  }
+</style>
