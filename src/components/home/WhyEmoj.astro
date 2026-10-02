@@ -2,6 +2,7 @@
 import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
 import { Image } from "astro:assets";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
+import SectionHeading from "../ui/SectionHeading.astro";
 
 interface Props {
   /** Section background, to keep the page's surface rhythm. */
@@ -38,49 +39,53 @@ const DIFFERENTIATORS = [
   aria-labelledby="por-que-emoj"
   class:list={[background === "surface" ? "bg-surface" : "bg-surface-sunken"]}
 >
-  <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16">
-    <div class="flex flex-col gap-6">
-      <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
-        Por qué EMOJ
-      </p>
-      <h2
+  <div class="container-site relative z-[2] grid gap-10 py-16 md:py-28 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:py-32">
+    <div class="flex flex-col gap-8">
+      <SectionHeading
         id="por-que-emoj"
-        class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
-      >
-        Ingeniería precisa, trato cercano
-      </h2>
-      <p class="max-w-[52ch] text-ink-muted">
-        Humanizar la ingeniería es explicarte cada decisión técnica con
-        claridad, cumplir lo que acordamos y estar disponibles cuando nos
-        necesitas.
-      </p>
+        eyebrow="Por qué EMOJ"
+        title="Ingeniería precisa, trato cercano"
+        lead="Humanizar la ingeniería es explicarte cada decisión técnica con claridad, cumplir lo que acordamos y estar disponibles cuando nos necesitas."
+      />
       <Image
         src={aerial}
         alt="Vista aérea de un complejo industrial costero con una chimenea alta."
         widths={[480, 720, 960]}
         sizes="(min-width: 1200px) 440px, (min-width: 1024px) 38vw, 100vw"
         loading="lazy"
-        class="mt-2 hidden aspect-[4/3] w-full rounded-lg object-cover lg:block"
+        data-reveal="wipe"
+        class="hidden aspect-[4/3] w-full rounded-lg object-cover lg:block"
       />
     </div>
 
-    <ul class="grid gap-6 sm:grid-cols-2">
-      {DIFFERENTIATORS.map(({ icon: Icon, title, text }) => (
+    <!-- Phones: a horizontal, snap-scrolling row (no autoplay) to keep the
+         page short; from sm up, a 2x2 grid. -->
+    <ul
+      aria-label="Diferenciadores"
+      class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:self-center"
+      data-reveal-stagger
+    >
+      {DIFFERENTIATORS.map(({ icon: Icon, title, text }, index) => (
         <li
           class:list={[
-            "radius-signature flex flex-col gap-4 p-6 pl-8 md:p-8 md:pl-10",
+            "group radius-signature flex w-[82%] shrink-0 snap-start flex-col gap-4 p-6 pl-8 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:w-auto md:p-8 md:pl-10",
             background === "surface"
               ? "bg-surface-sunken"
               : "bg-surface-raised",
           ]}
         >
-          <Icon
-            size={24}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="text-brand"
-          />
-          <h3 class="text-[22px] leading-7 font-semibold">{title}</h3>
+          <div class="flex items-center justify-between">
+            <span class="icon-draw text-brand">
+              <Icon size={24} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <span
+              class="text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted"
+              aria-hidden="true"
+            >
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          </div>
+          <h3 class="text-h3">{title}</h3>
           <p class="text-ink-muted">{text}</p>
         </li>
       ))}

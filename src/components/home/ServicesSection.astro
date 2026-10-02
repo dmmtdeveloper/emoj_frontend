@@ -1,52 +1,57 @@
 ---
+/**
+ * Home services as an asymmetric bento: the first service as a large photo
+ * tile, the other six as compact tiles and a closing "not sure?" tile.
+ * Phones get a dense two-column grid (titles only) to keep the page short.
+ */
 import { ArrowRight } from "@lucide/astro";
 import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
+import ArrowLink from "../ui/ArrowLink.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
+import SectionHeading from "../ui/SectionHeading.astro";
 
-const services = await getServices();
+const [first, ...rest] = await getServices();
 ---
 
 <section aria-labelledby="servicios" class="bg-surface-sunken">
-  <div class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
-    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div class="flex max-w-[60ch] flex-col gap-4">
-        <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
-          Servicios
-        </p>
-        <h2
-          id="servicios"
-          class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
-        >
-          Siete especialidades, un mismo equipo
-        </h2>
-        <p class="text-ink-muted">
-          Desde el agua potable hasta las fundaciones: coordinamos todas las
-          especialidades de tu proyecto para que avance sin interfaces perdidas.
-        </p>
-      </div>
-      <a
-        href="/servicios"
-        class="inline-flex min-h-11 shrink-0 items-center gap-2 font-semibold underline-offset-4 hover:underline"
-      >
+  <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
+    <SectionHeading
+      id="servicios"
+      eyebrow="Servicios"
+      title="Siete especialidades, un mismo equipo"
+      lead="Desde el agua potable hasta las fundaciones: coordinamos todas las especialidades de tu proyecto para que avance sin interfaces perdidas."
+    >
+      <ArrowLink slot="action" href="/servicios">
         Ver todos los servicios
-        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-      </a>
-    </div>
+      </ArrowLink>
+    </SectionHeading>
 
-    <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {services.map((service) => (
+    <ul
+      class="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4 lg:auto-rows-[minmax(232px,auto)]"
+      data-reveal-stagger
+    >
+      {first && (
+        <li class="col-span-2 lg:row-span-2">
+          <ServiceCard service={first} variant="featured" index={1} />
+        </li>
+      )}
+      {rest.map((service, i) => (
         <li>
-          <ServiceCard service={service} />
+          <ServiceCard service={service} variant="compact" index={i + 2} />
         </li>
       ))}
-      <li>
-        <div class="radius-signature flex h-full flex-col justify-between gap-6 bg-accent p-6 pl-8 text-on-accent md:p-8 md:pl-10">
-          <p class="text-[22px] leading-7 font-semibold">
-            ¿No sabes qué especialidad necesitas?
-          </p>
-          <p>Cuéntanos tu proyecto y te orientamos sin compromiso.</p>
-          <ButtonLink href="/contacto" class="self-start">
+      <li class="col-span-2">
+        <div class="radius-signature flex h-full flex-col justify-between gap-5 bg-accent p-6 pl-8 text-on-accent md:flex-row md:items-end md:p-8 md:pl-10">
+          <div class="flex flex-col gap-2">
+            <p class="text-[22px] leading-7 font-semibold md:text-[26px] md:leading-8">
+              ¿No sabes qué especialidad necesitas?
+            </p>
+            <p class="max-w-[40ch]">
+              Cuéntanos tu proyecto y te orientamos sin compromiso.
+            </p>
+          </div>
+          <ButtonLink href="/contacto" class="shrink-0 self-start md:self-end">
             Escríbenos
             <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
           </ButtonLink>

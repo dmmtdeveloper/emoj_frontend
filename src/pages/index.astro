@@ -4,6 +4,7 @@ import ClientsStrip from "../components/home/ClientsStrip.astro";
 import FactsBand from "../components/home/FactsBand.astro";
 import FeaturedProjects from "../components/home/FeaturedProjects.astro";
 import Hero from "../components/home/Hero.astro";
+import ScrollThread from "../components/home/ScrollThread.astro";
 import ServicesSection from "../components/home/ServicesSection.astro";
 import WhyEmoj from "../components/home/WhyEmoj.astro";
 import CtaBlock from "../components/ui/CtaBlock.astro";
@@ -22,15 +23,20 @@ const hasFeatured = featured.length > 0;
   title={SITE_NAME}
   description="Consultora de ingeniería civil en Quilpué con más de 30 años: obras sanitarias, viales, cálculo estructural y geotecnia en Valparaíso y Coquimbo."
   jsonLd={[organizationJsonLd(Astro.site)]}
+  headerOverlay
 >
   <Hero />
-  <ClientsStrip />
-  <ServicesSection />
-  {hasFeatured && (
-    <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
-  )}
-  <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
-  <FactsBand />
-  <AboutTeaser />
-  <CtaBlock background="surface-sunken" />
+  {/* The narrative thread is drawn behind every section after the hero. */}
+  <div class="relative isolate">
+    <ScrollThread />
+    <ClientsStrip />
+    <ServicesSection />
+    {hasFeatured && (
+      <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
+    )}
+    <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
+    <FactsBand />
+    <AboutTeaser />
+    <CtaBlock background="surface-sunken" />
+  </div>
 </BaseLayout>

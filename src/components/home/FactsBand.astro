@@ -2,8 +2,12 @@
 /**
  * Key facts on `surface-inverse` (first of the two inverse sections allowed
  * per page; the footer is the second). Only verifiable facts.
+ * The numbers count up when they scroll into view (src/scripts/motion.ts):
+ * the HTML holds the final value, the animated copy is hidden from AT and a
+ * static copy is read instead. Reduced motion shows the final values.
  */
 import { CLIENTS } from "../../lib/site";
+import StrokeLine from "../ui/StrokeLine.astro";
 
 const clients = `${CLIENTS.slice(0, -1).join(", ")} y ${CLIENTS.at(-1)}`;
 
@@ -15,22 +19,40 @@ const FACTS = [
 ] as const;
 ---
 
-<section aria-labelledby="cifras" class="bg-surface-inverse text-ink-inverse">
-  <div class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
-    <h2 id="cifras" class="sr-only">
+<section
+  aria-labelledby="cifras"
+  class="relative isolate z-[3] overflow-hidden bg-surface-inverse text-ink-inverse"
+>
+  <StrokeLine
+    draw="view-back"
+    class="absolute -right-24 -bottom-10 -z-10 w-[640px] opacity-25 md:w-[900px]"
+  />
+  <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-28 lg:py-32">
+    <h2 id="cifras" class="eyebrow eyebrow-inverse" data-reveal>
       EMOJ en cifras
     </h2>
-    <dl class="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+    <dl
+      class="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-8"
+      data-reveal-stagger
+    >
       {FACTS.map(({ value, label }) => (
-        <div class="flex flex-col gap-2 border-l border-ink-inverse/30 pl-6">
-          <dt class="order-2 max-w-[24ch]">{label}</dt>
-          <dd class="order-1 text-[56px] leading-[60px] font-semibold tracking-[-0.02em]">
-            {value}
+        <div class="flex flex-col gap-3 border-l border-ink-inverse/30 pl-4 md:pl-6">
+          <dt class="order-2 max-w-[22ch] text-base leading-6 md:text-[17px]">
+            {label}
+          </dt>
+          <dd class="order-1 text-[clamp(3rem,2rem+5vw,6rem)] leading-[0.95] font-semibold tracking-[-0.04em] tabular-nums">
+            <span aria-hidden="true" data-count>
+              {value}
+            </span>
+            <span class="sr-only">{value}</span>
           </dd>
         </div>
       ))}
     </dl>
-    <p class="max-w-[65ch] text-sm leading-5 font-medium opacity-90">
+    <p
+      class="max-w-[65ch] text-sm leading-5 font-medium opacity-90"
+      data-reveal
+    >
       Clientes de referencia: {clients}.
     </p>
   </div>

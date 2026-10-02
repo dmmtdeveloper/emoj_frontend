@@ -1,0 +1,29 @@
+---
+/**
+ * The home's narrative thread: one long, isotype-like hand-drawn line that
+ * runs behind the content from the clients strip to the closing CTA and is
+ * "drawn" as you scroll (clip-path on a view() timeline, motion.css).
+ * Purely decorative. The parent must be `relative isolate`; sections put
+ * their content at `z-[2]` so the line passes under cards and text but over
+ * section backgrounds. Without timeline support or with reduced motion the
+ * line is simply shown complete. Hidden below `lg`: the gutters are too
+ * narrow there and the line would cross the text.
+ */
+---
+
+<svg
+  viewBox="0 0 100 1000"
+  preserveAspectRatio="none"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+  class="scroll-thread pointer-events-none absolute inset-0 z-[1] hidden h-full w-full text-brand opacity-25 lg:block dark:opacity-35"
+>
+  <path
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    vector-effect="non-scaling-stroke"
+    d="M90 0C97 30 74 52 66 88s20 70 12 104c-7 30-44 26-60 58-14 28 10 52 4 86-6 33-16 44-14 82 2 36 40 30 62 62 20 30 22 56 8 92-12 30-46 32-58 66-10 30 14 62 4 98-8 30-30 34-28 70 2 36 44 40 60 70 14 26 6 64 26 84"
+  ></path>
+</svg>

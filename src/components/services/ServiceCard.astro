@@ -1,44 +1,172 @@
 ---
 /**
- * Clickable service card with the EMOJ signature shape.
- * The whole card is one link (the title), so there is a single tab stop.
+ * Clickable service tile with the EMOJ signature shape. The whole tile is
+ * one link (the title, stretched with ::after), so there is a single tab stop.
+ *
+ * Variants:
+ * - `default`: icon, title, summary, "Ver servicio".
+ * - `compact`: icon and title only on phones (summary from `md`), for the
+ *   two-column home grid.
+ * - `featured`: large photo tile for the home bento (needs `service.image`).
+ *
+ * Hover/focus: the tile lifts, the border turns brand, the icon redraws its
+ * strokes and the arrow slides (motion.css `.icon-draw`; none under reduced
+ * motion).
  */
 import { ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
 import type { Service } from "../../lib/get-services";
 import ServiceIcon from "./ServiceIcon.astro";
 
 interface Props {
   service: Service;
   headingLevel?: "h2" | "h3";
+  variant?: "default" | "compact" | "featured";
+  /** Position shown as an editorial index ("01"). */
+  index?: number;
 }
 
-const { service, headingLevel = "h3" } = Astro.props;
-const { title, summary, icon, slug } = service.data;
+const {
+  service,
+  headingLevel = "h3",
+  variant = "default",
+  index,
+} = Astro.props;
+const { title, summary, icon, slug, image } = service.data;
 const Heading = headingLevel;
+const number = index === undefined ? "" : String(index).padStart(2, "0");
+const featured = variant === "featured" && image !== undefined;
+const link =
+  "no-underline after:absolute after:inset-0 after:z-10 after:rounded-[inherit] focus-visible:outline-none";
+const shell =
+  "group radius-signature relative isolate flex h-full flex-col overflow-hidden transition-[translate,box-shadow,border-color] duration-300 ease-(--ease-out) hover:-translate-y-1 has-[a:focus-visible]:-translate-y-1 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring";
 ---
 
-<article class="group radius-signature relative flex h-full flex-col gap-4 border border-border bg-surface-raised p-6 pl-8 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring md:p-8 md:pl-10">
-  <span class="inline-flex size-12 items-center justify-center rounded-full bg-surface-sunken text-brand">
-    <ServiceIcon name={icon} />
-  </span>
-  <Heading class="text-[22px] leading-7 font-semibold text-ink">
-    <a
-      href={`/servicios/${slug}`}
-      class="text-ink no-underline after:absolute after:inset-0 after:rounded-[inherit] hover:text-ink focus-visible:outline-none"
-    >
-      {title}
-    </a>
-  </Heading>
-  <p class="text-ink-muted">{summary}</p>
-  <span
-    class="mt-auto inline-flex items-center gap-2 pt-2 text-base leading-5 font-semibold text-brand"
-    aria-hidden="true"
+{featured ? (
+  <article
+    class:list={[
+      shell,
+      "min-h-[340px] justify-end gap-4 bg-plum-950 p-6 pl-8 text-sand-50 shadow-(--shadow-md) md:p-10 md:pl-12 lg:min-h-full",
+    ]}
   >
-    Ver servicio
-    <ArrowRight
-      size={20}
-      stroke-width={1.75}
-      class="transition-transform duration-200 group-hover:translate-x-1"
+    <Image
+      src={image}
+      alt=""
+      widths={[480, 800, 1200]}
+      sizes="(min-width: 1200px) 584px, (min-width: 1024px) 48vw, 100vw"
+      loading="lazy"
+      class="absolute inset-0 -z-20 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
     />
-  </span>
-</article>
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/90 via-plum-950/65 to-plum-950/25"
+      aria-hidden="true"
+    />
+    <div class="flex items-center justify-between gap-4">
+      <span class="icon-draw inline-flex size-14 items-center justify-center rounded-full bg-sand-50 text-plum-950">
+        <ServiceIcon name={icon} />
+      </span>
+      {number && (
+        <span
+          class="text-sm leading-5 font-semibold tracking-[0.14em] opacity-80"
+          aria-hidden="true"
+        >
+          {number}
+        </span>
+      )}
+    </div>
+    <Heading class="text-h2 mt-auto max-w-[14ch] pt-10">
+      <a
+        href={`/servicios/${slug}`}
+        class:list={[link, "text-sand-50 hover:text-sand-50"]}
+      >
+        {title}
+      </a>
+    </Heading>
+    <p class="max-w-[44ch] text-sand-100">{summary}</p>
+    <span
+      class="inline-flex items-center gap-2 pt-2 text-base leading-5 font-semibold"
+      aria-hidden="true"
+    >
+      Ver servicio
+      <ArrowRight
+        size={20}
+        stroke-width={1.75}
+        class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
+      />
+    </span>
+  </article>
+) : (
+  <article
+    class:list={[
+      shell,
+      "gap-4 border border-border bg-surface-raised shadow-(--shadow-sm) hover:border-brand hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md)",
+      variant === "compact"
+        ? "p-4 pl-6 md:p-8 md:pl-10"
+        : "p-6 pl-8 md:p-8 md:pl-10",
+    ]}
+  >
+    <div class="flex items-start justify-between gap-3">
+      <span
+        class:list={[
+          "icon-draw inline-flex shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand",
+          variant === "compact" ? "size-11 md:size-12" : "size-12",
+        ]}
+      >
+        <ServiceIcon name={icon} />
+      </span>
+      {number && (
+        <span
+          class="text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted"
+          aria-hidden="true"
+        >
+          {number}
+        </span>
+      )}
+    </div>
+    <Heading
+      class:list={[
+        "font-semibold text-ink hyphens-auto",
+        variant === "compact"
+          ? "text-[17px] leading-[22px] md:text-[22px] md:leading-7"
+          : "text-[22px] leading-7",
+      ]}
+    >
+      <a
+        href={`/servicios/${slug}`}
+        class:list={[link, "text-ink hover:text-ink"]}
+      >
+        {title}
+      </a>
+    </Heading>
+    <p
+      class:list={[
+        "text-ink-muted",
+        variant === "compact" && "hidden md:block",
+      ]}
+    >
+      {summary}
+    </p>
+    <span
+      class:list={[
+        "mt-auto items-center gap-2 pt-1 text-base leading-5 font-semibold text-brand",
+        variant === "compact" ? "hidden md:inline-flex" : "inline-flex",
+      ]}
+      aria-hidden="true"
+    >
+      Ver servicio
+      <ArrowRight
+        size={20}
+        stroke-width={1.75}
+        class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
+      />
+    </span>
+    {variant === "compact" && (
+      <ArrowRight
+        size={20}
+        stroke-width={1.75}
+        aria-hidden="true"
+        class="mt-auto text-brand transition-transform duration-300 group-hover:translate-x-1 md:hidden"
+      />
+    )}
+  </article>
+)}

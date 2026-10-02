@@ -1,11 +1,21 @@
 ---
 /**
- * Home: up to three featured projects from the API. The parent renders this
- * section only when there is at least one featured project.
+ * Home: up to three featured projects from the API, as an editorial layout:
+ * the first project as a large photo card, the others as compact rows beside
+ * it (stacked on phones). The parent renders this section only when there is
+ * at least one featured project.
+ *
+ * Each card is a single link (the title, stretched with ::after). Photos
+ * reveal with a wipe on scroll and carry a view-transition name so they
+ * morph into the cover of the project page (motion.css `.vt-project`).
  */
-import { ArrowRight } from "@lucide/astro";
+import { MapPin } from "@lucide/astro";
+import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
-import ProjectCard from "../projects/ProjectCard.astro";
+import { fitWidth } from "../../lib/content/format";
+import { projectTransitionName } from "../../lib/content/transition";
+import ArrowLink from "../ui/ArrowLink.astro";
+import SectionHeading from "../ui/SectionHeading.astro";
 
 interface Props {
   projects: ProjectSummary[];
@@ -13,38 +23,152 @@ interface Props {
 }
 
 const { projects, serviceTitles } = Astro.props;
+const [lead, ...rest] = projects;
+const single = rest.length === 0;
+
+const place = (project: ProjectSummary) =>
+  [project.location, project.region].filter(Boolean).join(", ");
+const number = (index: number) => String(index + 1).padStart(2, "0");
+
+const card =
+  "group relative isolate has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-focus-ring";
+const link =
+  "text-ink no-underline after:absolute after:inset-0 after:z-10 hover:text-ink focus-visible:outline-none";
+const photo =
+  "h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]";
+const chip =
+  "rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-semibold text-on-accent";
 ---
 
 <section aria-labelledby="proyectos-destacados" class="bg-surface">
-  <div class="mx-auto flex max-w-[1200px] flex-col gap-10 px-4 py-16 md:gap-12 md:py-24">
-    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div class="flex max-w-[60ch] flex-col gap-4">
-        <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
-          Proyectos
-        </p>
-        <h2
-          id="proyectos-destacados"
-          class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
-        >
-          Proyectos destacados
-        </h2>
-        <p class="text-ink-muted">
-          Obras reales en las que hemos trabajado en las regiones de Valparaíso
-          y Coquimbo.
-        </p>
-      </div>
-      <a
-        href="/proyectos"
-        class="inline-flex min-h-11 shrink-0 items-center gap-2 font-semibold underline-offset-4 hover:underline"
-      >
+  <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
+    <SectionHeading
+      id="proyectos-destacados"
+      eyebrow="Proyectos"
+      title="Proyectos que ya son obra"
+      lead="Una selección del trabajo que hemos desarrollado para empresas de las regiones de Valparaíso y Coquimbo."
+    >
+      <ArrowLink slot="action" href="/proyectos">
         Ver todos los proyectos
-        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-      </a>
-    </div>
-    <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-      {projects.map((project) => (
-        <li>
-          <ProjectCard project={project} serviceTitles={serviceTitles} />
+      </ArrowLink>
+    </SectionHeading>
+
+    <ul
+      class="grid gap-8 md:gap-10 lg:grid-cols-12 lg:grid-rows-[auto_auto_1fr] lg:gap-x-10 lg:gap-y-8"
+      data-reveal-stagger
+    >
+      {lead && (
+        <li
+          class:list={[
+            single ? "lg:col-span-12" : "lg:col-span-7",
+            rest.length > 0 && "lg:row-span-3",
+          ]}
+        >
+          <article class:list={[card, "flex flex-col gap-5"]}>
+            <div
+              class:list={[
+                "overflow-hidden rounded-lg bg-surface-sunken",
+                single
+                  ? "aspect-[4/3] md:aspect-[16/7]"
+                  : "aspect-[4/3] lg:aspect-[3/2]",
+              ]}
+              data-reveal="wipe"
+            >
+              {lead.cover && (
+                <Image
+                  src={lead.cover.url}
+                  alt={lead.cover.alt}
+                  {...fitWidth(lead.cover, 1200)}
+                  widths={[480, 800, 1200]}
+                  sizes="(min-width: 1200px) 660px, (min-width: 1024px) 56vw, 100vw"
+                  loading="lazy"
+                  data-vt={projectTransitionName(lead.slug)}
+                  class:list={["vt-project", photo]}
+                />
+              )}
+            </div>
+            <div class="flex flex-col gap-3">
+              <p
+                class="text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted"
+                aria-hidden="true"
+              >
+                {number(0)}
+              </p>
+              <h3 class="max-w-[28ch] text-[24px] leading-[1.2] font-semibold tracking-[-0.015em] md:text-[30px]">
+                <a href={`/proyectos/${lead.slug}`} class={link}>
+                  {lead.title}
+                </a>
+              </h3>
+              {place(lead) && (
+                <p class="inline-flex items-start gap-1.5 text-sm leading-5 font-medium text-ink-muted">
+                  <MapPin
+                    size={20}
+                    stroke-width={1.75}
+                    aria-hidden="true"
+                    class="mt-px shrink-0"
+                  />
+                  <span>{place(lead)}</span>
+                </p>
+              )}
+              <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
+                {lead.services.map((service) => (
+                  <li class={chip}>{serviceTitles[service] ?? service}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        </li>
+      )}
+
+      {rest.map((project, i) => (
+        <li class="lg:col-span-5">
+          <article
+            class:list={[
+              card,
+              "grid grid-cols-[112px_minmax(0,1fr)] gap-4 border-t border-border pt-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-6 lg:pt-8",
+            ]}
+          >
+            <div
+              class="aspect-square overflow-hidden rounded-lg bg-surface-sunken sm:aspect-[4/3]"
+              data-reveal="wipe"
+            >
+              {project.cover && (
+                <Image
+                  src={project.cover.url}
+                  alt={project.cover.alt}
+                  {...fitWidth(project.cover, 640)}
+                  widths={[224, 400, 640]}
+                  sizes="(min-width: 1200px) 190px, (min-width: 640px) 36vw, 112px"
+                  loading="lazy"
+                  data-vt={projectTransitionName(project.slug)}
+                  class:list={["vt-project", photo]}
+                />
+              )}
+            </div>
+            <div class="flex min-w-0 flex-col gap-2">
+              <p
+                class="text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted"
+                aria-hidden="true"
+              >
+                {number(i + 1)}
+              </p>
+              <h3 class="text-lg leading-6 font-semibold md:text-[20px] md:leading-7">
+                <a href={`/proyectos/${project.slug}`} class={link}>
+                  {project.title}
+                </a>
+              </h3>
+              {place(project) && (
+                <p class="text-sm leading-5 font-medium text-ink-muted">
+                  {place(project)}
+                </p>
+              )}
+              <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
+                {project.services.map((service) => (
+                  <li class={chip}>{serviceTitles[service] ?? service}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
         </li>
       ))}
     </ul>

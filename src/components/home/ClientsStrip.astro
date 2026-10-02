@@ -1,25 +1,63 @@
 ---
 /**
- * Reference clients as typographic wordmarks (muted). Real logos replace
- * them once the client authorizes their use.
+ * Reference clients as typographic wordmarks (muted), in an endless
+ * marquee (CSS only, motion.css `.marquee*`). The second copy of the list is
+ * hidden from assistive tech. It pauses on hover, on focus and with the
+ * pause toggle (a checkbox, so it works without JavaScript; WCAG 2.2.2).
+ * Under reduced motion it is a static, wrapping list.
+ * Real logos replace the names once the client authorizes their use.
  */
+import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
+
+const item =
+  "flex items-center gap-10 text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap text-ink-muted before:size-1.5 before:shrink-0 before:rounded-full before:bg-brand md:gap-14 md:text-[28px]";
 ---
 
-<section aria-labelledby="clientes" class="border-b border-border bg-surface">
-  <div class="mx-auto flex max-w-[1200px] flex-col gap-6 px-4 py-12 lg:flex-row lg:items-center lg:gap-12">
-    <h2
-      id="clientes"
-      class="shrink-0 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase"
-    >
-      Han confiado en nosotros
-    </h2>
-    <ul class="flex flex-wrap items-center gap-x-8 gap-y-4 lg:flex-1 lg:justify-between">
-      {CLIENTS.map((client) => (
-        <li class="text-lg leading-7 font-semibold tracking-[0.02em] whitespace-nowrap text-ink-muted">
-          {client}
-        </li>
-      ))}
-    </ul>
+<section
+  aria-labelledby="clientes"
+  class="marquee-wrap border-b border-border bg-surface"
+>
+  <div class="container-site relative z-[2] flex flex-col gap-5 py-10 md:py-12 lg:flex-row lg:items-center lg:gap-12">
+    <div class="flex items-center justify-between gap-4 lg:shrink-0">
+      <h2 id="clientes" class="eyebrow">
+        Han confiado en nosotros
+      </h2>
+      <label class="marquee__control inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring lg:order-first">
+        <input type="checkbox" class="marquee__toggle peer sr-only" />
+        <Pause
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="peer-checked:hidden"
+        />
+        <Play
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="hidden peer-checked:block"
+        />
+        <span class="sr-only">
+          Pausar el movimiento de la lista de clientes
+        </span>
+      </label>
+    </div>
+    <div class="marquee min-w-0 flex-1">
+      <div class="marquee__track">
+        <ul class="flex shrink-0 items-center gap-10 pr-10 md:gap-14 md:pr-14">
+          {CLIENTS.map((client) => (
+            <li class={item}>{client}</li>
+          ))}
+        </ul>
+        <ul
+          class="marquee__clone flex shrink-0 items-center gap-10 pr-10 md:gap-14 md:pr-14"
+          aria-hidden="true"
+        >
+          {CLIENTS.map((client) => (
+            <li class={item}>{client}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
