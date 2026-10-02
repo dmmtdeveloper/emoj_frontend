@@ -31,3 +31,7 @@ graphify-out/
 .DS_Store
 Thumbs.db
 .idea/
+
+.vercel
+.env*
+!.env.example
