@@ -33,3 +33,93 @@ export function organizationJsonLd(site: URL | undefined = DEFAULT_SITE) {
     sameAs: SOCIAL.map((profile) => profile.href),
   };
 }
+
+function organizationRef(base: URL) {
+  return { "@id": new URL("/#organizacion", base).href };
+}
+
+export interface ProjectJsonLdInput {
+  url: string;
+  title: string;
+  summary: string;
+  location: string;
+  region: string;
+  client: string;
+  year?: number;
+  serviceNames: string[];
+  image?: string;
+}
+
+/** schema.org `CreativeWork` for a portfolio project (known facts only). */
+export function projectJsonLd(
+  project: ProjectJsonLdInput,
+  site: URL | undefined = DEFAULT_SITE,
+) {
+  const base = site ?? DEFAULT_SITE;
+  return {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: project.title,
+    description: project.summary,
+    url: project.url,
+    ...(project.image ? { image: project.image } : {}),
+    creator: organizationRef(base),
+    about: project.serviceNames,
+    ...(project.year ? { dateCreated: String(project.year) } : {}),
+    ...(project.client
+      ? { funder: { "@type": "Organization", name: project.client } }
+      : {}),
+    ...(project.location || project.region
+      ? {
+          locationCreated: {
+            "@type": "Place",
+            name: project.location || project.region,
+            address: {
+              "@type": "PostalAddress",
+              ...(project.location
+                ? { addressLocality: project.location }
+                : {}),
+              ...(project.region ? { addressRegion: project.region } : {}),
+              addressCountry: "CL",
+            },
+          },
+        }
+      : {}),
+  };
+}
+
+export interface ArticleJsonLdInput {
+  url: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  category: string;
+  image?: string;
+}
+
+/** schema.org `Article` for a news post published by EMOJ. */
+export function articleJsonLd(
+  article: ArticleJsonLdInput,
+  site: URL | undefined = DEFAULT_SITE,
+) {
+  const base = site ?? DEFAULT_SITE;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.description,
+    datePublished: article.publishedAt,
+    mainEntityOfPage: article.url,
+    ...(article.category ? { articleSection: article.category } : {}),
+    ...(article.image ? { image: [article.image] } : {}),
+    author: organizationRef(base),
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: new URL("/icon-512.png", base).href,
+      },
+    },
+  };
+}
