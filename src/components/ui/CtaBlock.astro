@@ -1,0 +1,76 @@
+---
+/**
+ * Closing call to action: quote button plus WhatsApp and email.
+ * Sits on `surface-sunken` with the signature shape (not `surface-inverse`,
+ * which is reserved for the facts band and the footer).
+ */
+import { Mail, MessageCircle } from "@lucide/astro";
+import { CONTACT } from "../../lib/site";
+import ButtonLink from "./ButtonLink.astro";
+import StrokeLine from "./StrokeLine.astro";
+
+interface Props {
+  title?: string;
+  text?: string;
+  href?: string;
+  label?: string;
+  /** Background of the surrounding section, to keep the page rhythm. */
+  background?: "surface" | "surface-sunken";
+}
+
+const {
+  title = "¿Tienes un proyecto? Conversemos.",
+  text = "Cuéntanos qué necesitas y te ayudamos a definir el alcance, los plazos y los entregables de tu proyecto.",
+  href = "/contacto",
+  label = "Cotizar proyecto",
+  background = "surface",
+} = Astro.props;
+---
+
+<section
+  class:list={[background === "surface" ? "bg-surface" : "bg-surface-sunken"]}
+>
+  <div class="mx-auto max-w-[1200px] px-4 py-16 md:py-24">
+    <div
+      class:list={[
+        "radius-signature relative grid gap-8 overflow-hidden p-8 md:grid-cols-[1.3fr_1fr] md:items-center md:p-12 md:pl-16",
+        background === "surface" ? "bg-surface-sunken" : "bg-surface-raised",
+      ]}
+    >
+      <StrokeLine class="absolute -right-16 -bottom-10 w-[420px] text-brand opacity-25" />
+      <div class="relative flex flex-col gap-4">
+        <h2 class="text-[26px] leading-8 font-semibold tracking-[-0.01em] text-ink md:text-[34px] md:leading-10">
+          {title}
+        </h2>
+        <p class="max-w-[52ch] text-ink-muted">{text}</p>
+      </div>
+      <div class="relative flex flex-col gap-4">
+        <ButtonLink href={href} class="w-full sm:w-auto sm:self-start">
+          {label}
+        </ButtonLink>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <a
+              href={CONTACT.whatsapp.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex min-h-11 items-center gap-2 font-semibold text-ink underline-offset-4 hover:text-brand hover:underline"
+            >
+              <MessageCircle size={20} stroke-width={1.75} aria-hidden="true" />
+              WhatsApp {CONTACT.whatsapp.display}
+            </a>
+          </li>
+          <li>
+            <a
+              href={`mailto:${CONTACT.email}`}
+              class="inline-flex min-h-11 items-center gap-2 font-semibold text-ink underline-offset-4 hover:text-brand hover:underline"
+            >
+              <Mail size={20} stroke-width={1.75} aria-hidden="true" />
+              {CONTACT.email}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

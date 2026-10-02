@@ -1,0 +1,33 @@
+---
+import {
+  Bridge,
+  CloudRain,
+  DraftingCompass,
+  Droplets,
+  Layers,
+  Route,
+  TrafficCone,
+} from "@lucide/astro";
+import type { ServiceIconName } from "../../lib/services";
+
+interface Props {
+  name: ServiceIconName;
+  size?: 20 | 24;
+  class?: string;
+}
+
+const ICONS = {
+  droplets: Droplets,
+  route: Route,
+  bridge: Bridge,
+  "traffic-cone": TrafficCone,
+  "drafting-compass": DraftingCompass,
+  layers: Layers,
+  "cloud-rain": CloudRain,
+} as const satisfies Record<ServiceIconName, unknown>;
+
+const { name, size = 24, class: className = "" } = Astro.props;
+const Icon = ICONS[name];
+---
+
+<Icon size={size} stroke-width={1.75} aria-hidden="true" class={className} />

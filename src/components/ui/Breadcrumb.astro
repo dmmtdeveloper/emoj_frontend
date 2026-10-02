@@ -1,0 +1,58 @@
+---
+/**
+ * Breadcrumb trail plus its `BreadcrumbList` JSON-LD.
+ * The last item is the current page (not a link).
+ */
+import { ChevronRight } from "@lucide/astro";
+import { serializeJsonLd } from "../../lib/json-ld";
+
+interface Props {
+  items: { label: string; href: string }[];
+}
+
+const { items } = Astro.props;
+const site = Astro.site ?? new URL("https://emoj.cl");
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: items.map((item, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: item.label,
+    item: new URL(item.href, site).href,
+  })),
+};
+---
+
+<nav aria-label="Ruta de navegación">
+  <ol class="flex flex-wrap items-center gap-1 text-sm leading-5 font-medium text-ink-muted">
+    {items.map((item, index) => {
+      const last = index === items.length - 1;
+      return (
+        <li class="flex items-center gap-1">
+          {last ? (
+            <span aria-current="page" class="text-ink">
+              {item.label}
+            </span>
+          ) : (
+            <>
+              <a
+                href={item.href}
+                class="inline-flex min-h-6 items-center text-ink-muted underline-offset-4 hover:text-brand hover:underline"
+              >
+                {item.label}
+              </a>
+              <ChevronRight size={20} stroke-width={1.75} aria-hidden="true" />
+            </>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={serializeJsonLd(jsonLd)}
+/>

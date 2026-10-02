@@ -1,0 +1,44 @@
+---
+/**
+ * Clickable service card with the EMOJ signature shape.
+ * The whole card is one link (the title), so there is a single tab stop.
+ */
+import { ArrowRight } from "@lucide/astro";
+import type { Service } from "../../lib/get-services";
+import ServiceIcon from "./ServiceIcon.astro";
+
+interface Props {
+  service: Service;
+  headingLevel?: "h2" | "h3";
+}
+
+const { service, headingLevel = "h3" } = Astro.props;
+const { title, summary, icon, slug } = service.data;
+const Heading = headingLevel;
+---
+
+<article class="group radius-signature relative flex h-full flex-col gap-4 border border-border bg-surface-raised p-6 pl-8 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring md:p-8 md:pl-10">
+  <span class="inline-flex size-12 items-center justify-center rounded-full bg-surface-sunken text-brand">
+    <ServiceIcon name={icon} />
+  </span>
+  <Heading class="text-[22px] leading-7 font-semibold text-ink">
+    <a
+      href={`/servicios/${slug}`}
+      class="text-ink no-underline after:absolute after:inset-0 after:rounded-[inherit] hover:text-ink focus-visible:outline-none"
+    >
+      {title}
+    </a>
+  </Heading>
+  <p class="text-ink-muted">{summary}</p>
+  <span
+    class="mt-auto inline-flex items-center gap-2 pt-2 text-base leading-5 font-semibold text-brand"
+    aria-hidden="true"
+  >
+    Ver servicio
+    <ArrowRight
+      size={20}
+      stroke-width={1.75}
+      class="transition-transform duration-200 group-hover:translate-x-1"
+    />
+  </span>
+</article>

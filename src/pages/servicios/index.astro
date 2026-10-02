@@ -1,0 +1,43 @@
+---
+import ServiceCard from "../../components/services/ServiceCard.astro";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import CtaBlock from "../../components/ui/CtaBlock.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getServices } from "../../lib/get-services";
+
+const services = await getServices();
+---
+
+<BaseLayout
+  title="Servicios de ingeniería civil"
+  description="Obras sanitarias, viales, cálculo estructural, geotecnia, estudios de tránsito, arquitectura y aguas lluvias en las regiones de Valparaíso y Coquimbo."
+>
+  <PageHeader
+    eyebrow="Servicios"
+    title="Ingeniería civil multidisciplinaria para tu proyecto"
+    lead="Siete especialidades coordinadas por un mismo equipo: así tu proyecto avanza con menos interfaces y menos sorpresas en obra."
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Servicios", href: "/servicios" },
+      ]}
+    />
+  </PageHeader>
+
+  <section class="bg-surface-sunken" aria-label="Lista de servicios">
+    <div class="mx-auto max-w-[1200px] px-4 py-16 md:py-24">
+      <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        {services.map((service) => (
+          <li>
+            <ServiceCard service={service} headingLevel="h2" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <CtaBlock />
+</BaseLayout>
