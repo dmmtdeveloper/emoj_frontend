@@ -621,7 +621,8 @@ export interface components {
             client: string;
             location: string;
             region: string;
-            year: number;
+            /** @description Omitted when the project year is unknown. */
+            year?: number;
             services: components["schemas"]["ServiceSlug"][];
             summary: string;
             featured: boolean;
@@ -637,7 +638,8 @@ export interface components {
             client: string;
             location: string;
             region: string;
-            year: number;
+            /** @description Omitted when the project year is unknown. */
+            year?: number;
             services: components["schemas"]["ServiceSlug"][];
             summary: string;
             featured: boolean;
@@ -824,7 +826,8 @@ export interface components {
             client?: string;
             location?: string;
             region?: string;
-            year?: number;
+            /** @description 0 or omitted means unknown; otherwise 1990 to next year. */
+            year?: number | 0 | unknown;
             services?: components["schemas"]["ServiceSlug"][];
             summary?: string;
             challenge?: string;
@@ -845,6 +848,7 @@ export interface components {
             client: string;
             location: string;
             region: string;
+            /** @description 0 when the project year is unknown. */
             year: number;
             services: components["schemas"]["ServiceSlug"][];
             summary: string;

@@ -123,3 +123,81 @@ describe("createApiClient().submitContact", () => {
     expect(result).toEqual({ ok: false, kind: "network", error: failure });
   });
 });
+
+describe("createApiClient() public content reads", () => {
+  function recorder(payload: unknown, status = 200) {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const fetchMock: typeof fetch = async (input, init) => {
+      calls.push({ url: String(input), init });
+      return jsonResponse(status, payload);
+    };
+    return {
+      calls,
+      client: createApiClient({
+        baseUrl: "https://api.example.com",
+        fetch: fetchMock,
+      }),
+    };
+  }
+
+  it("GETs /v1/projects with only the provided query parameters", async () => {
+    const page = { items: [], page: 2, pageSize: 50, total: 0 };
+    const { calls, client } = recorder(page);
+
+    const result = await client.listProjects({
+      page: 2,
+      pageSize: 50,
+      featured: true,
+    });
+
+    expect(result).toEqual({ ok: true, status: 200, data: page });
+    expect(calls[0]?.url).toBe(
+      "https://api.example.com/v1/projects?page=2&pageSize=50&featured=true",
+    );
+    expect(calls[0]?.init?.method).toBe("GET");
+    expect(calls[0]?.init?.body).toBeUndefined();
+  });
+
+  it("GETs /v1/projects without a query string when no parameters are given", async () => {
+    const { calls, client } = recorder({
+      items: [],
+      page: 1,
+      pageSize: 12,
+      total: 0,
+    });
+    await client.listProjects();
+    expect(calls[0]?.url).toBe("https://api.example.com/v1/projects");
+  });
+
+  it("encodes the slug of a project or article", async () => {
+    const { calls, client } = recorder({});
+    await client.getProject("puente llollito/../x");
+    await client.getNews("a?b");
+    expect(calls[0]?.url).toBe(
+      "https://api.example.com/v1/projects/puente%20llollito%2F..%2Fx",
+    );
+    expect(calls[1]?.url).toBe("https://api.example.com/v1/news/a%3Fb");
+  });
+
+  it("GETs /v1/news with paging parameters", async () => {
+    const { calls, client } = recorder({
+      items: [],
+      page: 1,
+      pageSize: 50,
+      total: 0,
+    });
+    await client.listNews({ page: 1, pageSize: 50 });
+    expect(calls[0]?.url).toBe(
+      "https://api.example.com/v1/news?page=1&pageSize=50",
+    );
+  });
+
+  it("returns a 404 as a problem", async () => {
+    const { client } = recorder(
+      { type: "about:blank", title: "Not Found", status: 404 },
+      404,
+    );
+    const result = await client.getProject("missing");
+    expect(result).toMatchObject({ ok: false, kind: "problem", status: 404 });
+  });
+});

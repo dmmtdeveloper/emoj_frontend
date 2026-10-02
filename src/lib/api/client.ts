@@ -6,7 +6,7 @@
  * `ApiResult`, so callers handle success, RFC 9457 problems and network
  * failures explicitly.
  */
-import type { components } from "./schema";
+import type { components, operations } from "./schema";
 
 type Schemas = components["schemas"];
 
@@ -16,6 +16,22 @@ export type ContactCreated = Schemas["ContactCreated"];
 export type Problem = Schemas["Problem"];
 export type FieldError = Schemas["FieldError"];
 export type ValidationProblem = Schemas["ValidationProblem"];
+export type MediaRef = Schemas["MediaRef"];
+export type Seo = Schemas["Seo"];
+export type ProjectSummary = Schemas["ProjectSummary"];
+export type ProjectDetail = Schemas["ProjectDetail"];
+export type ProjectPage = Schemas["ProjectPage"];
+export type NewsSummary = Schemas["NewsSummary"];
+export type NewsDetail = Schemas["NewsDetail"];
+export type NewsPage = Schemas["NewsPage"];
+export type TipTapDocument = Schemas["TipTapDocument"];
+
+export type ProjectQuery = NonNullable<
+  operations["listProjects"]["parameters"]["query"]
+>;
+export type NewsQuery = NonNullable<
+  operations["listNews"]["parameters"]["query"]
+>;
 
 export interface ApiSuccess<T> {
   ok: true;
@@ -51,6 +67,22 @@ export interface ApiClientOptions {
 
 export interface ApiClient {
   submitContact(body: ContactRequest): Promise<ApiResult<ContactCreated>>;
+  listProjects(query?: ProjectQuery): Promise<ApiResult<ProjectPage>>;
+  getProject(slug: string): Promise<ApiResult<ProjectDetail>>;
+  listNews(query?: NewsQuery): Promise<ApiResult<NewsPage>>;
+  getNews(slug: string): Promise<ApiResult<NewsDetail>>;
+}
+
+/** Serialize defined query parameters, in the given order. */
+function queryString(
+  query: Record<string, string | number | boolean | undefined> = {},
+): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
 }
 
 function parseRetryAfter(value: string | null): number | undefined {
@@ -126,5 +158,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   return {
     submitContact: (body) =>
       request<ContactCreated>("POST", "/v1/contact", body),
+    listProjects: (query) =>
+      request<ProjectPage>("GET", `/v1/projects${queryString(query)}`),
+    getProject: (slug) =>
+      request<ProjectDetail>("GET", `/v1/projects/${encodeURIComponent(slug)}`),
+    listNews: (query) =>
+      request<NewsPage>("GET", `/v1/news${queryString(query)}`),
+    getNews: (slug) =>
+      request<NewsDetail>("GET", `/v1/news/${encodeURIComponent(slug)}`),
   };
 }
