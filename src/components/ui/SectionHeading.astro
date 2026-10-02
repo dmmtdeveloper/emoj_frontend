@@ -1,0 +1,48 @@
+---
+/**
+ * Section intro: editorial eyebrow, the section's H2 and an optional lead.
+ * The `action` slot holds a secondary link aligned to the right on desktop.
+ * Reveals on scroll (data-reveal).
+ */
+interface Props {
+  id: string;
+  eyebrow: string;
+  title: string;
+  lead?: string;
+  /** On `surface-inverse` (brand is a forbidden pair there). */
+  inverse?: boolean;
+}
+
+const { id, eyebrow, title, lead, inverse = false } = Astro.props;
+const hasAction = Astro.slots.has("action");
+---
+
+<div
+  data-reveal
+  class:list={[
+    "flex flex-col gap-6",
+    hasAction && "md:flex-row md:items-end md:justify-between md:gap-12",
+  ]}
+>
+  <div class="flex max-w-[44rem] flex-col gap-5">
+    <p class:list={["eyebrow", inverse && "eyebrow-inverse"]}>{eyebrow}</p>
+    <h2 id={id} class="text-h2">
+      {title}
+    </h2>
+    {lead && (
+      <p
+        class:list={[
+          "text-lead max-w-[56ch]",
+          inverse ? "opacity-90" : "text-ink-muted",
+        ]}
+      >
+        {lead}
+      </p>
+    )}
+  </div>
+  {hasAction && (
+    <div class="shrink-0">
+      <slot name="action" />
+    </div>
+  )}
+</div>

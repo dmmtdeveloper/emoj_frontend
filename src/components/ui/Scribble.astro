@@ -1,0 +1,37 @@
+---
+/**
+ * Hand-drawn double underline (one continuous stroke: out and back), the
+ * "croquis" accent under an emphasized word. Decorative: hidden from AT.
+ * Color comes from `currentColor`.
+ *
+ * `draw`: "load" draws on page load, "view" when scrolled into view
+ * (src/styles/motion.css). Reduced motion shows the finished line.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends Omit<HTMLAttributes<"svg">, "viewBox"> {
+  draw?: "load" | "view";
+}
+
+const { draw, class: className, ...rest } = Astro.props;
+---
+
+<svg
+  viewBox="0 0 320 28"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+  preserveAspectRatio="none"
+  data-draw={draw}
+  class:list={["pointer-events-none overflow-visible", className]}
+  {...rest}
+>
+  <path
+    pathLength="1"
+    stroke="currentColor"
+    stroke-width="4.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="M5 17C74 9 196 3 315 11c-82 2-170 6-246 13"
+  ></path>
+</svg>

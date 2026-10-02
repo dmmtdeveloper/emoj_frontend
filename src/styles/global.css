@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./tokens.css";
+@import "./motion.css";
 
 /* Urbanist, self-hosted. Only the weights the design system allows. */
 @import "@fontsource/urbanist/400.css";
@@ -16,7 +17,7 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     /* Keep anchored headings clear of the sticky header. */
-    scroll-padding-top: 88px;
+    scroll-padding-top: calc(var(--header-h) + 16px);
   }
 
   /* Lock page scroll while a modal dialog (mobile menu) is open. */
@@ -53,6 +54,75 @@
   ::selection {
     background-color: var(--accent);
     color: var(--on-accent);
+  }
+}
+
+/*
+ * Type scale. Fluid with clamp(): bold, tight display sizes; body text stays
+ * at 17px (never below 16px), left aligned, max ~65ch.
+ */
+@layer components {
+  .text-display {
+    font-size: clamp(2.5rem, 1.55rem + 4.7vw, 6rem);
+    line-height: 0.98;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  .text-h1 {
+    font-size: clamp(2.25rem, 1.6rem + 2.9vw, 4.25rem);
+    line-height: 1.04;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .text-h2 {
+    font-size: clamp(1.875rem, 1.4rem + 2vw, 3.25rem);
+    line-height: 1.06;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .text-h3 {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .text-lead {
+    font-size: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+    line-height: 1.55;
+  }
+
+  /* Editorial label: uppercase, wide tracking, a short drawn rule before. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--eyebrow-rule, var(--brand));
+  }
+
+  /* On surface-inverse or photos, `brand` is a forbidden pair. */
+  .eyebrow-inverse {
+    --eyebrow-rule: currentColor;
+    color: inherit;
   }
 }
 
@@ -168,6 +238,42 @@
 /* EMOJ signature shape: rounded on the two left corners only. */
 @utility radius-signature {
   border-radius: var(--radius-signature) 0 0 var(--radius-signature);
+}
+
+/* Page container: 1200px max, 16px gutters (24px from md). */
+@utility container-site {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+
+  @media (min-width: 48rem) {
+    padding-inline: var(--space-6);
+  }
+}
+
+/* Faint blueprint grid (lines + dots) from the current text color. */
+@utility blueprint {
+  background-image:
+    radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklab, currentColor 32%, transparent) 1px,
+      transparent 1.5px
+    ),
+    linear-gradient(
+      to right,
+      color-mix(in oklab, currentColor 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, currentColor 9%, transparent) 1px,
+      transparent 1px
+    );
+  background-size:
+    24px 24px,
+    96px 96px,
+    96px 96px;
 }
 
 @media (prefers-reduced-motion: reduce) {

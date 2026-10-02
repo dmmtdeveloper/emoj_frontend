@@ -16,8 +16,10 @@ interface Props extends HTMLAttributes<"a"> {
 
 const { variant = "primary", class: className, ...rest } = Astro.props;
 
+// Micro-interactions: trailing arrow nudges on hover, the button presses in
+// on :active (transform only, no layout change).
 const base =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-6 py-3 text-base leading-5 font-semibold no-underline transition-colors duration-200";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-6 py-3 text-base leading-5 font-semibold no-underline transition-[color,background-color,border-color,scale] duration-200 ease-(--ease-out) active:scale-[0.97] [&>svg:last-child]:transition-transform [&>svg:last-child]:duration-300 [&>svg:last-child]:ease-(--ease-out) hover:[&>svg:last-child]:translate-x-1";
 
 const variants = {
   primary: "bg-brand text-on-brand hover:bg-brand-hover hover:text-on-brand",
