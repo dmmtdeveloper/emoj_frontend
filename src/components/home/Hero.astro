@@ -1,0 +1,54 @@
+---
+/**
+ * Home hero: real photo with the plum-950 overlay (55–65%), the page H1,
+ * lead and the two main actions. Static: no carousel, no autoplay.
+ */
+import { ArrowRight } from "@lucide/astro";
+import { Picture } from "astro:assets";
+import hero from "../../assets/photos/agua-manos.jpg";
+import { TAGLINE } from "../../lib/site";
+import ButtonLink from "../ui/ButtonLink.astro";
+---
+
+<section class="relative isolate overflow-hidden bg-plum-950 text-sand-50">
+  <Picture
+    src={hero}
+    alt="Manos recibiendo un chorro de agua limpia."
+    formats={["avif", "webp"]}
+    widths={[640, 960, 1280, 1600, 2130]}
+    sizes="100vw"
+    loading="eager"
+    fetchpriority="high"
+    class="absolute inset-0 -z-10 h-full w-full object-cover object-[72%_center]"
+    pictureAttributes={{ class: "contents" }}
+  />
+  <div
+    class="absolute inset-0 -z-10 bg-plum-950/65 md:bg-transparent md:bg-linear-to-r md:from-plum-950/65 md:via-plum-950/55 md:to-plum-950/20"
+    aria-hidden="true"
+  ></div>
+
+  <div class="mx-auto flex min-h-[560px] max-w-[1200px] flex-col justify-center gap-6 px-4 py-16 md:min-h-[640px] md:py-24">
+    <p class="flex items-center gap-3 text-[13px] leading-4 font-semibold tracking-[0.08em] uppercase">
+      <span class="h-px w-10 bg-sage-300" aria-hidden="true"></span>
+      {TAGLINE}
+    </p>
+    <h1 class="max-w-[20ch] text-[36px] leading-10 font-semibold tracking-[-0.02em] text-balance md:text-[56px] md:leading-[60px]">
+      Ingeniería civil con más de 30 años de experiencia en la Región de
+      Valparaíso
+    </h1>
+    <p class="max-w-[52ch] text-xl leading-[30px] text-sand-100">
+      Diseñamos agua potable, caminos, estructuras y fundaciones para empresas
+      de las regiones de Valparaíso y Coquimbo, con un equipo que te acompaña de
+      principio a fin.
+    </p>
+    <div class="flex flex-col gap-3 pt-2 sm:flex-row">
+      <ButtonLink href="/contacto">
+        Cotizar proyecto
+        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+      </ButtonLink>
+      <ButtonLink href="/servicios" variant="on-photo">
+        Ver servicios
+      </ButtonLink>
+    </div>
+  </div>
+</section>

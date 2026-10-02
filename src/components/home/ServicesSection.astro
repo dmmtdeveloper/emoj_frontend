@@ -1,0 +1,57 @@
+---
+import { ArrowRight } from "@lucide/astro";
+import { getServices } from "../../lib/get-services";
+import ServiceCard from "../services/ServiceCard.astro";
+import ButtonLink from "../ui/ButtonLink.astro";
+
+const services = await getServices();
+---
+
+<section aria-labelledby="servicios" class="bg-surface-sunken">
+  <div class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="flex max-w-[60ch] flex-col gap-4">
+        <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+          Servicios
+        </p>
+        <h2
+          id="servicios"
+          class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
+        >
+          Siete especialidades, un mismo equipo
+        </h2>
+        <p class="text-ink-muted">
+          Desde el agua potable hasta las fundaciones: coordinamos todas las
+          especialidades de tu proyecto para que avance sin interfaces perdidas.
+        </p>
+      </div>
+      <a
+        href="/servicios"
+        class="inline-flex min-h-11 shrink-0 items-center gap-2 font-semibold underline-offset-4 hover:underline"
+      >
+        Ver todos los servicios
+        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+      </a>
+    </div>
+
+    <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {services.map((service) => (
+        <li>
+          <ServiceCard service={service} />
+        </li>
+      ))}
+      <li>
+        <div class="radius-signature flex h-full flex-col justify-between gap-6 bg-accent p-6 pl-8 text-on-accent md:p-8 md:pl-10">
+          <p class="text-[22px] leading-7 font-semibold">
+            ¿No sabes qué especialidad necesitas?
+          </p>
+          <p>Cuéntanos tu proyecto y te orientamos sin compromiso.</p>
+          <ButtonLink href="/contacto" class="self-start">
+            Escríbenos
+            <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+          </ButtonLink>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>

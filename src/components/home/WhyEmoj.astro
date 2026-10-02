@@ -1,0 +1,72 @@
+---
+import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
+import { Image } from "astro:assets";
+import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
+
+const DIFFERENTIATORS = [
+  {
+    icon: CalendarCheck,
+    title: "Cumplimiento de plazos",
+    text: "Acordamos contigo un calendario de entregas desde el inicio y te mantenemos al tanto del avance en cada etapa.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Calidad garantizada",
+    text: "Diseñamos según la normativa chilena vigente y revisamos cada memoria y cada plano antes de entregártelo.",
+  },
+  {
+    icon: Users,
+    title: "Trabajo colaborativo",
+    text: "Ingenieros civiles y dibujantes proyectistas trabajan en un mismo equipo, coordinando las especialidades desde el primer día.",
+  },
+  {
+    icon: Handshake,
+    title: "Confianza y respaldo",
+    text: "Más de 30 años trabajando con empresas como ESVAL, Aguas del Valle y SAAM respaldan cada proyecto que firmamos.",
+  },
+] as const;
+---
+
+<section aria-labelledby="por-que-emoj" class="bg-surface">
+  <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16">
+    <div class="flex flex-col gap-6">
+      <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+        Por qué EMOJ
+      </p>
+      <h2
+        id="por-que-emoj"
+        class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
+      >
+        Ingeniería precisa, trato cercano
+      </h2>
+      <p class="max-w-[52ch] text-ink-muted">
+        Humanizar la ingeniería es explicarte cada decisión técnica con
+        claridad, cumplir lo que acordamos y estar disponibles cuando nos
+        necesitas.
+      </p>
+      <Image
+        src={aerial}
+        alt="Vista aérea de un complejo industrial costero con una chimenea alta."
+        widths={[480, 720, 960]}
+        sizes="(min-width: 1200px) 440px, (min-width: 1024px) 38vw, 100vw"
+        loading="lazy"
+        class="mt-2 hidden aspect-[4/3] w-full rounded-lg object-cover lg:block"
+      />
+    </div>
+
+    <ul class="grid gap-6 sm:grid-cols-2">
+      {DIFFERENTIATORS.map(({ icon: Icon, title, text }) => (
+        <li class="radius-signature flex flex-col gap-4 bg-surface-sunken p-6 pl-8 md:p-8 md:pl-10">
+          <Icon
+            size={24}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="text-brand"
+          />
+          <h3 class="text-[22px] leading-7 font-semibold">{title}</h3>
+          <p class="text-ink-muted">{text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

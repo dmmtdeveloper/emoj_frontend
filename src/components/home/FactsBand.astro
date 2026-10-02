@@ -1,0 +1,37 @@
+---
+/**
+ * Key facts on `surface-inverse` (first of the two inverse sections allowed
+ * per page; the footer is the second). Only verifiable facts.
+ */
+import { CLIENTS } from "../../lib/site";
+
+const clients = `${CLIENTS.slice(0, -1).join(", ")} y ${CLIENTS.at(-1)}`;
+
+const FACTS = [
+  { value: "30+", label: "años de experiencia en ingeniería civil" },
+  { value: "7", label: "especialidades coordinadas por un mismo equipo" },
+  { value: "2", label: "regiones: Valparaíso y Coquimbo" },
+  { value: String(CLIENTS.length), label: "clientes de referencia" },
+] as const;
+---
+
+<section aria-labelledby="cifras" class="bg-surface-inverse text-ink-inverse">
+  <div class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
+    <h2 id="cifras" class="sr-only">
+      EMOJ en cifras
+    </h2>
+    <dl class="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      {FACTS.map(({ value, label }) => (
+        <div class="flex flex-col gap-2 border-l border-ink-inverse/30 pl-6">
+          <dt class="order-2 max-w-[24ch]">{label}</dt>
+          <dd class="order-1 text-[56px] leading-[60px] font-semibold tracking-[-0.02em]">
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+    <p class="max-w-[65ch] text-sm leading-5 font-medium opacity-90">
+      Clientes de referencia: {clients}.
+    </p>
+  </div>
+</section>

@@ -1,0 +1,25 @@
+---
+/**
+ * Reference clients as typographic wordmarks (muted). Real logos replace
+ * them once the client authorizes their use.
+ */
+import { CLIENTS } from "../../lib/site";
+---
+
+<section aria-labelledby="clientes" class="border-b border-border bg-surface">
+  <div class="mx-auto flex max-w-[1200px] flex-col gap-6 px-4 py-12 lg:flex-row lg:items-center lg:gap-12">
+    <h2
+      id="clientes"
+      class="shrink-0 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase"
+    >
+      Han confiado en nosotros
+    </h2>
+    <ul class="flex flex-wrap items-center gap-x-8 gap-y-4 lg:flex-1 lg:justify-between">
+      {CLIENTS.map((client) => (
+        <li class="text-lg leading-7 font-semibold tracking-[0.02em] whitespace-nowrap text-ink-muted">
+          {client}
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
