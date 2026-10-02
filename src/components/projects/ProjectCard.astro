@@ -8,6 +8,7 @@ import { MapPin } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
+import { projectTransitionName } from "../../lib/content/transition";
 
 interface Props {
   project: ProjectSummary;
@@ -36,7 +37,8 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
       widths={[208, 400, 640, 800]}
       sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
       loading={eager ? "eager" : "lazy"}
-      class="aspect-square h-full w-full rounded-md object-cover sm:aspect-[4/3] sm:h-auto sm:rounded-none"
+      data-vt={projectTransitionName(project.slug)}
+      class="vt-project aspect-square h-full w-full rounded-md object-cover sm:aspect-[4/3] sm:h-auto sm:rounded-none"
     />
   ) : (
     <div

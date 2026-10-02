@@ -11,6 +11,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import type { ProjectDetail } from "../../lib/api/client";
 import { content } from "../../lib/content";
 import { fitWidth } from "../../lib/content/format";
+import { projectTransitionName } from "../../lib/content/transition";
 import { getServices } from "../../lib/get-services";
 import { projectJsonLd } from "../../lib/structured-data";
 
@@ -146,7 +147,8 @@ const h2Class =
           sizes="(min-width: 1200px) 1168px, calc(100vw - 32px)"
           loading="eager"
           fetchpriority="high"
-          class="aspect-[4/3] max-h-[640px] w-full rounded-lg object-cover md:aspect-[16/9]"
+          data-vt={projectTransitionName(project.slug)}
+          class="vt-project aspect-[4/3] max-h-[640px] w-full rounded-lg object-cover md:aspect-[16/9]"
         />
       </div>
     </div>
