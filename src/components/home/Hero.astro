@@ -1,80 +1,140 @@
 ---
 /**
- * Home hero, "del croquis a la obra": the real photo is revealed with a
- * left-to-right wipe (like a stroke being drawn) while it settles from a
- * slight zoom; a plum-950 veil keeps text contrast and a faint blueprint
- * grid sits on top. The headline's key phrase gets a hand-drawn underline.
+ * Home hero, "del croquis a la obra". Three real photos from the original
+ * emoj.cl hero (water, a pumping station and an aerial industrial view).
+ *
+ * The section is a scroll track: its inner frame sticks to the viewport
+ * while the page scrolls through the track, and photos 2 and 3 enter with a
+ * left-to-right wipe (like a stroke being drawn) driven by the scroll
+ * (CSS view timeline, no JavaScript). Headline and buttons stay put; a
+ * counter with a drawn progress line shows the current photo. On load the
+ * first photo is revealed with the same wipe.
+ *
+ * Without scroll-driven animations or with reduced motion the hero is a
+ * single, non-sticky screen with the first photo (no autoplay, no carousel).
  * The section slides under the transparent header (BaseLayout
- * `headerOverlay`). Static: no carousel, no autoplay video.
+ * `headerOverlay`).
  */
 import { ArrowRight } from "@lucide/astro";
 import { Picture } from "astro:assets";
-import hero from "../../assets/photos/agua-manos.jpg";
+import water from "../../assets/photos/agua-manos.jpg";
+import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
+import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
 import Scribble from "../ui/Scribble.astro";
+
+const photos = [
+  {
+    src: water,
+    alt: "Manos recibiendo un chorro de agua limpia.",
+    position: "object-[72%_center]",
+    widths: [640, 960, 1280, 1600, 2130],
+  },
+  {
+    src: pumping,
+    alt: "Estación de bombeo con tuberías blancas y bombas azules sobre una losa de hormigón.",
+    position: "object-center",
+    widths: [640, 960, 1280, 1600, 2000],
+  },
+  {
+    src: aerial,
+    alt: "Vista aérea de un complejo industrial costero con una chimenea alta.",
+    position: "object-center",
+    widths: [640, 960, 1280, 1600, 2000],
+  },
+];
 ---
 
-<section class="hero relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50">
-  <div class="hero__media absolute inset-0 -z-10 overflow-hidden">
-    <Picture
-      src={hero}
-      alt="Manos recibiendo un chorro de agua limpia."
-      formats={["avif", "webp"]}
-      widths={[640, 960, 1280, 1600, 2130]}
-      sizes="100vw"
-      loading="eager"
-      fetchpriority="high"
-      class="hero__img h-full w-full object-cover object-[72%_center]"
-      pictureAttributes={{ class: "contents" }}
-    />
-  </div>
-  <div
-    class="absolute inset-0 -z-10 bg-plum-950/65 md:bg-transparent md:bg-linear-to-r md:from-plum-950/80 md:via-plum-950/55 md:to-plum-950/15"
-    aria-hidden="true"
-  ></div>
-  <div
-    class="hero__grid blueprint absolute inset-0 -z-10 text-sand-50 opacity-50"
-    aria-hidden="true"
-  ></div>
-
-  <div class="container-site flex min-h-[max(560px,88svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-14 md:min-h-[max(680px,100svh)] md:justify-center md:gap-8 md:pb-24">
-    <p class="hero-in eyebrow eyebrow-inverse [--eyebrow-rule:var(--sage-300)]">
-      {TAGLINE}
-    </p>
-    <h1 class="hero-in hero-in--2 text-display max-w-[14ch]">
-      Ingeniería civil del{" "}
-      <span class="hero__em relative inline-block whitespace-nowrap">
-        primer trazo
-        <Scribble
-          draw="load"
-          class="absolute -bottom-[0.14em] left-[-2%] h-[0.3em] w-[104%] text-brick-400"
+<section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
+  <div class="hero__frame relative isolate overflow-hidden">
+    {photos.map((photo, i) => (
+      <div
+        class:list={[
+          "hero__media absolute inset-0 -z-10 overflow-hidden",
+          `hero__media--${i + 1}`,
+        ]}
+      >
+        <Picture
+          src={photo.src}
+          alt={photo.alt}
+          formats={["avif", "webp"]}
+          widths={photo.widths}
+          sizes="100vw"
+          loading={i === 0 ? "eager" : "lazy"}
+          fetchpriority={i === 0 ? "high" : "low"}
+          class:list={["hero__img h-full w-full object-cover", photo.position]}
+          pictureAttributes={{ class: "contents" }}
         />
-      </span>{" "}
-      a la obra
-    </h1>
-    <p class="hero-in hero-in--3 text-lead max-w-[46ch] text-sand-100">
-      Más de 30 años diseñando agua potable, caminos, estructuras y fundaciones
-      para empresas de las regiones de Valparaíso y Coquimbo, con un equipo que
-      te acompaña de principio a fin.
-    </p>
-    <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row">
-      <ButtonLink href="/contacto">
-        Cotizar proyecto
-        <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-      </ButtonLink>
-      <ButtonLink href="/servicios" variant="on-photo">
-        Ver servicios
-      </ButtonLink>
-    </div>
-  </div>
+      </div>
+    ))}
+    <div
+      class="absolute inset-0 -z-10 bg-plum-950/65 md:bg-transparent md:bg-linear-to-r md:from-plum-950/80 md:via-plum-950/55 md:to-plum-950/15"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="hero__grid blueprint absolute inset-0 -z-10 text-sand-50 opacity-50"
+      aria-hidden="true"
+    ></div>
 
-  <div
-    class="hero__cue absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 text-[12px] leading-4 font-semibold tracking-[0.18em] text-sand-100 uppercase md:flex"
-    aria-hidden="true"
-  >
-    Desliza
-    <span class="hero__cue-line relative block h-12 w-px overflow-hidden bg-sand-50/30"></span>
+    <div class="container-site flex min-h-[max(560px,88svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-20 md:min-h-[max(680px,100svh)] md:justify-center md:gap-8 md:pb-24">
+      <p class="hero-in eyebrow eyebrow-inverse [--eyebrow-rule:var(--sage-300)]">
+        {TAGLINE}
+      </p>
+      <h1 class="hero-in hero-in--2 text-display max-w-[14ch]">
+        Ingeniería civil del{" "}
+        <span class="hero__em relative inline-block whitespace-nowrap">
+          primer trazo
+          <Scribble
+            draw="load"
+            class="absolute -bottom-[0.14em] left-[-2%] h-[0.3em] w-[104%] text-brick-400"
+          />
+        </span>{" "}
+        a la obra
+      </h1>
+      <p class="hero-in hero-in--3 text-lead max-w-[46ch] text-sand-100">
+        Más de 30 años diseñando agua potable, caminos, estructuras y
+        fundaciones para empresas de las regiones de Valparaíso y Coquimbo, con
+        un equipo que te acompaña de principio a fin.
+      </p>
+      <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row">
+        <ButtonLink href="/contacto">
+          Cotizar proyecto
+          <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+        </ButtonLink>
+        <ButtonLink href="/servicios" variant="on-photo">
+          Ver servicios
+        </ButtonLink>
+      </div>
+    </div>
+
+    {/* Photo counter with a drawn progress line (decorative). */}
+    <div
+      class="hero__counter absolute right-[max(1rem,calc((100vw-1200px)/2+1.5rem))] bottom-8 hidden items-center gap-4 text-[13px] leading-4 font-semibold tracking-[0.14em] text-sand-100 tabular-nums md:flex"
+      aria-hidden="true"
+    >
+      <span class="relative inline-block w-[2ch]">
+        <span class="hero__count hero__count--1">01</span>
+        <span class="hero__count hero__count--2 absolute inset-0 opacity-0">
+          02
+        </span>
+        <span class="hero__count hero__count--3 absolute inset-0 opacity-0">
+          03
+        </span>
+      </span>
+      <span class="relative block h-0.5 w-24 overflow-hidden rounded-full bg-sand-50/25">
+        <span class="hero__progress absolute inset-0 origin-left scale-x-[0.3333] rounded-full bg-sand-50"></span>
+      </span>
+      <span>03</span>
+    </div>
+
+    <div
+      class="hero__cue absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 text-[12px] leading-4 font-semibold tracking-[0.18em] text-sand-100 uppercase md:flex"
+      aria-hidden="true"
+    >
+      Desliza
+      <span class="hero__cue-line relative block h-12 w-px overflow-hidden bg-sand-50/30"></span>
+    </div>
   </div>
 </section>
 
@@ -91,12 +151,19 @@ import Scribble from "../ui/Scribble.astro";
     transform: translateY(-100%);
   }
 
+  /* Static fallback: only the first photo; no counter. */
+  .hero__media--2,
+  .hero__media--3,
+  .hero__counter {
+    display: none;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
-    .hero__media {
+    .hero__media--1 {
       animation: wipe-right 1300ms var(--ease-in-out) both;
     }
 
-    .hero__media :global(.hero__img) {
+    .hero__media--1 :global(.hero__img) {
       animation: settle 3200ms var(--ease-out) both;
     }
 
@@ -131,11 +198,183 @@ import Scribble from "../ui/Scribble.astro";
     .hero__cue-line::after {
       animation: cue 2400ms var(--ease-in-out) 1800ms infinite;
     }
+
+    /*
+     * Scroll track: the section is taller than the viewport and its frame
+     * sticks while the page scrolls through it. Progress runs over the
+     * `contain` range (from the section's top at the top of the viewport to
+     * its bottom at the bottom). `animation-timeline` goes through var()
+     * (see motion.css: the minifier would otherwise fold it away).
+     */
+    @supports (animation-timeline: view()) {
+      .hero {
+        --hero-timeline: --hero;
+        height: 260svh;
+        view-timeline-name: --hero;
+      }
+
+      .hero__frame {
+        position: sticky;
+        top: 0;
+        height: 100svh;
+      }
+
+      .hero__frame > .container-site {
+        min-height: 100%;
+      }
+
+      .hero__media--2,
+      .hero__media--3 {
+        display: block;
+        animation: hero-wipe linear both;
+        animation-timeline: var(--hero-timeline);
+      }
+
+      .hero__media--2 :global(.hero__img),
+      .hero__media--3 :global(.hero__img) {
+        animation: hero-settle linear both;
+        animation-timeline: var(--hero-timeline);
+      }
+
+      .hero__media--2,
+      .hero__media--2 :global(.hero__img) {
+        animation-range: contain 14% contain 40%;
+      }
+
+      .hero__media--3,
+      .hero__media--3 :global(.hero__img) {
+        animation-range: contain 54% contain 80%;
+      }
+
+      @media (min-width: 48rem) {
+        .hero__counter {
+          display: flex;
+        }
+      }
+
+      .hero__count--1,
+      .hero__count--2,
+      .hero__count--3,
+      .hero__progress,
+      .hero__cue {
+        animation-timeline: var(--hero-timeline);
+        animation-range: contain 0% contain 100%;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+      }
+
+      .hero__count--1 {
+        animation-name: hero-count-1;
+      }
+
+      .hero__count--2 {
+        animation-name: hero-count-2;
+      }
+
+      .hero__count--3 {
+        animation-name: hero-count-3;
+      }
+
+      .hero__progress {
+        animation-name: hero-progress;
+      }
+
+      /* The scroll cue fades out once the photos start changing. */
+      .hero__cue {
+        animation-name: hero-cue-out;
+        animation-delay: 0ms;
+      }
+
+      .hero__cue-line::after {
+        animation: none;
+      }
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .hero__cue-line::after {
       transform: none;
+    }
+  }
+
+  @keyframes hero-wipe {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes hero-settle {
+    from {
+      transform: scale(1.12);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-count-1 {
+    0%,
+    26% {
+      opacity: 1;
+    }
+    30%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes hero-count-2 {
+    0%,
+    26% {
+      opacity: 0;
+    }
+    30%,
+    66% {
+      opacity: 1;
+    }
+    70%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes hero-count-3 {
+    0%,
+    66% {
+      opacity: 0;
+    }
+    70%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes hero-progress {
+    0%,
+    14% {
+      transform: scaleX(0.3333);
+    }
+    40%,
+    54% {
+      transform: scaleX(0.6667);
+    }
+    80%,
+    100% {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes hero-cue-out {
+    0%,
+    6% {
+      opacity: 1;
+    }
+    14%,
+    100% {
+      opacity: 0;
     }
   }
 </style>
