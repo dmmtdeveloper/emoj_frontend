@@ -1,0 +1,141 @@
+---
+/**
+ * Sticky site header: logo, primary navigation and the quote CTA.
+ * Below `lg` the navigation moves into a modal <dialog> (native focus
+ * containment, Escape to close, focus returns to the toggle on close).
+ */
+import { Menu, X } from "@lucide/astro";
+import { NAV, isCurrent } from "../../lib/site";
+import Logo from "../Logo.astro";
+import ButtonLink from "../ui/ButtonLink.astro";
+
+const pathname = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-sm supports-[backdrop-filter]:bg-surface/85">
+  <div class="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-6 px-4 lg:h-[72px]">
+    <a
+      href="/"
+      class="-m-2 inline-flex shrink-0 items-center p-2 text-ink hover:text-ink"
+    >
+      <Logo size={128} label="EMOJ Consultora, ir al inicio" />
+    </a>
+
+    <nav aria-label="Principal" class="hidden lg:block">
+      <ul class="flex items-center gap-1">
+        {NAV.map(({ label, href }) => {
+          const current = isCurrent(href, pathname);
+          return (
+            <li>
+              <a
+                href={href}
+                aria-current={current ? "page" : undefined}
+                class:list={[
+                  "relative inline-flex min-h-11 items-center px-3 text-base leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:text-brand",
+                  "after:absolute after:inset-x-3 after:bottom-2 after:h-0.5 after:rounded-full after:bg-brand after:opacity-0 after:transition-opacity",
+                  current && "after:opacity-100",
+                ]}
+              >
+                {label}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <ButtonLink href="/contacto" class="hidden sm:inline-flex">
+        Cotizar proyecto
+      </ButtonLink>
+      <button
+        type="button"
+        class="inline-flex size-11 items-center justify-center rounded-md text-ink hover:bg-surface-sunken lg:hidden"
+        aria-expanded="false"
+        aria-controls="menu-movil"
+        data-menu-open
+      >
+        <Menu size={24} stroke-width={1.75} aria-hidden="true" />
+        <span class="sr-only">Abrir menú</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog
+  id="menu-movil"
+  aria-label="Menú"
+  class="m-0 ml-auto h-dvh max-h-none w-full max-w-sm bg-surface p-0 text-ink backdrop:bg-plum-950/60 lg:hidden"
+  data-menu
+>
+  <div class="flex h-full flex-col">
+    <div class="flex h-16 items-center justify-between border-b border-border px-4">
+      <span class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+        Menú
+      </span>
+      <button
+        type="button"
+        class="inline-flex size-11 items-center justify-center rounded-md text-ink hover:bg-surface-sunken"
+        data-menu-close
+      >
+        <X size={24} stroke-width={1.75} aria-hidden="true" />
+        <span class="sr-only">Cerrar menú</span>
+      </button>
+    </div>
+    <nav aria-label="Principal móvil" class="flex-1 overflow-y-auto px-4 py-6">
+      <ul class="flex flex-col">
+        {NAV.map(({ label, href }) => {
+          const current = isCurrent(href, pathname);
+          return (
+            <li class="border-b border-border">
+              <a
+                href={href}
+                aria-current={current ? "page" : undefined}
+                class:list={[
+                  "flex min-h-14 items-center text-[22px] leading-7 font-semibold no-underline",
+                  current ? "text-brand" : "text-ink hover:text-brand",
+                ]}
+              >
+                {label}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+    <div class="border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <ButtonLink href="/contacto" class="w-full">
+        Cotizar proyecto
+      </ButtonLink>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>("[data-menu]");
+  const openButton =
+    document.querySelector<HTMLButtonElement>("[data-menu-open]");
+  const closeButton =
+    document.querySelector<HTMLButtonElement>("[data-menu-close]");
+
+  if (dialog && openButton && closeButton) {
+    openButton.addEventListener("click", () => {
+      dialog.showModal();
+      openButton.setAttribute("aria-expanded", "true");
+    });
+    closeButton.addEventListener("click", () => dialog.close());
+    // Fires for the close button, Escape and navigation alike.
+    dialog.addEventListener("close", () => {
+      openButton.setAttribute("aria-expanded", "false");
+      openButton.focus();
+    });
+    // Click on the backdrop (outside the panel) closes the menu.
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    // Leaving the mobile layout with the menu open closes it.
+    window.matchMedia("(min-width: 64rem)").addEventListener("change", (e) => {
+      if (e.matches && dialog.open) dialog.close();
+    });
+  }
+</script>

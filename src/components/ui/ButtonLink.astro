@@ -1,0 +1,35 @@
+---
+/**
+ * Link styled as a button (radius-md, 44px minimum target).
+ *
+ * - `primary`: brand fill. Use on `surface`, `surface-sunken`, `surface-raised`.
+ * - `secondary`: outlined in `ink`. Use on light surfaces.
+ * - `on-photo`: outlined cream, only over a photo with the plum overlay.
+ * - `on-inverse`: cream fill, only on `surface-inverse` (brand is forbidden there).
+ */
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"a"> {
+  href: string;
+  variant?: "primary" | "secondary" | "on-photo" | "on-inverse";
+}
+
+const { variant = "primary", class: className, ...rest } = Astro.props;
+
+const base =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-6 py-3 text-base leading-5 font-semibold no-underline transition-colors duration-200";
+
+const variants = {
+  primary: "bg-brand text-on-brand hover:bg-brand-hover hover:text-on-brand",
+  secondary:
+    "border border-ink bg-transparent text-ink hover:bg-ink hover:text-surface",
+  "on-photo":
+    "border border-sand-50 bg-transparent text-sand-50 hover:bg-sand-50 hover:text-plum-950",
+  "on-inverse":
+    "bg-ink-inverse text-surface-inverse hover:bg-surface-sunken hover:text-ink",
+} as const;
+---
+
+<a class:list={[base, variants[variant], className]} {...rest}>
+  <slot />
+</a>

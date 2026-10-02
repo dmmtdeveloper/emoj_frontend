@@ -1,0 +1,124 @@
+---
+import { Mail, MapPin, MessageCircle, Phone } from "@lucide/astro";
+import { CONTACT, NAV, SITE_NAME, SOCIAL, TAGLINE } from "../../lib/site";
+import Logo from "../Logo.astro";
+import SocialIcon from "../ui/SocialIcon.astro";
+
+const year = new Date().getFullYear();
+const linkClass =
+  "text-ink-inverse underline-offset-4 hover:text-ink-inverse hover:underline";
+---
+
+<footer class="bg-surface-inverse text-ink-inverse">
+  <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:grid-cols-2 md:py-24 lg:grid-cols-[1.4fr_1fr_1fr]">
+    <div class="flex flex-col gap-6">
+      <Logo size={168} label={SITE_NAME} />
+      <p class="max-w-[32ch] text-lg leading-7">{TAGLINE}.</p>
+      <ul class="flex gap-2" aria-label="Redes sociales">
+        {SOCIAL.map(({ name, href }) => (
+          <li>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${SITE_NAME} en ${name} (se abre en una pestaña nueva)`}
+              class="inline-flex size-11 items-center justify-center rounded-md border border-ink-inverse/40 text-ink-inverse transition-colors duration-200 hover:bg-ink-inverse hover:text-surface-inverse"
+            >
+              <SocialIcon name={name} />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <h2 class="text-[13px] leading-4 font-semibold tracking-[0.08em] uppercase">
+        Contacto
+      </h2>
+      <ul class="flex flex-col gap-3">
+        <li class="flex gap-3">
+          <Mail
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="mt-1 shrink-0"
+          />
+          <a class={linkClass} href={`mailto:${CONTACT.email}`}>
+            {CONTACT.email}
+          </a>
+        </li>
+        <li class="flex gap-3">
+          <MessageCircle
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="mt-1 shrink-0"
+          />
+          <a
+            class={linkClass}
+            href={CONTACT.whatsapp.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            WhatsApp {CONTACT.whatsapp.display}
+          </a>
+        </li>
+        <li class="flex gap-3">
+          <Phone
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="mt-1 shrink-0"
+          />
+          <span>
+            {CONTACT.phones.map((phone, index) => (
+              <>
+                {index > 0 && " · "}
+                <a class={linkClass} href={phone.href}>
+                  {phone.display}
+                </a>
+              </>
+            ))}
+          </span>
+        </li>
+        <li class="flex gap-3">
+          <MapPin
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="mt-1 shrink-0"
+          />
+          <address class="not-italic">
+            {CONTACT.address.street}
+            <br />
+            {CONTACT.address.locality}, {CONTACT.address.region}
+          </address>
+        </li>
+      </ul>
+    </div>
+
+    <nav aria-label="Pie de página" class="flex flex-col gap-4">
+      <h2 class="text-[13px] leading-4 font-semibold tracking-[0.08em] uppercase">
+        Navegación
+      </h2>
+      <ul class="grid grid-cols-2 gap-x-6 gap-y-1 md:grid-cols-1">
+        {NAV.map(({ label, href }) => (
+          <li>
+            <a
+              class={`${linkClass} inline-flex min-h-11 items-center md:min-h-9`}
+              href={href}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  <div class="border-t border-ink-inverse/20">
+    <p class="mx-auto max-w-[1200px] px-4 py-6 pb-28 text-sm leading-5 font-medium lg:pb-6">
+      © {year} EMOJ Consultora SpA. Todos los derechos reservados.
+    </p>
+  </div>
+</footer>

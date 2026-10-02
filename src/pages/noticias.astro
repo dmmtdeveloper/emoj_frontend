@@ -1,0 +1,17 @@
+---
+import ComingSoon from "../components/ui/ComingSoon.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Noticias"
+  description="Noticias de EMOJ Consultora: visitas técnicas, obras en curso y novedades de ingeniería civil en la Región de Valparaíso."
+>
+  <PageHeader
+    eyebrow="Noticias"
+    title="Noticias y visitas técnicas"
+    lead="Lo que pasa en terreno y en la oficina de EMOJ."
+  />
+  <ComingSoon message="Estamos preparando esta sección con novedades de nuestras obras y visitas técnicas." />
+</BaseLayout>

@@ -15,6 +15,13 @@
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* Keep anchored headings clear of the sticky header. */
+    scroll-padding-top: 88px;
+  }
+
+  /* Lock page scroll while a modal dialog (mobile menu) is open. */
+  html:has(dialog[open]) {
+    overflow: hidden;
   }
 
   body {

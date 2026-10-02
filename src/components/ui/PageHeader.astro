@@ -1,0 +1,34 @@
+---
+/**
+ * Page intro for inner pages: optional eyebrow label, the page's single H1
+ * and a lead paragraph. Breadcrumbs go in the `breadcrumb` slot.
+ */
+import StrokeLine from "./StrokeLine.astro";
+
+interface Props {
+  title: string;
+  lead?: string;
+  eyebrow?: string;
+}
+
+const { title, lead, eyebrow } = Astro.props;
+---
+
+<section class="relative overflow-hidden border-b border-border bg-surface">
+  <StrokeLine class="absolute -top-6 -right-24 hidden w-[520px] text-border-strong opacity-50 md:block" />
+  <div class="relative mx-auto flex max-w-[1200px] flex-col gap-6 px-4 py-16 md:py-24">
+    <slot name="breadcrumb" />
+    {eyebrow && (
+      <p class="text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+        {eyebrow}
+      </p>
+    )}
+    <h1 class="max-w-[22ch] text-[32px] leading-[38px] font-semibold tracking-[-0.015em] text-ink md:text-[44px] md:leading-[50px]">
+      {title}
+    </h1>
+    {lead && (
+      <p class="max-w-[60ch] text-xl leading-[30px] text-ink-muted">{lead}</p>
+    )}
+    <slot />
+  </div>
+</section>

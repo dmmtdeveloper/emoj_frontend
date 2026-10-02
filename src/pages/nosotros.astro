@@ -1,0 +1,18 @@
+---
+import ComingSoon from "../components/ui/ComingSoon.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { MISSION } from "../lib/site";
+---
+
+<BaseLayout
+  title="Nosotros"
+  description="EMOJ Consultora SpA: más de 30 años de ingeniería civil multidisciplinaria desde Quilpué, Región de Valparaíso."
+>
+  <PageHeader
+    eyebrow="Nosotros"
+    title="Más de 30 años de ingeniería civil desde Quilpué"
+    lead={MISSION}
+  />
+  <ComingSoon message="Muy pronto vas a conocer aquí a nuestro equipo, nuestra historia y la forma en que trabajamos." />
+</BaseLayout>
