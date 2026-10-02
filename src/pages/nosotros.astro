@@ -1,18 +1,138 @@
 ---
-import ComingSoon from "../components/ui/ComingSoon.astro";
+import { Compass, Target } from "@lucide/astro";
+import { Image } from "astro:assets";
+import TeamCard from "../components/about/TeamCard.astro";
+import ClientsStrip from "../components/home/ClientsStrip.astro";
+import Breadcrumb from "../components/ui/Breadcrumb.astro";
+import CtaBlock from "../components/ui/CtaBlock.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
+import teamPhoto from "../assets/photos/equipo-emoj.jpg";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { MISSION } from "../lib/site";
+import { organizationJsonLd } from "../lib/structured-data";
+import { ABOUT_INTRO, ABOUT_POSITIONING, TEAM, VISION } from "../lib/team";
+
+const organization = {
+  ...organizationJsonLd(Astro.site),
+  employee: TEAM.flatMap((department) =>
+    department.members.map((member) => ({
+      "@type": "Person",
+      name: member.name,
+      jobTitle: member.role,
+    })),
+  ),
+};
+
+const labelClass =
+  "text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+const h2Class =
+  "text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10";
 ---
 
 <BaseLayout
   title="Nosotros"
-  description="EMOJ Consultora SpA: más de 30 años de ingeniería civil multidisciplinaria desde Quilpué, Región de Valparaíso."
+  description="EMOJ Consultora SpA: más de 30 años de ingeniería civil multidisciplinaria desde Quilpué. Conoce nuestra misión, visión y al equipo detrás de cada proyecto."
+  jsonLd={[organization]}
 >
   <PageHeader
     eyebrow="Nosotros"
     title="Más de 30 años de ingeniería civil desde Quilpué"
-    lead={MISSION}
+    lead={ABOUT_INTRO}
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Nosotros", href: "/nosotros" },
+      ]}
+    />
+  </PageHeader>
+
+  <section class="bg-surface-sunken" aria-labelledby="trayectoria">
+    <div class="mx-auto grid max-w-[1200px] gap-8 px-4 py-16 md:py-24 lg:grid-cols-[7fr_5fr] lg:items-center lg:gap-16">
+      <figure class="flex flex-col gap-3">
+        <Image
+          src={teamPhoto}
+          alt="Integrantes del equipo de EMOJ Consultora posando juntos, de pie, en una oficina."
+          widths={[480, 800, 1200, 1600]}
+          sizes="(min-width: 1200px) 640px, (min-width: 1024px) 55vw, calc(100vw - 32px)"
+          loading="eager"
+          class="aspect-[16/9] w-full rounded-lg object-cover"
+        />
+        <figcaption class="text-sm leading-5 font-medium text-ink-muted">
+          Equipo de EMOJ Consultora SpA.
+        </figcaption>
+      </figure>
+      <div class="flex flex-col gap-4">
+        <p class={labelClass}>Trayectoria</p>
+        <h2 id="trayectoria" class={h2Class}>
+          Proyectos complejos, plazos cumplidos
+        </h2>
+        {ABOUT_POSITIONING.map((text) => (
+          <p class="max-w-[60ch]">{text}</p>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-surface" aria-labelledby="mision-vision">
+    <div class="mx-auto flex max-w-[1200px] flex-col gap-8 px-4 py-16 md:py-24">
+      <h2 id="mision-vision" class="sr-only">
+        Misión y visión
+      </h2>
+      <div class="grid gap-4 md:grid-cols-2 md:gap-8">
+        <div class="radius-signature flex flex-col gap-4 bg-surface-sunken p-6 pl-8 md:p-10 md:pl-12">
+          <span class="inline-flex size-12 items-center justify-center rounded-full bg-surface-raised text-brand">
+            <Target size={24} stroke-width={1.75} aria-hidden="true" />
+          </span>
+          <h3 class="text-[22px] leading-7 font-semibold">Misión</h3>
+          <p class="max-w-[60ch]">{MISSION}</p>
+        </div>
+        <div class="radius-signature flex flex-col gap-4 bg-surface-sunken p-6 pl-8 md:p-10 md:pl-12">
+          <span class="inline-flex size-12 items-center justify-center rounded-full bg-surface-raised text-brand">
+            <Compass size={24} stroke-width={1.75} aria-hidden="true" />
+          </span>
+          <h3 class="text-[22px] leading-7 font-semibold">Visión</h3>
+          <p class="max-w-[60ch]">{VISION}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-surface-sunken" aria-labelledby="equipo">
+    <div class="mx-auto flex max-w-[1200px] flex-col gap-12 px-4 py-16 md:py-24">
+      <div class="flex max-w-[60ch] flex-col gap-4">
+        <p class={labelClass}>Equipo</p>
+        <h2 id="equipo" class={h2Class}>
+          Las personas detrás de cada proyecto
+        </h2>
+        <p class="text-ink-muted">
+          Ingenieros civiles, dibujantes proyectistas y un equipo de
+          administración que coordinan cada especialidad desde Quilpué.
+        </p>
+      </div>
+      {TEAM.map((department) => (
+        <div class="flex flex-col gap-5">
+          <h3 class="border-b border-border pb-3 text-lg leading-6 font-semibold">
+            {department.name}
+          </h3>
+          <ul class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:gap-x-6 lg:grid-cols-5">
+            {department.members.map((member) => (
+              <li>
+                <TeamCard member={member} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <ClientsStrip />
+
+  <CtaBlock
+    background="surface-sunken"
+    title="¿Quieres trabajar con nuestro equipo?"
+    text="Cuéntanos qué proyecto tienes en mente y te ayudamos a definir el alcance, los plazos y los entregables."
   />
-  <ComingSoon message="Muy pronto vas a conocer aquí a nuestro equipo, nuestra historia y la forma en que trabajamos." />
 </BaseLayout>

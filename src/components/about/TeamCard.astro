@@ -1,0 +1,58 @@
+---
+/**
+ * Compact team member card: photo (or an initials avatar in brand colors
+ * when there is no real photo), name, role and education.
+ */
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { initials } from "../../lib/content/format";
+import type { TeamMember } from "../../lib/team";
+
+interface Props {
+  member: TeamMember;
+}
+
+const { member } = Astro.props;
+
+const photos = import.meta.glob<{ default: ImageMetadata }>(
+  "../../assets/team/*.jpg",
+  { eager: true },
+);
+const photo = member.photo
+  ? photos[`../../assets/team/${member.photo}.jpg`]?.default
+  : undefined;
+if (member.photo && !photo) {
+  throw new Error(
+    `Team photo "${member.photo}.jpg" not found in src/assets/team.`,
+  );
+}
+---
+
+<div class="flex flex-col gap-3">
+  {photo ? (
+    <Image
+      src={photo}
+      alt={`Retrato de ${member.name}.`}
+      widths={[240, 360, 480]}
+      sizes="(min-width: 1200px) 216px, (min-width: 1024px) 18vw, (min-width: 640px) 30vw, 46vw"
+      loading="lazy"
+      class="aspect-[4/5] w-full rounded-lg bg-surface-sunken object-cover object-top"
+    />
+  ) : (
+    <div
+      class="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent text-on-accent"
+      aria-hidden="true"
+    >
+      <span class="text-[40px] leading-none font-semibold tracking-[0.02em]">
+        {initials(member.name)}
+      </span>
+    </div>
+  )}
+  <div class="flex flex-col gap-0.5">
+    <h4 class="text-base leading-6 font-semibold text-ink">{member.name}</h4>
+    <p class="text-sm leading-5 font-medium text-ink-muted">{member.role}</p>
+    {member.education && (
+      <p class="text-[13px] leading-5 text-ink-muted">{member.education}</p>
+    )}
+  </div>
+</div>
