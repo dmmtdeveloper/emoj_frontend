@@ -20,10 +20,9 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
-# generated API types (regenerate with `pnpm api:types`)
-src/lib/api/schema.d.ts
-
 # tooling
+.screenshots/
+.lighthouseci/
 coverage/
 .codegraph/
 graphify-out/

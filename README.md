@@ -73,7 +73,11 @@ Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the clie
 
 ## API contract
 
-The API is defined in `openapi.yaml` in [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend). With both repos checked out side by side, run `pnpm api:types` to generate TypeScript types in `src/lib/api/schema.d.ts`. The generated file is git-ignored; the script fails if `../emoj_backend/openapi.yaml` is missing.
+The API is defined in `openapi.yaml` in [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend). With both repos checked out side by side, run `pnpm api:types` to generate TypeScript types in `src/lib/api/schema.d.ts`; the script fails if `../emoj_backend/openapi.yaml` is missing.
+
+The generated file **is committed**, because Vercel and CI only check out this repo. Whenever the backend contract changes, regenerate it, run `pnpm check && pnpm test`, and commit it in the same change that adapts the frontend. Never edit it by hand.
+
+`src/lib/api/client.ts` is a small typed `fetch` wrapper built on those types. It never throws: every call resolves to `{ ok: true, data }`, a typed RFC 9457 problem (`kind: "problem"`, with `errors[]` on 422 and `retryAfter` on 429) or a network error (`kind: "network"`).
 
 ## Project layout
 
