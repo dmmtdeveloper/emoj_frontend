@@ -77,6 +77,94 @@
   }
 }
 
+/*
+ * Rich text rendered from the API (TipTap JSON, see lib/content/tiptap.ts).
+ * Plain elements only, so styles live here instead of on each tag.
+ */
+@layer components {
+  .article-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: 65ch;
+    color: var(--ink);
+  }
+
+  .article-body h2 {
+    margin-top: var(--space-6);
+    font-size: 26px;
+    line-height: 32px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .article-body h3 {
+    margin-top: var(--space-4);
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+
+  .article-body h4 {
+    margin-top: var(--space-2);
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+  }
+
+  .article-body strong {
+    font-weight: 600;
+  }
+
+  .article-body a {
+    text-decoration: underline;
+  }
+
+  .article-body ul,
+  .article-body ol {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-left: var(--space-6);
+  }
+
+  .article-body ul {
+    list-style: disc;
+  }
+
+  .article-body ol {
+    list-style: decimal;
+  }
+
+  .article-body li::marker {
+    color: var(--brand);
+  }
+
+  .article-body li > p + p {
+    margin-top: var(--space-2);
+  }
+
+  .article-body blockquote {
+    border-left: 2px solid var(--brand);
+    padding-left: var(--space-6);
+    color: var(--ink-muted);
+    font-size: 20px;
+    line-height: 30px;
+  }
+
+  .article-body hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (min-width: 768px) {
+    .article-body h2 {
+      font-size: 30px;
+      line-height: 38px;
+    }
+  }
+}
+
 /* EMOJ signature shape: rounded on the two left corners only. */
 @utility radius-signature {
   border-radius: var(--radius-signature) 0 0 var(--radius-signature);

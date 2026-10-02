@@ -1,0 +1,134 @@
+---
+/**
+ * One page of the news index (12 per page): header, cards, pagination and
+ * the empty state. Page 1 is /noticias, page n is /noticias/pagina/n.
+ */
+import { ArrowLeft, ArrowRight } from "@lucide/astro";
+import type { NewsSummary } from "../../lib/api/client";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumb from "../ui/Breadcrumb.astro";
+import ButtonLink from "../ui/ButtonLink.astro";
+import CtaBlock from "../ui/CtaBlock.astro";
+import EmptyState from "../ui/EmptyState.astro";
+import PageHeader from "../ui/PageHeader.astro";
+import NewsCard from "./NewsCard.astro";
+
+interface Props {
+  articles: NewsSummary[];
+  page: number;
+  pages: number;
+}
+
+const { articles, page, pages } = Astro.props;
+
+function pageHref(n: number): string {
+  return n === 1 ? "/noticias" : `/noticias/pagina/${n}`;
+}
+
+const title = page === 1 ? "Noticias" : `Noticias, página ${page}`;
+const pageLink =
+  "inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md px-3 font-semibold no-underline";
+---
+
+<BaseLayout
+  title={title}
+  description="Noticias de EMOJ Consultora: proyectos, visitas a terreno y la vida de nuestro equipo de ingeniería civil en la Región de Valparaíso."
+>
+  <PageHeader
+    eyebrow="Noticias"
+    title="Noticias de EMOJ"
+    lead="Proyectos, visitas a terreno y lo que pasa en nuestro equipo."
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Noticias", href: "/noticias" },
+        ...(page > 1
+          ? [{ label: `Página ${page}`, href: pageHref(page) }]
+          : []),
+      ]}
+    />
+  </PageHeader>
+
+  <section class="bg-surface-sunken" aria-label="Lista de noticias">
+    <div class="mx-auto flex max-w-[1200px] flex-col gap-10 px-4 py-12 md:py-24">
+      {articles.length === 0 ? (
+        <EmptyState message="Pronto publicaremos noticias sobre nuestros proyectos y nuestro equipo. Mientras tanto, conoce nuestros servicios.">
+          <ButtonLink href="/servicios">
+            Ver servicios
+            <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+          </ButtonLink>
+          <ButtonLink href="/contacto" variant="secondary">
+            Cotizar proyecto
+          </ButtonLink>
+        </EmptyState>
+      ) : (
+        <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+          {articles.map((article, index) => (
+            <li>
+              <NewsCard article={article} eager={index < 2} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {pages > 1 && (
+        <nav aria-label="Páginas de noticias">
+          <ul class="flex flex-wrap items-center gap-2">
+            {page > 1 && (
+              <li>
+                <a
+                  href={pageHref(page - 1)}
+                  class:list={[pageLink, "text-ink hover:text-brand"]}
+                  rel="prev"
+                >
+                  <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
+                  Anterior
+                </a>
+              </li>
+            )}
+            {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+              <li>
+                {n === page ? (
+                  <span
+                    aria-current="page"
+                    class:list={[pageLink, "bg-ink text-surface"]}
+                  >
+                    {n}
+                  </span>
+                ) : (
+                  <a
+                    href={pageHref(n)}
+                    class:list={[pageLink, "text-ink hover:text-brand"]}
+                    aria-label={`Página ${n}`}
+                  >
+                    {n}
+                  </a>
+                )}
+              </li>
+            ))}
+            {page < pages && (
+              <li>
+                <a
+                  href={pageHref(page + 1)}
+                  class:list={[pageLink, "text-ink hover:text-brand"]}
+                  rel="next"
+                >
+                  Siguiente
+                  <ArrowRight
+                    size={20}
+                    stroke-width={1.75}
+                    aria-hidden="true"
+                  />
+                </a>
+              </li>
+            )}
+          </ul>
+        </nav>
+      )}
+    </div>
+  </section>
+
+  <CtaBlock />
+</BaseLayout>

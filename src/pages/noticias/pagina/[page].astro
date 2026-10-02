@@ -1,0 +1,26 @@
+---
+import type { GetStaticPaths } from "astro";
+import NewsListing from "../../../components/news/NewsListing.astro";
+import type { NewsSummary } from "../../../lib/api/client";
+import { content } from "../../../lib/content";
+import { NEWS_PER_PAGE, paginate } from "../../../lib/content/format";
+
+/** Pages 2..n; page 1 is /noticias. */
+export const getStaticPaths = (async () => {
+  const pages = paginate(await content.getNews(), NEWS_PER_PAGE);
+  return pages.slice(1).map((articles, i) => ({
+    params: { page: String(i + 2) },
+    props: { articles, page: i + 2, pages: pages.length },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  articles: NewsSummary[];
+  page: number;
+  pages: number;
+}
+
+const { articles, page, pages } = Astro.props;
+---
+
+<NewsListing articles={articles} page={page} pages={pages} />

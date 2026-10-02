@@ -1,0 +1,59 @@
+---
+/**
+ * News card: cover, date, category, title (the card's single link) and
+ * excerpt. Compact row on phones (no excerpt), stacked card from `sm` up.
+ */
+import { Image } from "astro:assets";
+import type { NewsSummary } from "../../lib/api/client";
+import { fitWidth, formatDate } from "../../lib/content/format";
+
+interface Props {
+  article: NewsSummary;
+  headingLevel?: "h2" | "h3";
+  eager?: boolean;
+}
+
+const { article, headingLevel = "h2", eager = false } = Astro.props;
+const Heading = headingLevel;
+---
+
+<article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
+  {article.cover ? (
+    <Image
+      src={article.cover.url}
+      alt={article.cover.alt}
+      {...fitWidth(article.cover, 800)}
+      widths={[208, 400, 640, 800]}
+      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
+      loading={eager ? "eager" : "lazy"}
+      class="aspect-square h-full w-full rounded-md object-cover sm:aspect-[16/10] sm:h-auto sm:rounded-none"
+    />
+  ) : (
+    <div
+      class="aspect-square h-full w-full rounded-md bg-surface-sunken sm:aspect-[16/10] sm:h-auto sm:rounded-none"
+      aria-hidden="true"
+    />
+  )}
+  <div class="flex min-w-0 flex-col gap-2 sm:flex-1 sm:gap-3 sm:p-6">
+    <p class="flex flex-wrap items-center gap-x-2 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+      <time datetime={article.publishedAt}>
+        {formatDate(article.publishedAt)}
+      </time>
+      {article.category && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span>{article.category}</span>
+        </>
+      )}
+    </p>
+    <Heading class="text-lg leading-6 font-semibold text-ink sm:text-[22px] sm:leading-7">
+      <a
+        href={`/noticias/${article.slug}`}
+        class="text-ink no-underline after:absolute after:inset-0 after:rounded-[inherit] hover:text-ink focus-visible:outline-none"
+      >
+        {article.title}
+      </a>
+    </Heading>
+    <p class="hidden text-ink-muted sm:line-clamp-3">{article.excerpt}</p>
+  </div>
+</article>

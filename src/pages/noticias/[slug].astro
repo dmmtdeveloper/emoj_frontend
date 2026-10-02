@@ -1,0 +1,181 @@
+---
+import { ArrowLeft, Link as LinkIcon, MessageCircle } from "@lucide/astro";
+import type { GetStaticPaths } from "astro";
+import { getImage, Image } from "astro:assets";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import CtaBlock from "../../components/ui/CtaBlock.astro";
+import SocialIcon from "../../components/ui/SocialIcon.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import type { NewsDetail } from "../../lib/api/client";
+import { content } from "../../lib/content";
+import { fitWidth, formatDate, shareLinks } from "../../lib/content/format";
+import { renderTipTap } from "../../lib/content/tiptap";
+import { articleJsonLd } from "../../lib/structured-data";
+
+export const getStaticPaths = (async () => {
+  const news = await content.getNews();
+  return Promise.all(
+    news.map(async (summary) => ({
+      params: { slug: summary.slug },
+      props: { article: await content.getArticle(summary.slug) },
+    })),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  article: NewsDetail;
+}
+
+const { article } = Astro.props;
+const site = Astro.site ?? new URL("https://emoj.cl");
+const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
+const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
+const share = shareLinks(pageUrl, article.title);
+
+const ogSource = article.seo.ogImage ?? article.cover;
+const ogImage = ogSource
+  ? await getImage({
+      src: ogSource.url,
+      width: 1200,
+      height: 630,
+      fit: "cover",
+      format: "jpeg",
+    })
+  : undefined;
+
+const shareLink =
+  "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-semibold text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink";
+---
+
+<BaseLayout
+  title={article.seo.title}
+  description={article.seo.description}
+  {...(ogImage
+    ? { image: ogImage.src, imageAlt: ogSource?.alt ?? article.title }
+    : {})}
+  jsonLd={[
+    articleJsonLd(
+      {
+        url: pageUrl,
+        title: article.title,
+        description: article.excerpt || article.seo.description,
+        publishedAt: article.publishedAt,
+        category: article.category,
+        ...(ogImage ? { image: new URL(ogImage.src, site).href } : {}),
+      },
+      Astro.site,
+    ),
+  ]}
+>
+  <article>
+    <header class="border-b border-border bg-surface">
+      <div class="mx-auto flex max-w-[1200px] flex-col gap-6 px-4 pt-12 pb-10 md:pt-16">
+        <Breadcrumb
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Noticias", href: "/noticias" },
+            { label: article.title, href: `/noticias/${article.slug}` },
+          ]}
+        />
+        <p class="flex flex-wrap items-center gap-x-2 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+          <time datetime={article.publishedAt}>
+            {formatDate(article.publishedAt)}
+          </time>
+          {article.category && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{article.category}</span>
+            </>
+          )}
+        </p>
+        <h1 class="max-w-[30ch] text-[30px] leading-9 font-semibold tracking-[-0.015em] text-ink md:text-[44px] md:leading-[50px]">
+          {article.title}
+        </h1>
+        {article.excerpt && (
+          <p class="max-w-[60ch] text-xl leading-[30px] text-ink-muted">
+            {article.excerpt}
+          </p>
+        )}
+      </div>
+    </header>
+
+    <div class="bg-surface">
+      <div class="mx-auto flex max-w-[1200px] flex-col gap-10 px-4 py-10 md:py-16">
+        {article.cover && (
+          <Image
+            src={article.cover.url}
+            alt={article.cover.alt}
+            {...fitWidth(article.cover, 1600)}
+            widths={[480, 800, 1200, 1600]}
+            sizes="(min-width: 1200px) 960px, calc(100vw - 32px)"
+            loading="eager"
+            fetchpriority="high"
+            class="aspect-[16/10] max-h-[600px] w-full max-w-[960px] rounded-lg object-cover"
+          />
+        )}
+
+        <div class="article-body" set:html={bodyHtml} />
+
+        <aside
+          aria-labelledby="compartir"
+          class="flex max-w-[65ch] flex-col gap-3 border-t border-border pt-8"
+        >
+          <h2 id="compartir" class="text-lg leading-6 font-semibold">
+            Comparte esta noticia
+          </h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <a
+              href={share.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              class={shareLink}
+            >
+              <SocialIcon name="LinkedIn" />
+              LinkedIn
+              <span class="sr-only">(se abre en una pestaña nueva)</span>
+            </a>
+            <a
+              href={share.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              class={shareLink}
+            >
+              <MessageCircle size={20} stroke-width={1.75} aria-hidden="true" />
+              WhatsApp
+              <span class="sr-only">(se abre en una pestaña nueva)</span>
+            </a>
+            <button
+              type="button"
+              data-copy-link={pageUrl}
+              class:list={[shareLink, "cursor-pointer"]}
+              hidden
+            >
+              <LinkIcon size={20} stroke-width={1.75} aria-hidden="true" />
+              Copiar enlace
+            </button>
+            <span
+              data-copy-status
+              role="status"
+              class="text-sm leading-5 font-medium text-ink-muted"
+            ></span>
+          </div>
+        </aside>
+
+        <a
+          href="/noticias"
+          class="inline-flex min-h-11 items-center gap-2 self-start font-semibold underline-offset-4 hover:underline"
+        >
+          <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
+          Ver todas las noticias
+        </a>
+      </div>
+    </div>
+  </article>
+
+  <CtaBlock background="surface-sunken" />
+</BaseLayout>
+
+<script>
+  import { initCopyLinks } from "../../scripts/copy-link";
+  initCopyLinks();
+</script>

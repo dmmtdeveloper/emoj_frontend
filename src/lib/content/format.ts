@@ -13,6 +13,9 @@ export function formatDate(iso: string): string {
   return dateFormat.format(new Date(iso));
 }
 
+/** Articles per page in the news index. */
+export const NEWS_PER_PAGE = 12;
+
 /** Split items into consecutive pages; always at least one (maybe empty). */
 export function paginate<T>(items: readonly T[], size: number): T[][] {
   const pages: T[][] = [];
