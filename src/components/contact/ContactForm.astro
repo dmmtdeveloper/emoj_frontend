@@ -1,0 +1,470 @@
+---
+/**
+ * Contact form. Needs JavaScript (Turnstile + fetch to the API); without it
+ * the <noscript> block offers the email address instead.
+ *
+ * Validation rules live in `src/lib/contact/form.ts` and mirror the API.
+ */
+import { CircleAlert, CircleCheck, Send } from "@lucide/astro";
+import { MESSAGE_MAX } from "../../lib/contact/form";
+import { API_URL, TURNSTILE_SITE_KEY } from "../../lib/env";
+import { CONTACT } from "../../lib/site";
+import type { Service } from "../../lib/get-services";
+
+interface Props {
+  services: Service[];
+}
+
+const { services } = Astro.props;
+
+const inputClass =
+  "block min-h-12 w-full rounded-sm border border-border-strong bg-surface-raised px-4 py-3 text-base leading-6 text-ink shadow-(--shadow-sm) placeholder:text-ink-muted aria-invalid:border-brand aria-invalid:border-2";
+const labelClass = "text-base leading-5 font-semibold text-ink";
+const optionalClass = "font-medium text-ink-muted";
+
+const textFields = [
+  {
+    name: "name",
+    label: "Nombre",
+    type: "text",
+    autocomplete: "name",
+    required: true,
+    max: 120,
+  },
+  {
+    name: "email",
+    label: "Correo",
+    type: "email",
+    autocomplete: "email",
+    required: true,
+    max: 254,
+  },
+  {
+    name: "phone",
+    label: "Teléfono",
+    type: "tel",
+    autocomplete: "tel",
+    required: false,
+    max: 40,
+  },
+  {
+    name: "company",
+    label: "Empresa",
+    type: "text",
+    autocomplete: "organization",
+    required: false,
+    max: 120,
+  },
+] as const;
+---
+
+<div class="rounded-lg border border-border bg-surface-raised p-6 shadow-(--shadow-sm) md:p-10">
+  <noscript>
+    <p class="mb-6 rounded-sm border border-border-strong p-4">
+      Para enviar el formulario necesitas activar JavaScript. También puedes
+      escribirnos directamente a
+      <a class="font-semibold" href={`mailto:${CONTACT.email}`}>
+        {CONTACT.email}
+      </a>
+      .
+    </p>
+  </noscript>
+
+  <div
+    data-contact-success
+    hidden
+    tabindex="-1"
+    class="flex flex-col gap-4 focus:outline-none"
+  >
+    <CircleCheck
+      size={24}
+      stroke-width={1.75}
+      aria-hidden="true"
+      class="text-brand"
+    />
+    <h2 class="text-[22px] leading-7 font-semibold">Recibimos tu consulta</h2>
+    <p>Gracias por escribirnos. Te responderemos a la brevedad.</p>
+    <p class="text-ink-muted">
+      Si es urgente, escríbenos por
+      <a href={CONTACT.whatsapp.href} target="_blank" rel="noopener noreferrer">
+        WhatsApp
+      </a>
+      .
+    </p>
+  </div>
+
+  <form
+    data-contact-form
+    data-api-url={API_URL}
+    data-sitekey={TURNSTILE_SITE_KEY}
+    novalidate
+    class="flex flex-col gap-6"
+    aria-labelledby="titulo-formulario"
+  >
+    <div class="flex flex-col gap-2">
+      <h2 id="titulo-formulario" class="text-[22px] leading-7 font-semibold">
+        Cuéntanos tu proyecto
+      </h2>
+      <p class="text-sm leading-5 font-medium text-ink-muted">
+        Los campos marcados como opcionales puedes dejarlos en blanco.
+      </p>
+    </div>
+
+    <div class="grid gap-6 sm:grid-cols-2">
+      {textFields.map((field) => (
+        <div class="flex flex-col gap-2">
+          <label for={`contacto-${field.name}`} class={labelClass}>
+            {field.label}
+            {!field.required && <span class={optionalClass}> (opcional)</span>}
+          </label>
+          <input
+            id={`contacto-${field.name}`}
+            name={field.name}
+            type={field.type}
+            autocomplete={field.autocomplete}
+            maxlength={field.max}
+            required={field.required}
+            aria-required={field.required ? "true" : undefined}
+            class={inputClass}
+          />
+          <p
+            id={`contacto-${field.name}-error`}
+            data-error-for={field.name}
+            class="hidden items-start gap-2 text-sm leading-5 font-medium text-brand"
+          >
+            <CircleAlert
+              size={20}
+              stroke-width={1.75}
+              aria-hidden="true"
+              class="shrink-0"
+            />
+            <span></span>
+          </p>
+        </div>
+      ))}
+
+      <div class="flex flex-col gap-2">
+        <label for="contacto-service" class={labelClass}>
+          Servicio <span class={optionalClass}>(opcional)</span>
+        </label>
+        <select id="contacto-service" name="service" class={inputClass}>
+          <option value="">Elige un servicio</option>
+          {services.map((service) => (
+            <option value={service.data.slug}>{service.data.title}</option>
+          ))}
+          <option value="">Otro / no estoy seguro</option>
+        </select>
+        <p
+          id="contacto-service-error"
+          data-error-for="service"
+          class="hidden items-start gap-2 text-sm leading-5 font-medium text-brand"
+        >
+          <CircleAlert
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="shrink-0"
+          />
+          <span></span>
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="contacto-location" class={labelClass}>
+          Ubicación del proyecto <span class={optionalClass}>(opcional)</span>
+        </label>
+        <input
+          id="contacto-location"
+          name="location"
+          type="text"
+          autocomplete="address-level2"
+          maxlength="120"
+          placeholder="Por ejemplo, Quilpué"
+          class={inputClass}
+        />
+        <p
+          id="contacto-location-error"
+          data-error-for="location"
+          class="hidden items-start gap-2 text-sm leading-5 font-medium text-brand"
+        >
+          <CircleAlert
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="shrink-0"
+          />
+          <span></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="contacto-message" class={labelClass}>
+        Mensaje
+      </label>
+      <p
+        id="contacto-message-hint"
+        class="text-sm leading-5 font-medium text-ink-muted"
+      >
+        Qué necesitas, dónde y para cuándo. Entre 10 y 5.000 caracteres.
+      </p>
+      <textarea
+        id="contacto-message"
+        name="message"
+        rows="6"
+        required
+        aria-required="true"
+        maxlength={MESSAGE_MAX}
+        aria-describedby="contacto-message-hint"
+        class={`${inputClass} resize-y`}
+      ></textarea>
+      <p
+        id="contacto-message-error"
+        data-error-for="message"
+        class="hidden items-start gap-2 text-sm leading-5 font-medium text-brand"
+      >
+        <CircleAlert
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="shrink-0"
+        />
+        <span></span>
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div data-turnstile class="min-h-[65px]"></div>
+      <p
+        id="contacto-captcha-error"
+        data-error-for="captcha"
+        class="hidden items-start gap-2 text-sm leading-5 font-medium text-brand"
+      >
+        <CircleAlert
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="shrink-0"
+        />
+        <span></span>
+      </p>
+    </div>
+
+    <div
+      data-form-alert
+      role="alert"
+      class="hidden items-start gap-3 rounded-sm border-2 border-brand p-4 text-ink"
+    >
+      <CircleAlert
+        size={20}
+        stroke-width={1.75}
+        aria-hidden="true"
+        class="mt-[3px] shrink-0 text-brand"
+      />
+      <span></span>
+    </div>
+
+    <p data-form-status role="status" class="sr-only"></p>
+
+    <div>
+      <button
+        type="submit"
+        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-brand px-6 py-3 text-base leading-5 font-semibold text-on-brand transition-colors duration-200 hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+      >
+        <Send size={20} stroke-width={1.75} aria-hidden="true" />
+        <span data-submit-label>Enviar consulta</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  import { createApiClient } from "../../lib/api/client";
+  import {
+    CONTACT_FIELDS,
+    MESSAGES,
+    describeSubmitResult,
+    toContactRequest,
+    validateContact,
+    type ContactField,
+    type ContactValues,
+    type FieldErrors,
+  } from "../../lib/contact/form";
+  import { isServiceSlug } from "../../lib/services";
+
+  interface Turnstile {
+    render(el: HTMLElement, options: Record<string, unknown>): string;
+    getResponse(widgetId: string): string | undefined;
+    reset(widgetId: string): void;
+  }
+  type TurnstileWindow = Window & { turnstile?: Turnstile };
+
+  const TURNSTILE_SRC =
+    "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+  const form = document.querySelector<HTMLFormElement>("[data-contact-form]");
+  const success = document.querySelector<HTMLElement>("[data-contact-success]");
+
+  if (form && success) setup(form, success);
+
+  function setup(form: HTMLFormElement, success: HTMLElement) {
+    const client = createApiClient({ baseUrl: form.dataset["apiUrl"] ?? "" });
+    const alertBox = form.querySelector<HTMLElement>("[data-form-alert]");
+    const status = form.querySelector<HTMLElement>("[data-form-status]");
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]");
+    const submitLabel = form.querySelector<HTMLElement>("[data-submit-label]");
+    const widgetHost = form.querySelector<HTMLElement>("[data-turnstile]");
+    let widgetId: string | undefined;
+    let turnstile: Turnstile | undefined;
+
+    // Preselect the service from ?servicio=<slug> (links from service pages).
+    const requested = new URLSearchParams(location.search).get("servicio");
+    const select = form.elements.namedItem("service");
+    if (
+      requested &&
+      isServiceSlug(requested) &&
+      select instanceof HTMLSelectElement
+    ) {
+      select.value = requested;
+    }
+
+    loadTurnstile();
+
+    function loadTurnstile() {
+      if (!widgetHost) return;
+      const script = document.createElement("script");
+      script.src = TURNSTILE_SRC;
+      script.async = true;
+      script.addEventListener("load", () => {
+        turnstile = (window as TurnstileWindow).turnstile;
+        if (!turnstile) return;
+        widgetId = turnstile.render(widgetHost, {
+          sitekey: form.dataset["sitekey"],
+          language: "es",
+          theme: "auto",
+          callback: () => showError("captcha", undefined),
+        });
+      });
+      document.head.append(script);
+    }
+
+    function control(field: ContactField) {
+      return form.elements.namedItem(field) as
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
+    }
+
+    function showError(
+      field: ContactField | "captcha",
+      message: string | undefined,
+    ) {
+      const box = form.querySelector<HTMLElement>(
+        `[data-error-for="${field}"]`,
+      );
+      const text = box?.querySelector("span");
+      if (box && text) {
+        text.textContent = message ?? "";
+        box.classList.toggle("hidden", !message);
+        box.classList.toggle("flex", Boolean(message));
+      }
+      if (field === "captcha") return;
+      const input = control(field);
+      if (!input) return;
+      const describedBy = (input.getAttribute("aria-describedby") ?? "")
+        .split(" ")
+        .filter((id) => id && id !== box?.id);
+      if (message && box) describedBy.push(box.id);
+      if (describedBy.length)
+        input.setAttribute("aria-describedby", describedBy.join(" "));
+      else input.removeAttribute("aria-describedby");
+      if (message) input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+    }
+
+    function showFieldErrors(errors: FieldErrors) {
+      for (const field of CONTACT_FIELDS) showError(field, errors[field]);
+      const first = CONTACT_FIELDS.find((field) => errors[field]);
+      if (first) control(first)?.focus();
+    }
+
+    function showAlert(message: string | undefined) {
+      if (!alertBox) return;
+      const text = alertBox.querySelector("span");
+      if (text) text.textContent = message ?? "";
+      alertBox.classList.toggle("hidden", !message);
+      alertBox.classList.toggle("flex", Boolean(message));
+    }
+
+    function setSending(sending: boolean) {
+      if (submit) submit.disabled = sending;
+      form.setAttribute("aria-busy", String(sending));
+      if (submitLabel)
+        submitLabel.textContent = sending ? "Enviando…" : "Enviar consulta";
+      if (status) status.textContent = sending ? "Enviando tu consulta…" : "";
+    }
+
+    function values(): ContactValues {
+      const data = new FormData(form);
+      return Object.fromEntries(
+        CONTACT_FIELDS.map((field) => [field, String(data.get(field) ?? "")]),
+      ) as ContactValues;
+    }
+
+    // Re-validate a field once the visitor leaves it, only if it showed an error.
+    form.addEventListener("focusout", (event) => {
+      const target = event.target as HTMLElement;
+      const name = target.getAttribute("name");
+      if (!name || target.getAttribute("aria-invalid") !== "true") return;
+      const errors = validateContact(values());
+      showError(name as ContactField, errors[name as ContactField]);
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      showAlert(undefined);
+
+      const current = values();
+      const errors = validateContact(current);
+      showFieldErrors(errors);
+      if (Object.keys(errors).length > 0) return;
+
+      const token =
+        widgetId && turnstile ? turnstile.getResponse(widgetId) : undefined;
+      if (!token) {
+        showError("captcha", MESSAGES.captcha);
+        widgetHost?.querySelector("iframe")?.focus();
+        return;
+      }
+
+      setSending(true);
+      const result = await client.submitContact(
+        toContactRequest(current, token),
+      );
+      const outcome = describeSubmitResult(result);
+      setSending(false);
+
+      if (outcome.kind === "success") {
+        form.reset();
+        form.hidden = true;
+        success.hidden = false;
+        success.focus();
+        return;
+      }
+
+      // Turnstile tokens are single use: get a fresh one for the next try.
+      if (widgetId && turnstile) turnstile.reset(widgetId);
+
+      if (outcome.kind === "invalid") {
+        showFieldErrors(outcome.fieldErrors);
+        if (outcome.captchaFailed) showError("captcha", MESSAGES.captcha);
+        if (
+          Object.keys(outcome.fieldErrors).length === 0 &&
+          !outcome.captchaFailed
+        ) {
+          showAlert(MESSAGES.generic);
+        }
+        return;
+      }
+      showAlert(outcome.message);
+    });
+  }
+</script>

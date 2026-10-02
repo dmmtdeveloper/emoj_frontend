@@ -66,10 +66,11 @@ Global styles live in `src/styles/global.css` (Tailwind, tokens, fonts, base sty
 
 Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the client.
 
-| Variable          | Example                 | Purpose                                         |
-| ----------------- | ----------------------- | ----------------------------------------------- |
-| `PUBLIC_SITE_URL` | `https://emoj.cl`       | Canonical origin for URLs, Open Graph, sitemap. |
-| `PUBLIC_API_URL`  | `http://localhost:8080` | Base URL of the EMOJ Go API.                    |
+| Variable                    | Example                    | Purpose                                                                                               |
+| --------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `PUBLIC_SITE_URL`           | `https://emoj.cl`          | Canonical origin for URLs, Open Graph, sitemap.                                                       |
+| `PUBLIC_API_URL`            | `http://localhost:8080`    | Base URL of the EMOJ Go API.                                                                          |
+| `PUBLIC_TURNSTILE_SITE_KEY` | `1x00000000000000000000AA` | Cloudflare Turnstile site key for the contact form. Defaults to Cloudflare's always-passing test key. |
 
 ## API contract
 

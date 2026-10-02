@@ -1,0 +1,133 @@
+---
+import {
+  ArrowUpRight,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+} from "@lucide/astro";
+import ContactForm from "../components/contact/ContactForm.astro";
+import Breadcrumb from "../components/ui/Breadcrumb.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getServices } from "../lib/get-services";
+import { CONTACT } from "../lib/site";
+import { organizationJsonLd } from "../lib/structured-data";
+
+const services = await getServices();
+const itemClass = "flex gap-4";
+const iconClass =
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand";
+const titleClass =
+  "text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+---
+
+<BaseLayout
+  title="Contacto y cotizaciones"
+  description="Cotiza tu proyecto de ingeniería civil con EMOJ Consultora. Escríbenos a coordinacion@emoj.cl, por WhatsApp o visítanos en Quilpué, Región de Valparaíso."
+  jsonLd={[organizationJsonLd(Astro.site)]}
+>
+  <PageHeader
+    eyebrow="Contacto"
+    title="Cotiza tu proyecto"
+    lead="Cuéntanos qué necesitas. Revisamos cada consulta con un ingeniero y te respondemos con los próximos pasos."
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Contacto", href: "/contacto" },
+      ]}
+    />
+  </PageHeader>
+
+  <section class="bg-surface-sunken">
+    <div class="mx-auto grid max-w-[1200px] gap-12 px-4 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16">
+      <ContactForm services={services} />
+
+      <aside aria-labelledby="otros-canales" class="flex flex-col gap-8">
+        <h2
+          id="otros-canales"
+          class="text-[22px] leading-7 font-semibold text-ink"
+        >
+          Otras formas de contactarnos
+        </h2>
+        <ul class="flex flex-col gap-6">
+          <li class={itemClass}>
+            <span class={iconClass}>
+              <Mail size={20} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex flex-col gap-1">
+              <span class={titleClass}>Correo</span>
+              <a
+                class="font-semibold break-all"
+                href={`mailto:${CONTACT.email}`}
+              >
+                {CONTACT.email}
+              </a>
+            </div>
+          </li>
+          <li class={itemClass}>
+            <span class={iconClass}>
+              <MessageCircle size={20} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex flex-col gap-1">
+              <span class={titleClass}>WhatsApp</span>
+              <a
+                class="font-semibold"
+                href={CONTACT.whatsapp.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {CONTACT.whatsapp.display}
+              </a>
+            </div>
+          </li>
+          <li class={itemClass}>
+            <span class={iconClass}>
+              <Phone size={20} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex flex-col gap-1">
+              <span class={titleClass}>Teléfonos</span>
+              {CONTACT.phones.map((phone) => (
+                <a class="font-semibold" href={phone.href}>
+                  {phone.display}
+                </a>
+              ))}
+            </div>
+          </li>
+          <li class={itemClass}>
+            <span class={iconClass}>
+              <MapPin size={20} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex flex-col gap-1">
+              <span class={titleClass}>Oficina</span>
+              <address class="not-italic">
+                {CONTACT.address.street}
+                <br />
+                {CONTACT.address.locality}, {CONTACT.address.region}
+              </address>
+              <a
+                class="inline-flex min-h-11 items-center gap-1 font-semibold"
+                href={CONTACT.mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver en Google Maps
+                <ArrowUpRight
+                  size={20}
+                  stroke-width={1.75}
+                  aria-hidden="true"
+                />
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+            </div>
+          </li>
+        </ul>
+        <p class="radius-signature bg-accent p-6 pl-8 text-on-accent">
+          Trabajamos principalmente en las regiones de Valparaíso y Coquimbo.
+        </p>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
