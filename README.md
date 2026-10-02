@@ -4,7 +4,7 @@ Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean ci
 
 The site is built with Astro as a fully static site and deployed on Vercel. Content will come from a separate Go API, [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
 
-> Status: Phase 9 "Foundations". Tooling, design tokens, base layout and CI only. The home page is a placeholder that proves the design system in light and dark mode.
+> Status: Phase 12 "Public site", slice 1. Layout, home, services (content collection), contact form wired to the API, SEO and security headers. Proyectos, Nosotros and Noticias are placeholders until slice 2.
 
 ## Stack
 
@@ -90,10 +90,12 @@ The generated file **is committed**, because Vercel and CI only check out this r
 design/          design tokens source (tokens.json)
 public/          favicons, web manifest, robots.txt
 scripts/         build scripts (token generator)
-src/assets/      brand SVGs
-src/components/  UI components (Logo)
+src/assets/      brand SVGs and optimized photos (rendered with astro:assets)
+src/content/     services content collection (one Markdown file per API service slug)
+src/components/  UI components (layout, home, services, contact, ui)
+src/lib/         API client and types, site facts, contact form rules, structured data
 src/layouts/     page layouts (BaseLayout: SEO, social, favicons, skip link)
-src/pages/       routes (placeholder home, 404)
+src/pages/       routes (home, servicios, contacto, placeholders, 404)
 src/styles/      global.css and generated tokens.css
 tests/           unit tests
 ```
