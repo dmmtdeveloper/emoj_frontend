@@ -1,124 +1,212 @@
 ---
-import { Mail, MapPin, MessageCircle, Phone } from "@lucide/astro";
-import { CONTACT, NAV, SITE_NAME, SOCIAL, TAGLINE } from "../../lib/site";
+/**
+ * Site footer on `surface-inverse` (the second inverse section of a page).
+ *
+ * - Top: logo, a short description of the firm and the email as the main
+ *   way to start a conversation.
+ * - Columns: every service (internal links that also help SEO), company
+ *   pages, direct contact and social profiles with their names.
+ * - Bottom bar: legal line, location and a "back to top" link.
+ *
+ * Only inverse tokens (with opacity) are used, so it works in both themes;
+ * `brand` on plum is a forbidden pair. A faint isotype stroke signs the
+ * corner. The bottom bar leaves room for the floating WhatsApp button on
+ * mobile.
+ */
+import { ArrowUp, ArrowUpRight } from "@lucide/astro";
+import { getServices } from "../../lib/get-services";
+import {
+  CONTACT,
+  LEGAL_NAME,
+  SITE_NAME,
+  SOCIAL,
+  TAGLINE,
+} from "../../lib/site";
 import Logo from "../Logo.astro";
 import SocialIcon from "../ui/SocialIcon.astro";
+import StrokeLine from "../ui/StrokeLine.astro";
 
 const year = new Date().getFullYear();
-const linkClass =
-  "text-ink-inverse underline-offset-4 hover:text-ink-inverse hover:underline";
+const legalLine = `© ${year} ${LEGAL_NAME} · Quilpué, Región de Valparaíso, Chile`;
+const services = await getServices();
+
+const COMPANY = [
+  { label: "Nosotros", href: "/nosotros" },
+  { label: "Proyectos", href: "/proyectos" },
+  { label: "Noticias", href: "/noticias" },
+  { label: "Contacto", href: "/contacto" },
+] as const;
+
+const heading = "eyebrow eyebrow-inverse text-ink-inverse/70";
+const link =
+  "text-ink-inverse/80 underline-offset-4 transition-colors duration-200 hover:text-ink-inverse hover:underline";
 ---
 
-<footer class="bg-surface-inverse text-ink-inverse">
-  <div class="container-site grid gap-12 py-16 md:grid-cols-2 md:py-24 lg:grid-cols-[1.4fr_1fr_1fr]">
-    <div class="flex flex-col gap-6">
-      <Logo size={168} label={SITE_NAME} />
-      <p class="max-w-[32ch] text-lg leading-7">{TAGLINE}.</p>
-      <ul class="flex gap-2" aria-label="Redes sociales">
-        {SOCIAL.map(({ name, href }) => (
-          <li>
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${SITE_NAME} en ${name} (se abre en una pestaña nueva)`}
-              class="inline-flex size-11 items-center justify-center rounded-md border border-ink-inverse/40 text-ink-inverse transition-colors duration-200 hover:bg-ink-inverse hover:text-surface-inverse"
-            >
-              <SocialIcon name={name} />
-            </a>
-          </li>
-        ))}
-      </ul>
+<footer class="relative isolate overflow-clip bg-surface-inverse text-ink-inverse">
+  <StrokeLine class="absolute -right-40 -bottom-24 -z-10 w-[720px] text-ink-inverse opacity-[0.07] md:-right-24 md:w-[980px]" />
+
+  <div class="container-site">
+    {/* Brand and main contact */}
+    <div class="grid gap-10 py-16 md:pt-20 md:pb-16 lg:grid-cols-12 lg:items-end lg:gap-8">
+      <div class="flex flex-col gap-6 lg:col-span-6">
+        <Logo size={168} label={SITE_NAME} />
+        <p class="max-w-[46ch] text-base leading-7 text-ink-inverse/80">
+          Consultora de ingeniería civil con base en Quilpué. Diseñamos agua
+          potable, caminos, estructuras y fundaciones para las regiones de
+          Valparaíso y Coquimbo. {TAGLINE}.
+        </p>
+      </div>
+      <div class="flex flex-col gap-3 lg:col-span-6 lg:items-end lg:text-right">
+        <p class="text-sm leading-5 font-medium text-ink-inverse/70">
+          ¿Tienes un proyecto en mente? Escríbenos
+        </p>
+        <a
+          href={`mailto:${CONTACT.email}`}
+          class="group inline-flex items-center gap-3 text-[clamp(1.5rem,1.1rem+1.6vw,2.25rem)] leading-tight font-semibold tracking-[-0.01em] text-ink-inverse no-underline hover:text-ink-inverse"
+        >
+          <span class="bg-linear-to-r from-current to-current bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-300 group-hover:bg-[length:100%_2px] group-focus-visible:bg-[length:100%_2px]">
+            {CONTACT.email}
+          </span>
+          <ArrowUpRight
+            size={28}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="shrink-0 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+          />
+        </a>
+      </div>
     </div>
 
-    <div class="flex flex-col gap-4">
-      <h2 class="text-[13px] leading-4 font-semibold tracking-[0.08em] uppercase">
-        Contacto
-      </h2>
-      <ul class="flex flex-col gap-3">
-        <li class="flex gap-3">
-          <Mail
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="mt-1 shrink-0"
-          />
-          <a class={linkClass} href={`mailto:${CONTACT.email}`}>
-            {CONTACT.email}
-          </a>
-        </li>
-        <li class="flex gap-3">
-          <MessageCircle
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="mt-1 shrink-0"
-          />
-          <a
-            class={linkClass}
-            href={CONTACT.whatsapp.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp {CONTACT.whatsapp.display}
-          </a>
-        </li>
-        <li class="flex gap-3">
-          <Phone
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="mt-1 shrink-0"
-          />
-          <span>
-            {CONTACT.phones.map((phone, index) => (
-              <>
-                {index > 0 && " · "}
-                <a class={linkClass} href={phone.href}>
+    {/* Link columns */}
+    <div class="grid grid-cols-2 gap-x-6 gap-y-12 border-t border-ink-inverse/15 py-14 md:py-16 lg:grid-cols-12 lg:gap-x-8">
+      <nav
+        aria-labelledby="footer-servicios"
+        class="col-span-2 flex flex-col gap-5 sm:col-span-1 lg:col-span-4"
+      >
+        <h2 id="footer-servicios" class={heading}>
+          Servicios
+        </h2>
+        <ul class="flex flex-col gap-1">
+          {services.map(({ data }) => (
+            <li>
+              <a
+                class={`${link} inline-flex min-h-11 items-center md:min-h-9`}
+                href={`/servicios/${data.slug}`}
+              >
+                {data.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <nav
+        aria-labelledby="footer-empresa"
+        class="flex flex-col gap-5 lg:col-span-2"
+      >
+        <h2 id="footer-empresa" class={heading}>
+          Empresa
+        </h2>
+        <ul class="flex flex-col gap-1">
+          {COMPANY.map(({ label, href }) => (
+            <li>
+              <a
+                class={`${link} inline-flex min-h-11 items-center md:min-h-9`}
+                href={href}
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="order-last col-span-2 flex flex-col gap-5 sm:col-span-1 lg:order-none lg:col-span-3">
+        <h2 class={heading}>Contacto</h2>
+        <dl class="flex flex-col gap-4 text-base leading-6">
+          <div class="flex flex-col gap-1">
+            <dt class="text-sm leading-5 text-ink-inverse/60">Teléfonos</dt>
+            {CONTACT.phones.map((phone) => (
+              <dd>
+                <a class={link} href={phone.href}>
                   {phone.display}
                 </a>
-              </>
+              </dd>
             ))}
-          </span>
-        </li>
-        <li class="flex gap-3">
-          <MapPin
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="mt-1 shrink-0"
-          />
-          <address class="not-italic">
-            {CONTACT.address.street}
-            <br />
-            {CONTACT.address.locality}, {CONTACT.address.region}
-          </address>
-        </li>
-      </ul>
-    </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <dt class="text-sm leading-5 text-ink-inverse/60">WhatsApp</dt>
+            <dd>
+              <a
+                class={link}
+                href={CONTACT.whatsapp.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {CONTACT.whatsapp.display}
+              </a>
+            </dd>
+          </div>
+          <div class="flex flex-col gap-1">
+            <dt class="text-sm leading-5 text-ink-inverse/60">Oficina</dt>
+            <dd>
+              <a
+                class={link}
+                href={CONTACT.mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <address class="not-italic">
+                  {CONTACT.address.street}
+                  <br />
+                  {CONTACT.address.locality}, {CONTACT.address.region}
+                </address>
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
 
-    <nav aria-label="Pie de página" class="flex flex-col gap-4">
-      <h2 class="text-[13px] leading-4 font-semibold tracking-[0.08em] uppercase">
-        Navegación
-      </h2>
-      <ul class="grid grid-cols-2 gap-x-6 gap-y-1 md:grid-cols-1">
-        {NAV.map(({ label, href }) => (
-          <li>
-            <a
-              class={`${linkClass} inline-flex min-h-11 items-center md:min-h-9`}
-              href={href}
-            >
-              {label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+      <div class="flex flex-col gap-5 lg:col-span-3">
+        <h2 class={heading}>Síguenos</h2>
+        <ul class="flex flex-col gap-1">
+          {SOCIAL.map(({ name, href }) => (
+            <li>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={`${link} group inline-flex min-h-11 items-center gap-3 md:min-h-9`}
+              >
+                <span class="inline-flex size-9 items-center justify-center rounded-full border border-ink-inverse/25 transition-colors duration-200 group-hover:border-ink-inverse group-hover:bg-ink-inverse group-hover:text-surface-inverse">
+                  <SocialIcon name={name} size={20} />
+                </span>
+                {name}
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   </div>
 
-  <div class="border-t border-ink-inverse/20">
-    <p class="container-site py-6 pb-28 text-sm leading-5 font-medium lg:pb-6">
-      © {year} EMOJ Consultora SpA. Todos los derechos reservados.
-    </p>
+  {/* Legal bar */}
+  <div class="border-t border-ink-inverse/15">
+    <div class="container-site flex flex-col gap-3 py-6 pb-28 text-sm leading-5 text-ink-inverse/70 sm:flex-row sm:items-center sm:justify-between lg:pb-6">
+      <p>{legalLine}</p>
+      <a
+        href="#top"
+        class="group inline-flex min-h-11 items-center gap-2 self-start font-medium text-ink-inverse/80 no-underline hover:text-ink-inverse sm:self-auto md:min-h-9"
+      >
+        Volver arriba
+        <ArrowUp
+          size={16}
+          stroke-width={2}
+          aria-hidden="true"
+          class="transition-transform duration-200 group-hover:-translate-y-0.5"
+        />
+      </a>
+    </div>
   </div>
 </footer>
