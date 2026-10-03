@@ -192,28 +192,43 @@ const photos = [
    * over the hero.
    */
   .hero__glow {
+    /* Embossed dot, light from the top left: highlight, body, cast shadow
+       (bottom right), then a faint halo; lines a little stronger. */
     background-image:
       radial-gradient(
-        circle at 12px 12px,
-        var(--sand-50) 1.4px,
-        transparent 2.2px
+        circle at 11.2px 11.2px,
+        color-mix(in oklab, var(--sand-50) 85%, transparent) 0.35px,
+        transparent 1.1px
       ),
       radial-gradient(
         circle at 12px 12px,
-        color-mix(in oklab, var(--sand-50) 45%, transparent) 2px,
+        color-mix(in oklab, var(--sand-50) 50%, transparent) 1.2px,
+        color-mix(in oklab, var(--sand-50) 30%, transparent) 1.8px,
+        transparent 2.3px
+      ),
+      radial-gradient(
+        circle at 12.9px 12.9px,
+        color-mix(in oklab, var(--plum-950) 80%, transparent) 1.6px,
+        transparent 2.6px
+      ),
+      radial-gradient(
+        circle at 12px 12px,
+        color-mix(in oklab, var(--sand-50) 14%, transparent) 2px,
         transparent 6px
       ),
       linear-gradient(
         to right,
-        color-mix(in oklab, var(--sand-50) 22%, transparent) 1px,
+        color-mix(in oklab, var(--sand-50) 14%, transparent) 1px,
         transparent 1px
       ),
       linear-gradient(
         to bottom,
-        color-mix(in oklab, var(--sand-50) 22%, transparent) 1px,
+        color-mix(in oklab, var(--sand-50) 14%, transparent) 1px,
         transparent 1px
       );
     background-size:
+      24px 24px,
+      24px 24px,
       24px 24px,
       24px 24px,
       96px 96px,
@@ -221,6 +236,8 @@ const photos = [
     /* Dots drawn at the cell centre (so the halo is not cut by the cell
        edge) and shifted back onto the base grid's dots at (1px, 1px). */
     background-position:
+      -11px -11px,
+      -11px -11px,
       -11px -11px,
       -11px -11px,
       0 0,
