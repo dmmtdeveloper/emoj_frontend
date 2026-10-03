@@ -1,17 +1,35 @@
 ---
 /**
- * Reference clients as typographic wordmarks (muted), in an endless
- * marquee (CSS only, motion.css `.marquee*`). The second copy of the list is
- * hidden from assistive tech. It pauses on hover, on focus and with the
- * pause toggle (a checkbox, so it works without JavaScript; WCAG 2.2.2).
- * Under reduced motion it is a static, wrapping list.
- * Real logos replace the names once the client authorizes their use.
+ * Reference clients as monochrome logos in an endless marquee (CSS only,
+ * motion.css `.marquee*`). Each logo (public/logos/clientes/*.svg, the
+ * brand's own artwork) is used as a CSS mask over `currentColor`, so every
+ * brand reads in the same muted tone in both themes and darkens to `ink` on
+ * hover. Heights are balanced by eye per logo (wide wordmarks shorter).
+ * A client without a logo file falls back to its name as a wordmark.
+ *
+ * The second copy of the list is hidden from assistive tech. It pauses on
+ * hover, on focus and with the pause toggle (a checkbox, so it works without
+ * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
+ * list.
  */
 import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
 
+/** Logo file, its aspect ratio (width / height) and display height (px). */
+const LOGOS: Partial<
+  Record<(typeof CLIENTS)[number], { file: string; ratio: number; h: number }>
+> = {
+  ESVAL: { file: "esval", ratio: 2.732, h: 40 },
+  "Aguas del Valle": { file: "aguas-del-valle", ratio: 3.876, h: 44 },
+  SAAM: { file: "saam", ratio: 6.152, h: 26 },
+  "AES Andes": { file: "aes-andes", ratio: 5.196, h: 28 },
+  CODELCO: { file: "codelco", ratio: 4.565, h: 32 },
+};
+
 const item =
-  "flex items-center gap-10 text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap text-ink-muted before:size-1.5 before:shrink-0 before:rounded-full before:bg-brand md:gap-14 md:text-[28px]";
+  "flex items-center text-ink-muted transition-colors duration-200 hover:text-ink";
+const wordmark =
+  "text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap md:text-[26px]";
 ---
 
 <section
@@ -44,20 +62,64 @@ const item =
     </div>
     <div class="marquee min-w-0 flex-1">
       <div class="marquee__track">
-        <ul class="flex shrink-0 items-center gap-10 pr-10 md:gap-14 md:pr-14">
-          {CLIENTS.map((client) => (
-            <li class={item}>{client}</li>
-          ))}
+        <ul class="flex shrink-0 items-center gap-12 pr-12 md:gap-20 md:pr-20">
+          {CLIENTS.map((client) => {
+            const logo = LOGOS[client];
+            return (
+              <li class={item}>
+                {logo ? (
+                  <span
+                    role="img"
+                    aria-label={client}
+                    class="client-logo"
+                    style={`--logo: url(/logos/clientes/${logo.file}.svg); --ratio: ${logo.ratio}; --h: ${logo.h}px`}
+                  />
+                ) : (
+                  <span class={wordmark}>{client}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
         <ul
-          class="marquee__clone flex shrink-0 items-center gap-10 pr-10 md:gap-14 md:pr-14"
+          class="marquee__clone flex shrink-0 items-center gap-12 pr-12 md:gap-20 md:pr-20"
           aria-hidden="true"
         >
-          {CLIENTS.map((client) => (
-            <li class={item}>{client}</li>
-          ))}
+          {CLIENTS.map((client) => {
+            const logo = LOGOS[client];
+            return (
+              <li class={item}>
+                {logo ? (
+                  <span
+                    role="img"
+                    aria-label={client}
+                    class="client-logo"
+                    style={`--logo: url(/logos/clientes/${logo.file}.svg); --ratio: ${logo.ratio}; --h: ${logo.h}px`}
+                  />
+                ) : (
+                  <span class={wordmark}>{client}</span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
   </div>
 </section>
+
+<style>
+  .client-logo {
+    display: block;
+    height: calc(var(--h) * 0.8);
+    aspect-ratio: var(--ratio);
+    background-color: currentColor;
+    mask: var(--logo) center / contain no-repeat;
+  }
+
+  @media (min-width: 48rem) {
+    .client-logo {
+      height: var(--h);
+    }
+  }
+</style>

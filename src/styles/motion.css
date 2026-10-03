@@ -556,6 +556,12 @@
     flex-wrap: wrap;
   }
 
+  .marquee__track > ul {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    row-gap: 1.5rem;
+  }
+
   .marquee__clone,
   .marquee__control {
     display: none;

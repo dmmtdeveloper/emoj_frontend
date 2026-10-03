@@ -53,7 +53,7 @@ export const CLIENTS = [
   "ESVAL",
   "Aguas del Valle",
   "SAAM",
-  "AES Gener",
+  "AES Andes",
   "CODELCO",
   "GNL Quintero",
 ] as const;
