@@ -76,6 +76,8 @@ const photos = [
       class="hero__grid blueprint absolute inset-0 -z-10 text-sand-50 opacity-50"
       aria-hidden="true"
     ></div>
+    {/* Brighter copy of the grid, shown only around the mouse (script). */}
+    <div class="hero__glow absolute inset-0 -z-10" aria-hidden="true"></div>
 
     <div class="container-site flex min-h-[max(560px,88svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-20 md:min-h-[max(680px,100svh)] md:justify-center md:gap-8 md:pb-24">
       <p class="hero-in eyebrow eyebrow-inverse [--eyebrow-rule:var(--sage-300)]">
@@ -138,9 +140,104 @@ const photos = [
   </div>
 </section>
 
+<script>
+  import { spotlightEnabled, spotlightPoint } from "../../lib/motion/spotlight";
+
+  const frame = document.querySelector<HTMLElement>(".hero__frame");
+  const enabled = spotlightEnabled({
+    prefersReducedMotion: matchMedia("(prefers-reduced-motion: reduce)")
+      .matches,
+    finePointer: matchMedia("(hover: hover) and (pointer: fine)").matches,
+  });
+
+  if (frame && enabled) {
+    let pointer: { clientX: number; clientY: number } | null = null;
+    let queued = false;
+    const paint = (): void => {
+      queued = false;
+      if (!pointer) return;
+      const { x, y } = spotlightPoint(frame.getBoundingClientRect(), pointer);
+      frame.style.setProperty("--spot-x", x);
+      frame.style.setProperty("--spot-y", y);
+    };
+    const schedule = (): void => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(paint);
+    };
+    frame.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+      pointer = { clientX: event.clientX, clientY: event.clientY };
+      frame.dataset["spotlight"] = "";
+      schedule();
+    });
+    frame.addEventListener("pointerleave", () => {
+      pointer = null;
+      delete frame.dataset["spotlight"];
+    });
+    // The frame moves under a still mouse while the page scrolls.
+    addEventListener("scroll", schedule, { passive: true });
+  }
+</script>
+
 <style>
   .hero__grid {
     mask-image: radial-gradient(120% 90% at 0% 100%, white 0%, transparent 70%);
+  }
+
+  /*
+   * Spotlight: the same 24px dot / 96px line grid, brighter and with a soft
+   * halo per dot, masked to a circle around the pointer (--spot-x/--spot-y,
+   * set by the script below on mouse devices). Hidden until the pointer is
+   * over the hero.
+   */
+  .hero__glow {
+    background-image:
+      radial-gradient(
+        circle at 12px 12px,
+        var(--sand-50) 1.4px,
+        transparent 2.2px
+      ),
+      radial-gradient(
+        circle at 12px 12px,
+        color-mix(in oklab, var(--sand-50) 45%, transparent) 2px,
+        transparent 6px
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--sand-50) 22%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--sand-50) 22%, transparent) 1px,
+        transparent 1px
+      );
+    background-size:
+      24px 24px,
+      24px 24px,
+      96px 96px,
+      96px 96px;
+    /* Dots drawn at the cell centre (so the halo is not cut by the cell
+       edge) and shifted back onto the base grid's dots at (1px, 1px). */
+    background-position:
+      -11px -11px,
+      -11px -11px,
+      0 0,
+      0 0;
+    mask-image: radial-gradient(
+      circle 200px at var(--spot-x, -999px) var(--spot-y, -999px),
+      white 0%,
+      color-mix(in srgb, white 45%, transparent) 45%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 500ms var(--ease-out);
+    pointer-events: none;
+  }
+
+  .hero__frame[data-spotlight] .hero__glow {
+    opacity: 1;
   }
 
   .hero__cue-line::after {
