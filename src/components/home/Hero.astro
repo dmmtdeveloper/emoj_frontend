@@ -361,18 +361,23 @@ const photos = [
     }
   }
 
+  /*
+   * Animates `scale` (not `transform`): the bar's resting width comes from
+   * Tailwind's `scale-x-*`, which sets the `scale` property, and a transform
+   * keyframe would multiply with it (the bar stopped at a third).
+   */
   @keyframes hero-progress {
     0%,
     14% {
-      transform: scaleX(0.3333);
+      scale: 0.3333 1;
     }
     40%,
     54% {
-      transform: scaleX(0.6667);
+      scale: 0.6667 1;
     }
     80%,
     100% {
-      transform: scaleX(1);
+      scale: 1 1;
     }
   }
 
