@@ -253,7 +253,8 @@
     [data-draw="view-back"] path {
       animation: draw linear both;
       animation-timeline: var(--timeline-view, view());
-      animation-range: entry 10% cover 45%;
+      /* Per-instance override: `--draw-range` (e.g. a slower, longer draw). */
+      animation-range: var(--draw-range, entry 10% cover 45%);
     }
 
     [data-draw="view-back"] path {
