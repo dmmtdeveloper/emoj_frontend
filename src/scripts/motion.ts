@@ -7,6 +7,8 @@
  *   header when `animation-timeline: scroll()` is unsupported.
  * - Reveal: IntersectionObserver fallback for `[data-reveal]`.
  * - Count-up: `[data-count]` numbers count from 0 when they scroll in.
+ * - Draw on view: `[data-draw-on-view]` (footer logo) draws once when it
+ *   enters the viewport.
  */
 import {
   countValueAt,
@@ -14,6 +16,7 @@ import {
   parseCount,
   type CountSpec,
 } from "../lib/motion/count-up";
+import { drawOnViewMode, initDrawOnView } from "../lib/motion/draw-on-view";
 import { headerMode, isHeaderSolid } from "../lib/motion/header-state";
 import { initRevealFallback, revealMode } from "../lib/motion/reveal";
 
@@ -119,6 +122,30 @@ function initCountUp(): void {
   for (const element of pending.keys()) observer.observe(element);
 }
 
+function initDrawOnViewElements(): void {
+  const mode = drawOnViewMode({
+    prefersReducedMotion,
+    hasIntersectionObserver,
+  });
+  if (mode !== "observer") return;
+  initDrawOnView({
+    elements: [...document.querySelectorAll<SVGElement>("[data-draw-on-view]")],
+    factory: (callback) =>
+      new IntersectionObserver(
+        (entries) =>
+          callback(
+            entries.map((entry) => ({
+              target: entry.target as SVGElement,
+              isIntersecting: entry.isIntersecting,
+              boundingClientRect: entry.boundingClientRect,
+            })),
+          ),
+        { rootMargin: "0px 0px -10% 0px", threshold: 0.6 },
+      ),
+  });
+}
+
 initHeader();
 initReveal();
 initCountUp();
+initDrawOnViewElements();

@@ -166,8 +166,17 @@
   overflow: visible;
 }
 
-.wordmark text {
+/*
+ * Fill and pen are separate paths: `.wordmark__fill` (all contours, holes
+ * kept) and `.wordmark__stroke` (one per contour). The same keyframes run on
+ * both; each only has the property it paints.
+ */
+.wordmark__fill {
   fill: currentColor;
+}
+
+.wordmark__stroke {
+  fill: none;
   stroke: currentColor;
   stroke-width: 3.5;
   stroke-linejoin: round;
@@ -191,7 +200,7 @@
     fill-opacity: 0;
   }
   100% {
-    stroke-dashoffset: 800;
+    stroke-dashoffset: 1;
     stroke-opacity: 1;
     fill-opacity: 0;
   }
@@ -203,10 +212,10 @@
   }
 }
 
-/* Outline traced at 800 units per glyph (font-size 100), then filled. */
+/* Each contour traced (pathLength 1), then filled. */
 @keyframes wordmark-write {
   0% {
-    stroke-dashoffset: 800;
+    stroke-dashoffset: 1;
     stroke-opacity: 1;
     fill-opacity: 0;
   }
@@ -244,10 +253,14 @@
 
   /*
    * Wordmark (Wordmark.astro): once the isotype stroke ends (~1350ms) the pen
-   * traces each letter's outline, left to right, and the letter fills in.
+   * traces each letter's contours, left to right, and the letter fills in.
+   * `--i` (letter index) is set on the letter group and inherited.
    */
-  .wordmark--draw .wordmark__letter {
-    stroke-dasharray: 800;
+  .wordmark--draw .wordmark__stroke {
+    stroke-dasharray: 1;
+  }
+
+  .wordmark--draw .wordmark__letter path {
     animation:
       wordmark-write 1100ms var(--ease-in-out)
         calc(1300ms + var(--i, 0) * 130ms) both,
@@ -274,60 +287,50 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Footer lockup (LogoLockup.astro): drawn as the footer scrolls in      */
+/* Footer lockup (LogoLockup.astro): drawn once when it enters the view   */
 /* ------------------------------------------------------------------ */
 
 /*
- * The timeline is the footer's own entry (named on <footer>): it always
- * completes, because the footer's bottom reaches the viewport's bottom at
- * the end of every page (the body is `min-h-dvh`). Ranges are in pixels of
- * scroll from the moment the footer's top appears (the logo sits ~64px
- * below it), and finish within 760px: shorter than the footer at any width.
+ * Time-based, triggered by src/lib/motion/draw-on-view.ts through
+ * `data-draw-state` ("armed" hides the parts, "play" draws them). Without
+ * the script or with reduced motion the attribute is never set and the logo
+ * is complete. Timing mirrors the header mark.
  */
 .logo-lockup__dot {
   transform-box: fill-box;
   transform-origin: center;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .site-footer {
-      view-timeline-name: --footer;
-    }
+.logo-lockup__stroke {
+  stroke-dasharray: 1;
+}
 
-    .logo-lockup--draw {
-      --logo-lockup-timeline: --footer;
-    }
+[data-draw-state="armed"] .logo-lockup__stroke {
+  stroke-dashoffset: -1;
+}
 
-    .logo-lockup--draw
-      :is(.logo-lockup__stroke, .logo-lockup__dot, .logo-lockup__words) {
-      animation-timeline: var(--logo-lockup-timeline);
-      animation-timing-function: linear;
-      animation-fill-mode: both;
-    }
+[data-draw-state="armed"] .logo-lockup__dot {
+  transform: scale(0);
+}
 
-    /* The pen starts at the left dot, like the header mark. */
-    .logo-lockup--draw .logo-lockup__dot--start {
-      animation-name: pop;
-      animation-range: entry 100px entry 180px;
-    }
+[data-draw-state="armed"] .logo-lockup__words {
+  clip-path: inset(0 100% 0 0);
+}
 
-    .logo-lockup--draw .logo-lockup__stroke {
-      stroke-dasharray: 1;
-      animation-name: draw-back;
-      animation-range: entry 140px entry 560px;
-    }
+[data-draw-state="play"] .logo-lockup__dot--start {
+  animation: pop 420ms var(--ease-spring) 80ms both;
+}
 
-    .logo-lockup--draw .logo-lockup__dot--end {
-      animation-name: pop;
-      animation-range: entry 530px entry 620px;
-    }
+[data-draw-state="play"] .logo-lockup__stroke {
+  animation: draw-back 1300ms var(--ease-in-out) 250ms both;
+}
 
-    .logo-lockup--draw .logo-lockup__words {
-      animation-name: wipe-right;
-      animation-range: entry 560px entry 760px;
-    }
-  }
+[data-draw-state="play"] .logo-lockup__dot--end {
+  animation: pop 420ms var(--ease-spring) 1500ms both;
+}
+
+[data-draw-state="play"] .logo-lockup__words {
+  animation: wipe-right 900ms var(--ease-in-out) 1550ms both;
 }
 
 /* ------------------------------------------------------------------ */

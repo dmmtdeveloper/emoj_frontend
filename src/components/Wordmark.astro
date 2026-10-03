@@ -1,17 +1,19 @@
 ---
 /**
- * The "emoj" wordmark as inline SVG text, so it can be written with the same
- * pen as the isotype: with `draw`, each letter's outline is traced (stroke
- * dash) left to right right after the isotype stroke ends, then fills in;
- * after a hold it is erased last letter first and hidden, leaving the
- * isotype alone. With `draw` and reduced motion it is never shown. Without
- * `draw` it is plain filled text.
+ * The "emoj" wordmark as inline SVG outlines, so it can be written with the
+ * same pen as the isotype: with `draw`, each letter's contours are traced
+ * (stroke dash, `pathLength="1"`) left to right right after the isotype
+ * stroke ends, then fill in; after a hold it is erased last letter first and
+ * hidden, leaving the isotype alone. With `draw` and reduced motion it is
+ * never shown. Without `draw` it is plain filled.
  *
- * Sized in `em` of the parent font size, with the same box as a line of
- * `leading-none` Urbanist 600 text (viewBox measured at font-size 100:
- * baseline 85 units from the top, advance ~225). `textLength` pins the width
- * so a fallback font cannot overflow. Decorative: the link around it carries
- * the accessible name. Motion lives in `src/styles/motion.css` (`.wordmark*`).
+ * The outlines are Urbanist 600 glyphs (e, m, o, j) extracted from
+ * `@fontsource/urbanist` at font-size 100, baseline at y=0, so the drawing
+ * does not depend on SVG text support or on the web font having loaded
+ * (Safari animates outlines reliably, text glyphs not). The viewBox is the
+ * box of one line of `leading-none` text: baseline 85 units from the top.
+ * Decorative: the link around it carries the accessible name. Motion lives
+ * in `src/styles/motion.css` (`.wordmark*`).
  */
 interface Props {
   /** Write the letters when the page loads (after the isotype stroke). */
@@ -20,7 +22,36 @@ interface Props {
 }
 
 const { draw = false, class: className } = Astro.props;
-const letters = ["e", "m", "o", "j"];
+
+const LETTERS = [
+  {
+    letter: "e",
+    contours: [
+      "M28 1.3Q21.1 1.3 15.4 -2.3Q9.8 -5.8 6.4 -11.8Q3 -17.8 3 -25Q3 -30.5 5 -35.3Q6.9 -40.1 10.3 -43.7Q13.8 -47.3 18.3 -49.4Q22.9 -51.4 28 -51.4Q33.8 -51.4 38.5 -49Q43.4 -46.7 46.8 -42.5Q50.2 -38.3 51.8 -32.9Q53.4 -27.5 52.7 -21.4H14.2Q14.8 -17.9 16.7 -15.1Q18.6 -12.4 21.5 -10.8Q24.4 -9.2 28 -9.1Q31.8 -9.1 34.9 -11Q38.1 -12.9 40.1 -16.2L50.6 -13.8Q47.6 -7.2 41.5 -2.9Q35.5 1.3 28 1.3Z",
+      "M13.8 -29.3H42.2Q41.7 -32.9 39.7 -35.8Q37.6 -38.8 34.6 -40.5Q31.6 -42.2 28 -42.2Q24.5 -42.2 21.4 -40.5Q18.4 -38.8 16.4 -35.9Q14.5 -33 13.8 -29.3Z",
+    ],
+  },
+  {
+    letter: "m",
+    contours: [
+      "M61.9 0V-50H72.3V-44.7Q74.9 -47.8 78.7 -49.6Q82.5 -51.4 86.9 -51.4Q92.2 -51.4 96.7 -48.8Q101.2 -46.2 103.9 -42Q106.5 -46.2 110.9 -48.8Q115.4 -51.4 120.7 -51.4Q126.3 -51.4 130.8 -48.7Q135.4 -46 138.1 -41.5Q140.8 -36.9 140.8 -31.4V0H130.4V-28.7Q130.4 -32 128.8 -34.8Q127.2 -37.5 124.5 -39.2Q121.8 -40.9 118.5 -40.9Q115.2 -40.9 112.5 -39.3Q109.8 -37.7 108.2 -35Q106.6 -32.2 106.6 -28.7V0H96.2V-28.7Q96.2 -32.2 94.6 -35Q93 -37.7 90.2 -39.3Q87.5 -40.9 84.2 -40.9Q81 -40.9 78.2 -39.2Q75.5 -37.5 73.9 -34.8Q72.3 -32 72.3 -28.7V0Z",
+    ],
+  },
+  {
+    letter: "o",
+    contours: [
+      "M172.8 1.3Q165.8 1.3 160.2 -2.3Q154.5 -5.8 151.1 -11.8Q147.8 -17.8 147.8 -25Q147.8 -30.5 149.7 -35.3Q151.7 -40.1 155.1 -43.7Q158.5 -47.3 163.1 -49.4Q167.6 -51.4 172.8 -51.4Q179.7 -51.4 185.3 -47.9Q191 -44.3 194.4 -38.3Q197.8 -32.3 197.8 -25Q197.8 -19.6 195.8 -14.8Q193.8 -10.1 190.4 -6.4Q187 -2.8 182.5 -0.8Q177.9 1.3 172.8 1.3Z",
+      "M172.8 -9.1Q176.9 -9.1 180.2 -11.3Q183.5 -13.5 185.4 -17.1Q187.3 -20.8 187.3 -25Q187.3 -29.4 185.4 -33Q183.4 -36.6 180.1 -38.8Q176.8 -41 172.8 -41Q168.7 -41 165.3 -38.8Q162 -36.6 160.1 -33Q158.2 -29.3 158.2 -25Q158.2 -20.6 160.2 -17Q162.2 -13.4 165.5 -11.2Q168.8 -9.1 172.8 -9.1Z",
+    ],
+  },
+  {
+    letter: "j",
+    contours: [
+      "M196.8 25V14.6Q199.9 14.6 202.4 13.2Q204.9 11.8 206.4 9.2Q207.9 6.8 207.9 3.7V-50H218.3V3.7Q218.3 9.6 215.4 14.4Q212.6 19.2 207.7 22.1Q202.8 25 196.8 25Z",
+      "M213.2 -57.2Q210.8 -57.2 209.2 -58.8Q207.6 -60.4 207.6 -62.7Q207.6 -65 209.2 -66.6Q210.8 -68.2 213.2 -68.2Q215.4 -68.2 217.1 -66.6Q218.7 -65 218.7 -62.7Q218.7 -60.4 217.1 -58.8Q215.5 -57.2 213.2 -57.2Z",
+    ],
+  },
+];
 ---
 
 <svg
@@ -30,15 +61,14 @@ const letters = ["e", "m", "o", "j"];
   focusable="false"
   class:list={["wordmark", draw && "wordmark--draw", className]}
 >
-  <text
-    y="0"
-    font-size="100"
-    font-weight="600"
-    textLength="225"
-    lengthAdjust="spacing"
-  >
-    {letters.map((letter, i) => (
-      <tspan class="wordmark__letter" style={`--i: ${i}`} set:text={letter} />
-    ))}
-  </text>
+  {LETTERS.map(({ contours }, i) => (
+    <g class="wordmark__letter" style={`--i: ${i}`}>
+      {/* One shape for the fill, so counters stay open (e, o, j). */}
+      <path class="wordmark__fill" d={contours.join("")} />
+      {/* One line per contour for the pen (pathLength per contour). */}
+      {contours.map((d) => (
+        <path class="wordmark__stroke" pathLength="1" d={d} />
+      ))}
+    </g>
+  ))}
 </svg>

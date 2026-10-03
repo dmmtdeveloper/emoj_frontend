@@ -5,10 +5,11 @@
  * `src/assets/brand/emoj-logo-currentcolor.svg` (keep in sync); the two dots
  * are split into separate paths.
  *
- * Paints in `currentColor`. With `draw="view"` (motion.css, `.logo-lockup*`)
- * it is drawn as it scrolls into view: the stroke from its left end, the
- * dots pop, then the words wipe in left to right. Reduced motion or no
- * scroll-timeline support shows the finished logo.
+ * Paints in `currentColor`. With `draw="view"` it is drawn once when it
+ * enters the viewport (src/lib/motion/draw-on-view.ts sets
+ * `data-draw-state`; motion.css `.logo-lockup*`): the left dot pops, the
+ * stroke draws from its left end, the right dot pops, then the words wipe
+ * in. Reduced motion or no JavaScript shows the finished logo.
  */
 import type { HTMLAttributes } from "astro/types";
 
@@ -35,7 +36,8 @@ const a11y =
   viewBox="0 0 470 231"
   fill="none"
   focusable="false"
-  class:list={["logo-lockup", draw && "logo-lockup--draw", className]}
+  class:list={["logo-lockup", className]}
+  data-draw-on-view={draw === "view" ? "" : undefined}
   {...a11y}
   {...rest}
 >
