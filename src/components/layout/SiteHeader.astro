@@ -14,6 +14,7 @@
 import { Menu, X } from "@lucide/astro";
 import { CONTACT, NAV, isCurrent } from "../../lib/site";
 import IsotipoMark from "../IsotipoMark.astro";
+import Wordmark from "../Wordmark.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
 
 interface Props {
@@ -47,12 +48,7 @@ const drawMark = pathname === "/";
         height="26"
         class="h-[26px] w-auto lg:h-[30px]"
       />
-      <span
-        aria-hidden="true"
-        class="text-[21px] leading-none font-semibold tracking-[0.01em] lg:text-[23px]"
-      >
-        emoj
-      </span>
+      <Wordmark draw={drawMark} class="h-[21px] w-auto lg:h-[23px]" />
     </a>
 
     <nav aria-label="Principal" class="hidden lg:block">

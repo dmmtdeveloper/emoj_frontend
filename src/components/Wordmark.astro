@@ -1,0 +1,42 @@
+---
+/**
+ * The "emoj" wordmark as inline SVG text, so it can be written with the same
+ * pen as the isotype: with `draw`, each letter's outline is traced (stroke
+ * dash) left to right right after the isotype stroke ends, then fills in.
+ * Without `draw` or with reduced motion it is plain filled text.
+ *
+ * Sized in `em` of the parent font size, with the same box as a line of
+ * `leading-none` Urbanist 600 text (viewBox measured at font-size 100:
+ * baseline 85 units from the top, advance ~225). `textLength` pins the width
+ * so a fallback font cannot overflow. Decorative: the link around it carries
+ * the accessible name. Motion lives in `src/styles/motion.css` (`.wordmark*`).
+ */
+interface Props {
+  /** Write the letters when the page loads (after the isotype stroke). */
+  draw?: boolean;
+  class?: string;
+}
+
+const { draw = false, class: className } = Astro.props;
+const letters = ["e", "m", "o", "j"];
+---
+
+<svg
+  viewBox="0 -85 226 100"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+  class:list={["wordmark", draw && "wordmark--draw", className]}
+>
+  <text
+    y="0"
+    font-size="100"
+    font-weight="600"
+    textLength="225"
+    lengthAdjust="spacing"
+  >
+    {letters.map((letter, i) => (
+      <tspan class="wordmark__letter" style={`--i: ${i}`} set:text={letter} />
+    ))}
+  </text>
+</svg>
