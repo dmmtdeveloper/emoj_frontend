@@ -274,6 +274,63 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Footer lockup (LogoLockup.astro): drawn as the footer scrolls in      */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The timeline is the footer's own entry (named on <footer>): it always
+ * completes, because the footer's bottom reaches the viewport's bottom at
+ * the end of every page (the body is `min-h-dvh`). Ranges are in pixels of
+ * scroll from the moment the footer's top appears (the logo sits ~64px
+ * below it), and finish within 760px: shorter than the footer at any width.
+ */
+.logo-lockup__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .site-footer {
+      view-timeline-name: --footer;
+    }
+
+    .logo-lockup--draw {
+      --logo-lockup-timeline: --footer;
+    }
+
+    .logo-lockup--draw
+      :is(.logo-lockup__stroke, .logo-lockup__dot, .logo-lockup__words) {
+      animation-timeline: var(--logo-lockup-timeline);
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+    }
+
+    /* The pen starts at the left dot, like the header mark. */
+    .logo-lockup--draw .logo-lockup__dot--start {
+      animation-name: pop;
+      animation-range: entry 100px entry 180px;
+    }
+
+    .logo-lockup--draw .logo-lockup__stroke {
+      stroke-dasharray: 1;
+      animation-name: draw-back;
+      animation-range: entry 140px entry 560px;
+    }
+
+    .logo-lockup--draw .logo-lockup__dot--end {
+      animation-name: pop;
+      animation-range: entry 530px entry 620px;
+    }
+
+    .logo-lockup--draw .logo-lockup__words {
+      animation-name: wipe-right;
+      animation-range: entry 560px entry 760px;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Drawn lines (StrokeLine, Scribble)                                  */
 /* ------------------------------------------------------------------ */
 
