@@ -207,6 +207,15 @@ const photos = [
      * (see motion.css: the minifier would otherwise fold it away).
      */
     @supports (animation-timeline: view()) {
+      /*
+       * The overlay header stays transparent while the frame is pinned and
+       * solidifies once the page really moves: track height minus one
+       * viewport, minus the header the section slides under (motion.css).
+       */
+      :global(body:has(.hero__frame)) {
+        --header-solid-start: calc(260svh - 100svh - var(--header-h));
+      }
+
       .hero {
         --hero-timeline: --hero;
         height: 260svh;
