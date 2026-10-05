@@ -197,8 +197,15 @@ function UserMenu() {
   );
 }
 
-export function Shell({ children }: { children: ReactNode }) {
-  const current = activeNavItem(window.location.pathname);
+export function Shell({
+  path,
+  children,
+}: {
+  /** Current pathname (kept by the in-app router in AdminApp). */
+  path: string;
+  children: ReactNode;
+}) {
+  const current = activeNavItem(path);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const drawer = useRef<HTMLDialogElement>(null);
 
@@ -206,6 +213,13 @@ export function Shell({ children }: { children: ReactNode }) {
     const title = current ? `${current.label} | Panel EMOJ` : "Panel EMOJ";
     document.title = title;
   }, [current]);
+
+  // After an in-app navigation, close the mobile drawer and the user menu.
+  useEffect(() => {
+    drawer.current?.close();
+    const menu = document.getElementById("admin-user-menu");
+    if (menu?.matches(":popover-open")) menu.hidePopover();
+  }, [path]);
 
   // Close the drawer on a click on its backdrop (outside the panel). Esc is
   // handled natively by <dialog>, so this is a pointer-only convenience.
