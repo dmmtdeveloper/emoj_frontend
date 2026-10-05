@@ -9,6 +9,7 @@ import type { AdminUser } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { loginUrl } from "../lib/admin/redirect";
 import { adminApi } from "./api";
+import { ShellSkeleton } from "./skeletons";
 import { Notice } from "./ui";
 
 const SessionContext = createContext<AdminUser | null>(null);
@@ -28,16 +29,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
   });
 
   const result = query.data;
-  if (!result) {
-    return (
-      <div
-        className="grid min-h-dvh place-items-center text-ink-muted"
-        role="status"
-      >
-        Cargando el panel…
-      </div>
-    );
-  }
+  if (!result) return <ShellSkeleton />;
 
   if (!result.ok) {
     if (result.kind === "problem" && result.status === 401) {

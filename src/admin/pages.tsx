@@ -25,6 +25,7 @@ import {
   unwrap,
 } from "./common";
 import { useUser } from "./session";
+import { DashboardSkeleton, MessagesSkeleton } from "./skeletons";
 import { Button, ButtonLink, Card, Notice } from "./ui";
 
 /* ------------------------------------------------------------------ */
@@ -136,9 +137,7 @@ export function DashboardPage() {
       )}
 
       {counts.isPending ? (
-        <p className="text-ink-muted" role="status">
-          Cargando el resumen…
-        </p>
+        <DashboardSkeleton />
       ) : counts.data ? (
         <>
           <div className="grid gap-6 md:grid-cols-2">
@@ -307,9 +306,7 @@ export function MessagesPage({
       )}
       <Card>
         {query.isPending ? (
-          <p className="text-ink-muted" role="status">
-            Cargando mensajes…
-          </p>
+          <MessagesSkeleton />
         ) : query.data && query.data.items.length === 0 ? (
           <p className="text-ink-muted">
             Todavía no llegan consultas por el formulario.

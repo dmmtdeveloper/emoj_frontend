@@ -1,8 +1,8 @@
 ---
-import AdminApp from "../../admin/AdminApp";
+import AdminMount from "../../layouts/AdminMount.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 ---
 
 <AdminLayout title="Nueva contraseña">
-  <AdminApp page="reset" client:only="react" />
+  <AdminMount page="reset" />
 </AdminLayout>

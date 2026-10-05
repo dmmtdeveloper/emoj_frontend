@@ -25,7 +25,17 @@ import {
 import { charCount } from "../lib/admin/project-form";
 import { adminApi } from "./api";
 import { ErrorNotice, unwrap } from "./common";
-import { Button, Counter, cx, Dialog, Field, Notice, ProgressBar } from "./ui";
+import { MediaGridSkeleton } from "./skeletons";
+import {
+  Button,
+  Counter,
+  cx,
+  Dialog,
+  FadeImage,
+  Field,
+  Notice,
+  ProgressBar,
+} from "./ui";
 
 const MEDIA_KEY = ["media-all"] as const;
 const LIBRARY_PAGE_SIZE = 50;
@@ -80,7 +90,7 @@ export function MediaThumb({
     );
   }
   return (
-    <img
+    <FadeImage
       src={media.url}
       alt={media.alt}
       width={media.width || undefined}
@@ -88,7 +98,7 @@ export function MediaThumb({
       sizes={sizes}
       loading="lazy"
       decoding="async"
-      className={cx("bg-surface-sunken object-cover", className)}
+      className={cx("object-cover", className)}
     />
   );
 }
@@ -411,9 +421,7 @@ export function MediaPicker({
               retry={() => void library.refetch()}
             />
           ) : library.isPending ? (
-            <p role="status" className="text-ink-muted">
-              Cargando imágenes…
-            </p>
+            <MediaGridSkeleton />
           ) : items.length === 0 ? (
             <p className="text-ink-muted">
               Todavía no hay imágenes. Sube la primera.

@@ -3,6 +3,7 @@
  */
 import type {
   ButtonHTMLAttributes,
+  ImgHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
   TextareaHTMLAttributes,
@@ -400,5 +401,33 @@ export function Isotype({ className }: { className?: string }) {
         d="M463.625 71.7677C466.912 71.7677 469.577 69.2302 469.577 66.1001C469.577 62.9701 466.912 60.4326 463.625 60.4326C460.337 60.4326 457.673 62.9701 457.673 66.1001C457.673 69.2302 460.337 71.7677 463.625 71.7677Z"
       />
     </svg>
+  );
+}
+
+/**
+ * An image that fades in once it has loaded (`.admin-fade`, AdminLayout),
+ * over the grey of its box, instead of appearing line by line.
+ */
+export function FadeImage({
+  className,
+  alt,
+  ...img
+}: ImgHTMLAttributes<HTMLImageElement> & { alt: string }) {
+  return (
+    <img
+      {...img}
+      alt={alt}
+      ref={(el) => {
+        // Cached images may be complete before React attaches onLoad.
+        if (el?.complete && el.naturalWidth > 0) el.dataset["loaded"] = "";
+      }}
+      onLoad={(e) => {
+        e.currentTarget.dataset["loaded"] = "";
+      }}
+      onError={(e) => {
+        e.currentTarget.dataset["loaded"] = "";
+      }}
+      className={cx("admin-fade bg-surface-sunken", className)}
+    />
   );
 }

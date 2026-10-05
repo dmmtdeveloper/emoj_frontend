@@ -1,0 +1,25 @@
+---
+/**
+ * Where the panel renders (src/admin/mount.tsx starts it). The page and its
+ * data travel in data-* attributes and the script is a same-origin module,
+ * so the strict Content-Security-Policy needs no inline-script exception.
+ */
+import type { AdminPage } from "../admin/AdminApp";
+
+interface Props {
+  page: AdminPage;
+  serviceTitles?: Record<string, string>;
+}
+
+const { page, serviceTitles = {} } = Astro.props;
+---
+
+<div
+  id="admin-root"
+  data-page={page}
+  data-service-titles={JSON.stringify(serviceTitles)}
+></div>
+
+<script>
+  import "../admin/mount";
+</script>

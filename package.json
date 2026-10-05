@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/check-csp.mjs",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",
@@ -22,7 +22,6 @@
     "api:types": "openapi-typescript ../emoj_backend/openapi.yaml -o src/lib/api/schema.d.ts"
   },
   "dependencies": {
-    "@astrojs/react": "^7.0.0",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/urbanist": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",

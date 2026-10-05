@@ -26,6 +26,7 @@ import {
 } from "../lib/admin/project-form";
 import { SERVICE_SLUGS } from "../lib/services";
 import { adminApi } from "./api";
+import { EditorSkeleton } from "./skeletons";
 import { ErrorNotice, unwrap } from "./common";
 import {
   BannerSlot,
@@ -134,11 +135,7 @@ export function ProjectEditor({
     );
   }
   if (id !== null && !query.data) {
-    return (
-      <p role="status" className="text-ink-muted">
-        Cargando el proyecto…
-      </p>
-    );
+    return <EditorSkeleton label="Cargando el proyecto…" />;
   }
   return (
     <EditorForm project={query.data ?? null} serviceTitles={serviceTitles} />

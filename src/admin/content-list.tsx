@@ -17,7 +17,8 @@ import {
   replaceParam,
   unwrap,
 } from "./common";
-import { ButtonLink, Card, cx, StatusBadge } from "./ui";
+import { ListSkeleton } from "./skeletons";
+import { ButtonLink, Card, cx, FadeImage, StatusBadge } from "./ui";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -71,12 +72,12 @@ export interface ListConfig<T> {
 
 function Cover({ cover }: { cover: MediaRef | undefined }) {
   return cover?.url ? (
-    <img
+    <FadeImage
       src={cover.url}
       alt=""
       loading="lazy"
       decoding="async"
-      className="aspect-[4/3] w-20 shrink-0 rounded-sm bg-surface-sunken object-cover"
+      className="aspect-[4/3] w-20 shrink-0 rounded-sm object-cover"
     />
   ) : (
     <span className="grid aspect-[4/3] w-20 shrink-0 place-items-center rounded-sm bg-surface-sunken text-ink-muted">
@@ -256,9 +257,7 @@ export function ContentListPage<T>({ config }: { config: ListConfig<T> }) {
 
       <Card className={cx(query.isFetching && data && "opacity-70")}>
         {query.isPending ? (
-          <p role="status" className="text-ink-muted">
-            Cargando {config.many}…
-          </p>
+          <ListSkeleton label={`Cargando ${config.many}…`} />
         ) : data && data.items.length === 0 ? (
           <p className="text-ink-muted">
             {filtered

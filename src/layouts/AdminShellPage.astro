@@ -1,11 +1,12 @@
 ---
 /**
- * A panel page inside the shell. Every section gets the same island props,
+ * A panel page inside the shell. Every section gets the same data,
  * because in-app navigation can reach any section from any first page.
  */
-import AdminApp, { type AdminPage } from "../admin/AdminApp";
+import type { AdminPage } from "../admin/AdminApp";
 import { getServiceTitles } from "../lib/get-services";
 import AdminLayout from "./AdminLayout.astro";
+import AdminMount from "./AdminMount.astro";
 
 interface Props {
   title: string;
@@ -17,5 +18,5 @@ const serviceTitles = await getServiceTitles();
 ---
 
 <AdminLayout title={title}>
-  <AdminApp page={page} serviceTitles={serviceTitles} client:only="react" />
+  <AdminMount page={page} serviceTitles={serviceTitles} />
 </AdminLayout>

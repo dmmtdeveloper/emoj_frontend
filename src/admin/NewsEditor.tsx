@@ -21,6 +21,7 @@ import {
 } from "../lib/admin/news-form";
 import { charCount } from "../lib/admin/project-form";
 import { adminApi } from "./api";
+import { EditorSkeleton } from "./skeletons";
 import { ErrorNotice, unwrap } from "./common";
 import {
   BannerSlot,
@@ -118,11 +119,7 @@ export function NewsEditor({ id }: { id: string | null }) {
     );
   }
   if (id !== null && !query.data) {
-    return (
-      <p role="status" className="text-ink-muted">
-        Cargando la noticia…
-      </p>
-    );
+    return <EditorSkeleton label="Cargando la noticia…" />;
   }
   return <EditorForm news={query.data ?? null} />;
 }

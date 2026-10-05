@@ -1,5 +1,4 @@
 // @ts-check
-import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
@@ -17,8 +16,8 @@ export default defineConfig({
   output: "static",
   trailingSlash: "ignore",
   integrations: [
-    // The admin panel (/admin) is a client-only React island.
-    react(),
+    // The admin panel (/admin) is React started by a plain module script
+    // (src/admin/mount.tsx); no Astro islands, so no inline scripts.
     sitemap({ filter: (page) => !new URL(page).pathname.startsWith("/admin") }),
   ],
   image: {
@@ -38,6 +37,22 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // Pre-bundle the panel's dependencies when the dev server starts. The
+    // news editor (TipTap) loads on demand; discovered late, Vite would
+    // re-bundle mid-request and that first load would fail.
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom/client",
+        "@tanstack/react-query",
+        "react-hook-form",
+        "@hookform/resolvers/zod",
+        "zod",
+        "lucide-react",
+        "@tiptap/react",
+        "@tiptap/starter-kit",
+      ],
+    },
     server: {
       // Same-origin API for the admin in development, like the Vercel
       // rewrite in production: the session cookie stays first-party.

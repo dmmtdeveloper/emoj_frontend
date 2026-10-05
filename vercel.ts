@@ -9,6 +9,8 @@ import type { VercelConfig } from "@vercel/config/v1";
 /** Staging API, allowed when PUBLIC_API_URL is not available at config time. */
 const STAGING_API_ORIGIN = "https://api-staging-25e9.up.railway.app";
 const TURNSTILE_ORIGIN = "https://challenges.cloudflare.com";
+/** Railway buckets (virtual-hosted style), as in astro.config.mjs. */
+const MEDIA_ORIGIN = "https://*.t3.storageapi.dev";
 
 function apiOrigin(): string {
   const raw = process.env["PUBLIC_API_URL"];
@@ -36,12 +38,15 @@ const connectSources = [
  * - connect-src: the API origin (from PUBLIC_API_URL when Vercel exposes it
  *   while compiling this file) plus the staging API as a fallback.
  * - Turnstile renders inside an iframe from challenges.cloudflare.com.
+ * - img-src: the admin panel shows media straight from the Railway bucket
+ *   (presigned URLs, <bucket>.t3.storageapi.dev); the public site only
+ *   serves images optimized at build time from its own origin.
  */
 const csp = [
   "default-src 'self'",
   `script-src 'self' ${TURNSTILE_ORIGIN}`,
   "style-src 'self'",
-  "img-src 'self' data:",
+  `img-src 'self' data: ${MEDIA_ORIGIN}`,
   "font-src 'self'",
   `connect-src ${connectSources.join(" ")}`,
   `frame-src ${TURNSTILE_ORIGIN}`,

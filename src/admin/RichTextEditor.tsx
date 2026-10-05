@@ -118,6 +118,9 @@ export function RichTextEditor({
 
   const editor = useEditor({
     extensions,
+    // TipTap would inject a <style> element, which the CSP blocks; its base
+    // styles live in AdminLayout.astro instead.
+    injectCSS: false,
     content: value ?? "",
     editorProps: {
       attributes: {

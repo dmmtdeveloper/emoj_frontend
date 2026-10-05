@@ -1,6 +1,6 @@
 /**
- * Entry point of the admin island. Each /admin page mounts it with its
- * `page` (client:only): the auth screens render on their own, everything
+ * Root of the panel. Each /admin page mounts it with its `page` (see
+ * mount.tsx): the auth screens render on their own, everything
  * else goes through the session guard and the shell.
  *
  * Inside the shell, clicks on links to other sections are handled here
@@ -8,7 +8,15 @@
  * the content is swapped, so the sidebar, navbar and session stay loaded.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState } from "react";
+import {
+  Component,
+  lazy,
+  Suspense,
+  useEffect,
+  useState,
+  type ErrorInfo,
+  type ReactNode,
+} from "react";
 import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
 import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
@@ -22,6 +30,8 @@ import { NewsListPage } from "./news";
 import { ProjectEditor } from "./ProjectEditor";
 import { ProjectsPage } from "./projects";
 import { RequireSession } from "./session";
+import { EditorSkeleton } from "./skeletons";
+import { Button, Notice } from "./ui";
 import { Shell } from "./Shell";
 
 // The news editor brings TipTap (the largest part of the panel): it loads
@@ -30,28 +40,60 @@ const NewsEditor = lazy(() =>
   import("./NewsEditor").then((m) => ({ default: m.NewsEditor })),
 );
 
-function Loading() {
-  return (
-    <p role="status" className="text-ink-muted">
-      Cargando el editor…
-    </p>
-  );
+/**
+ * If a section fails to render or load (for instance a new version of the
+ * site was published while the panel was open, so an old file is gone),
+ * show what happened and a way out instead of a blank page.
+ */
+class SectionBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Admin section failed", error, info.componentStack);
+  }
+
+  override render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="mx-auto flex max-w-xl flex-col items-start gap-4">
+        <Notice tone="error">
+          Esta sección no se pudo cargar. Puede pasar si se publicó una versión
+          nueva del panel mientras lo tenías abierto.
+        </Notice>
+        <Button onClick={() => window.location.reload()}>Recargar</Button>
+      </div>
+    );
+  }
 }
 
-export type AdminPage =
-  | "login"
-  | "forgot"
-  | "reset"
-  | "dashboard"
-  | "projects"
-  | "project-new"
-  | "project-edit"
-  | "news"
-  | "news-new"
-  | "news-edit"
-  | "media"
-  | "messages"
-  | "account";
+function Loading() {
+  return <EditorSkeleton label="Cargando el editor…" />;
+}
+
+export const ADMIN_PAGES = [
+  "login",
+  "forgot",
+  "reset",
+  "dashboard",
+  "projects",
+  "project-new",
+  "project-edit",
+  "news",
+  "news-new",
+  "news-edit",
+  "media",
+  "messages",
+  "account",
+] as const;
+
+export type AdminPage = (typeof ADMIN_PAGES)[number];
 
 interface Props {
   page: AdminPage;
@@ -108,7 +150,13 @@ export default function AdminApp(props: Props) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { retry: false, refetchOnWindowFocus: false },
+          queries: {
+            retry: false,
+            refetchOnWindowFocus: false,
+            // Coming back to a section shows what was loaded a moment ago
+            // at once (and refreshes it quietly after 30 s).
+            staleTime: 30_000,
+          },
         },
       }),
   );
@@ -150,12 +198,16 @@ function ShellRouter({
 
   return (
     <Shell path={path}>
-      <Content
-        key={`${path}${search}`}
-        page={pageForPath(path)}
-        search={search}
-        serviceTitles={serviceTitles}
-      />
+      {/* Re-keyed per section, so each one rises in (admin-enter). */}
+      <div key={`${path}${search}`} className="admin-enter">
+        <SectionBoundary>
+          <Content
+            page={pageForPath(path)}
+            search={search}
+            serviceTitles={serviceTitles}
+          />
+        </SectionBoundary>
+      </div>
     </Shell>
   );
 }
