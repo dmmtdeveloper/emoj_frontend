@@ -19,7 +19,7 @@ import {
 } from "./common";
 import { ButtonLink, Card, cx, StatusBadge } from "./ui";
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 
 type StatusFilter = "" | "draft" | "published";
 
@@ -63,6 +63,8 @@ export interface ListConfig<T> {
   filters: { all: string; published: string; draft: string };
   newHref: string;
   newLabel: string;
+  /** Items per page (default 20). */
+  pageSize?: number;
   searchPlaceholder: string;
   empty: ReactNode;
 }
@@ -133,6 +135,7 @@ function Row({ row }: { row: ListRow }) {
 }
 
 export function ContentListPage<T>({ config }: { config: ListConfig<T> }) {
+  const pageSize = config.pageSize ?? DEFAULT_PAGE_SIZE;
   const searchId = useId();
   const [search, setSearch] = useState(
     () => new URLSearchParams(window.location.search).get("q") ?? "",
@@ -142,14 +145,14 @@ export function ContentListPage<T>({ config }: { config: ListConfig<T> }) {
   const q = useDebounced(search.trim(), 300);
 
   const query = useQuery({
-    queryKey: [config.queryKey, { q, status, page }],
+    queryKey: [config.queryKey, { q, status, page, pageSize }],
     queryFn: async () =>
       unwrap(
         await config.load({
           q,
           ...(status ? { status } : {}),
           page,
-          pageSize: PAGE_SIZE,
+          pageSize,
         }),
       ),
     placeholderData: keepPreviousData,
@@ -176,7 +179,7 @@ export function ContentListPage<T>({ config }: { config: ListConfig<T> }) {
   }
 
   const data = query.data;
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / pageSize)) : 1;
   const filtered = q !== "" || status !== "";
   const filters: { value: StatusFilter; label: string }[] = [
     { value: "", label: config.filters.all },

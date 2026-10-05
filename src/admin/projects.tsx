@@ -29,6 +29,7 @@ const CONFIG: ListConfig<AdminProject> = {
   filters: { all: "Todos", published: "Publicados", draft: "Borradores" },
   newHref: "/admin/proyectos/nuevo",
   newLabel: "Nuevo proyecto",
+  pageSize: 5,
   searchPlaceholder: "Ej.: canal, puente…",
   empty: "Todavía no hay proyectos. Crea el primero con «Nuevo proyecto».",
 };

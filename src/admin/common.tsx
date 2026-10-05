@@ -6,7 +6,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ApiResult } from "../lib/api/client";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
-import { Button, Notice } from "./ui";
+import { pageItems } from "../lib/admin/pagination";
+import { cx, Notice } from "./ui";
 
 const dateTimeFormat = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",
@@ -88,27 +89,60 @@ export function Pagination({
   onChange: (page: number) => void;
 }) {
   if (totalPages <= 1) return null;
+  const arrow =
+    "inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-base font-semibold text-ink hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
   return (
-    <nav aria-label={label} className="flex items-center justify-between gap-4">
-      <Button
-        variant="secondary"
+    <nav aria-label={label} className="flex items-center justify-center gap-1">
+      <button
+        type="button"
+        className={arrow}
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
       >
         <ChevronLeft size={18} strokeWidth={1.75} aria-hidden="true" />
-        Anteriores
-      </Button>
-      <p className="text-sm text-ink-muted">
-        Página {page} de {totalPages}
-      </p>
-      <Button
-        variant="secondary"
+        <span className="hidden sm:inline">Anterior</span>
+        <span className="sr-only sm:hidden">Página anterior</span>
+      </button>
+      <ol className="flex items-center gap-1">
+        {pageItems(page, totalPages).map((item, i) =>
+          item === "…" ? (
+            <li
+              key={`gap-${i}`}
+              aria-hidden="true"
+              className="grid size-11 place-items-center text-ink-muted"
+            >
+              …
+            </li>
+          ) : (
+            <li key={item}>
+              <button
+                type="button"
+                aria-current={item === page ? "page" : undefined}
+                onClick={() => onChange(item)}
+                className={cx(
+                  "grid size-11 place-items-center rounded-md text-base font-semibold tabular-nums",
+                  item === page
+                    ? "bg-surface-inverse text-ink-inverse"
+                    : "text-ink hover:bg-surface-sunken",
+                )}
+              >
+                <span className="sr-only">Página </span>
+                {item}
+              </button>
+            </li>
+          ),
+        )}
+      </ol>
+      <button
+        type="button"
+        className={arrow}
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
       >
-        Siguientes
+        <span className="hidden sm:inline">Siguiente</span>
+        <span className="sr-only sm:hidden">Página siguiente</span>
         <ChevronRight size={18} strokeWidth={1.75} aria-hidden="true" />
-      </Button>
+      </button>
     </nav>
   );
 }
