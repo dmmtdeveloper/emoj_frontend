@@ -3,7 +3,6 @@ import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
 import { Image } from "astro:assets";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
 import SectionHeading from "../ui/SectionHeading.astro";
-import SectionTrace from "../ui/SectionTrace.astro";
 
 interface Props {
   /** Section background, to keep the page's surface rhythm. */
@@ -38,12 +37,8 @@ const DIFFERENTIATORS = [
 
 <section
   aria-labelledby="por-que-emoj"
-  class:list={[
-    "relative isolate overflow-clip",
-    background === "surface" ? "bg-surface" : "bg-surface-sunken",
-  ]}
+  class:list={[background === "surface" ? "bg-surface" : "bg-surface-sunken"]}
 >
-  <SectionTrace corner="top-right" />
   <div class="container-site relative z-[2] grid gap-10 py-16 md:py-28 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:py-32">
     <div class="flex flex-col gap-8">
       <SectionHeading
