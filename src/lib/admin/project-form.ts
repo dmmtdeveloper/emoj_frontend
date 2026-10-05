@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { FieldError, ServiceSlug } from "../api/client";
 import { SERVICE_SLUGS } from "../services";
 import type { AdminProject, ProjectInput } from "./api";
+import { fieldErrors, tooLong } from "./form-errors";
 
 /** Character limits, mirroring emoj_backend `internal/domain`. */
 export const PROJECT_LIMITS = {
@@ -152,8 +153,7 @@ export function charCount(value: string): number {
   return [...value].length;
 }
 
-export const tooLong = (max: number) =>
-  `Puede tener hasta ${max.toLocaleString("es-CL")} caracteres.`;
+export { tooLong };
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -209,8 +209,8 @@ export function projectFormSchema(now: Date) {
   }) satisfies z.ZodType<ProjectFormValues>;
 }
 
-export interface ChecklistItem {
-  field: ProjectField;
+export interface ChecklistItem<F extends string = ProjectField> {
+  field: F;
   label: string;
   done: boolean;
   /** Required by the API to publish; otherwise only recommended. */
@@ -292,25 +292,6 @@ const API_FIELDS: Record<string, ProjectField> = {
   "seo.ogImageMediaId": "ogImageMediaId",
 };
 
-/** Spanish wording for the API's English field messages. */
-function translate(status: number, field: ProjectField, message: string) {
-  if (status === 409 && field === "slug") {
-    return "Ya hay otro proyecto con esta dirección. Cámbiala para continuar.";
-  }
-  const max = /at most (\d+)/.exec(message);
-  if (max) return tooLong(Number(max[1]));
-  if (/required to publish/.test(message)) {
-    return "Es obligatorio para publicar.";
-  }
-  if (/required/.test(message)) return "Este campo es obligatorio.";
-  if (field === "services") return "Elige al menos un servicio.";
-  if (field === "year") return "Escribe un año válido o déjalo vacío.";
-  if (field === "slug") {
-    return "Usa solo minúsculas sin tildes, números y guiones simples.";
-  }
-  return "Revisa este campo.";
-}
-
 /**
  * Field errors from an API problem (409/422), keyed by form field. Fields
  * the form does not show are listed in `other`.
@@ -319,15 +300,13 @@ export function formErrorsFromProblem(
   status: number,
   errors: readonly FieldError[] = [],
 ): { fields: Partial<Record<ProjectField, string>>; other: string[] } {
-  const fields: Partial<Record<ProjectField, string>> = {};
-  const other: string[] = [];
-  for (const { field, message } of errors) {
-    const name = API_FIELDS[field];
-    if (!name) {
-      other.push(field);
-      continue;
-    }
-    fields[name] ??= translate(status, name, message);
-  }
-  return { fields, other };
+  return fieldErrors(status, errors, {
+    fields: API_FIELDS,
+    slugTaken:
+      "Ya hay otro proyecto con esta dirección. Cámbiala para continuar.",
+    fallbacks: {
+      services: "Elige al menos un servicio.",
+      year: "Escribe un año válido o déjalo vacío.",
+    },
+  });
 }

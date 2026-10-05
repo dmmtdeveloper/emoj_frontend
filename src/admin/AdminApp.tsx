@@ -8,7 +8,7 @@
  * the content is swapped, so the sidebar, navbar and session stay loaded.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
 import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
@@ -18,10 +18,25 @@ import {
   DashboardPage,
   MessagesPage,
 } from "./pages";
+import { NewsListPage } from "./news";
 import { ProjectEditor } from "./ProjectEditor";
 import { ProjectsPage } from "./projects";
 import { RequireSession } from "./session";
 import { Shell } from "./Shell";
+
+// The news editor brings TipTap (the largest part of the panel): it loads
+// only when a news item is opened.
+const NewsEditor = lazy(() =>
+  import("./NewsEditor").then((m) => ({ default: m.NewsEditor })),
+);
+
+function Loading() {
+  return (
+    <p role="status" className="text-ink-muted">
+      Cargando el editor…
+    </p>
+  );
+}
 
 export type AdminPage =
   | "login"
@@ -32,6 +47,8 @@ export type AdminPage =
   | "project-new"
   | "project-edit"
   | "news"
+  | "news-new"
+  | "news-edit"
   | "media"
   | "messages"
   | "account";
@@ -70,7 +87,15 @@ function Content({
         />
       );
     case "news":
-      return <ComingSoonPage what="las noticias" />;
+      return <NewsListPage />;
+    case "news-new":
+      return (
+        <Suspense fallback={<Loading />}>
+          <NewsEditor id={null} />
+        </Suspense>
+      );
+    case "news-edit":
+      return <NewsEditor id={new URLSearchParams(search).get("id") ?? ""} />;
     case "media":
       return <ComingSoonPage what="las fotos e imágenes" />;
     default:

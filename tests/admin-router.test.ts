@@ -17,6 +17,11 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/proyectos/editar/")).toBe("project-edit");
   });
 
+  it("maps the news editor routes", () => {
+    expect(pageForPath("/admin/noticias/nueva")).toBe("news-new");
+    expect(pageForPath("/admin/noticias/editar")).toBe("news-edit");
+  });
+
   it("returns null for the sign-in pages and anything else", () => {
     expect(pageForPath("/admin/login")).toBeNull();
     expect(pageForPath("/admin/restablecer")).toBeNull();

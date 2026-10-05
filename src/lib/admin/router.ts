@@ -11,6 +11,8 @@ export type ShellPage =
   | "project-new"
   | "project-edit"
   | "news"
+  | "news-new"
+  | "news-edit"
   | "media"
   | "messages"
   | "account";
@@ -21,6 +23,8 @@ const PAGES: Record<string, ShellPage> = {
   "/admin/proyectos/nuevo": "project-new",
   "/admin/proyectos/editar": "project-edit",
   "/admin/noticias": "news",
+  "/admin/noticias/nueva": "news-new",
+  "/admin/noticias/editar": "news-edit",
   "/admin/medios": "media",
   "/admin/mensajes": "messages",
   "/admin/cuenta": "account",

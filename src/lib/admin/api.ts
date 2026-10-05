@@ -27,6 +27,8 @@ export type AdminProjectPage = Schemas["AdminProjectPage"];
 export type AdminNewsPage = Schemas["AdminNewsPage"];
 export type AdminProject = Schemas["AdminProject"];
 export type ProjectInput = Schemas["ProjectInput"];
+export type AdminNews = Schemas["AdminNews"];
+export type NewsInput = Schemas["NewsInput"];
 export type AdminMedia = Schemas["AdminMedia"];
 export type AdminMediaPage = Schemas["AdminMediaPage"];
 export type ContactMessage = Schemas["ContactMessage"];
@@ -77,6 +79,13 @@ export interface AdminClient {
   unpublishProject(id: string): Promise<ApiResult<AdminProject>>;
   deleteProject(id: string): Promise<ApiResult<null>>;
   listNews(query?: AdminListQuery): Promise<ApiResult<AdminNewsPage>>;
+  getNews(id: string): Promise<ApiResult<AdminNews>>;
+  createNews(body: NewsInput): Promise<ApiResult<AdminNews>>;
+  /** Partial update: absent fields keep their value (`body: null` clears it). */
+  updateNews(id: string, body: NewsInput): Promise<ApiResult<AdminNews>>;
+  publishNews(id: string): Promise<ApiResult<AdminNews>>;
+  unpublishNews(id: string): Promise<ApiResult<AdminNews>>;
+  deleteNews(id: string): Promise<ApiResult<null>>;
   listMedia(query?: MediaQuery): Promise<ApiResult<AdminMediaPage>>;
   /** Uploads an image; `onProgress` receives the sent fraction (0 to 1). */
   uploadMedia(
@@ -272,6 +281,15 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
       request<AdminMedia>("PATCH", `/v1/admin/media/${seg(id)}`, { alt }),
     listNews: (query) =>
       request<AdminNewsPage>("GET", `/v1/admin/news${queryString(query)}`),
+    getNews: (id) => request<AdminNews>("GET", `/v1/admin/news/${seg(id)}`),
+    createNews: (body) => request<AdminNews>("POST", "/v1/admin/news", body),
+    updateNews: (id, body) =>
+      request<AdminNews>("PATCH", `/v1/admin/news/${seg(id)}`, body),
+    publishNews: (id) =>
+      request<AdminNews>("POST", `/v1/admin/news/${seg(id)}/publish`),
+    unpublishNews: (id) =>
+      request<AdminNews>("POST", `/v1/admin/news/${seg(id)}/unpublish`),
+    deleteNews: (id) => request<null>("DELETE", `/v1/admin/news/${seg(id)}`),
     listMessages: (query) =>
       request<ContactMessagePage>(
         "GET",

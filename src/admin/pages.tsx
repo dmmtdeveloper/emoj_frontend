@@ -154,6 +154,8 @@ export function DashboardPage() {
             <StatCard
               title="Noticias"
               href="/admin/noticias"
+              newHref="/admin/noticias/nueva"
+              newLabel="Nueva noticia"
               icon={FileText}
               published={counts.data.news.published}
               draft={counts.data.news.draft}

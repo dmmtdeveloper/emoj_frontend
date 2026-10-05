@@ -288,4 +288,36 @@ describe("createAdminClient", () => {
     }).uploadMedia(file, "a");
     expect(dropped).toMatchObject({ ok: false, kind: "network" });
   });
+
+  it("reads, writes, publishes and deletes news with the CSRF token", async () => {
+    const article = { id: "n1", title: "Visita", status: "draft" };
+    const fetch = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "DELETE"
+        ? new Response(null, { status: 204 })
+        : jsonResponse(200, article),
+    );
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+    await client.getNews("n1");
+    await client.createNews({ title: "Visita" });
+    await client.updateNews("n1", { body: null });
+    await client.publishNews("n1");
+    await client.unpublishNews("n1");
+    await client.deleteNews("n1");
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "GET /api/v1/admin/news/n1",
+      "POST /api/v1/admin/news",
+      "PATCH /api/v1/admin/news/n1",
+      "POST /api/v1/admin/news/n1/publish",
+      "POST /api/v1/admin/news/n1/unpublish",
+      "DELETE /api/v1/admin/news/n1",
+    ]);
+    expect(JSON.parse(String(calls[2]?.[1].body))).toEqual({ body: null });
+    expect(
+      calls
+        .slice(1)
+        .every(([, i]) => new Headers(i.headers).get("X-CSRF-Token") === "tok"),
+    ).toBe(true);
+  });
 });
