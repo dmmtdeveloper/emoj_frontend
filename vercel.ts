@@ -3,6 +3,8 @@ import type { VercelConfig } from "@vercel/config/v1";
 
 // Typed Vercel project configuration. The Vercel CLI compiles this file to
 // vercel.json at build time. Redirects from the legacy site land in Phase 14.
+// `/api/*` is rewritten to the API so the admin panel calls it same-origin
+// and the session cookie is first-party (see emoj_backend README, Admin API).
 
 /** Staging API, allowed when PUBLIC_API_URL is not available at config time. */
 const STAGING_API_ORIGIN = "https://api-staging-25e9.up.railway.app";
@@ -56,6 +58,7 @@ const config: VercelConfig = {
   installCommand: "pnpm install --frozen-lockfile",
   buildCommand: "pnpm build",
   outputDirectory: "dist",
+  rewrites: [routes.rewrite("/api/(.*)", `${apiOrigin()}/$1`)],
   headers: [
     routes.header("/(.*)", [
       { key: "Content-Security-Policy", value: csp },
@@ -70,6 +73,11 @@ const config: VercelConfig = {
         value: "camera=(), microphone=(), geolocation=()",
       },
       { key: "X-Frame-Options", value: "DENY" },
+    ]),
+    // The admin panel is private: never indexed, never cached by proxies.
+    routes.header("/admin(.*)", [
+      { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      { key: "Cache-Control", value: "no-store" },
     ]),
     // Hashed build assets never change, so they can be cached forever.
     routes.cacheControl("/_astro/(.*)", {

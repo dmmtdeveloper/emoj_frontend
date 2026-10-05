@@ -1,0 +1,65 @@
+---
+/**
+ * Layout of the admin panel (/admin): private (noindex, no canonical, no
+ * social tags, out of the sitemap), no site header or footer. The page body
+ * is the React island (src/admin/AdminApp.tsx), rendered on the client only.
+ */
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es-CL">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="same-origin" />
+    <title>{title} | Panel EMOJ</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body class="min-h-dvh bg-surface-sunken text-ink">
+    <slot />
+    <noscript>
+      <p class="p-6">
+        El panel de administración necesita JavaScript. Actívalo en tu navegador
+        para continuar.
+      </p>
+    </noscript>
+  </body>
+</html>
+
+<style is:global>
+  /* User menu (native popover): under the navbar, aligned to the right. */
+  .admin-popover {
+    position: fixed;
+    inset: 4.25rem 1rem auto auto;
+    margin: 0;
+  }
+
+  /* Mobile drawer (native dialog) slides in from the left. */
+  .admin-drawer {
+    inset: 0 auto 0 0;
+  }
+
+  .admin-drawer::backdrop {
+    background-color: color-mix(in oklab, var(--plum-950) 55%, transparent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .admin-drawer[open] {
+      animation: admin-drawer-in 220ms var(--ease-out);
+    }
+  }
+
+  @keyframes admin-drawer-in {
+    from {
+      translate: -100% 0;
+    }
+  }
+</style>

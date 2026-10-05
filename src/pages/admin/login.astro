@@ -1,0 +1,8 @@
+---
+import AdminApp from "../../admin/AdminApp";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Iniciar sesión">
+  <AdminApp page="login" client:only="react" />
+</AdminLayout>

@@ -85,13 +85,13 @@ function queryString(
   return qs ? `?${qs}` : "";
 }
 
-function parseRetryAfter(value: string | null): number | undefined {
+export function parseRetryAfter(value: string | null): number | undefined {
   if (value === null) return undefined;
   const seconds = Number(value);
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
 }
 
-function isProblem(value: unknown): value is Problem {
+export function isProblem(value: unknown): value is Problem {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -100,7 +100,7 @@ function isProblem(value: unknown): value is Problem {
   );
 }
 
-async function readJson(response: Response): Promise<unknown> {
+export async function readJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {
