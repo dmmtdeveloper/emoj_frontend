@@ -13,7 +13,8 @@
  * (Safari animates outlines reliably, text glyphs not). The viewBox is the
  * box of one line of `leading-none` text: baseline 85 units from the top.
  * Decorative: the link around it carries the accessible name. Motion lives
- * in `src/styles/motion.css` (`.wordmark*`).
+ * in `src/styles/motion.css` (`.wordmark*`); the letter index comes from
+ * `:nth-child` there, not a `style` attribute, which the CSP blocks.
  */
 interface Props {
   /** Write the letters when the page loads (after the isotype stroke). */
@@ -61,8 +62,8 @@ const LETTERS = [
   focusable="false"
   class:list={["wordmark", draw && "wordmark--draw", className]}
 >
-  {LETTERS.map(({ contours }, i) => (
-    <g class="wordmark__letter" style={`--i: ${i}`}>
+  {LETTERS.map(({ contours }) => (
+    <g class="wordmark__letter">
       {/* One shape for the fill, so counters stay open (e, o, j). */}
       <path class="wordmark__fill" d={contours.join("")} />
       {/* One line per contour for the pen (pathLength per contour). */}

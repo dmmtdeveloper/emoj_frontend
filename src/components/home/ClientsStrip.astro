@@ -7,6 +7,10 @@
  * hover. Heights are balanced by eye per logo (wide wordmarks shorter).
  * A client without a logo file falls back to its name as a wordmark.
  *
+ * Per-logo values (file, aspect ratio, height) live in the <style> block as
+ * classes, never in a `style` attribute: production sends the CSP
+ * `style-src 'self'`, which blocks inline style attributes.
+ *
  * The second copy of the list is hidden from assistive tech. It pauses on
  * hover, on focus and with the pause toggle (a checkbox, so it works without
  * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
@@ -15,15 +19,16 @@
 import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
 
-/** Logo file, its aspect ratio (width / height) and display height (px). */
-const LOGOS: Partial<
-  Record<(typeof CLIENTS)[number], { file: string; ratio: number; h: number }>
-> = {
-  ESVAL: { file: "esval", ratio: 2.732, h: 40 },
-  "Aguas del Valle": { file: "aguas-del-valle", ratio: 3.876, h: 44 },
-  SAAM: { file: "saam", ratio: 6.152, h: 26 },
-  "AES Andes": { file: "aes-andes", ratio: 5.196, h: 28 },
-  CODELCO: { file: "codelco", ratio: 4.565, h: 32 },
+/**
+ * Logo file per client (public/logos/clientes/<file>.svg). Its aspect ratio
+ * and display height are set by the matching `.client-logo--<file>` class.
+ */
+const LOGOS: Partial<Record<(typeof CLIENTS)[number], string>> = {
+  ESVAL: "esval",
+  "Aguas del Valle": "aguas-del-valle",
+  SAAM: "saam",
+  "AES Andes": "aes-andes",
+  CODELCO: "codelco",
 };
 
 const item =
@@ -71,8 +76,7 @@ const wordmark =
                   <span
                     role="img"
                     aria-label={client}
-                    class="client-logo"
-                    style={`--logo: url(/logos/clientes/${logo.file}.svg); --ratio: ${logo.ratio}; --h: ${logo.h}px`}
+                    class={`client-logo client-logo--${logo}`}
                   />
                 ) : (
                   <span class={wordmark}>{client}</span>
@@ -93,8 +97,7 @@ const wordmark =
                   <span
                     role="img"
                     aria-label={client}
-                    class="client-logo"
-                    style={`--logo: url(/logos/clientes/${logo.file}.svg); --ratio: ${logo.ratio}; --h: ${logo.h}px`}
+                    class={`client-logo client-logo--${logo}`}
                   />
                 ) : (
                   <span class={wordmark}>{client}</span>
@@ -121,5 +124,36 @@ const wordmark =
     .client-logo {
       height: var(--h);
     }
+  }
+
+  /* Aspect ratio (width / height) and display height, balanced by eye. */
+  .client-logo--esval {
+    --logo: url("/logos/clientes/esval.svg");
+    --ratio: 2.732;
+    --h: 40px;
+  }
+
+  .client-logo--aguas-del-valle {
+    --logo: url("/logos/clientes/aguas-del-valle.svg");
+    --ratio: 3.876;
+    --h: 44px;
+  }
+
+  .client-logo--saam {
+    --logo: url("/logos/clientes/saam.svg");
+    --ratio: 6.152;
+    --h: 26px;
+  }
+
+  .client-logo--aes-andes {
+    --logo: url("/logos/clientes/aes-andes.svg");
+    --ratio: 5.196;
+    --h: 28px;
+  }
+
+  .client-logo--codelco {
+    --logo: url("/logos/clientes/codelco.svg");
+    --ratio: 4.565;
+    --h: 32px;
   }
 </style>

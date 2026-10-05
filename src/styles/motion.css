@@ -254,8 +254,22 @@
   /*
    * Wordmark (Wordmark.astro): once the isotype stroke ends (~1350ms) the pen
    * traces each letter's contours, left to right, and the letter fills in.
-   * `--i` (letter index) is set on the letter group and inherited.
+   * `--i` (letter index) is set per letter group below and inherited. It is
+   * not a `style` attribute: the production CSP (`style-src 'self'`) blocks
+   * inline style attributes.
    */
+  .wordmark__letter:nth-child(2) {
+    --i: 1;
+  }
+
+  .wordmark__letter:nth-child(3) {
+    --i: 2;
+  }
+
+  .wordmark__letter:nth-child(4) {
+    --i: 3;
+  }
+
   .wordmark--draw .wordmark__stroke {
     stroke-dasharray: 1;
   }
