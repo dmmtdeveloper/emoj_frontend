@@ -1,6 +1,7 @@
 /**
- * Interactive 3D dot grid for the home hero (Hero.astro): a canvas replaces
- * the CSS blueprint grid on mouse devices with motion allowed. Nodes sit on
+ * Interactive 3D dot grid: in the home hero (Hero.astro) a canvas replaces
+ * the CSS blueprint grid on mouse devices with motion allowed; sections can
+ * also carry a subtle version behind their content (DotField.astro). Nodes sit on
  * springs (src/lib/motion/dot-grid.ts); the pointer pushes them aside and
  * lifts them toward the viewer, the plane tilts slightly toward it, and
  * lifted dots grow, brighten and show relief (highlight + cast shadow).
@@ -33,12 +34,18 @@ interface Palette {
   shadow: string;
 }
 
-function readPalette(element: HTMLElement): Palette {
-  const style = getComputedStyle(element);
-  return {
-    dot: style.getPropertyValue("--sand-50").trim() || "white",
-    shadow: style.getPropertyValue("--plum-950").trim() || "black",
-  };
+/** How the grid looks: colours, line strength and each dot's opacity. */
+export interface DotGridLook {
+  palette: Palette;
+  lineAlpha: number;
+  /** Opacity of the dot resting at (x, y), `lifted` 0-1 toward the viewer. */
+  dotAlpha: (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    lifted: number,
+  ) => number;
 }
 
 /** Base visibility, like the CSS grid's mask: strongest at the bottom left. */
@@ -49,14 +56,52 @@ function baseAlpha(x: number, y: number, w: number, h: number): number {
   return Math.max(0, 1 - d / 0.7);
 }
 
+/** The hero: light dots over the photo, brightest at the bottom left. */
+function heroLook(frame: HTMLElement): DotGridLook {
+  const style = getComputedStyle(frame);
+  return {
+    palette: {
+      dot: style.getPropertyValue("--sand-50").trim() || "white",
+      shadow: style.getPropertyValue("--plum-950").trim() || "black",
+    },
+    lineAlpha: 0.07,
+    dotAlpha: (x, y, w, h, lifted) =>
+      Math.min(0.85, 0.08 + 0.3 * baseAlpha(x, y, w, h) + 0.55 * lifted),
+  };
+}
+
+const EDGE_FADE = 160;
+
+/**
+ * A section background: dots in the canvas's text colour (a token, so it
+ * follows light and dark mode), barely visible at rest and fading out near
+ * the edges; they only show up when the pointer lifts them.
+ */
+function subtleLook(canvas: HTMLCanvasElement): DotGridLook {
+  const style = getComputedStyle(canvas);
+  return {
+    palette: {
+      dot: style.color || "currentColor",
+      shadow: style.getPropertyValue("--plum-950").trim() || "black",
+    },
+    lineAlpha: 0.03,
+    dotAlpha: (x, y, w, h, lifted) => {
+      const edge = Math.min(1, Math.min(x, w - x, y, h - y) / EDGE_FADE);
+      return Math.max(0, edge) * Math.min(0.45, 0.1 + 0.4 * lifted);
+    },
+  };
+}
+
 export function initDotGrid(
   frame: HTMLElement,
   canvas: HTMLCanvasElement,
+  look: DotGridLook,
+  interactive = true,
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  const palette = readPalette(frame);
+  const { palette } = look;
   let grid: Grid = createGrid(1, 1, SPACING);
   let width = 0;
   let height = 0;
@@ -108,7 +153,7 @@ export function initDotGrid(
     // Lines every LINE_EVERY nodes, through the displaced nodes.
     ctx.strokeStyle = palette.dot;
     ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.07;
+    ctx.globalAlpha = look.lineAlpha;
     ctx.beginPath();
     for (let r = 0; r < rows; r += LINE_EVERY) {
       for (let c = 0; c < cols; c++) {
@@ -132,11 +177,12 @@ export function initDotGrid(
       const y = sy[i] ?? 0;
       if (x < -8 || y < -8 || x > width + 8 || y > height + 8) continue;
       const lifted = Math.min(1, Math.max(0, (dz[i] ?? 0) / 40));
-      const alpha = Math.min(
-        0.85,
-        0.08 +
-          0.3 * baseAlpha(restX[i] ?? 0, restY[i] ?? 0, width, height) +
-          0.55 * lifted,
+      const alpha = look.dotAlpha(
+        restX[i] ?? 0,
+        restY[i] ?? 0,
+        width,
+        height,
+        lifted,
       );
       if (alpha < 0.02) continue;
       const radius = (1 + 1.4 * lifted) * (ss[i] ?? 1);
@@ -195,27 +241,41 @@ export function initDotGrid(
     requestAnimationFrame(tick);
   };
 
-  frame.addEventListener("pointermove", (event) => {
-    if (event.pointerType !== "mouse") return;
-    const rect = canvas.getBoundingClientRect();
-    pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    start();
-  });
-  frame.addEventListener("pointerleave", () => {
-    pointer = null;
-    start();
-  });
-
-  // Shows the canvas and hides the CSS grid (Hero.astro), then sizes it.
+  if (interactive) listen();
+  // Marks the frame (the hero then hides its CSS grid), then sizes it.
   frame.dataset["dotGrid"] = "";
   new ResizeObserver(resize).observe(canvas);
   resize();
+
+  function listen(): void {
+    frame.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+      const rect = canvas.getBoundingClientRect();
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      start();
+    });
+    frame.addEventListener("pointerleave", () => {
+      pointer = null;
+      start();
+    });
+  }
 }
 
-const frame = document.querySelector<HTMLElement>(".hero__frame");
-const canvas = document.querySelector<HTMLCanvasElement>(".hero__dots");
 const enabled = spotlightEnabled({
   prefersReducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
   finePointer: matchMedia("(hover: hover) and (pointer: fine)").matches,
 });
-if (frame && canvas && enabled) initDotGrid(frame, canvas);
+
+const heroFrame = document.querySelector<HTMLElement>(".hero__frame");
+const heroCanvas = document.querySelector<HTMLCanvasElement>(".hero__dots");
+if (heroFrame && heroCanvas && enabled) {
+  initDotGrid(heroFrame, heroCanvas, heroLook(heroFrame));
+}
+
+// Section backgrounds: still on touch screens and with reduced motion.
+for (const canvas of document.querySelectorAll<HTMLCanvasElement>(
+  "canvas[data-dot-field]",
+)) {
+  const frame = canvas.parentElement;
+  if (frame) initDotGrid(frame, canvas, subtleLook(canvas), enabled);
+}

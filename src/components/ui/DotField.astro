@@ -1,0 +1,19 @@
+---
+/**
+ * The hero's dot grid as a subtle section background
+ * (src/scripts/dot-grid.ts): faint dots in the `ink` token colour that the
+ * mouse lifts and pushes aside; still on touch screens and with reduced
+ * motion, absent without JavaScript. The parent must be `relative isolate`
+ * and keep its content above it (`relative z-[2]`).
+ */
+---
+
+<canvas
+  data-dot-field
+  class="pointer-events-none absolute inset-0 -z-20 h-full w-full text-ink"
+  aria-hidden="true"
+></canvas>
+
+<script>
+  import "../../scripts/dot-grid";
+</script>
