@@ -9,6 +9,8 @@
  * (motion.css). Reduced motion shows the finished line.
  *
  * `dots` adds the isotype's two dots, so the line reads as the EMOJ logo.
+ * They sit on the stroke's direction, smaller and closer to its ends than
+ * in the logo, in proportion to this thinner line.
  * With "view-back" the left dot appears as the pen starts and the right one
  * when the stroke is complete.
  */
@@ -43,16 +45,16 @@ const { draw, dots = false, class: className, ...rest } = Astro.props;
     <>
       <circle
         class="stroke-line__dot stroke-line__dot--start"
-        cx="5.952"
-        cy="106.666"
-        r="5.4"
+        cx="17.43"
+        cy="103.98"
+        r="3.2"
         fill="currentColor"
       />
       <circle
         class="stroke-line__dot stroke-line__dot--end"
-        cx="463.625"
-        cy="66.1"
-        r="5.4"
+        cx="451.88"
+        cy="70.37"
+        r="3.2"
         fill="currentColor"
       />
     </>
