@@ -15,11 +15,9 @@ interface Props {
   corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   /** "inverse" on `surface-inverse` (brand on plum is a forbidden pair). */
   tone?: "brand" | "inverse";
-  /** "md" for smaller containers such as the CTA card. */
-  size?: "md" | "lg";
 }
 
-const { corner, tone = "brand", size = "lg" } = Astro.props;
+const { corner, tone = "brand" } = Astro.props;
 
 // Inside the section, so the whole mark (both dots) stays visible.
 const CORNERS = {
@@ -35,9 +33,7 @@ const CORNERS = {
   dots
   class:list={[
     "section-trace absolute -z-10",
-    size === "lg"
-      ? "w-[min(92vw,420px)] md:w-[640px] lg:w-[760px]"
-      : "w-[min(80vw,360px)] md:w-[520px]",
+    "w-[min(92vw,420px)] md:w-[640px] lg:w-[760px]",
     CORNERS[corner],
     tone === "inverse"
       ? "text-ink-inverse opacity-25"
