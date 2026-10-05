@@ -18,7 +18,6 @@
  */
 import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
-import DotField from "../ui/DotField.astro";
 
 /**
  * Logo file per client (public/logos/clientes/<file>.svg). Its aspect ratio
@@ -40,9 +39,8 @@ const wordmark =
 
 <section
   aria-labelledby="clientes"
-  class="marquee-wrap relative isolate border-b border-border bg-surface"
+  class="marquee-wrap border-b border-border bg-surface"
 >
-  <DotField />
   <div class="container-site relative z-[2] flex flex-col gap-5 py-10 md:py-12 lg:flex-row lg:items-center lg:gap-12">
     <div class="flex items-center justify-between gap-4 lg:shrink-0">
       <h2 id="clientes" class="eyebrow">
