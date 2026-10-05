@@ -7,14 +7,19 @@
  * `draw` animates the stroke from its left end (the path starts on the
  * right): "load-back" on page load, "view-back" while it scrolls into view
  * (motion.css). Reduced motion shows the finished line.
+ *
+ * `dots` adds the isotype's two dots, so the line reads as the EMOJ logo.
+ * With "view-back" the left dot appears as the pen starts and the right one
+ * when the stroke is complete.
  */
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends Omit<HTMLAttributes<"svg">, "viewBox"> {
   draw?: "load-back" | "view-back";
+  dots?: boolean;
 }
 
-const { draw, class: className, ...rest } = Astro.props;
+const { draw, dots = false, class: className, ...rest } = Astro.props;
 ---
 
 <svg
@@ -34,4 +39,22 @@ const { draw, class: className, ...rest } = Astro.props;
     stroke-linecap="round"
     d="M443.892 73.276c-51.511 17.446-64.706-25.5-91.869 18.332-25.174 40.616-32.522 78.166-64.594 73.585-63.498-9.07 21.954-144.469-27.778-158.67-69.72-19.918-117.291 176.694-192.108 157.569C5.306 148.183 97.941-11.744 129.202 14.078 152.5 33.325 84.634 85.626 25.707 101.949"
   ></path>
+  {dots && (
+    <>
+      <circle
+        class="stroke-line__dot stroke-line__dot--start"
+        cx="5.952"
+        cy="106.666"
+        r="5.4"
+        fill="currentColor"
+      />
+      <circle
+        class="stroke-line__dot stroke-line__dot--end"
+        cx="463.625"
+        cy="66.1"
+        r="5.4"
+        fill="currentColor"
+      />
+    </>
+  )}
 </svg>

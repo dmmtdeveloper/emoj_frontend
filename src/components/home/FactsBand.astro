@@ -7,7 +7,7 @@
  * static copy is read instead. Reduced motion shows the final values.
  */
 import { CLIENTS } from "../../lib/site";
-import StrokeLine from "../ui/StrokeLine.astro";
+import SectionTrace from "../ui/SectionTrace.astro";
 
 const clients = `${CLIENTS.slice(0, -1).join(", ")} y ${CLIENTS.at(-1)}`;
 
@@ -23,10 +23,7 @@ const FACTS = [
   aria-labelledby="cifras"
   class="relative isolate z-[3] overflow-clip bg-surface-inverse text-ink-inverse"
 >
-  <StrokeLine
-    draw="view-back"
-    class="absolute -right-24 -bottom-10 -z-10 w-[640px] opacity-25 [--draw-range:entry_0%_cover_80%] md:w-[900px]"
-  />
+  <SectionTrace corner="bottom-right" tone="inverse" />
   <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-28 lg:py-32">
     <h2 id="cifras" class="eyebrow eyebrow-inverse" data-reveal>
       EMOJ en cifras

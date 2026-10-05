@@ -16,6 +16,7 @@ import { fitWidth } from "../../lib/content/format";
 import { projectTransitionName } from "../../lib/content/transition";
 import ArrowLink from "../ui/ArrowLink.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
+import SectionTrace from "../ui/SectionTrace.astro";
 
 interface Props {
   projects: ProjectSummary[];
@@ -40,7 +41,11 @@ const chip =
   "rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-semibold text-on-accent";
 ---
 
-<section aria-labelledby="proyectos-destacados" class="bg-surface">
+<section
+  aria-labelledby="proyectos-destacados"
+  class="relative isolate overflow-clip bg-surface"
+>
+  <SectionTrace corner="bottom-left" />
   <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
     <SectionHeading
       id="proyectos-destacados"

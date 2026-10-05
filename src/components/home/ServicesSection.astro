@@ -10,11 +10,16 @@ import ServiceCard from "../services/ServiceCard.astro";
 import ArrowLink from "../ui/ArrowLink.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
+import SectionTrace from "../ui/SectionTrace.astro";
 
 const [first, ...rest] = await getServices();
 ---
 
-<section aria-labelledby="servicios" class="bg-surface-sunken">
+<section
+  aria-labelledby="servicios"
+  class="relative isolate overflow-clip bg-surface-sunken"
+>
+  <SectionTrace corner="top-right" />
   <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
     <SectionHeading
       id="servicios"

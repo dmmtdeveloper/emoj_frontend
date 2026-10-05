@@ -47,6 +47,34 @@
   }
 }
 
+/* Isotype dots of a scroll-drawn StrokeLine: the left one pops in as the
+   pen starts, the right one once the stroke is complete. */
+@keyframes dot-start {
+  0% {
+    scale: 0;
+  }
+  5% {
+    scale: 1.35;
+  }
+  9%,
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes dot-end {
+  0%,
+  93% {
+    scale: 0;
+  }
+  97% {
+    scale: 1.35;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
 @keyframes pop {
   0% {
     transform: scale(0);
@@ -88,15 +116,6 @@
 @keyframes wipe-right {
   from {
     clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes wipe-down {
-  from {
-    clip-path: inset(0 0 100% 0);
   }
   to {
     clip-path: inset(0 0 0 0);
@@ -376,7 +395,36 @@
     [data-draw="view-back"] path {
       animation-name: draw-back;
     }
+
+    /* Dots follow the svg's own view timeline, so they stay in sync with
+       the stroke (a circle's own view() would track its tiny box). */
+    [data-draw="view-back"]:has(.stroke-line__dot) {
+      view-timeline: --stroke-line block;
+    }
+
+    [data-draw="view-back"]:has(.stroke-line__dot) path,
+    [data-draw="view-back"] .stroke-line__dot {
+      animation-timeline: --stroke-line;
+    }
+
+    [data-draw="view-back"] .stroke-line__dot {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: dot-start linear both;
+      animation-timeline: --stroke-line;
+      animation-range: var(--draw-range, entry 10% cover 45%);
+    }
+
+    [data-draw="view-back"] .stroke-line__dot--end {
+      animation-name: dot-end;
+    }
   }
+}
+
+/* Section traces (SectionTrace.astro): drawn while the mark rises from
+   the bottom of the screen to about its upper third. */
+.section-trace {
+  --draw-range: entry 0% cover 55%;
 }
 
 /* ------------------------------------------------------------------ */
@@ -676,19 +724,5 @@
     .icon-draw
     :is(path, line, circle, rect, polyline, polygon, ellipse) {
     animation: icon-draw 900ms var(--ease-out) both;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Scroll thread (home): a long hand-drawn line drawn by scrolling     */
-/* ------------------------------------------------------------------ */
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .scroll-thread {
-      animation: wipe-down linear both;
-      animation-timeline: var(--timeline-view, view());
-      animation-range: cover 0% cover 92%;
-    }
   }
 }
