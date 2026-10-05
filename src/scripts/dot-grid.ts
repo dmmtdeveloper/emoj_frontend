@@ -38,6 +38,8 @@ interface Palette {
 export interface DotGridLook {
   palette: Palette;
   lineAlpha: number;
+  /** Device pixel ratio cap: big section canvases use less memory. */
+  maxDpr: number;
   /** Opacity of the dot resting at (x, y), `lifted` 0-1 toward the viewer. */
   dotAlpha: (
     x: number,
@@ -65,6 +67,7 @@ function heroLook(frame: HTMLElement): DotGridLook {
       shadow: style.getPropertyValue("--plum-950").trim() || "black",
     },
     lineAlpha: 0.07,
+    maxDpr: 2,
     dotAlpha: (x, y, w, h, lifted) =>
       Math.min(0.85, 0.08 + 0.3 * baseAlpha(x, y, w, h) + 0.55 * lifted),
   };
@@ -85,6 +88,7 @@ function subtleLook(canvas: HTMLCanvasElement): DotGridLook {
       shadow: style.getPropertyValue("--plum-950").trim() || "black",
     },
     lineAlpha: 0.03,
+    maxDpr: 1.5,
     dotAlpha: (x, y, w, h, lifted) => {
       const edge = Math.min(1, Math.min(x, w - x, y, h - y) / EDGE_FADE);
       return Math.max(0, edge) * Math.min(0.45, 0.1 + 0.4 * lifted);
@@ -111,12 +115,20 @@ export function initDotGrid(
   let tiltY = 0;
   let running = false;
   let last = 0;
+  // The canvas only holds pixels while it is on (or near) the screen.
+  let visible = false;
+
+  const release = (): void => {
+    canvas.width = 0;
+    canvas.height = 0;
+  };
 
   const resize = (): void => {
+    if (!visible) return;
     const rect = canvas.getBoundingClientRect();
     width = rect.width;
     height = rect.height;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, look.maxDpr);
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     grid = createGrid(width, height, SPACING);
@@ -124,6 +136,7 @@ export function initDotGrid(
   };
 
   const draw = (): void => {
+    if (!visible) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
     const view: View = {
@@ -226,7 +239,7 @@ export function initDotGrid(
     draw();
     const tilting =
       Math.abs(tiltX - targetX) + Math.abs(tiltY - targetY) > 0.0005;
-    if (pointer || energy > 0 || tilting) {
+    if (visible && (pointer || energy > 0 || tilting)) {
       requestAnimationFrame(tick);
     } else {
       tiltX = tiltY = 0;
@@ -242,10 +255,21 @@ export function initDotGrid(
   };
 
   if (interactive) listen();
-  // Marks the frame (the hero then hides its CSS grid), then sizes it.
+  // Marks the frame (the hero then hides its CSS grid); the canvas is sized
+  // when it comes near the screen and emptied when it leaves.
   frame.dataset["dotGrid"] = "";
   new ResizeObserver(resize).observe(canvas);
-  resize();
+  new IntersectionObserver(
+    ([entry]) => {
+      visible = entry?.isIntersecting ?? false;
+      if (visible) resize();
+      else {
+        pointer = null;
+        release();
+      }
+    },
+    { rootMargin: "200px 0px" },
+  ).observe(canvas);
 
   function listen(): void {
     frame.addEventListener("pointermove", (event) => {

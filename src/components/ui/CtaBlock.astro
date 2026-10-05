@@ -13,6 +13,7 @@ import { splitEmphasis } from "../../lib/emphasis";
 import { CONTACT } from "../../lib/site";
 import ButtonLink from "./ButtonLink.astro";
 import Scribble from "./Scribble.astro";
+import DotField from "./DotField.astro";
 
 interface Props {
   title?: string;
@@ -41,10 +42,11 @@ const contactLink =
 
 <section
   class:list={[
-    "relative",
+    "relative isolate",
     background === "surface" ? "bg-surface" : "bg-surface-sunken",
   ]}
 >
+  <DotField />
   <div class="container-site relative z-[2] py-16 md:py-28 lg:py-32">
     <div
       class:list={[

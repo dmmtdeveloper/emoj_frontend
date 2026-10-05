@@ -5,12 +5,21 @@
  * mouse lifts and pushes aside; still on touch screens and with reduced
  * motion, absent without JavaScript. The parent must be `relative isolate`
  * and keep its content above it (`relative z-[2]`).
+ * `tone="inverse"` on `surface-inverse` sections.
  */
+interface Props {
+  tone?: "ink" | "inverse";
+}
+
+const { tone = "ink" } = Astro.props;
 ---
 
 <canvas
   data-dot-field
-  class="pointer-events-none absolute inset-0 -z-20 h-full w-full text-ink"
+  class:list={[
+    "pointer-events-none absolute inset-0 -z-20 h-full w-full",
+    tone === "inverse" ? "text-ink-inverse" : "text-ink",
+  ]}
   aria-hidden="true"
 ></canvas>
 

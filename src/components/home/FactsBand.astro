@@ -8,6 +8,7 @@
  */
 import { CLIENTS } from "../../lib/site";
 import SectionTrace from "../ui/SectionTrace.astro";
+import DotField from "../ui/DotField.astro";
 
 const clients = `${CLIENTS.slice(0, -1).join(", ")} y ${CLIENTS.at(-1)}`;
 
@@ -23,6 +24,7 @@ const FACTS = [
   aria-labelledby="cifras"
   class="relative isolate z-[3] overflow-clip bg-surface-inverse text-ink-inverse"
 >
+  <DotField tone="inverse" />
   <SectionTrace corner="bottom-right" tone="inverse" mobile />
   <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-28 lg:py-32">
     <h2 id="cifras" class="eyebrow eyebrow-inverse" data-reveal>
