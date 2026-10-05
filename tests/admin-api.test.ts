@@ -113,4 +113,179 @@ describe("createAdminClient", () => {
       "/api/v1/admin/news",
     ]);
   });
+
+  it("reads, creates, updates and deletes projects with the CSRF token", async () => {
+    const project = { id: "p1", title: "Canal", status: "draft" };
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, project))
+      .mockResolvedValueOnce(jsonResponse(201, project))
+      .mockResolvedValueOnce(jsonResponse(200, project))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+    await client.getProject("p1");
+    await client.createProject({ title: "Canal" });
+    await client.updateProject("p1", { featured: true });
+    const removed = await client.deleteProject("p1");
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "GET /api/v1/admin/projects/p1",
+      "POST /api/v1/admin/projects",
+      "PATCH /api/v1/admin/projects/p1",
+      "DELETE /api/v1/admin/projects/p1",
+    ]);
+    expect(JSON.parse(String(calls[2]?.[1].body))).toEqual({ featured: true });
+    expect(new Headers(calls[3]?.[1].headers).get("X-CSRF-Token")).toBe("tok");
+    expect(removed).toMatchObject({ ok: true, data: null });
+  });
+
+  it("publishes and unpublishes a project", async () => {
+    const fetch = vi.fn(async () => jsonResponse(200, { id: "p1" }));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    await client.publishProject("p1");
+    await client.unpublishProject("p1");
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "POST /api/v1/admin/projects/p1/publish",
+      "POST /api/v1/admin/projects/p1/unpublish",
+    ]);
+  });
+
+  it("escapes ids in paths", async () => {
+    const fetch = vi.fn(async () => jsonResponse(404, { status: 404 }));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    await client.getProject("../auth/me");
+    const [url] = fetch.mock.calls[0] as unknown as [string];
+    expect(url).toBe("/api/v1/admin/projects/..%2Fauth%2Fme");
+  });
+
+  it("keeps the field errors of a validation problem", async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse(422, {
+        type: "about:blank",
+        title: "Unprocessable Entity",
+        status: 422,
+        errors: [{ field: "seo.description", message: "is required" }],
+      }),
+    );
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    const result = await client.publishProject("p1");
+    expect(result).toMatchObject({
+      ok: false,
+      status: 422,
+      problem: { errors: [{ field: "seo.description" }] },
+    });
+  });
+
+  it("lists media and changes an image's alt text", async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse(200, { items: [], page: 2, pageSize: 24, total: 0 }),
+    );
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    await client.listMedia({ page: 2, pageSize: 24 });
+    await client.updateMedia("m1", "Planta elevadora");
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "GET /api/v1/admin/media?page=2&pageSize=24",
+      "PATCH /api/v1/admin/media/m1",
+    ]);
+    expect(JSON.parse(String(calls[1]?.[1].body))).toEqual({
+      alt: "Planta elevadora",
+    });
+  });
+
+  it("uploads an image as multipart with its alt text and reports progress", async () => {
+    const sent: {
+      url?: string;
+      headers: Record<string, string>;
+      body?: FormData;
+    } = { headers: {} };
+    class FakeXhr {
+      status = 0;
+      responseText = "";
+      upload = { onprogress: null as ((e: ProgressEvent) => void) | null };
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      withCredentials = false;
+      open(_method: string, url: string) {
+        sent.url = url;
+      }
+      setRequestHeader(name: string, value: string) {
+        sent.headers[name] = value;
+      }
+      getResponseHeader() {
+        return null;
+      }
+      send(body: FormData) {
+        sent.body = body;
+        this.upload.onprogress?.({
+          lengthComputable: true,
+          loaded: 50,
+          total: 100,
+        } as ProgressEvent);
+        this.status = 201;
+        this.responseText = JSON.stringify({ id: "m9", alt: "Obra" });
+        this.onload?.();
+      }
+    }
+    const client = createAdminClient({
+      baseUrl: "/api",
+      fetch: vi.fn(),
+      xhr: () => new FakeXhr() as unknown as XMLHttpRequest,
+    });
+    client.setCsrfToken("tok");
+    const progress: number[] = [];
+    const file = new File(["x"], "obra.jpg", { type: "image/jpeg" });
+    const result = await client.uploadMedia(file, "Obra", (p) =>
+      progress.push(p),
+    );
+    expect(result).toMatchObject({ ok: true, data: { id: "m9" } });
+    expect(sent.url).toBe("/api/v1/admin/media");
+    expect(sent.headers["X-CSRF-Token"]).toBe("tok");
+    expect(sent.body?.get("alt")).toBe("Obra");
+    expect(sent.body?.get("file")).toBeInstanceOf(File);
+    expect(progress).toEqual([0.5]);
+  });
+
+  it("maps a rejected upload to a problem and a dropped one to a network error", async () => {
+    function fake(status: number, body: string, fail = false) {
+      return () =>
+        ({
+          upload: {},
+          open() {
+            // Nothing to record.
+          },
+          setRequestHeader() {
+            // Nothing to record.
+          },
+          getResponseHeader() {
+            return null;
+          },
+          send() {
+            const self = this as unknown as {
+              status: number;
+              responseText: string;
+              onload?: () => void;
+              onerror?: () => void;
+            };
+            self.status = status;
+            self.responseText = body;
+            if (fail) self.onerror?.();
+            else self.onload?.();
+          },
+        }) as unknown as XMLHttpRequest;
+    }
+    const file = new File(["x"], "a.svg", { type: "image/svg+xml" });
+    const rejected = await createAdminClient({
+      baseUrl: "/api",
+      xhr: fake(415, JSON.stringify({ title: "Unsupported", status: 415 })),
+    }).uploadMedia(file, "a");
+    expect(rejected).toMatchObject({ ok: false, kind: "problem", status: 415 });
+    const dropped = await createAdminClient({
+      baseUrl: "/api",
+      xhr: fake(0, "", true),
+    }).uploadMedia(file, "a");
+    expect(dropped).toMatchObject({ ok: false, kind: "network" });
+  });
 });

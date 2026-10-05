@@ -1,0 +1,21 @@
+---
+/**
+ * A panel page inside the shell. Every section gets the same island props,
+ * because in-app navigation can reach any section from any first page.
+ */
+import AdminApp, { type AdminPage } from "../admin/AdminApp";
+import { getServiceTitles } from "../lib/get-services";
+import AdminLayout from "./AdminLayout.astro";
+
+interface Props {
+  title: string;
+  page: Exclude<AdminPage, "login" | "forgot" | "reset">;
+}
+
+const { title, page } = Astro.props;
+const serviceTitles = await getServiceTitles();
+---
+
+<AdminLayout title={title}>
+  <AdminApp page={page} serviceTitles={serviceTitles} client:only="react" />
+</AdminLayout>

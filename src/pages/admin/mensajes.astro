@@ -1,10 +1,5 @@
 ---
-import AdminApp from "../../admin/AdminApp";
-import { getServiceTitles } from "../../lib/get-services";
-import AdminLayout from "../../layouts/AdminLayout.astro";
-const serviceTitles = await getServiceTitles();
+import AdminShellPage from "../../layouts/AdminShellPage.astro";
 ---
 
-<AdminLayout title="Mensajes">
-  <AdminApp page="messages" serviceTitles={serviceTitles} client:only="react" />
-</AdminLayout>
+<AdminShellPage title="Mensajes" page="messages" />

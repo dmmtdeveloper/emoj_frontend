@@ -5,8 +5,9 @@ import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  TextareaHTMLAttributes,
 } from "react";
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 
 export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -20,6 +21,8 @@ const buttonVariants = {
   secondary:
     "border border-border-strong bg-surface-raised text-ink hover:bg-surface-sunken",
   ghost: "text-ink hover:bg-surface-sunken",
+  danger:
+    "border border-brand bg-surface-raised text-brand hover:bg-brand hover:text-on-brand",
 } as const;
 
 export function Button({
@@ -66,49 +69,267 @@ export function ButtonLink({
   );
 }
 
-export function Field({
+const controlClass =
+  "rounded-md border bg-surface-raised px-3.5 py-2.5 text-base text-ink placeholder:text-ink-muted";
+
+interface FieldChrome {
+  label: string;
+  hint?: ReactNode | undefined;
+  error?: string | undefined;
+  /** Shown at the end of the label row, e.g. a character counter. */
+  aside?: ReactNode | undefined;
+  /** Marks the label as optional. */
+  optional?: boolean | undefined;
+}
+
+function FieldFrame({
+  id,
   label,
   hint,
   error,
-  className,
-  ...input
-}: InputHTMLAttributes<HTMLInputElement> & {
-  label: string;
-  hint?: string;
-  error?: string | undefined;
-}) {
-  const id = useId();
-  const hintId = `${id}-hint`;
-  const errorId = `${id}-error`;
-  const describedBy = [hint && hintId, error && errorId]
-    .filter(Boolean)
-    .join(" ");
+  aside,
+  optional,
+  children,
+}: FieldChrome & { id: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm leading-5 font-semibold text-ink">
-        {label}
-      </label>
-      <input
-        id={id}
-        className={cx(
-          "min-h-11 rounded-md border bg-surface-raised px-3.5 py-2.5 text-base text-ink placeholder:text-ink-muted",
-          error ? "border-brand" : "border-border-strong",
-          className,
-        )}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
-        {...input}
-      />
+      <div className="flex items-baseline justify-between gap-3">
+        <label
+          htmlFor={id}
+          className="text-sm leading-5 font-semibold text-ink"
+        >
+          {label}
+          {optional && (
+            <span className="font-medium text-ink-muted"> (opcional)</span>
+          )}
+        </label>
+        {aside}
+      </div>
+      {children}
       {hint && (
-        <p id={hintId} className="text-sm leading-5 text-ink-muted">
+        <p id={`${id}-hint`} className="text-sm leading-5 text-ink-muted">
           {hint}
         </p>
       )}
       {error && (
-        <p id={errorId} className="text-sm leading-5 font-semibold text-brand">
+        <p
+          id={`${id}-error`}
+          className="text-sm leading-5 font-semibold text-brand"
+        >
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+function describedBy(id: string, hint: unknown, error: unknown) {
+  return (
+    [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") ||
+    undefined
+  );
+}
+
+export function Field({
+  label,
+  hint,
+  error,
+  aside,
+  optional,
+  className,
+  id: idProp,
+  ...input
+}: InputHTMLAttributes<HTMLInputElement> & FieldChrome) {
+  const generated = useId();
+  const id = idProp ?? generated;
+  return (
+    <FieldFrame {...{ id, label, hint, error, aside, optional }}>
+      <input
+        id={id}
+        className={cx(
+          "min-h-11",
+          controlClass,
+          error ? "border-brand" : "border-border-strong",
+          className,
+        )}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, hint, error)}
+        {...input}
+      />
+    </FieldFrame>
+  );
+}
+
+export function TextArea({
+  label,
+  hint,
+  error,
+  aside,
+  optional,
+  className,
+  id: idProp,
+  ...input
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & FieldChrome) {
+  const generated = useId();
+  const id = idProp ?? generated;
+  return (
+    <FieldFrame {...{ id, label, hint, error, aside, optional }}>
+      <textarea
+        id={id}
+        className={cx(
+          "min-h-28 resize-y leading-7",
+          controlClass,
+          error ? "border-brand" : "border-border-strong",
+          className,
+        )}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, hint, error)}
+        {...input}
+      />
+    </FieldFrame>
+  );
+}
+
+/** "12 / 60" counter; turns brand-colored above the limit. */
+export function Counter({ count, max }: { count: number; max: number }) {
+  return (
+    <span
+      className={cx(
+        "text-sm tabular-nums",
+        count > max ? "font-semibold text-brand" : "text-ink-muted",
+      )}
+    >
+      {count} / {max}
+    </span>
+  );
+}
+
+export function StatusBadge({ status }: { status: "draft" | "published" }) {
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-sm leading-5 font-semibold whitespace-nowrap",
+        status === "published"
+          ? "bg-accent text-on-accent"
+          : "bg-surface-sunken text-ink",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cx(
+          "size-1.5 rounded-full",
+          status === "published" ? "bg-on-accent" : "bg-ink-muted",
+        )}
+      />
+      {status === "published" ? "Publicado" : "Borrador"}
+    </span>
+  );
+}
+
+/**
+ * Modal built on the native <dialog> (focus trap, Esc, top layer). Rendered
+ * only while open; closing by Esc or backdrop calls `onClose`.
+ */
+export function Dialog({
+  title,
+  description,
+  onClose,
+  size = "md",
+  children,
+  footer,
+}: {
+  title: string;
+  description?: ReactNode;
+  onClose: () => void;
+  size?: "md" | "lg";
+  children?: ReactNode;
+  footer?: ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    dialog.showModal();
+    const onCancel = (event: Event) => {
+      event.preventDefault();
+      onCloseRef.current();
+    };
+    const onClick = (event: MouseEvent) => {
+      if (event.target === dialog) onCloseRef.current();
+    };
+    dialog.addEventListener("cancel", onCancel);
+    dialog.addEventListener("click", onClick);
+    return () => {
+      dialog.removeEventListener("cancel", onCancel);
+      dialog.removeEventListener("click", onClick);
+      dialog.close();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby={titleId}
+      className={cx(
+        "admin-dialog m-auto max-h-[min(92dvh,56rem)] w-[calc(100%-2rem)] rounded-lg border border-border bg-surface-raised p-0 text-ink shadow-(--shadow-md)",
+        size === "md" ? "max-w-lg" : "max-w-5xl",
+      )}
+    >
+      <div className="flex max-h-[inherit] flex-col">
+        <div className="flex flex-col gap-1 border-b border-border px-5 pt-5 pb-4 md:px-6">
+          <h2 id={titleId} className="text-xl leading-7 font-semibold">
+            {title}
+          </h2>
+          {description && <div className="text-ink-muted">{description}</div>}
+        </div>
+        {children && (
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
+            {children}
+          </div>
+        )}
+        {footer && (
+          <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4 md:px-6">
+            {footer}
+          </div>
+        )}
+      </div>
+    </dialog>
+  );
+}
+
+export function ProgressBar({
+  value,
+  label,
+}: {
+  value: number;
+  label: string;
+}) {
+  const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between text-sm text-ink-muted">
+        <span>{label}</span>
+        <span className="tabular-nums">{percent}%</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        className="h-2 overflow-hidden rounded-full bg-surface-sunken"
+      >
+        <div
+          className="h-full rounded-full bg-brand transition-[width] duration-200"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
     </div>
   );
 }

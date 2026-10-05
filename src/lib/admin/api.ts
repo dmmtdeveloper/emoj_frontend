@@ -25,11 +25,18 @@ export type AdminSession = Schemas["Session"];
 export type LoginRequest = Schemas["LoginRequest"];
 export type AdminProjectPage = Schemas["AdminProjectPage"];
 export type AdminNewsPage = Schemas["AdminNewsPage"];
+export type AdminProject = Schemas["AdminProject"];
+export type ProjectInput = Schemas["ProjectInput"];
+export type AdminMedia = Schemas["AdminMedia"];
+export type AdminMediaPage = Schemas["AdminMediaPage"];
 export type ContactMessage = Schemas["ContactMessage"];
 export type ContactMessagePage = Schemas["ContactMessagePage"];
 
 export type AdminListQuery = NonNullable<
   operations["adminListProjects"]["parameters"]["query"]
+>;
+export type MediaQuery = NonNullable<
+  operations["adminListMedia"]["parameters"]["query"]
 >;
 export type MessagesQuery = NonNullable<
   operations["adminListContactMessages"]["parameters"]["query"]
@@ -43,6 +50,11 @@ export interface AdminClientOptions {
   baseUrl: string;
   /** Injected for tests; defaults to the global `fetch`. */
   fetch?: typeof fetch;
+  /**
+   * Injected for tests; defaults to `new XMLHttpRequest()`. Uploads use XHR
+   * because fetch cannot report upload progress.
+   */
+  xhr?: () => XMLHttpRequest;
 }
 
 export interface AdminClient {
@@ -54,7 +66,25 @@ export interface AdminClient {
   forgotPassword(email: string): Promise<ApiResult<null>>;
   resetPassword(token: string, password: string): Promise<ApiResult<null>>;
   listProjects(query?: AdminListQuery): Promise<ApiResult<AdminProjectPage>>;
+  getProject(id: string): Promise<ApiResult<AdminProject>>;
+  createProject(body: ProjectInput): Promise<ApiResult<AdminProject>>;
+  /** Partial update: absent fields keep their value. */
+  updateProject(
+    id: string,
+    body: ProjectInput,
+  ): Promise<ApiResult<AdminProject>>;
+  publishProject(id: string): Promise<ApiResult<AdminProject>>;
+  unpublishProject(id: string): Promise<ApiResult<AdminProject>>;
+  deleteProject(id: string): Promise<ApiResult<null>>;
   listNews(query?: AdminListQuery): Promise<ApiResult<AdminNewsPage>>;
+  listMedia(query?: MediaQuery): Promise<ApiResult<AdminMediaPage>>;
+  /** Uploads an image; `onProgress` receives the sent fraction (0 to 1). */
+  uploadMedia(
+    file: File,
+    alt: string,
+    onProgress?: (fraction: number) => void,
+  ): Promise<ApiResult<AdminMedia>>;
+  updateMedia(id: string, alt: string): Promise<ApiResult<AdminMedia>>;
   listMessages(query?: MessagesQuery): Promise<ApiResult<ContactMessagePage>>;
   /** Current CSRF token, or null when signed out. */
   csrfToken(): string | null;
@@ -75,9 +105,38 @@ function queryString(
   return qs ? `?${qs}` : "";
 }
 
+/** A single, escaped path segment. */
+function seg(value: string): string {
+  return encodeURIComponent(value);
+}
+
+/** Success or problem from a status, its parsed body and `Retry-After`. */
+function toResult<T>(
+  status: number,
+  statusText: string,
+  payload: unknown,
+  retryAfterHeader: string | null,
+): ApiResult<T> {
+  if (status >= 200 && status < 300) {
+    return { ok: true, status, data: (status === 204 ? null : payload) as T };
+  }
+  const problem: ApiProblem["problem"] = isProblem(payload)
+    ? payload
+    : { type: "about:blank", title: statusText || "Error", status };
+  const retryAfter = parseRetryAfter(retryAfterHeader);
+  return {
+    ok: false,
+    kind: "problem",
+    status,
+    problem,
+    ...(retryAfter === undefined ? {} : { retryAfter }),
+  };
+}
+
 export function createAdminClient(options: AdminClientOptions): AdminClient {
   const baseUrl = options.baseUrl.replace(/\/+$/, "");
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+  const newXhr = options.xhr ?? (() => new XMLHttpRequest());
   let csrf: string | null = null;
 
   async function request<T>(
@@ -105,24 +164,55 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
     }
 
     const payload = response.status === 204 ? null : await readJson(response);
-    if (response.ok) {
-      return { ok: true, status: response.status, data: payload as T };
-    }
-    const problem: ApiProblem["problem"] = isProblem(payload)
-      ? payload
-      : {
-          type: "about:blank",
-          title: response.statusText || "Error",
-          status: response.status,
+    return toResult<T>(
+      response.status,
+      response.statusText,
+      payload,
+      response.headers.get("Retry-After"),
+    );
+  }
+
+  function upload(
+    path: string,
+    form: FormData,
+    onProgress?: (fraction: number) => void,
+  ): Promise<ApiResult<AdminMedia>> {
+    return new Promise((resolve) => {
+      const xhr = newXhr();
+      xhr.open("POST", `${baseUrl}${path}`);
+      xhr.setRequestHeader(
+        "Accept",
+        "application/json, application/problem+json",
+      );
+      if (csrf) xhr.setRequestHeader(CSRF_HEADER, csrf);
+      if (onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && event.total > 0) {
+            onProgress(event.loaded / event.total);
+          }
         };
-    const retryAfter = parseRetryAfter(response.headers.get("Retry-After"));
-    return {
-      ok: false,
-      kind: "problem",
-      status: response.status,
-      problem,
-      ...(retryAfter === undefined ? {} : { retryAfter }),
-    };
+      }
+      xhr.onload = () => {
+        let payload: unknown;
+        try {
+          payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+        } catch {
+          payload = null;
+        }
+        resolve(
+          toResult<AdminMedia>(
+            xhr.status,
+            "",
+            payload,
+            xhr.getResponseHeader("Retry-After"),
+          ),
+        );
+      };
+      xhr.onerror = () =>
+        resolve({ ok: false, kind: "network", error: new Error("upload") });
+      xhr.onabort = xhr.onerror;
+      xhr.send(form);
+    });
   }
 
   /** Keeps the CSRF token of a fresh session. */
@@ -158,6 +248,28 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
         "GET",
         `/v1/admin/projects${queryString(query)}`,
       ),
+    getProject: (id) =>
+      request<AdminProject>("GET", `/v1/admin/projects/${seg(id)}`),
+    createProject: (body) =>
+      request<AdminProject>("POST", "/v1/admin/projects", body),
+    updateProject: (id, body) =>
+      request<AdminProject>("PATCH", `/v1/admin/projects/${seg(id)}`, body),
+    publishProject: (id) =>
+      request<AdminProject>("POST", `/v1/admin/projects/${seg(id)}/publish`),
+    unpublishProject: (id) =>
+      request<AdminProject>("POST", `/v1/admin/projects/${seg(id)}/unpublish`),
+    deleteProject: (id) =>
+      request<null>("DELETE", `/v1/admin/projects/${seg(id)}`),
+    listMedia: (query) =>
+      request<AdminMediaPage>("GET", `/v1/admin/media${queryString(query)}`),
+    uploadMedia: (file, alt, onProgress) => {
+      const form = new FormData();
+      form.set("file", file);
+      form.set("alt", alt);
+      return upload("/v1/admin/media", form, onProgress);
+    },
+    updateMedia: (id, alt) =>
+      request<AdminMedia>("PATCH", `/v1/admin/media/${seg(id)}`, { alt }),
     listNews: (query) =>
       request<AdminNewsPage>("GET", `/v1/admin/news${queryString(query)}`),
     listMessages: (query) =>

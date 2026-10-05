@@ -10,6 +10,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
+import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
 import {
   AccountPage,
@@ -17,6 +18,8 @@ import {
   DashboardPage,
   MessagesPage,
 } from "./pages";
+import { ProjectEditor } from "./ProjectEditor";
+import { ProjectsPage } from "./projects";
 import { RequireSession } from "./session";
 import { Shell } from "./Shell";
 
@@ -26,6 +29,8 @@ export type AdminPage =
   | "reset"
   | "dashboard"
   | "projects"
+  | "project-new"
+  | "project-edit"
   | "news"
   | "media"
   | "messages"
@@ -39,9 +44,11 @@ interface Props {
 
 function Content({
   page,
+  search,
   serviceTitles = {},
 }: {
   page: ShellPage | null;
+  search: string;
   serviceTitles?: Record<string, string>;
 }) {
   switch (page) {
@@ -52,7 +59,16 @@ function Content({
     case "account":
       return <AccountPage />;
     case "projects":
-      return <ComingSoonPage what="los proyectos" />;
+      return <ProjectsPage />;
+    case "project-new":
+      return <ProjectEditor id={null} serviceTitles={serviceTitles} />;
+    case "project-edit":
+      return (
+        <ProjectEditor
+          id={new URLSearchParams(search).get("id") ?? ""}
+          serviceTitles={serviceTitles}
+        />
+      );
     case "news":
       return <ComingSoonPage what="las noticias" />;
     case "media":
@@ -79,7 +95,9 @@ export default function AdminApp(props: Props) {
   return (
     <QueryClientProvider client={queryClient}>
       <RequireSession>
-        <ShellRouter serviceTitles={props.serviceTitles ?? {}} />
+        <AppProvider>
+          <ShellRouter serviceTitles={props.serviceTitles ?? {}} />
+        </AppProvider>
       </RequireSession>
     </QueryClientProvider>
   );
@@ -90,40 +108,27 @@ function ShellRouter({
 }: {
   serviceTitles: Record<string, string>;
 }) {
-  const [path, setPath] = useState(() => window.location.pathname);
+  const { path, search, navigate } = useApp();
 
+  // Links to other sections switch the content instead of loading a page.
   useEffect(() => {
     function onClick(event: MouseEvent) {
       const anchor = (event.target as Element | null)?.closest?.("a");
       if (!anchor) return;
       if (!isInAppClick(event, anchor, window.location.origin)) return;
       event.preventDefault();
-      const url = new URL(anchor.href);
-      const next = `${url.pathname}${url.search}`;
-      if (next !== `${window.location.pathname}${window.location.search}`) {
-        window.history.pushState(null, "", next);
-      }
-      setPath(url.pathname);
-      window.scrollTo(0, 0);
-      // Move focus to the new content so screen readers announce it.
-      document.getElementById("contenido")?.focus({ preventScroll: true });
-    }
-    function onPopState() {
-      setPath(window.location.pathname);
+      navigate(anchor.href);
     }
     document.addEventListener("click", onClick);
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      document.removeEventListener("click", onClick);
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, []);
+    return () => document.removeEventListener("click", onClick);
+  }, [navigate]);
 
   return (
     <Shell path={path}>
       <Content
-        key={path}
+        key={`${path}${search}`}
         page={pageForPath(path)}
+        search={search}
         serviceTitles={serviceTitles}
       />
     </Shell>

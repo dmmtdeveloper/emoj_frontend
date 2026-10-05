@@ -12,6 +12,11 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/cuenta")).toBe("account");
   });
 
+  it("maps the project editor routes", () => {
+    expect(pageForPath("/admin/proyectos/nuevo")).toBe("project-new");
+    expect(pageForPath("/admin/proyectos/editar/")).toBe("project-edit");
+  });
+
   it("returns null for the sign-in pages and anything else", () => {
     expect(pageForPath("/admin/login")).toBeNull();
     expect(pageForPath("/admin/restablecer")).toBeNull();
@@ -104,5 +109,20 @@ describe("isInAppClick", () => {
         origin,
       ),
     ).toBe(false);
+  });
+});
+
+describe("rebuildState", () => {
+  it("reports a site rebuild for about two minutes after a change", async () => {
+    const { rebuildState, REBUILD_MS } =
+      await import("../src/lib/admin/rebuild");
+    expect(rebuildState(null, 1000)).toEqual({ building: false });
+    expect(rebuildState(1000, 1000 + 30_000)).toEqual({
+      building: true,
+      remainingMs: REBUILD_MS - 30_000,
+    });
+    expect(rebuildState(1000, 1000 + REBUILD_MS)).toEqual({ building: false });
+    // A start time in the future (clock change) is ignored.
+    expect(rebuildState(5000, 1000)).toEqual({ building: false });
   });
 });

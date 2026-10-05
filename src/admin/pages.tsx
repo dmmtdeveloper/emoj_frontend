@@ -5,58 +5,27 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   FolderKanban,
   Mail,
   Phone,
+  Plus,
 } from "lucide-react";
 import { useState } from "react";
-import type { ApiResult } from "../lib/api/client";
 import type { ContactMessage } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
+import {
+  ErrorNotice,
+  formatDateTime as formatDate,
+  pageFromUrl,
+  Pagination,
+  replaceParam,
+  unwrap,
+} from "./common";
 import { useUser } from "./session";
 import { Button, ButtonLink, Card, Notice } from "./ui";
-
-const dateFormat = new Intl.DateTimeFormat("es-CL", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "America/Santiago",
-});
-
-function formatDate(iso: string): string {
-  return dateFormat.format(new Date(iso));
-}
-
-/** Data of an ApiResult, or a thrown message for react-query's error state. */
-function unwrap<T>(result: ApiResult<T>): T {
-  if (result.ok) return result.data;
-  if (result.kind === "problem" && result.status === 401) {
-    window.location.assign(LOGIN_PATH);
-  }
-  throw new Error(problemMessage(result));
-}
-
-function ErrorNotice({ error, retry }: { error: Error; retry: () => void }) {
-  return (
-    <Notice tone="error">
-      {error.message}{" "}
-      <button
-        type="button"
-        onClick={retry}
-        className="font-semibold text-brand underline underline-offset-4"
-      >
-        Reintentar
-      </button>
-    </Notice>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Resumen                                                             */
@@ -97,12 +66,17 @@ function useCounts() {
 function StatCard({
   title,
   href,
+  newHref,
+  newLabel,
   icon: Icon,
   published,
   draft,
 }: {
   title: string;
   href: string;
+  /** "Nuevo …" quick action, once that editor exists. */
+  newHref?: string;
+  newLabel?: string;
   icon: typeof FolderKanban;
   published: number;
   draft: number;
@@ -129,8 +103,13 @@ function StatCard({
           </dd>
         </div>
       </dl>
-      {/* "Nuevo …" joins "Ver todos" once the editors exist (Fase 13). */}
       <div className="mt-auto flex flex-wrap gap-2">
+        {newHref && (
+          <ButtonLink href={newHref}>
+            <Plus size={18} strokeWidth={1.75} aria-hidden="true" />
+            {newLabel}
+          </ButtonLink>
+        )}
         <ButtonLink href={href} variant="secondary">
           Ver {title.toLowerCase()}
           <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
@@ -166,6 +145,8 @@ export function DashboardPage() {
             <StatCard
               title="Proyectos"
               href="/admin/proyectos"
+              newHref="/admin/proyectos/nuevo"
+              newLabel="Nuevo proyecto"
               icon={FolderKanban}
               published={counts.data.projects.published}
               draft={counts.data.projects.draft}
@@ -296,10 +277,7 @@ export function MessagesPage({
 }: {
   serviceTitles: Record<string, string>;
 }) {
-  const [page, setPage] = useState(() => {
-    const raw = Number(new URLSearchParams(window.location.search).get("page"));
-    return Number.isInteger(raw) && raw > 0 ? raw : 1;
-  });
+  const [page, setPage] = useState(pageFromUrl);
   const query = useQuery({
     queryKey: ["messages", page],
     queryFn: async () =>
@@ -308,9 +286,7 @@ export function MessagesPage({
 
   function go(next: number) {
     setPage(next);
-    const url = new URL(window.location.href);
-    url.searchParams.set("page", String(next));
-    window.history.replaceState(null, "", url);
+    replaceParam("page", String(next));
     document.getElementById("contenido")?.focus();
   }
 
@@ -351,31 +327,13 @@ export function MessagesPage({
           </>
         ) : null}
       </Card>
-      {query.data && totalPages > 1 && (
-        <nav
-          aria-label="Páginas de mensajes"
-          className="flex items-center justify-between gap-4"
-        >
-          <Button
-            variant="secondary"
-            disabled={page <= 1}
-            onClick={() => go(page - 1)}
-          >
-            <ChevronLeft size={18} strokeWidth={1.75} aria-hidden="true" />
-            Anteriores
-          </Button>
-          <p className="text-sm text-ink-muted">
-            Página {page} de {totalPages}
-          </p>
-          <Button
-            variant="secondary"
-            disabled={page >= totalPages}
-            onClick={() => go(page + 1)}
-          >
-            Siguientes
-            <ChevronRight size={18} strokeWidth={1.75} aria-hidden="true" />
-          </Button>
-        </nav>
+      {query.data && (
+        <Pagination
+          label="Páginas de mensajes"
+          page={page}
+          totalPages={totalPages}
+          onChange={go}
+        />
       )}
     </div>
   );

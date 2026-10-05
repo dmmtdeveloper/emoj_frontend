@@ -11,7 +11,9 @@
  *   and the user menu (native popover: light dismiss and Esc for free).
  */
 import {
+  CircleCheck,
   ExternalLink,
+  LoaderCircle,
   FileText,
   FolderKanban,
   Image,
@@ -29,8 +31,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activeNavItem, ADMIN_NAV, type AdminNavItem } from "../lib/admin/nav";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
+import { useApp } from "./app-context";
 import { useUser } from "./session";
-import { cx, Isotype } from "./ui";
+import { cx, Isotype, Notice } from "./ui";
 
 const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -133,6 +136,44 @@ function Brand({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/** "Actualizando el sitio…" while a rebuild is running (about 2 minutes). */
+function RebuildStatus() {
+  const { rebuild, hadRebuild } = useApp();
+  if (!rebuild.building && !hadRebuild) return null;
+  const minutes = rebuild.building
+    ? Math.max(1, Math.ceil(rebuild.remainingMs / 60_000))
+    : 0;
+  return (
+    <p
+      role="status"
+      title={
+        rebuild.building
+          ? "Los cambios publicados tardan unos 2 minutos en verse en el sitio."
+          : undefined
+      }
+      className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full bg-surface-sunken px-3 text-sm font-semibold whitespace-nowrap text-ink"
+    >
+      {rebuild.building ? (
+        <>
+          <LoaderCircle
+            size={16}
+            strokeWidth={2}
+            aria-hidden="true"
+            className="motion-safe:animate-spin"
+          />
+          <span className="sr-only sm:not-sr-only">Actualizando el sitio</span>
+          <span className="font-medium text-ink-muted">~{minutes} min</span>
+        </>
+      ) : (
+        <>
+          <CircleCheck size={16} strokeWidth={2} aria-hidden="true" />
+          <span className="sr-only sm:not-sr-only">Sitio actualizado</span>
+        </>
+      )}
+    </p>
+  );
+}
+
 function UserMenu() {
   const user = useUser();
   const [busy, setBusy] = useState(false);
@@ -194,6 +235,16 @@ function UserMenu() {
         </ul>
       </div>
     </>
+  );
+}
+
+function FlashNotice() {
+  const { flash } = useApp();
+  if (!flash) return null;
+  return (
+    <div className="mx-auto mb-6 max-w-6xl">
+      <Notice tone="success">{flash}</Notice>
+    </div>
   );
 }
 
@@ -323,6 +374,7 @@ export function Shell({
               </p>
             )}
           </div>
+          <RebuildStatus />
           <a
             href="/"
             target="_blank"
@@ -340,6 +392,7 @@ export function Shell({
           tabIndex={-1}
           className="flex-1 px-4 py-6 focus:outline-none md:px-8 md:py-8"
         >
+          <FlashNotice />
           {children}
         </main>
       </div>

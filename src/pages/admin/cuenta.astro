@@ -1,8 +1,5 @@
 ---
-import AdminApp from "../../admin/AdminApp";
-import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminShellPage from "../../layouts/AdminShellPage.astro";
 ---
 
-<AdminLayout title="Cuenta">
-  <AdminApp page="account" client:only="react" />
-</AdminLayout>
+<AdminShellPage title="Cuenta" page="account" />
