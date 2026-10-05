@@ -12,10 +12,17 @@
  * Hover/focus: the tile lifts, the border turns brand, the icon redraws its
  * strokes and the arrow slides (motion.css `.icon-draw`; none under reduced
  * motion).
+ *
+ * `photo` (compact and default tiles): a project photo that fades in behind
+ * the content on hover or keyboard focus, under a plum overlay; the text
+ * switches to light colors so it keeps its contrast. Decorative (`alt=""`):
+ * the link names the service. Touch screens never show it (no hover).
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
 import type { Service } from "../../lib/get-services";
+import { fitWidth } from "../../lib/content/format";
 import ServiceIcon from "./ServiceIcon.astro";
 
 interface Props {
@@ -24,6 +31,11 @@ interface Props {
   variant?: "default" | "compact" | "featured";
   /** Position shown as an editorial index ("01"). */
   index?: number;
+  /** Photo revealed on hover (see above). Remote URLs need their size. */
+  photo?:
+    | { src: string; width: number; height: number }
+    | { src: ImageMetadata }
+    | undefined;
 }
 
 const {
@@ -31,6 +43,7 @@ const {
   headingLevel = "h3",
   variant = "default",
   index,
+  photo,
 } = Astro.props;
 const { title, summary, icon, slug, image } = service.data;
 const Heading = headingLevel;
@@ -38,6 +51,16 @@ const number = index === undefined ? "" : String(index).padStart(2, "0");
 const featured = variant === "featured" && image !== undefined;
 const link =
   "no-underline after:absolute after:inset-0 after:z-10 after:rounded-[inherit] focus-visible:outline-none";
+// Light text while the photo shows (written out in full for Tailwind).
+const onPhoto = {
+  title: "group-hover:text-sand-50 group-has-[a:focus-visible]:text-sand-50",
+  muted: "group-hover:text-sand-100 group-has-[a:focus-visible]:text-sand-100",
+  link: "group-hover:text-sand-50 group-has-[a:focus-visible]:text-sand-50",
+};
+const photoImage =
+  "h-full w-full scale-105 object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-100 group-has-[a:focus-visible]:scale-100";
+const photoLayer =
+  "pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 ease-(--ease-out) group-hover:opacity-100 group-has-[a:focus-visible]:opacity-100";
 const shell =
   "group radius-signature relative isolate flex h-full flex-col overflow-hidden transition-[translate,box-shadow,border-color] duration-300 ease-(--ease-out) hover:-translate-y-1 has-[a:focus-visible]:-translate-y-1 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring";
 ---
@@ -105,6 +128,30 @@ const shell =
         : "p-6 pl-8 md:p-8 md:pl-10",
     ]}
   >
+    {photo && (
+      <div class={photoLayer} aria-hidden="true">
+        {"width" in photo ? (
+          <Image
+            src={photo.src}
+            alt=""
+            {...fitWidth(photo, 640)}
+            sizes="(min-width: 1024px) 300px, 50vw"
+            loading="lazy"
+            class={photoImage}
+          />
+        ) : (
+          <Image
+            src={photo.src}
+            alt=""
+            widths={[400, 640]}
+            sizes="(min-width: 1024px) 300px, 50vw"
+            loading="lazy"
+            class={photoImage}
+          />
+        )}
+        <div class="absolute inset-0 bg-linear-to-t from-plum-950/85 via-plum-950/70 to-plum-950/60" />
+      </div>
+    )}
     <div class="flex items-start justify-between gap-3">
       <span
         class:list={[
@@ -116,7 +163,10 @@ const shell =
       </span>
       {number && (
         <span
-          class="text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted"
+          class:list={[
+            "text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted transition-colors duration-300",
+            onPhoto.muted,
+          ]}
           aria-hidden="true"
         >
           {number}
@@ -125,7 +175,8 @@ const shell =
     </div>
     <Heading
       class:list={[
-        "font-semibold text-ink hyphens-auto",
+        "font-semibold text-ink hyphens-auto transition-colors duration-300",
+        onPhoto.title,
         variant === "compact"
           ? "text-[17px] leading-[22px] md:text-[22px] md:leading-7"
           : "text-[22px] leading-7",
@@ -133,14 +184,19 @@ const shell =
     >
       <a
         href={`/servicios/${slug}`}
-        class:list={[link, "text-ink hover:text-ink"]}
+        class:list={[
+          link,
+          "text-ink hover:text-ink",
+          photo && "group-hover:text-sand-50 hover:text-sand-50",
+        ]}
       >
         {title}
       </a>
     </Heading>
     <p
       class:list={[
-        "text-ink-muted",
+        "text-ink-muted transition-colors duration-300",
+        onPhoto.muted,
         variant === "compact" && "hidden md:block",
       ]}
     >
@@ -148,7 +204,8 @@ const shell =
     </p>
     <span
       class:list={[
-        "mt-auto items-center gap-2 pt-1 text-base leading-5 font-semibold text-brand",
+        "mt-auto items-center gap-2 pt-1 text-base leading-5 font-semibold text-brand transition-colors duration-300",
+        onPhoto.link,
         variant === "compact" ? "hidden md:inline-flex" : "inline-flex",
       ]}
       aria-hidden="true"

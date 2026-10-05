@@ -3,8 +3,12 @@
  * Home services as an asymmetric bento: the first service as a large photo
  * tile, the other six as compact tiles and a closing "not sure?" tile.
  * Phones get a dense two-column grid (titles only) to keep the page short.
+ * Hovering a compact tile reveals a photo of a real project of that service
+ * (the newest published one with a cover), or the service's own photo.
  */
 import { ArrowRight } from "@lucide/astro";
+import { content } from "../../lib/content";
+import { coversByService } from "../../lib/content/service-covers";
 import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
 import ArrowLink from "../ui/ArrowLink.astro";
@@ -13,6 +17,16 @@ import SectionHeading from "../ui/SectionHeading.astro";
 import SectionTrace from "../ui/SectionTrace.astro";
 
 const [first, ...rest] = await getServices();
+const covers = coversByService(
+  rest.map((s) => s.data.slug),
+  await content.getProjects(),
+);
+const photoFor = (service: (typeof rest)[number]) => {
+  const cover = covers.get(service.data.slug);
+  if (cover)
+    return { src: cover.url, width: cover.width, height: cover.height };
+  return service.data.image ? { src: service.data.image } : undefined;
+};
 ---
 
 <section
@@ -43,7 +57,12 @@ const [first, ...rest] = await getServices();
       )}
       {rest.map((service, i) => (
         <li>
-          <ServiceCard service={service} variant="compact" index={i + 2} />
+          <ServiceCard
+            service={service}
+            variant="compact"
+            index={i + 2}
+            photo={photoFor(service)}
+          />
         </li>
       ))}
       <li class="col-span-2">
