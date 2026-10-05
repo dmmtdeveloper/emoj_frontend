@@ -15,9 +15,14 @@ interface Props {
   corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   /** "inverse" on `surface-inverse` (brand on plum is a forbidden pair). */
   tone?: "brand" | "inverse";
+  /**
+   * Also show it below 1024px. Off by default: in one column there is no
+   * free space and the mark would run under the text.
+   */
+  mobile?: boolean;
 }
 
-const { corner, tone = "brand" } = Astro.props;
+const { corner, tone = "brand", mobile = false } = Astro.props;
 
 // Inside the section, so the whole mark (both dots) stays visible.
 const CORNERS = {
@@ -33,6 +38,7 @@ const CORNERS = {
   dots
   class:list={[
     "section-trace absolute -z-10",
+    !mobile && "hidden lg:block",
     "w-[min(92vw,420px)] md:w-[640px] lg:w-[760px]",
     CORNERS[corner],
     tone === "inverse"
