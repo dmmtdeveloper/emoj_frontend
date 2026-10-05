@@ -12,6 +12,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   Circle,
   ExternalLink,
@@ -23,6 +24,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type KeyboardEvent,
   type BaseSyntheticEvent,
   type ReactNode,
 } from "react";
@@ -35,6 +37,13 @@ import type {
 import type { AdminMedia } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { smallForCover } from "../lib/admin/media";
+import {
+  firstErrorField,
+  tabForField,
+  tabStatus,
+  type EditorTab,
+  type TabState,
+} from "../lib/admin/editor-tabs";
 import { charCount, type ChecklistItem } from "../lib/admin/project-form";
 import {
   searchPreview,
@@ -44,7 +53,7 @@ import {
 } from "../lib/admin/seo";
 import type { ApiResult, FieldError } from "../lib/api/client";
 import { useApp } from "./app-context";
-import { formatDateTime } from "./common";
+import { formatDateTime, replaceParam } from "./common";
 import { MediaThumb } from "./MediaPicker";
 import {
   Button,
@@ -110,8 +119,19 @@ export function useContentEditor<
   T extends ContentItem,
   V extends FieldValues,
   I,
->(adapter: EditorAdapter<T, V, I>, initial: T | null, form: UseFormReturn<V>) {
+>(
+  adapter: EditorAdapter<T, V, I>,
+  initial: T | null,
+  form: UseFormReturn<V>,
+  tabs: readonly EditorTab[],
+) {
   const app = useApp();
+  const [tab, setTabState] = useState(() => {
+    const wanted = new URLSearchParams(window.location.search).get("paso");
+    return tabs.some((t) => t.id === wanted)
+      ? (wanted ?? "")
+      : (tabs[0]?.id ?? "");
+  });
   const queryClient = useQueryClient();
   const [item, setItem] = useState(initial);
   const [banner, setBanner] = useState<Banner>(null);
@@ -124,8 +144,23 @@ export function useContentEditor<
     reset,
     setError,
     getValues,
+    setFocus,
     formState: { isDirty },
   } = form;
+
+  /** Shows a step and keeps it in the URL (`?paso=`), so a reload stays. */
+  function setTab(id: string) {
+    setTabState(id);
+    replaceParam("paso", id === tabs[0]?.id ? null : id);
+  }
+
+  /** Opens the step of a field and puts the cursor on it. */
+  function reveal(field: string) {
+    setTab(tabForField(tabs, field));
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => setFocus(field as FieldPath<V>)),
+    );
+  }
 
   // Ask before leaving with unsaved changes (in-app links and the browser).
   useEffect(() => {
@@ -158,13 +193,14 @@ export function useContentEditor<
 
   function markFields(fields: Partial<Record<string, string>>): boolean {
     const names = Object.keys(fields);
-    names.forEach((name, i) =>
-      setError(
-        name as FieldPath<V>,
-        { type: "server", message: fields[name] ?? "" },
-        { shouldFocus: i === 0 },
-      ),
-    );
+    for (const name of names) {
+      setError(name as FieldPath<V>, {
+        type: "server",
+        message: fields[name] ?? "",
+      });
+    }
+    const first = firstErrorField(tabs, names);
+    if (first) reveal(first);
     return names.length > 0;
   }
 
@@ -211,7 +247,9 @@ export function useContentEditor<
     app.navigate(adapter.editHref(saved.id), { replace: true });
   }
 
-  function invalid() {
+  function invalid(errors: Record<string, unknown>) {
+    const first = firstErrorField(tabs, Object.keys(errors));
+    if (first) reveal(first);
     show({ tone: "error", text: REVIEW }, { focus: false });
   }
 
@@ -323,6 +361,9 @@ export function useContentEditor<
   }
 
   return {
+    tab,
+    setTab,
+    reveal,
     item,
     isNew,
     status: item?.status ?? ("draft" as const),
@@ -466,14 +507,20 @@ export function BannerSlot({
 export function ChecklistCard({
   checklist,
   published,
+  children,
+  onGoTo,
 }: {
   checklist: ChecklistItem<string>[];
   published: boolean;
+  /** Shown below the card (e.g. the delete action). */
+  children?: ReactNode;
+  /** Pending items become links to their field (opens its step). */
+  onGoTo?: (field: string) => void;
 }) {
   const missing = checklist.filter((i) => i.required && !i.done);
   const n = missing.length;
   return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
+    <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
       <Card className="flex flex-col gap-4">
         <h3 className="text-lg leading-6 font-semibold text-ink">
           {published ? "Estado" : "Para publicar"}
@@ -496,13 +543,25 @@ export function ChecklistCard({
                   className="mt-0.5 shrink-0 text-ink-muted"
                 />
               )}
-              <span className={cx(item.done ? "text-ink" : "text-ink-muted")}>
-                {item.label}
-                <span className="sr-only">
-                  {item.done ? ": listo" : ": pendiente"}
+              {!item.done && onGoTo ? (
+                <button
+                  type="button"
+                  onClick={() => onGoTo(item.field)}
+                  className="text-left text-ink-muted underline decoration-border-strong underline-offset-4 hover:text-ink hover:decoration-current"
+                >
+                  {item.label}
+                  <span className="sr-only">: pendiente, ir al campo</span>
+                  {item.required ? "" : " (recomendado)"}
+                </button>
+              ) : (
+                <span className={cx(item.done ? "text-ink" : "text-ink-muted")}>
+                  {item.label}
+                  <span className="sr-only">
+                    {item.done ? ": listo" : ": pendiente"}
+                  </span>
+                  {item.required ? "" : " (recomendado)"}
                 </span>
-                {item.required ? "" : " (recomendado)"}
-              </span>
+              )}
             </li>
           ))}
         </ul>
@@ -514,6 +573,7 @@ export function ChecklistCard({
             : `Falta${n === 1 ? "" : "n"} ${n} dato${n === 1 ? "" : "s"} obligatorio${n === 1 ? "" : "s"} para publicar.`}
         </p>
       </Card>
+      {children}
     </aside>
   );
 }
@@ -787,29 +847,201 @@ export function SeoCard({
   );
 }
 
-export function DeleteCard({
-  title,
-  text,
+/** Delete action, quiet and below the checklist (not at the end of a step). */
+export function DeleteAction({
   label,
+  text,
   busy,
   onAsk,
 }: {
-  title: string;
-  text: string;
   label: string;
+  text: string;
   busy: Busy;
   onAsk: () => void;
 }) {
   return (
-    <Card className="flex flex-col gap-3">
-      <SectionTitle title={title} text={text} />
-      <div>
-        <Button variant="danger" disabled={busy !== null} onClick={onAsk}>
-          <Trash2 size={18} strokeWidth={1.75} aria-hidden="true" />
-          {busy === "delete" ? "Eliminando…" : label}
-        </Button>
-      </div>
-    </Card>
+    <div className="flex flex-col gap-1 px-1">
+      <Button
+        variant="ghost"
+        disabled={busy !== null}
+        onClick={onAsk}
+        className="self-start px-3 text-brand hover:text-brand"
+      >
+        <Trash2 size={18} strokeWidth={1.75} aria-hidden="true" />
+        {busy === "delete" ? "Eliminando…" : label}
+      </Button>
+      <p className="px-3 text-sm leading-5 text-ink-muted">{text}</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Steps (tabs)                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The editor's steps as tabs (WAI-ARIA tabs pattern: arrow keys, Home and
+ * End move between them). Each tab shows its number and a check when the
+ * step is complete, or a mark when one of its fields has an error.
+ */
+export function EditorTabs({
+  tabs,
+  current,
+  onChange,
+  checklist,
+  errorFields,
+}: {
+  tabs: readonly EditorTab[];
+  current: string;
+  onChange: (id: string) => void;
+  checklist: readonly ChecklistItem<string>[];
+  errorFields: readonly string[];
+}) {
+  const status = tabStatus(tabs, checklist, errorFields);
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const last = tabs.length - 1;
+    const next =
+      event.key === "ArrowRight"
+        ? index === last
+          ? 0
+          : index + 1
+        : event.key === "ArrowLeft"
+          ? index === 0
+            ? last
+            : index - 1
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? last
+              : null;
+    if (next === null) return;
+    event.preventDefault();
+    const target = tabs[next];
+    if (!target) return;
+    onChange(target.id);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="tablist"
+      aria-label="Pasos"
+      className="-mx-4 flex gap-1 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0"
+    >
+      {tabs.map((t, index) => {
+        const selected = t.id === current;
+        const state: TabState = status[t.id] ?? "todo";
+        return (
+          <button
+            key={t.id}
+            ref={(el) => {
+              refs.current[index] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`tab-${t.id}`}
+            aria-selected={selected}
+            aria-controls={`panel-${t.id}`}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => onChange(t.id)}
+            onKeyDown={(e) => onKeyDown(e, index)}
+            className={cx(
+              "relative -mb-px flex min-h-12 shrink-0 items-center gap-2.5 border-b-2 px-3 text-base font-semibold whitespace-nowrap transition-colors md:px-4",
+              selected
+                ? "border-brand text-ink"
+                : "border-transparent text-ink-muted hover:border-border-strong hover:text-ink",
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cx(
+                "grid size-6 place-items-center rounded-full text-[13px] tabular-nums",
+                state === "error"
+                  ? "bg-brand text-on-brand"
+                  : state === "done"
+                    ? "bg-surface-inverse text-ink-inverse"
+                    : selected
+                      ? "bg-surface-sunken text-ink"
+                      : "bg-surface-sunken text-ink-muted",
+              )}
+            >
+              {state === "done" ? (
+                <Check size={14} strokeWidth={2.5} />
+              ) : state === "error" ? (
+                "!"
+              ) : (
+                index + 1
+              )}
+            </span>
+            {t.label}
+            <span className="sr-only">
+              {state === "error"
+                ? " (tiene campos por revisar)"
+                : state === "done"
+                  ? " (completo)"
+                  : ""}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** One step: its fields, then a way to the previous and next steps. */
+export function StepPanel({
+  tabs,
+  id,
+  current,
+  onChange,
+  children,
+}: {
+  tabs: readonly EditorTab[];
+  id: string;
+  current: string;
+  onChange: (id: string) => void;
+  children: ReactNode;
+}) {
+  const index = tabs.findIndex((t) => t.id === id);
+  const prev = tabs[index - 1];
+  const next = tabs[index + 1];
+  const go = (target: string) => {
+    onChange(target);
+    document.getElementById(`tab-${target}`)?.focus({ preventScroll: true });
+    document
+      .getElementById("editor-steps")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <div
+      role="tabpanel"
+      id={`panel-${id}`}
+      aria-labelledby={`tab-${id}`}
+      hidden={id !== current}
+      className="flex flex-col gap-6"
+    >
+      {children}
+      {(prev || next) && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {prev ? (
+            <Button variant="ghost" onClick={() => go(prev.id)}>
+              <ArrowLeft size={18} strokeWidth={1.75} aria-hidden="true" />
+              {prev.label}
+            </Button>
+          ) : (
+            <span />
+          )}
+          {next && (
+            <Button variant="secondary" onClick={() => go(next.id)}>
+              Siguiente: {next.label}
+              <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

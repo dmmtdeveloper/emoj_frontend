@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { AdminNews, NewsInput } from "../lib/admin/api";
+import type { EditorTab } from "../lib/admin/editor-tabs";
 import {
   emptyNewsForm,
   formToNewsInput,
@@ -25,11 +26,13 @@ import {
   BannerSlot,
   ChecklistCard,
   CoverChooser,
-  DeleteCard,
+  DeleteAction,
   EditorDialogs,
   EditorHeader,
+  EditorTabs,
   SectionTitle,
   SeoCard,
+  StepPanel,
   useContentEditor,
   type EditorAdapter,
 } from "./editor-kit";
@@ -39,6 +42,20 @@ import { RichTextEditor } from "./RichTextEditor";
 import { Card, Counter, Field, Notice, TextArea } from "./ui";
 
 const LIST_PATH = "/admin/noticias";
+
+const TABS: readonly EditorTab[] = [
+  {
+    id: "noticia",
+    label: "Noticia",
+    fields: ["title", "excerpt", "category", "coverMediaId"],
+  },
+  { id: "texto", label: "Texto", fields: ["body"] },
+  {
+    id: "google",
+    label: "Google",
+    fields: ["seoTitle", "seoDescription", "slug", "ogImageMediaId"],
+  },
+];
 
 type Picker = null | "cover" | "og";
 
@@ -130,7 +147,9 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
     formState: { errors, isDirty },
   } = form;
   const values = useWatch({ control }) as NewsFormValues;
-  const editor = useContentEditor(ADAPTER, initial, form);
+  const editor = useContentEditor(ADAPTER, initial, form, TABS);
+  const checklist = newsPublishChecklist(values);
+  const step = { tabs: TABS, current: editor.tab, onChange: editor.setTab };
   const { item: news, isNew, status } = editor;
   const published = status === "published";
   const title = values.title.trim() || (isNew ? "Nueva noticia" : "Sin título");
@@ -159,148 +178,165 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
       <BannerSlot banner={editor.banner} bannerRef={editor.bannerRef} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card className="flex flex-col gap-5">
-            <SectionTitle
-              title="Noticia"
-              text="El título y la bajada aparecen en la lista de noticias y al inicio del artículo."
-            />
-            <Field
-              label="Título"
-              {...register("title")}
-              error={errors.title?.message}
-              aside={
-                <Counter
-                  count={charCount(values.title)}
-                  max={NEWS_LIMITS.title}
-                />
-              }
-            />
-            <TextArea
-              label="Bajada"
-              hint="Una o dos frases que resumen la noticia. Obligatoria para publicar."
-              rows={3}
-              {...register("excerpt")}
-              error={errors.excerpt?.message}
-              aside={
-                <Counter
-                  count={charCount(values.excerpt)}
-                  max={NEWS_LIMITS.excerpt}
-                />
-              }
-            />
-            <Field
-              label="Categoría"
-              optional
-              hint="Una etiqueta corta, por ejemplo «Proyectos» o «Equipo». Usa las mismas para que las noticias se agrupen."
-              list={categoriesId}
-              autoComplete="off"
-              {...register("category")}
-              error={errors.category?.message}
-              className="md:max-w-sm"
-            />
-            <datalist id={categoriesId}>
-              {(categories.data ?? []).map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-            <div className="flex flex-col gap-3">
-              <h4 className="text-sm font-semibold text-ink">
-                Foto de portada{" "}
-                <span className="font-medium text-ink-muted">
-                  (recomendada)
-                </span>
-              </h4>
-              <CoverChooser
-                mediaId={values.coverMediaId}
-                media={
-                  values.coverMediaId
-                    ? media.get(values.coverMediaId)
-                    : undefined
-                }
-                emptyLabel="Elegir foto de portada"
-                onPick={() => setPicker("cover")}
-                onClear={() =>
-                  setValue("coverMediaId", null, { shouldDirty: true })
-                }
-              />
-            </div>
-          </Card>
-
-          <Card className="flex flex-col gap-5">
-            <SectionTitle
-              title="Texto"
-              text="Usa títulos de sección para ordenar el texto y párrafos cortos. Pegar desde Word o Google Docs conserva solo el formato que el sitio puede mostrar."
-            />
-            <Controller
-              control={control}
-              name="body"
-              render={({ field }) => (
-                <RichTextEditor
-                  label="Texto de la noticia"
-                  hint="Obligatorio para publicar."
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  editorRef={field.ref}
-                  error={errors.body?.message as string | undefined}
-                />
-              )}
-            />
-          </Card>
-
-          <SeoCard
-            noun="la noticia"
-            preview={{
-              section: "noticias",
-              slug: values.slug,
-              title: values.title,
-              seoTitle: values.seoTitle,
-              seoDescription: values.seoDescription,
-              fallbackDescription: values.excerpt,
-            }}
-            limits={NEWS_LIMITS}
-            fields={{
-              seoTitle: register("seoTitle"),
-              seoDescription: register("seoDescription"),
-              slug: register("slug"),
-            }}
-            errors={{
-              seoTitle: errors.seoTitle?.message,
-              seoDescription: errors.seoDescription?.message,
-              slug: errors.slug?.message,
-            }}
-            isNew={isNew}
-            published={published}
-            emptyTitleHint="Si lo dejas vacío se usa el título de la noticia."
-            emptyDescriptionHint="Obligatoria para publicar. Cuenta en una frase de qué trata la noticia."
-            ogImage={{
-              id: values.ogImageMediaId,
-              media: values.ogImageMediaId
-                ? media.get(values.ogImageMediaId)
-                : undefined,
-            }}
-            onPickOg={() => setPicker("og")}
-            onClearOg={() =>
-              setValue("ogImageMediaId", null, { shouldDirty: true })
-            }
+        <div
+          id="editor-steps"
+          className="flex min-w-0 scroll-mt-24 flex-col gap-6"
+        >
+          <EditorTabs
+            tabs={TABS}
+            current={editor.tab}
+            onChange={editor.setTab}
+            checklist={checklist}
+            errorFields={Object.keys(errors)}
           />
 
+          <StepPanel id="noticia" {...step}>
+            <Card className="flex flex-col gap-5">
+              <SectionTitle
+                title="Noticia"
+                text="El título y la bajada aparecen en la lista de noticias y al inicio del artículo."
+              />
+              <Field
+                label="Título"
+                {...register("title")}
+                error={errors.title?.message}
+                aside={
+                  <Counter
+                    count={charCount(values.title)}
+                    max={NEWS_LIMITS.title}
+                  />
+                }
+              />
+              <TextArea
+                label="Bajada"
+                hint="Una o dos frases que resumen la noticia. Obligatoria para publicar."
+                rows={3}
+                {...register("excerpt")}
+                error={errors.excerpt?.message}
+                aside={
+                  <Counter
+                    count={charCount(values.excerpt)}
+                    max={NEWS_LIMITS.excerpt}
+                  />
+                }
+              />
+              <Field
+                label="Categoría"
+                optional
+                hint="Una etiqueta corta, por ejemplo «Proyectos» o «Equipo». Usa las mismas para que las noticias se agrupen."
+                list={categoriesId}
+                autoComplete="off"
+                {...register("category")}
+                error={errors.category?.message}
+                className="md:max-w-sm"
+              />
+              <datalist id={categoriesId}>
+                {(categories.data ?? []).map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+              <div className="flex flex-col gap-3">
+                <h4 className="text-sm font-semibold text-ink">
+                  Foto de portada{" "}
+                  <span className="font-medium text-ink-muted">
+                    (recomendada)
+                  </span>
+                </h4>
+                <CoverChooser
+                  mediaId={values.coverMediaId}
+                  media={
+                    values.coverMediaId
+                      ? media.get(values.coverMediaId)
+                      : undefined
+                  }
+                  emptyLabel="Elegir foto de portada"
+                  onPick={() => setPicker("cover")}
+                  onClear={() =>
+                    setValue("coverMediaId", null, { shouldDirty: true })
+                  }
+                />
+              </div>
+            </Card>
+          </StepPanel>
+
+          <StepPanel id="texto" {...step}>
+            <Card className="flex flex-col gap-5">
+              <SectionTitle
+                title="Texto"
+                text="Usa títulos de sección para ordenar el texto y párrafos cortos. Pegar desde Word o Google Docs conserva solo el formato que el sitio puede mostrar."
+              />
+              <Controller
+                control={control}
+                name="body"
+                render={({ field }) => (
+                  <RichTextEditor
+                    label="Texto de la noticia"
+                    hint="Obligatorio para publicar."
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    editorRef={field.ref}
+                    error={errors.body?.message as string | undefined}
+                  />
+                )}
+              />
+            </Card>
+          </StepPanel>
+
+          <StepPanel id="google" {...step}>
+            <SeoCard
+              noun="la noticia"
+              preview={{
+                section: "noticias",
+                slug: values.slug,
+                title: values.title,
+                seoTitle: values.seoTitle,
+                seoDescription: values.seoDescription,
+                fallbackDescription: values.excerpt,
+              }}
+              limits={NEWS_LIMITS}
+              fields={{
+                seoTitle: register("seoTitle"),
+                seoDescription: register("seoDescription"),
+                slug: register("slug"),
+              }}
+              errors={{
+                seoTitle: errors.seoTitle?.message,
+                seoDescription: errors.seoDescription?.message,
+                slug: errors.slug?.message,
+              }}
+              isNew={isNew}
+              published={published}
+              emptyTitleHint="Si lo dejas vacío se usa el título de la noticia."
+              emptyDescriptionHint="Obligatoria para publicar. Cuenta en una frase de qué trata la noticia."
+              ogImage={{
+                id: values.ogImageMediaId,
+                media: values.ogImageMediaId
+                  ? media.get(values.ogImageMediaId)
+                  : undefined,
+              }}
+              onPickOg={() => setPicker("og")}
+              onClearOg={() =>
+                setValue("ogImageMediaId", null, { shouldDirty: true })
+              }
+            />
+          </StepPanel>
+        </div>
+
+        <ChecklistCard
+          checklist={checklist}
+          published={published}
+          onGoTo={editor.reveal}
+        >
           {!isNew && (
-            <DeleteCard
-              title="Eliminar noticia"
-              text="Se borra del panel y, si está publicada, del sitio. Las fotos siguen en la biblioteca."
+            <DeleteAction
               label="Eliminar noticia"
+              text="Se borra del panel y, si está publicada, del sitio. Las fotos siguen en la biblioteca."
               busy={editor.busy}
               onAsk={() => editor.setConfirm("delete")}
             />
           )}
-        </div>
-
-        <ChecklistCard
-          checklist={newsPublishChecklist(values)}
-          published={published}
-        />
+        </ChecklistCard>
       </div>
 
       {picker && (
