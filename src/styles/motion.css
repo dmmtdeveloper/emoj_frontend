@@ -428,6 +428,75 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Signature photo (SignatureFrame.astro + .signature-photo)           */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The outline draws from its top-right end, around the rounded side, to
+ * the bottom-right, a little behind the photo's wipe; each dot pops when
+ * the pen passes its end. The photo settles from a slight zoom over the
+ * same scroll, and leans in a touch on hover (`scale`, so it does not
+ * fight the scroll `transform`).
+ */
+@keyframes photo-settle {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.signature-photo__img {
+  transition: scale 700ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .signature-photo:hover .signature-photo__img {
+    scale: 1.03;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .signature-photo {
+      view-timeline: --signature-photo block;
+    }
+
+    .signature-frame path {
+      stroke-dasharray: 1;
+      animation: draw linear both;
+      animation-timeline: --signature-photo;
+      animation-range: entry 15% cover 50%;
+    }
+
+    .signature-frame__dot {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: dot-start linear both;
+      animation-timeline: --signature-photo;
+      animation-range: entry 15% cover 50%;
+    }
+
+    .signature-frame__dot--end {
+      animation-name: dot-end;
+    }
+
+    .signature-photo__img {
+      animation: photo-settle linear both;
+      animation-timeline: --signature-photo;
+      animation-range: entry 0% cover 60%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signature-photo__img {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Reveal on scroll: [data-reveal] and children of [data-reveal-stagger] */
 /* ------------------------------------------------------------------ */
 

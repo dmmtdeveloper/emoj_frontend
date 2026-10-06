@@ -9,6 +9,8 @@
  * - Count-up: `[data-count]` numbers count from 0 when they scroll in.
  * - Draw on view: `[data-draw-on-view]` (footer logo) draws once when it
  *   enters the viewport.
+ * - Signature frames: `[data-signature-frame]` outlines get their path from
+ *   the photo's size, rebuilt on resize (the drawing itself is CSS).
  */
 import {
   countValueAt,
@@ -19,6 +21,7 @@ import {
 import { drawOnViewMode, initDrawOnView } from "../lib/motion/draw-on-view";
 import { headerMode, isHeaderSolid } from "../lib/motion/header-state";
 import { initRevealFallback, revealMode } from "../lib/motion/reveal";
+import { signatureFramePath } from "../lib/motion/signature-frame";
 
 const COUNT_DURATION_MS = 1600;
 
@@ -145,7 +148,56 @@ function initDrawOnViewElements(): void {
   });
 }
 
+/** Space between each line end of a signature frame and its dot, in px. */
+const FRAME_DOT_GAP = 9;
+
+function drawSignatureFrame(svg: SVGSVGElement): void {
+  const photo = svg.parentElement;
+  if (!photo) return;
+  const box = svg.getBoundingClientRect();
+  const outset = (box.width - photo.getBoundingClientRect().width) / 2;
+  const base = Number.parseFloat(
+    getComputedStyle(svg).getPropertyValue("--radius-signature"),
+  );
+  const frame = signatureFramePath({
+    width: box.width,
+    height: box.height,
+    // Concentric with the photo's corners.
+    radius: (Number.isFinite(base) ? base : 50) + outset,
+    dotGap: FRAME_DOT_GAP,
+  });
+  if (!frame) return;
+  svg.setAttribute("viewBox", `0 0 ${frame.start.x} ${frame.end.y}`);
+  svg.querySelector("path")?.setAttribute("d", frame.d);
+  const [start, end] = svg.querySelectorAll("circle");
+  for (const [dot, point] of [
+    [start, frame.start],
+    [end, frame.end],
+  ] as const) {
+    dot?.setAttribute("cx", String(point.x));
+    dot?.setAttribute("cy", String(point.y));
+  }
+}
+
+function initSignatureFrames(): void {
+  const frames = document.querySelectorAll<SVGSVGElement>(
+    "[data-signature-frame]",
+  );
+  if (frames.length === 0) return;
+  if (!("ResizeObserver" in window)) {
+    frames.forEach(drawSignatureFrame);
+    return;
+  }
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      drawSignatureFrame(entry.target as SVGSVGElement);
+    }
+  });
+  frames.forEach((svg) => observer.observe(svg));
+}
+
 initHeader();
 initReveal();
 initCountUp();
 initDrawOnViewElements();
+initSignatureFrames();

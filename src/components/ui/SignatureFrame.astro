@@ -1,0 +1,45 @@
+---
+/**
+ * A thin outline around a photo in the signature shape: rounded on the
+ * left, open on the right, ending in the isotype's two dots. It draws
+ * itself as the photo scrolls into view (motion.css).
+ *
+ * Place it as the first child of a `relative` wrapper that has the photo's
+ * exact size. The path depends on that size, so src/scripts/motion.ts
+ * builds it (and rebuilds it on resize); without the script nothing shows.
+ * Decorative and hidden from assistive tech.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<svg
+  data-signature-frame
+  aria-hidden="true"
+  focusable="false"
+  fill="none"
+  class:list={[
+    "signature-frame pointer-events-none absolute -top-2.5 -left-2.5 h-[calc(100%+1.25rem)] w-[calc(100%+1.25rem)] overflow-visible text-brand md:-top-4 md:-left-4 md:h-[calc(100%+2rem)] md:w-[calc(100%+2rem)]",
+    className,
+  ]}
+>
+  <path
+    pathLength="1"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  ></path>
+  <circle
+    class="signature-frame__dot signature-frame__dot--start"
+    r="3.2"
+    fill="currentColor"
+  ></circle>
+  <circle
+    class="signature-frame__dot signature-frame__dot--end"
+    r="3.2"
+    fill="currentColor"
+  ></circle>
+</svg>
