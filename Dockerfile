@@ -1,7 +1,7 @@
 # Static site image for Railway: Astro builds the site, Caddy serves it.
 #
-# Vercel ignores this file; it only matters when the service is deployed on
-# Railway (railway.json). Caddy reproduces what vercel.ts configures on
+# Vercel ignores this file; it only matters on Railway, where the service's
+# builder is set to Dockerfile. Caddy reproduces what vercel.ts configures on
 # Vercel: security headers, the /api rewrite to the backend and the cache
 # rules (tests/caddyfile.test.ts keeps the two in sync). See
 # docs/deploy-railway.md.

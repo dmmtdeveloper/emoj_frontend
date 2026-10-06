@@ -11,7 +11,6 @@ content rebuilds and the eventual switch of `emoj.cl`.
 | ------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `Dockerfile`              | Builds the site with pnpm (Node 22) and serves `dist/` with Caddy.                                        |
 | `Caddyfile`               | Same security headers, `/api` rewrite and cache rules as `vercel.ts`; 404 page; gzip/zstd.                |
-| `railway.json`            | Tells Railway to build with the Dockerfile and health-check `/`.                                          |
 | `tests/caddyfile.test.ts` | Fails when the Caddyfile and `vercel.ts` disagree on headers or the `/api` rewrite. Change both together. |
 
 Static output, so nothing runs on the server but Caddy. The backend has a
@@ -26,15 +25,26 @@ matching `railway` site rebuilder (see "Content rebuilds").
 | `PUBLIC_TURNSTILE_SITE_KEY` | build   | Turnstile site key (the test key is used when unset).                                                                                                  |
 | `API_ORIGIN`                | runtime | Origin of the API for the CSP `connect-src` (the contact form calls it directly), e.g. `https://api.emoj.cl`.                                          |
 | `API_UPSTREAM`              | runtime | Where `/api/*` is proxied. The public origin works; the private network is better: `http://${{<backend>.RAILWAY_PRIVATE_DOMAIN}}:${{<backend>.PORT}}`. |
-| `PORT`                      | runtime | Set by Railway.                                                                                                                                        |
+| `PORT`                      | runtime | Caddy listens on it; 8080 when unset. The domain's target port must match.                                                                             |
 
 Railway passes service variables to the Dockerfile as build arguments, so the
 `PUBLIC_*` values only need to be defined once on the service.
 
+## Service settings
+
+Set these in the service's Settings on Railway. There is no `railway.json`:
+Railway deprecated config-as-code, and services created after 2026-08-28
+cannot opt in.
+
+- **Source:** this repository and the branch to deploy.
+- **Build → Builder:** Dockerfile (`/Dockerfile`).
+- **Deploy → Healthcheck Path:** `/`.
+- **Networking → Generate Domain:** target port `8080`.
+
 ## Test deployment (no DNS changes)
 
-1. In the Railway project that holds the API, add a service from this GitHub
-   repository. Railway reads `railway.json` and builds the Dockerfile.
+1. In the Railway project that holds the API, add an empty service, connect
+   this repository and apply the settings above before the first deploy.
 2. Set the variables above, pointing at the staging API.
 3. Generate a Railway domain (`*.up.railway.app`) for the service.
 4. On the API service, add that domain to `ALLOWED_ORIGINS`. The contact form
