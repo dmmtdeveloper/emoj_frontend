@@ -66,11 +66,9 @@ const ADAPTER: EditorAdapter<AdminNews, NewsFormValues, NewsInput> = {
   listPath: LIST_PATH,
   editPath: "/admin/noticias/editar",
   editHref: editNewsHref,
-  messages: {
-    published: "Noticia publicada. Aparecerá en el sitio en unos 2 minutos.",
-    unpublished:
-      "Noticia despublicada. Dejará de verse en el sitio en unos 2 minutos.",
-  },
+  kind: "news",
+  noun: { singular: "noticia", feminine: true },
+  sitePath: (slug) => `/noticias/${slug}`,
   toForm: newsToForm,
   toInput: formToNewsInput,
   create: (input) => adminApi.createNews(input),
@@ -155,7 +153,7 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
     <form
       noValidate
       onSubmit={editor.onSave}
-      className="mx-auto flex max-w-6xl flex-col gap-6"
+      className="mx-auto flex max-w-6xl flex-col gap-6 pb-24 lg:pb-0"
       aria-labelledby="editor-title"
     >
       <EditorHeader

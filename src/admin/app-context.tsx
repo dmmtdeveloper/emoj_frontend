@@ -4,9 +4,11 @@
  * - Navigation: the in-app router's `navigate()`, and a leave guard an
  *   editor sets while it has unsaved changes (it decides whether and how to
  *   ask before leaving).
- * - Site rebuild: when content goes public (publish, unpublish, edit or
- *   delete of a published item) the API rebuilds the static site, which
- *   takes about two minutes; the navbar shows it (src/lib/admin/rebuild.ts).
+ * - Success dialog: after saving, publishing, unpublishing or deleting, an
+ *   editor shows what happened and, for public changes, whether the site
+ *   already shows it (src/lib/admin/site-refresh.ts). It lives here so it
+ *   stays open when the editor moves to another address (a new item gets
+ *   its edit page, a deleted one goes back to the list).
  */
 import {
   createContext,
@@ -19,7 +21,7 @@ import {
   type ReactNode,
 } from "react";
 import { pageForPath } from "../lib/admin/router";
-import { rebuildState, type RebuildState } from "../lib/admin/rebuild";
+import type { SiteState } from "../lib/admin/site-refresh";
 
 /** Returns true when it took over the navigation (it will call `proceed`). */
 export type LeaveGuard = (proceed: () => void) => boolean;
@@ -29,13 +31,32 @@ interface AppContextValue {
   search: string;
   navigate: (href: string, options?: { replace?: boolean }) => void;
   setLeaveGuard: (guard: LeaveGuard | null) => void;
-  rebuild: RebuildState;
-  /** Whether a rebuild was started in this browser tab. */
-  hadRebuild: boolean;
-  markRebuild: () => void;
+  /** The open success dialog, if any. */
+  success: SuccessDialog | null;
+  /**
+   * Opens the success dialog. With `refresh`, the dialog says the site is
+   * updating and then whether it already shows the change.
+   */
+  showSuccess: (dialog: SuccessRequest, refresh?: Promise<SiteState>) => void;
+  closeSuccess: () => void;
   /** One-time success message for the page at `path` (after a redirect). */
   flash: string | null;
   setFlash: (message: string, path: string) => void;
+}
+
+export interface SuccessRequest {
+  /** Builds the text for the current state of the site. */
+  build: (state: SiteState | "pending" | null) => {
+    title: string;
+    text: string;
+    showLink: boolean;
+  };
+  /** Public page of the item, for "Ver en el sitio". */
+  siteHref: string | null;
+}
+
+export interface SuccessDialog extends SuccessRequest {
+  state: SiteState | "pending" | null;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -46,46 +67,6 @@ export function useApp(): AppContextValue {
   return value;
 }
 
-const REBUILD_KEY = "emoj-admin-rebuild-started";
-
-function readRebuildStart(): number | null {
-  try {
-    const raw = Number(sessionStorage.getItem(REBUILD_KEY));
-    return Number.isFinite(raw) && raw > 0 ? raw : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeRebuildStart(value: number): void {
-  try {
-    sessionStorage.setItem(REBUILD_KEY, String(value));
-  } catch {
-    // Storage unavailable: the indicator lasts while this page is open.
-  }
-}
-
-function useRebuild() {
-  const [startedAt, setStartedAt] = useState(readRebuildStart);
-  const [now, setNow] = useState(() => Date.now());
-  const state = rebuildState(startedAt, now);
-
-  useEffect(() => {
-    if (!state.building) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 5000);
-    return () => window.clearInterval(timer);
-  }, [state.building]);
-
-  const markRebuild = useCallback(() => {
-    const at = Date.now();
-    writeRebuildStart(at);
-    setStartedAt(at);
-    setNow(at);
-  }, []);
-
-  return { state, hadRebuild: startedAt !== null, markRebuild };
-}
-
 function currentLocation() {
   return { path: window.location.pathname, search: window.location.search };
 }
@@ -93,7 +74,9 @@ function currentLocation() {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState(currentLocation);
   const guard = useRef<LeaveGuard | null>(null);
-  const { state: rebuild, hadRebuild, markRebuild } = useRebuild();
+  const [success, setSuccess] = useState<
+    (SuccessDialog & { token: object }) | null
+  >(null);
   const [flashState, setFlashState] = useState<{
     message: string;
     path: string;
@@ -172,15 +155,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     guard.current = next;
   }, []);
 
+  const showSuccess = useCallback(
+    (dialog: SuccessRequest, refresh?: Promise<SiteState>) => {
+      const token = {};
+      setSuccess({ ...dialog, state: refresh ? "pending" : null, token });
+      void refresh?.then((state) =>
+        setSuccess((current) =>
+          current?.token === token ? { ...current, state } : current,
+        ),
+      );
+    },
+    [],
+  );
+
+  const closeSuccess = useCallback(() => setSuccess(null), []);
+
   const value = useMemo(
     () => ({
       path: location.path,
       search: location.search,
       navigate,
       setLeaveGuard,
-      rebuild,
-      hadRebuild,
-      markRebuild,
+      success,
+      showSuccess,
+      closeSuccess,
       flash,
       setFlash,
     }),
@@ -188,9 +186,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       location,
       navigate,
       setLeaveGuard,
-      rebuild,
-      hadRebuild,
-      markRebuild,
+      success,
+      showSuccess,
+      closeSuccess,
       flash,
       setFlash,
     ],
