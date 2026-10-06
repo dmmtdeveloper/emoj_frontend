@@ -1,0 +1,200 @@
+---
+/**
+ * Privacy policy (Ley 21.719 duty to inform). Content lives in
+ * src/lib/privacy.ts. While the policy has gaps (RUT, requests mailbox,
+ * legal review) the page stays out of search engines and requests go to the
+ * general contact address.
+ */
+import Breadcrumb from "../components/ui/Breadcrumb.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { formatDate } from "../lib/content/format";
+import { PRIVACY, privacyGaps } from "../lib/privacy";
+import { CONTACT } from "../lib/site";
+
+const gaps = privacyGaps(PRIVACY);
+const requestsEmail = PRIVACY.requestsEmail ?? CONTACT.email;
+const { controller } = PRIVACY;
+
+const h2Class =
+  "text-[24px] leading-8 font-semibold tracking-[-0.01em] md:text-[28px] md:leading-9";
+const labelClass =
+  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
+---
+
+<BaseLayout
+  title="Política de privacidad"
+  description="Cómo EMOJ Consultora SpA trata tus datos personales: qué datos recoge, para qué, por cuánto tiempo, con quién los comparte y cómo ejercer tus derechos."
+  noindex={gaps.length > 0}
+>
+  <PageHeader
+    eyebrow="Privacidad"
+    title="Política de privacidad"
+    lead="Te contamos qué datos personales tratamos cuando usas este sitio, para qué los usamos y cómo puedes ejercer tus derechos según la Ley 21.719."
+  >
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Inicio", href: "/" },
+        { label: "Política de privacidad", href: "/privacidad" },
+      ]}
+    />
+    <p class="text-sm leading-5 text-ink-muted">
+      Última actualización:{" "}
+      <time datetime={PRIVACY.updated}>
+        {formatDate(`${PRIVACY.updated}T12:00:00-03:00`)}
+      </time>
+    </p>
+  </PageHeader>
+
+  <div class="container-site flex flex-col gap-14 py-16 md:gap-20 md:py-24">
+    <section
+      aria-labelledby="responsable"
+      class="flex max-w-[65ch] flex-col gap-4"
+    >
+      <h2 id="responsable" class={h2Class}>
+        Quién es responsable de tus datos
+      </h2>
+      <p>
+        El responsable del tratamiento es{" "}
+        <strong class="font-semibold">{controller.name}</strong>
+        {controller.rut && <>, RUT {controller.rut}</>}, con domicilio en{" "}
+        {controller.address}.
+      </p>
+      <p>
+        Para cualquier tema sobre tus datos personales escríbenos a{" "}
+        <a href={`mailto:${requestsEmail}`}>{requestsEmail}</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="datos" class="flex flex-col gap-6">
+      <div class="flex max-w-[65ch] flex-col gap-4">
+        <h2 id="datos" class={h2Class}>
+          Qué datos tratamos y para qué
+        </h2>
+        <p>
+          Solo pedimos los datos necesarios para responderte. No vendemos tus
+          datos ni los usamos para publicidad.
+        </p>
+      </div>
+      <ul class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+        {PRIVACY.activities.map((activity) => (
+          <li class="radius-signature flex flex-col gap-4 bg-surface-sunken p-6 pl-8 md:p-8 md:pl-10">
+            <h3 class="text-h3">{activity.source}</h3>
+            <dl class="flex flex-col gap-3">
+              <div class="flex flex-col gap-1">
+                <dt class={labelClass}>Datos</dt>
+                <dd>{activity.data}</dd>
+              </div>
+              <div class="flex flex-col gap-1">
+                <dt class={labelClass}>Para qué</dt>
+                <dd>{activity.purpose}</dd>
+              </div>
+              <div class="flex flex-col gap-1">
+                <dt class={labelClass}>Base legal</dt>
+                <dd>{activity.basis}</dd>
+              </div>
+              <div class="flex flex-col gap-1">
+                <dt class={labelClass}>Cuánto tiempo</dt>
+                <dd>{activity.retention}</dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section aria-labelledby="cookies" class="flex max-w-[65ch] flex-col gap-4">
+      <h2 id="cookies" class={h2Class}>
+        Cookies
+      </h2>
+      <p>
+        Este sitio no usa cookies de publicidad ni de analítica. Si algún día
+        las usamos, te pediremos tu consentimiento antes, con la opción de
+        rechazarlas igual de visible.
+      </p>
+    </section>
+
+    <section
+      aria-labelledby="proveedores"
+      class="flex max-w-[65ch] flex-col gap-4"
+    >
+      <h2 id="proveedores" class={h2Class}>
+        Con quién compartimos tus datos
+      </h2>
+      <p>
+        Usamos proveedores que tratan los datos por encargo nuestro y solo para
+        prestarnos su servicio:
+      </p>
+      <ul class="flex list-disc flex-col gap-2 pl-6">
+        {PRIVACY.processors.map((processor) => (
+          <li>
+            <span class="font-medium text-ink">{processor.name}</span>:{" "}
+            {processor.role.charAt(0).toLowerCase() + processor.role.slice(1)}
+          </li>
+        ))}
+      </ul>
+      <p>
+        Estos proveedores pueden almacenar o procesar los datos fuera de Chile.
+        Exigimos que lo hagan con garantías de protección adecuadas,
+        establecidas en sus contratos.
+      </p>
+    </section>
+
+    <section aria-labelledby="derechos" class="flex flex-col gap-6">
+      <div class="flex max-w-[65ch] flex-col gap-4">
+        <h2 id="derechos" class={h2Class}>
+          Tus derechos
+        </h2>
+        <p>Sobre tus datos personales puedes ejercer en cualquier momento:</p>
+      </div>
+      <dl class="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        {PRIVACY.rights.map((right) => (
+          <div class="flex flex-col gap-1 border-t border-border pt-4">
+            <dt class="font-semibold text-ink">{right.name}</dt>
+            <dd class="text-ink-muted">{right.text}</dd>
+          </div>
+        ))}
+      </dl>
+      <div class="flex max-w-[65ch] flex-col gap-4">
+        <p>
+          Para ejercerlos, escríbenos a{" "}
+          <a href={`mailto:${requestsEmail}`}>{requestsEmail}</a> indicando qué
+          derecho quieres ejercer y un dato que nos permita identificarte (por
+          ejemplo, el correo con el que nos escribiste). Te responderemos en un
+          plazo de {PRIVACY.responseTime}
+        </p>
+        <p>
+          Si no quedas conforme con nuestra respuesta, puedes reclamar ante la
+          Agencia de Protección de Datos Personales.
+        </p>
+      </div>
+    </section>
+
+    <section
+      aria-labelledby="seguridad"
+      class="flex max-w-[65ch] flex-col gap-4"
+    >
+      <h2 id="seguridad" class={h2Class}>
+        Cómo protegemos tus datos
+      </h2>
+      <p>
+        Todo el sitio funciona con conexión cifrada (HTTPS). Solo el personal
+        autorizado de EMOJ accede al panel, con usuario propio, contraseñas
+        cifradas y sesiones que expiran. Si ocurriera un incidente de seguridad
+        que afecte tus datos, lo informaremos a la Agencia y, cuando
+        corresponda, a ti.
+      </p>
+    </section>
+
+    <section aria-labelledby="cambios" class="flex max-w-[65ch] flex-col gap-4">
+      <h2 id="cambios" class={h2Class}>
+        Cambios a esta política
+      </h2>
+      <p>
+        Si cambiamos esta política, publicaremos la nueva versión en esta misma
+        página con su fecha de actualización.
+      </p>
+    </section>
+  </div>
+</BaseLayout>

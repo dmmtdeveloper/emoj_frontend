@@ -200,7 +200,15 @@ const link =
   {/* Legal bar */}
   <div class="border-t border-ink-inverse/15">
     <div class="container-site flex flex-col gap-3 py-6 pb-28 text-sm leading-5 text-ink-inverse/70 sm:flex-row sm:items-center sm:justify-between lg:pb-6 lg:max-[1319px]:pr-24">
-      <p>{legalLine}</p>
+      <div class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+        <p>{legalLine}</p>
+        <a
+          href="/privacidad"
+          class="inline-flex min-h-11 items-center self-start font-medium text-ink-inverse/80 underline-offset-4 hover:text-ink-inverse hover:underline sm:self-auto md:min-h-9"
+        >
+          Política de privacidad
+        </a>
+      </div>
       <a
         href="#top"
         class="group inline-flex min-h-11 items-center gap-2 self-start font-medium text-ink-inverse/80 no-underline hover:text-ink-inverse sm:self-auto md:min-h-9"

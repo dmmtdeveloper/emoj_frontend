@@ -2,6 +2,7 @@
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
+import { PRIVACY, privacyGaps } from "./src/lib/privacy.ts";
 
 /**
  * API the admin reaches through `/api` in `astro dev` (the Vercel rewrite
@@ -11,6 +12,8 @@ import { defineConfig } from "astro/config";
 const devApiTarget = process.env["PUBLIC_API_URL"] || "http://localhost:8080";
 
 // https://docs.astro.build/en/reference/configuration-reference/
+const privacyReady = privacyGaps(PRIVACY).length === 0;
+
 export default defineConfig({
   site: "https://emoj.cl",
   output: "static",
@@ -18,7 +21,15 @@ export default defineConfig({
   integrations: [
     // The admin panel (/admin) is React started by a plain module script
     // (src/admin/mount.tsx); no Astro islands, so no inline scripts.
-    sitemap({ filter: (page) => !new URL(page).pathname.startsWith("/admin") }),
+    sitemap({
+      filter: (page) => {
+        const path = new URL(page).pathname;
+        if (path.startsWith("/admin")) return false;
+        // The privacy policy is noindex until its gaps are filled.
+        if (path.startsWith("/privacidad")) return privacyReady;
+        return true;
+      },
+    }),
   ],
   image: {
     // Project and news photos come from the API as presigned, expiring URLs.
