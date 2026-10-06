@@ -1,10 +1,11 @@
 ---
-import { ArrowLeft, Link as LinkIcon, MessageCircle } from "@lucide/astro";
+import { ArrowLeft, Link as LinkIcon } from "@lucide/astro";
 import type { GetStaticPaths } from "astro";
 import { getImage, Image } from "astro:assets";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import SocialIcon from "../../components/ui/SocialIcon.astro";
+import WhatsAppIcon from "../../components/ui/WhatsAppIcon.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import type { NewsDetail } from "../../lib/api/client";
 import { content } from "../../lib/content";
@@ -135,7 +136,7 @@ const shareLink =
               rel="noopener noreferrer"
               class={shareLink}
             >
-              <MessageCircle size={20} stroke-width={1.75} aria-hidden="true" />
+              <WhatsAppIcon size={20} />
               WhatsApp
               <span class="sr-only">(se abre en una pestaña nueva)</span>
             </a>

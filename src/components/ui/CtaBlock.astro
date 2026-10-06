@@ -8,11 +8,12 @@
  * underline (drawn when it scrolls into view). Ignored when the title does
  * not contain it.
  */
-import { ArrowRight, Mail, MessageCircle } from "@lucide/astro";
+import { ArrowRight, Mail } from "@lucide/astro";
 import { splitEmphasis } from "../../lib/emphasis";
 import { CONTACT } from "../../lib/site";
 import ButtonLink from "./ButtonLink.astro";
 import Scribble from "./Scribble.astro";
+import WhatsAppIcon from "./WhatsAppIcon.astro";
 
 interface Props {
   title?: string;
@@ -86,12 +87,7 @@ const contactLink =
               rel="noopener noreferrer"
               class={contactLink}
             >
-              <MessageCircle
-                size={20}
-                stroke-width={1.75}
-                aria-hidden="true"
-                class="text-brand"
-              />
+              <WhatsAppIcon size={20} class="text-brand" />
               <span class="underline-offset-4 group-hover/contact:underline">
                 WhatsApp {CONTACT.whatsapp.display}
               </span>

@@ -1,9 +1,10 @@
 ---
 /**
- * Floating WhatsApp button (56px, bottom right, safe-area aware).
- * Pages reserve bottom space in the footer so it never covers content.
+ * Floating WhatsApp button (56px, bottom right, safe-area aware): the
+ * official green glyph on a raised surface. Pages reserve bottom space in
+ * the footer so it never covers content.
  */
-import { MessageCircle } from "@lucide/astro";
+import WhatsAppIcon from "../ui/WhatsAppIcon.astro";
 import { CONTACT } from "../../lib/site";
 ---
 
@@ -12,9 +13,9 @@ import { CONTACT } from "../../lib/site";
   target="_blank"
   rel="noopener noreferrer"
   aria-label="Escríbenos por WhatsApp"
-  class="whatsapp-fab fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 inline-flex size-14 items-center justify-center rounded-full bg-whatsapp text-plum-950 shadow-(--shadow-md) transition-transform duration-200 hover:scale-105 hover:text-plum-950"
+  class="whatsapp-fab fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 inline-flex size-14 items-center justify-center rounded-full border border-border bg-surface-raised text-whatsapp shadow-(--shadow-md) transition-transform duration-200 hover:scale-105 hover:text-whatsapp"
 >
-  <MessageCircle size={24} stroke-width={1.75} aria-hidden="true" />
+  <WhatsAppIcon size={28} />
 </a>
 
 <style>
