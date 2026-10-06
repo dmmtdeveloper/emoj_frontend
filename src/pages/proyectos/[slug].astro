@@ -1,6 +1,5 @@
 ---
 import { ArrowRight } from "@lucide/astro";
-import type { GetStaticPaths } from "astro";
 import { getImage, Image } from "astro:assets";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
@@ -8,28 +7,18 @@ import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import type { ProjectDetail } from "../../lib/api/client";
-import { content } from "../../lib/content";
+import { contentSource } from "../../lib/content";
 import { fitWidth } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 import { getServices } from "../../lib/get-services";
 import { projectJsonLd } from "../../lib/structured-data";
 
-export const getStaticPaths = (async () => {
-  const projects = await content.getProjects();
-  return Promise.all(
-    projects.map(async (summary) => ({
-      params: { slug: summary.slug },
-      props: { project: await content.getProject(summary.slug) },
-    })),
-  );
-}) satisfies GetStaticPaths;
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
+export const prerender = false;
 
-interface Props {
-  project: ProjectDetail;
-}
-
-const { project } = Astro.props;
+const project = await contentSource().findProject(Astro.params.slug ?? "");
+if (!project) return Astro.rewrite("/no-encontrada");
 const allServices = await getServices();
 const services = project.services
   .map((slug) => allServices.find((s) => s.data.slug === slug))
@@ -42,7 +31,7 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
 const ogSource = project.seo.ogImage ?? project.cover;
 const ogImage = ogSource
   ? await getImage({
-      src: ogSource.url,
+      src: mediaPath("proyectos", project.slug, ogSource),
       width: 1200,
       height: 630,
       fit: "cover",
@@ -140,7 +129,7 @@ const h2Class =
     <div class="bg-surface">
       <div class="container-site pt-8 md:pt-12">
         <Image
-          src={project.cover.url}
+          src={mediaPath("proyectos", project.slug, project.cover)}
           alt={project.cover.alt}
           {...fitWidth(project.cover, 1600)}
           widths={[480, 800, 1200, 1600]}
@@ -183,7 +172,7 @@ const h2Class =
           {project.gallery.map((photo) => (
             <li>
               <Image
-                src={photo.url}
+                src={mediaPath("proyectos", project.slug, photo)}
                 alt={photo.alt}
                 {...fitWidth(photo, 800)}
                 widths={[320, 640, 800]}

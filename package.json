@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/vercel": "^11",
     "@fontsource/urbanist": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
     "@lucide/astro": "^1.49.0",

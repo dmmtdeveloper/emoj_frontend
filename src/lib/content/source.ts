@@ -1,9 +1,15 @@
 /**
- * Build-time content from the EMOJ API (projects and news).
+ * Content from the EMOJ API (projects and news), for pages rendered on
+ * demand (and cached) and for the few still built ahead of time.
  *
  * Policy: an API error or an unreachable API throws a `ContentFetchError`,
- * which fails `astro build`, so a broken API never publishes a silently
- * empty site. A valid empty list is fine: pages render their empty states.
+ * so a broken API never shows a silently empty site: a build fails, and a
+ * page rendered on demand answers 503 without being cached. A valid empty
+ * list is fine: pages render their empty states. A slug the API does not
+ * know is `null` from the `find*` methods (the page answers 404).
+ *
+ * A source memoizes its requests: create one per page render, never share
+ * one across requests (it would serve stale content).
  */
 import type {
   ApiClient,
@@ -30,9 +36,13 @@ export interface ContentSource {
   /** Up to `limit` featured projects, newest first. */
   getFeaturedProjects(limit?: number): Promise<ProjectSummary[]>;
   getProject(slug: string): Promise<ProjectDetail>;
+  /** The project, or null when the API has none with this slug. */
+  findProject(slug: string): Promise<ProjectDetail | null>;
   /** Every published article, newest first. */
   getNews(): Promise<NewsSummary[]>;
   getArticle(slug: string): Promise<NewsDetail>;
+  /** The article, or null when the API has none with this slug. */
+  findArticle(slug: string): Promise<NewsDetail | null>;
 }
 
 interface Page<T> {
@@ -59,9 +69,13 @@ function describeFailure(result: Exclude<ApiResult<unknown>, { ok: true }>) {
 function fail(what: string, baseUrl: string, detail: string): never {
   throw new ContentFetchError(
     `Could not load ${what} from the EMOJ API at ${baseUrl}: ${detail}. ` +
-      "The build stops so the site is never published with missing content; " +
+      "Nothing is published with missing content; " +
       "check PUBLIC_API_URL and that the API is up.",
   );
+}
+
+function isNotFound(result: ApiResult<unknown>): boolean {
+  return !result.ok && result.kind === "problem" && result.status === 404;
 }
 
 function unwrap<T>(result: ApiResult<T>, what: string, baseUrl: string): T {
@@ -144,6 +158,16 @@ export function createContentSource(
         projects.set(slug, promise);
       }
       return promise;
+    },
+    async findProject(slug) {
+      const result = await client.getProject(slug);
+      if (isNotFound(result)) return null;
+      return unwrap(result, `project "${slug}"`, baseUrl);
+    },
+    async findArticle(slug) {
+      const result = await client.getNews(slug);
+      if (isNotFound(result)) return null;
+      return unwrap(result, `article "${slug}"`, baseUrl);
     },
     getArticle(slug) {
       let promise = articles.get(slug);

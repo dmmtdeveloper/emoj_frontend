@@ -8,7 +8,8 @@
  * (the newest published one with a cover), or the service's own photo.
  */
 import { ArrowRight } from "@lucide/astro";
-import { content } from "../../lib/content";
+import { contentSource } from "../../lib/content";
+import { mediaPath } from "../../lib/content/media";
 import { coversByService } from "../../lib/content/service-covers";
 import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
@@ -22,12 +23,16 @@ import TeamAvatars from "../ui/TeamAvatars.astro";
 const [first, ...rest] = await getServices();
 const covers = coversByService(
   rest.map((s) => s.data.slug),
-  await content.getProjects(),
+  await contentSource().getProjects(),
 );
 const photoFor = (service: (typeof rest)[number]) => {
-  const cover = covers.get(service.data.slug);
-  if (cover)
-    return { src: cover.url, width: cover.width, height: cover.height };
+  const found = covers.get(service.data.slug);
+  if (found)
+    return {
+      src: mediaPath("proyectos", found.slug, found.cover),
+      width: found.cover.width,
+      height: found.cover.height,
+    };
   return service.data.image ? { src: service.data.image } : undefined;
 };
 ---

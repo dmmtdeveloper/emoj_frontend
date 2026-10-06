@@ -1,7 +1,8 @@
 import { routes } from "@vercel/config/v1";
 import type { VercelConfig } from "@vercel/config/v1";
 
-// Typed Vercel project configuration. The Vercel CLI compiles this file to
+// Typed Vercel project configuration. The build output comes from
+// @astrojs/vercel (.vercel/output), so no outputDirectory is set. The Vercel CLI compiles this file to
 // vercel.json at build time. Redirects from the legacy site land in Phase 14.
 // `/api/*` is rewritten to the API so the admin panel calls it same-origin
 // and the session cookie is first-party (see emoj_backend README, Admin API).
@@ -40,7 +41,8 @@ const connectSources = [
  * - Turnstile renders inside an iframe from challenges.cloudflare.com.
  * - img-src: the admin panel shows media straight from the Railway bucket
  *   (presigned URLs, <bucket>.t3.storageapi.dev); the public site only
- *   serves images optimized at build time from its own origin.
+ *   serves images from its own origin (built ahead of time, or resized on
+ *   demand through /_image and /media/..., see src/lib/content/media.ts).
  */
 const csp = [
   "default-src 'self'",
@@ -83,7 +85,6 @@ const config: VercelConfig = {
   framework: "astro",
   installCommand: "pnpm install --frozen-lockfile",
   buildCommand: "pnpm build",
-  outputDirectory: "dist",
   redirects: legacyRedirects.map(([source, destination]) => ({
     source,
     destination,

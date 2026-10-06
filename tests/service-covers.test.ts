@@ -41,8 +41,11 @@ describe("coversByService", () => {
         project("saam", ["geotecnia"], "https://cdn/saam.jpg"),
       ],
     );
-    expect(covers.get("obras-sanitarias")?.url).toBe("https://cdn/nuevo.jpg");
-    expect(covers.get("geotecnia")?.url).toBe("https://cdn/saam.jpg");
+    expect(covers.get("obras-sanitarias")?.cover.url).toBe(
+      "https://cdn/nuevo.jpg",
+    );
+    expect(covers.get("geotecnia")?.cover.url).toBe("https://cdn/saam.jpg");
+    expect(covers.get("geotecnia")?.slug).toBe("saam");
   });
 
   it("skips projects without a cover and leaves services without one out", () => {
@@ -53,7 +56,7 @@ describe("coversByService", () => {
         project("con-foto", ["obras-viales"], "https://cdn/via.jpg"),
       ],
     );
-    expect(covers.get("obras-viales")?.url).toBe("https://cdn/via.jpg");
+    expect(covers.get("obras-viales")?.cover.url).toBe("https://cdn/via.jpg");
     expect(covers.has("aguas-lluvias")).toBe(false);
   });
 
@@ -74,11 +77,11 @@ describe("coversByService", () => {
         ),
       ],
     );
-    expect(covers.get("obras-viales")?.url).toBe("https://cdn/pm.jpg");
-    expect(covers.get("estudios-de-transito")?.url).toBe(
+    expect(covers.get("obras-viales")?.cover.url).toBe("https://cdn/pm.jpg");
+    expect(covers.get("estudios-de-transito")?.cover.url).toBe(
       "https://cdn/rotonda.jpg",
     );
-    expect(covers.get("calculo-estructural")?.url).toBe(
+    expect(covers.get("calculo-estructural")?.cover.url).toBe(
       "https://cdn/puente.jpg",
     );
 
@@ -92,6 +95,8 @@ describe("coversByService", () => {
         ),
       ],
     );
-    expect(only.get("estudios-de-transito")?.url).toBe("https://cdn/pm.jpg");
+    expect(only.get("estudios-de-transito")?.cover.url).toBe(
+      "https://cdn/pm.jpg",
+    );
   });
 });

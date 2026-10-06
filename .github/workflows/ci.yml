@@ -51,6 +51,6 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          # Pages read projects and news from the API at build time; the
-          # build fails if it is unreachable, so CI builds against staging.
+          # The CSP check renders a few on-demand pages (home, projects,
+          # news) through the built function, so it needs a live API.
           PUBLIC_API_URL: https://api-staging-25e9.up.railway.app

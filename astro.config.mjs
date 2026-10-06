@@ -1,5 +1,6 @@
 // @ts-check
 import sitemap from "@astrojs/sitemap";
+import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { PRIVACY, privacyGaps } from "./src/lib/privacy.ts";
@@ -16,12 +17,28 @@ const privacyReady = privacyGaps(PRIVACY).length === 0;
 
 export default defineConfig({
   site: "https://emoj.cl",
+  // Pages are built ahead of time, except those that show API content (home,
+  // projects, news, their images and sitemap): `prerender = false`, rendered
+  // on demand and kept in Vercel's cache (ISR). Publishing in the panel
+  // refreshes them right away through /admin/revalidar, which sends
+  // REVALIDATE_TOKEN; `expiration` is a fallback if that ever fails.
   output: "static",
+  adapter: vercel({
+    isr: {
+      ...(process.env["REVALIDATE_TOKEN"]
+        ? { bypassToken: process.env["REVALIDATE_TOKEN"] }
+        : {}),
+      expiration: 60 * 60,
+      exclude: [/^\/admin\/revalidar$/],
+    },
+  }),
   trailingSlash: "ignore",
   integrations: [
     // The admin panel (/admin) is React started by a plain module script
     // (src/admin/mount.tsx); no Astro islands, so no inline scripts.
     sitemap({
+      // Pages rendered on demand are listed by src/pages/sitemap-content.xml.ts.
+      customSitemaps: ["https://emoj.cl/sitemap-content.xml"],
       filter: (page) => {
         const path = new URL(page).pathname;
         if (path.startsWith("/admin")) return false;
@@ -32,15 +49,11 @@ export default defineConfig({
     }),
   ],
   image: {
-    // Project and news photos come from the API as presigned, expiring URLs.
-    // They are downloaded and optimized at build time (astro:assets) and
-    // served from this site, never hotlinked, so CSP img-src stays 'self'.
-    remotePatterns: [
-      // Railway buckets (virtual-hosted style: <bucket>.t3.storageapi.dev).
-      { protocol: "https", hostname: "**.t3.storageapi.dev" },
-      // Local SeaweedFS from the backend's docker compose (path style).
-      { protocol: "http", hostname: "localhost", port: "9000" },
-    ],
+    // Content photos are served from this site at stable addresses and
+    // resized on demand (src/lib/image-service.ts, src/lib/content/media.ts),
+    // never hotlinked from the bucket, so CSP img-src stays 'self'.
+    // No remote patterns: /_image only resizes this site's own files.
+    service: { entrypoint: "./src/lib/image-service.ts" },
   },
   build: {
     // Always emit CSS as files so the CSP needs no 'unsafe-inline' for styles.
