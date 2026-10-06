@@ -8,17 +8,17 @@ The site is built with Astro as a fully static site and deployed on Vercel. Cont
 
 ## Stack
 
-| Concern         | Choice                                                                         |
-| --------------- | ------------------------------------------------------------------------------ |
-| Framework       | [Astro](https://astro.build) 7, `output: "static"`                             |
-| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties |
-| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                  |
-| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)             |
-| Language        | TypeScript, `astro/tsconfigs/strictest`                                        |
-| Tests           | Vitest                                                                         |
-| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier     |
-| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`)            |
-| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)              |
+| Concern         | Choice                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Framework       | [Astro](https://astro.build) 7, `output: "static"`                                                                                         |
+| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties                                                             |
+| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                                                                              |
+| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)                                                                         |
+| Language        | TypeScript, `astro/tsconfigs/strictest`                                                                                                    |
+| Tests           | Vitest                                                                                                                                     |
+| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier                                                                 |
+| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`); Railway-ready, see [docs/deploy-railway.md](./docs/deploy-railway.md) |
+| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)                                                                          |
 
 ## Getting started
 
@@ -103,7 +103,7 @@ The generated file **is committed**, because Vercel and CI only check out this r
 
 ## Security headers
 
-`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `connect-src` allows the origin of `PUBLIC_API_URL` when Vercel exposes it while compiling `vercel.ts`, plus the staging API as a fallback; add the production API origin there if it differs. Turnstile needs `https://challenges.cloudflare.com` in `script-src` and `frame-src`. Run `npx @vercel/config validate` after editing.
+`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `connect-src` allows the origin of `PUBLIC_API_URL` when Vercel exposes it while compiling `vercel.ts`, plus the staging API as a fallback; add the production API origin there if it differs. Turnstile needs `https://challenges.cloudflare.com` in `script-src` and `frame-src`. Run `npx @vercel/config validate` after editing. The `Caddyfile` (Railway) must send the same headers; `tests/caddyfile.test.ts` checks it.
 
 ## Project layout
 
