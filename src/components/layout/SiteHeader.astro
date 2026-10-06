@@ -65,8 +65,14 @@ const drawMark = pathname === "/";
       )}
     </a>
 
-    <nav aria-label="Principal" class="hidden lg:block">
-      <ul class="flex items-center gap-0.5">
+    <nav aria-label="Principal" class="hidden lg:block" data-nav-spy>
+      <ul class="relative flex items-center gap-0.5">
+        {/* Sliding highlight, positioned by src/scripts/nav-spy.ts. */}
+        <span
+          class="nav-indicator pointer-events-none absolute inset-0 rounded-full bg-current/10"
+          aria-hidden="true"
+          data-nav-indicator
+        ></span>
         {NAV.map(({ label, href }) => {
           const current = isCurrent(href, pathname);
           return (
@@ -74,10 +80,9 @@ const drawMark = pathname === "/";
               <a
                 href={href}
                 aria-current={current ? "page" : undefined}
-                class:list={[
-                  "inline-flex h-9 items-center rounded-full px-3.5 text-[15px] leading-5 font-medium text-current no-underline transition-colors duration-200 hover:bg-current/10 hover:text-current",
-                  current && "bg-current/10",
-                ]}
+                data-nav-link={href}
+                data-active={current ? "" : undefined}
+                class="nav-link relative inline-flex h-9 items-center rounded-full px-3.5 text-[15px] leading-5 font-medium text-current no-underline transition-colors duration-200 hover:bg-current/5 hover:text-current"
               >
                 {label}
               </a>
@@ -89,7 +94,7 @@ const drawMark = pathname === "/";
 
     <div class="flex items-center gap-1">
       <div class="hidden sm:block">
-        <ButtonLink href="/contacto" class="rounded-full">
+        <ButtonLink href="/contacto" pill>
           Cotizar proyecto
         </ButtonLink>
       </div>
@@ -178,6 +183,8 @@ const drawMark = pathname === "/";
 </dialog>
 
 <script>
+  import "../../scripts/nav-spy";
+
   const dialog = document.querySelector<HTMLDialogElement>("[data-menu]");
   const openButton =
     document.querySelector<HTMLButtonElement>("[data-menu-open]");
@@ -203,6 +210,41 @@ const drawMark = pathname === "/";
 </script>
 
 <style>
+  /*
+   * The highlighted link: a filled pill on the link itself without the
+   * script; with it (`data-spy-ready`) one shared pill slides between links
+   * as the page scrolls through their sections (clip-path, see nav-spy.ts).
+   */
+  .nav-indicator {
+    display: none;
+  }
+
+  .nav-link[data-active] {
+    background-color: color-mix(in oklab, currentColor 10%, transparent);
+  }
+
+  [data-spy-ready] .nav-link[data-active] {
+    background-color: transparent;
+  }
+
+  [data-spy-ready] .nav-indicator {
+    display: block;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  [data-spy-ready] .nav-indicator[data-visible] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-spy-ready] .nav-indicator[data-moved] {
+      transition:
+        clip-path 450ms var(--ease-out),
+        opacity 200ms ease;
+    }
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     .menu-overlay[open] {
       animation: fade-in 260ms var(--ease-out) both;

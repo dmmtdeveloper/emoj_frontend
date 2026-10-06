@@ -26,12 +26,22 @@ const hasFeatured = featured.length > 0;
 >
   <Hero />
   <ClientsStrip />
-  <ServicesSection />
+  {/* `data-nav-section`: the header highlights that link while the
+      section is on screen (src/scripts/nav-spy.ts). */}
+  <div data-nav-section="/servicios">
+    <ServicesSection />
+  </div>
   {hasFeatured && (
-    <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
+    <div data-nav-section="/proyectos">
+      <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
+    </div>
   )}
-  <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
-  <FactsBand />
-  <AboutTeaser />
-  <CtaBlock background="surface-sunken" />
+  <div data-nav-section="/nosotros">
+    <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
+    <FactsBand />
+    <AboutTeaser />
+  </div>
+  <div data-nav-section="/contacto">
+    <CtaBlock background="surface-sunken" />
+  </div>
 </BaseLayout>

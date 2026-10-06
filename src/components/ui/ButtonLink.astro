@@ -12,14 +12,21 @@ import type { HTMLAttributes } from "astro/types";
 interface Props extends HTMLAttributes<"a"> {
   href: string;
   variant?: "primary" | "secondary" | "on-photo" | "on-inverse";
+  /** Fully rounded ends, for buttons inside a rounded container (header). */
+  pill?: boolean;
 }
 
-const { variant = "primary", class: className, ...rest } = Astro.props;
+const {
+  variant = "primary",
+  pill = false,
+  class: className,
+  ...rest
+} = Astro.props;
 
 // Micro-interactions: trailing arrow nudges on hover, the button presses in
 // on :active (transform only, no layout change).
 const base =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-5 py-2.5 text-[15px] leading-5 font-medium no-underline transition-[color,background-color,border-color,scale] duration-200 ease-(--ease-out) active:scale-[0.97] [&>svg:last-child]:transition-transform [&>svg:last-child]:duration-300 [&>svg:last-child]:ease-(--ease-out) hover:[&>svg:last-child]:translate-x-1";
+  "inline-flex min-h-10 items-center justify-center gap-2 px-5 py-2.5 text-[15px] leading-5 font-medium no-underline transition-[color,background-color,border-color,scale] duration-200 ease-(--ease-out) active:scale-[0.97] [&>svg:last-child]:transition-transform [&>svg:last-child]:duration-300 [&>svg:last-child]:ease-(--ease-out) hover:[&>svg:last-child]:translate-x-1";
 
 const variants = {
   primary: "bg-brand text-on-brand hover:bg-brand-hover hover:text-on-brand",
@@ -32,6 +39,14 @@ const variants = {
 } as const;
 ---
 
-<a class:list={[base, variants[variant], className]} {...rest}>
+<a
+  class:list={[
+    base,
+    pill ? "rounded-full" : "rounded-md",
+    variants[variant],
+    className,
+  ]}
+  {...rest}
+>
   <slot />
 </a>
