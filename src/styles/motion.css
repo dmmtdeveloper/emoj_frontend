@@ -428,6 +428,32 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Team avatars (TeamAvatars.astro): fan out on the parent group's hover */
+/* ------------------------------------------------------------------ */
+
+.team-avatars > * {
+  transition: translate 500ms var(--ease-spring);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .group:hover .team-avatars > :nth-child(2) {
+    translate: 4px 0;
+  }
+
+  .group:hover .team-avatars > :nth-child(3) {
+    translate: 8px 0;
+  }
+
+  .group:hover .team-avatars > :nth-child(4) {
+    translate: 12px 0;
+  }
+
+  .group:hover .team-avatars > :nth-child(n + 5) {
+    translate: 16px 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Signature photo (SignatureFrame.astro + .signature-photo)           */
 /* ------------------------------------------------------------------ */
 

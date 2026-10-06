@@ -125,3 +125,16 @@ export const ABOUT_POSITIONING = [
 
 export const VISION =
   "Ser una empresa líder en el rubro, aportando verdaderamente al engrandecimiento de nuestro país.";
+
+/**
+ * A few faces for a small avatar stack: the first `limit` people with a
+ * real photo, in team order, plus how many other people are on the team.
+ */
+export function teamFaces(
+  team: readonly Department[],
+  limit: number,
+): { faces: TeamMember[]; others: number } {
+  const everyone = team.flatMap((d) => d.members);
+  const faces = everyone.filter((m) => m.photo).slice(0, limit);
+  return { faces, others: everyone.length - faces.length };
+}

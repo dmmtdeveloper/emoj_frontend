@@ -1,0 +1,50 @@
+---
+/**
+ * A small overlapping stack of real team faces plus a "+N" bubble for the
+ * rest of the team. Decorative: place it next to a caption that says who
+ * they are; the whole stack is hidden from assistive tech.
+ * Inside a `group`, hovering the group fans the faces out a little.
+ */
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { TEAM, teamFaces } from "../../lib/team";
+
+interface Props {
+  limit?: number;
+  class?: string;
+}
+
+const { limit = 4, class: className } = Astro.props;
+const { faces, others } = teamFaces(TEAM, limit);
+
+const photos = import.meta.glob<{ default: ImageMetadata }>(
+  "../../assets/team/*.jpg",
+  { eager: true },
+);
+const photoOf = (file: string): ImageMetadata => {
+  const photo = photos[`../../assets/team/${file}.jpg`]?.default;
+  if (!photo) throw new Error(`Team photo "${file}.jpg" not found.`);
+  return photo;
+};
+---
+
+<div
+  aria-hidden="true"
+  class:list={["team-avatars flex items-center -space-x-3", className]}
+>
+  {faces.map((member) => (
+    <Image
+      src={photoOf(member.photo ?? "")}
+      alt=""
+      widths={[96, 144]}
+      sizes="48px"
+      loading="lazy"
+      class="size-11 rounded-full bg-surface-sunken object-cover object-top ring-2 ring-accent md:size-12"
+    />
+  ))}
+  {others > 0 && (
+    <span class="grid size-11 place-items-center rounded-full bg-surface-inverse text-sm font-semibold text-ink-inverse ring-2 ring-accent md:size-12">
+      +{others}
+    </span>
+  )}
+</div>

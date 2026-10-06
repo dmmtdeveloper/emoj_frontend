@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { TEAM } from "../src/lib/team";
+import { TEAM, teamFaces, type Department } from "../src/lib/team";
 
 const members = TEAM.flatMap((d) => d.members);
 
@@ -44,5 +44,44 @@ describe("TEAM", () => {
       "Diego Abuyeres",
       "Maxell Cayupe",
     ]);
+  });
+});
+
+describe("teamFaces", () => {
+  const dept = (name: string, people: [string, string?][]): Department => ({
+    name,
+    members: people.map(([n, photo]) => ({
+      name: n,
+      role: "Ingeniero Civil",
+      ...(photo ? { photo } : {}),
+    })),
+  });
+
+  it("takes the first people with a photo, in team order, and counts everyone else", () => {
+    const team = [
+      dept("Gerencia", [["Ana Pérez", "ana"]]),
+      dept("Ingeniería", [
+        ["Luis Soto"],
+        ["Rosa Díaz", "rosa"],
+        ["Iván Mora", "ivan"],
+      ]),
+    ];
+    const { faces, others } = teamFaces(team, 2);
+    expect(faces.map((m) => m.name)).toEqual(["Ana Pérez", "Rosa Díaz"]);
+    expect(others).toBe(2);
+  });
+
+  it("never asks for more faces than there are photos", () => {
+    const team = [dept("Gerencia", [["Ana Pérez", "ana"], ["Luis Soto"]])];
+    const { faces, others } = teamFaces(team, 5);
+    expect(faces.map((m) => m.name)).toEqual(["Ana Pérez"]);
+    expect(others).toBe(1);
+  });
+
+  it("works with the real team", () => {
+    const { faces, others } = teamFaces(TEAM, 4);
+    expect(faces).toHaveLength(4);
+    expect(faces.every((m) => m.photo)).toBe(true);
+    expect(others).toBe(members.length - 4);
   });
 });
