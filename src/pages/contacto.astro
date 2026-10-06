@@ -14,7 +14,7 @@ const itemClass = "flex gap-4";
 const iconClass =
   "inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand";
 const titleClass =
-  "text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 <BaseLayout
@@ -54,10 +54,7 @@ const titleClass =
             </span>
             <div class="flex flex-col gap-1">
               <span class={titleClass}>Correo</span>
-              <a
-                class="font-semibold break-all"
-                href={`mailto:${CONTACT.email}`}
-              >
+              <a class="font-medium break-all" href={`mailto:${CONTACT.email}`}>
                 {CONTACT.email}
               </a>
             </div>
@@ -69,7 +66,7 @@ const titleClass =
             <div class="flex flex-col gap-1">
               <span class={titleClass}>WhatsApp</span>
               <a
-                class="font-semibold"
+                class="font-medium"
                 href={CONTACT.whatsapp.href}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -85,7 +82,7 @@ const titleClass =
             <div class="flex flex-col gap-1">
               <span class={titleClass}>Teléfonos</span>
               {CONTACT.phones.map((phone) => (
-                <a class="font-semibold" href={phone.href}>
+                <a class="font-medium" href={phone.href}>
                   {phone.display}
                 </a>
               ))}
@@ -103,7 +100,7 @@ const titleClass =
                 {CONTACT.address.locality}, {CONTACT.address.region}
               </address>
               <a
-                class="inline-flex min-h-11 items-center gap-1 font-semibold"
+                class="inline-flex min-h-11 items-center gap-1 font-medium"
                 href={CONTACT.mapsHref}
                 target="_blank"
                 rel="noopener noreferrer"

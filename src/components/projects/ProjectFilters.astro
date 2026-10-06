@@ -21,9 +21,9 @@ const { services, regions, serviceTitles, total } = Astro.props;
 const showServices = services.length > 1;
 const showRegions = regions.length > 1;
 const chip =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-semibold text-ink transition-colors duration-200 hover:border-border-strong aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-surface";
+  "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink transition-colors duration-200 hover:border-border-strong aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-surface";
 const legend =
-  "mb-2 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+  "mb-2 text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 {(showServices || showRegions) && (

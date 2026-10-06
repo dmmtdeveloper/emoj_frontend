@@ -45,7 +45,7 @@ const ogImage = ogSource
   : undefined;
 
 const shareLink =
-  "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-semibold text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink";
+  "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink";
 ---
 
 <BaseLayout
@@ -78,7 +78,7 @@ const shareLink =
             { label: article.title, href: `/noticias/${article.slug}` },
           ]}
         />
-        <p class="flex flex-wrap items-center gap-x-2 text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase">
+        <p class="flex flex-wrap items-center gap-x-2 text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase">
           <time datetime={article.publishedAt}>
             {formatDate(article.publishedAt)}
           </time>
@@ -159,7 +159,7 @@ const shareLink =
 
         <a
           href="/noticias"
-          class="inline-flex min-h-11 items-center gap-2 self-start font-semibold underline-offset-4 hover:underline"
+          class="inline-flex min-h-11 items-center gap-2 self-start font-medium underline-offset-4 hover:underline"
         >
           <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
           Ver todas las noticias

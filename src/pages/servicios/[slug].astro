@@ -42,7 +42,7 @@ const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
 const ctaHref = `/contacto?servicio=${slug}`;
 const hasExamples = examples.length > 0;
 const labelClass =
-  "text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 <BaseLayout
@@ -156,7 +156,7 @@ const labelClass =
           <li>
             <a
               href={`/servicios/${other.data.slug}`}
-              class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-semibold text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
+              class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
             >
               <span class="text-brand">
                 <ServiceIcon name={other.data.icon} size={20} />

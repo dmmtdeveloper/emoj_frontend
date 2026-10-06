@@ -68,7 +68,7 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
     )}
     <ul class="mt-auto flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
       {project.services.map((service) => (
-        <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-semibold text-on-accent">
+        <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-medium text-on-accent">
           {serviceTitles[service] ?? service}
         </li>
       ))}

@@ -75,7 +75,7 @@ const ctaHref = firstService
   ? `/contacto?servicio=${firstService}`
   : "/contacto";
 const labelClass =
-  "text-[13px] leading-4 font-semibold tracking-[0.08em] text-ink-muted uppercase";
+  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 const h2Class =
   "text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10";
 ---
@@ -116,7 +116,7 @@ const h2Class =
       {meta.map((item) => (
         <div class="flex flex-col gap-1">
           <dt class={labelClass}>{item.label}</dt>
-          <dd class="font-semibold text-ink">{item.value}</dd>
+          <dd class="font-medium text-ink">{item.value}</dd>
         </div>
       ))}
       <div class="col-span-2 flex flex-col gap-1">
@@ -126,7 +126,7 @@ const h2Class =
         <dd>
           <ul class="flex flex-wrap gap-1.5">
             {services.map((service) => (
-              <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-semibold text-on-accent">
+              <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-medium text-on-accent">
                 {service.data.title}
               </li>
             ))}
@@ -214,7 +214,7 @@ const h2Class =
             <li>
               <a
                 href={`/servicios/${service.data.slug}`}
-                class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-semibold text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
+                class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
               >
                 <span class="text-brand">
                   <ServiceIcon name={service.data.icon} size={20} />

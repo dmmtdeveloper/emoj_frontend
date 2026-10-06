@@ -90,7 +90,7 @@ const shell =
       </span>
       {number && (
         <span
-          class="text-sm leading-5 font-semibold tracking-[0.14em] opacity-80"
+          class="text-sm leading-5 font-medium tracking-[0.14em] opacity-80"
           aria-hidden="true"
         >
           {number}
@@ -107,7 +107,7 @@ const shell =
     </Heading>
     <p class="max-w-[44ch] text-sand-100">{summary}</p>
     <span
-      class="inline-flex items-center gap-2 pt-2 text-base leading-5 font-semibold"
+      class="inline-flex items-center gap-2 pt-2 text-base leading-5 font-medium"
       aria-hidden="true"
     >
       Ver servicio
@@ -164,7 +164,7 @@ const shell =
       {number && (
         <span
           class:list={[
-            "text-[13px] leading-4 font-semibold tracking-[0.14em] text-ink-muted transition-colors duration-300",
+            "text-[13px] leading-4 font-medium tracking-[0.14em] text-ink-muted transition-colors duration-300",
             onPhoto.muted,
           ]}
           aria-hidden="true"
@@ -204,7 +204,7 @@ const shell =
     </p>
     <span
       class:list={[
-        "mt-auto items-center gap-2 pt-1 text-base leading-5 font-semibold text-brand transition-colors duration-300",
+        "mt-auto items-center gap-2 pt-1 text-base leading-5 font-medium text-brand transition-colors duration-300",
         onPhoto.link,
         variant === "compact" ? "hidden md:inline-flex" : "inline-flex",
       ]}
