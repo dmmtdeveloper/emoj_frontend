@@ -5,6 +5,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Clock,
   FileText,
   FolderKanban,
   Mail,
@@ -16,8 +17,10 @@ import type { ContactMessage } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
+import { PersonDataRequests } from "./privacy";
 import {
   ErrorNotice,
+  formatDate as formatDay,
   formatDateTime as formatDate,
   pageFromUrl,
   Pagination,
@@ -268,6 +271,13 @@ function MessageItem({
         {message.location && (
           <li className="text-ink-muted">Ubicación: {message.location}</li>
         )}
+        <li className="inline-flex items-center gap-1.5 text-ink-muted">
+          <Clock size={16} strokeWidth={1.75} aria-hidden="true" />
+          Se borra el{" "}
+          <time dateTime={message.deleteAfter}>
+            {formatDay(message.deleteAfter)}
+          </time>
+        </li>
       </ul>
     </article>
   );
@@ -299,8 +309,10 @@ export function MessagesPage({
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <Notice tone="info">
         Estos mensajes contienen datos personales. Úsalos solo para responder la
-        consulta y no los compartas fuera de EMOJ.
+        consulta y no los compartas fuera de EMOJ. Cada mensaje se borra solo al
+        cumplir 24 meses.
       </Notice>
+      <PersonDataRequests />
       {query.error && (
         <ErrorNotice error={query.error} retry={() => void query.refetch()} />
       )}

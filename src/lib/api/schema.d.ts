@@ -517,11 +517,77 @@ export interface paths {
         };
         /**
          * List contact form messages
-         * @description Read-only inbox, newest first.
+         * @description Read-only inbox, newest first. Each message carries `deleteAfter`, the
+         *     date it is erased automatically under the retention period
+         *     (`CONTACT_RETENTION_MONTHS`, 24 by default).
          */
         get: operations["adminListContactMessages"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/data-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List data subject requests
+         * @description Audit trail of exports and erasures, newest first.
+         */
+        get: operations["adminListDataRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/data-requests/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export a person's data
+         * @description Returns every contact message sent from the given email address
+         *     (case-insensitive) and records the request in the audit trail, even
+         *     when nothing is found. Right of access and portability.
+         */
+        post: operations["adminExportPersonData"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/data-requests/erase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Erase a person's data
+         * @description Deletes every contact message sent from the given email address
+         *     (case-insensitive) and records the request in the audit trail with
+         *     the number of messages deleted. Right to erasure. Cannot be undone.
+         */
+        post: operations["adminErasePersonData"];
         delete?: never;
         options?: never;
         head?: never;
@@ -961,12 +1027,53 @@ export interface components {
             message: string;
             /** Format: date-time */
             createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the message is erased automatically (retention period).
+             */
+            deleteAfter: string;
         };
         ContactMessagePage: {
             items: components["schemas"]["ContactMessage"][];
             page: number;
             pageSize: number;
             total: number;
+        };
+        /** @enum {string} */
+        DataRequestKind: "export" | "erasure";
+        DataRequestInput: {
+            /** @description The person's email address, as they wrote it in the form. */
+            email: string;
+        };
+        DataRequest: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DataRequestKind"];
+            /** @description The data subject's email address. */
+            email: string;
+            /** @description Messages exported or erased. */
+            messages: number;
+            /** @description Name (or email) of the admin who handled the request. */
+            performedBy: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        DataRequestPage: {
+            items: components["schemas"]["DataRequest"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
+        PersonDataExport: {
+            request: components["schemas"]["DataRequest"];
+            email: string;
+            /** Format: date-time */
+            generatedAt: string;
+            messages: components["schemas"]["ContactMessage"][];
+        };
+        PersonDataErasure: {
+            request: components["schemas"]["DataRequest"];
+            deleted: number;
         };
         /** @enum {string} */
         PreviewKind: "project" | "news";
@@ -2202,6 +2309,104 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminListDataRequests: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: components["parameters"]["Page"];
+                /** @description Items per page. */
+                pageSize?: components["parameters"]["PageSize"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of requests. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminExportPersonData: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataRequestInput"];
+            };
+        };
+        responses: {
+            /** @description The person's data. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonDataExport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminErasePersonData: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataRequestInput"];
+            };
+        };
+        responses: {
+            /** @description The data was erased. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonDataErasure"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
             default: components["responses"]["Error"];
         };
     };

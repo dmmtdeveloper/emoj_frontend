@@ -33,6 +33,10 @@ export type AdminMedia = Schemas["AdminMedia"];
 export type AdminMediaPage = Schemas["AdminMediaPage"];
 export type ContactMessage = Schemas["ContactMessage"];
 export type ContactMessagePage = Schemas["ContactMessagePage"];
+export type DataRequest = Schemas["DataRequest"];
+export type DataRequestPage = Schemas["DataRequestPage"];
+export type PersonDataExport = Schemas["PersonDataExport"];
+export type PersonDataErasure = Schemas["PersonDataErasure"];
 
 export type AdminListQuery = NonNullable<
   operations["adminListProjects"]["parameters"]["query"]
@@ -42,6 +46,9 @@ export type MediaQuery = NonNullable<
 >;
 export type MessagesQuery = NonNullable<
   operations["adminListContactMessages"]["parameters"]["query"]
+>;
+export type DataRequestsQuery = NonNullable<
+  operations["adminListDataRequests"]["parameters"]["query"]
 >;
 
 export const ADMIN_API_BASE = "/api";
@@ -95,6 +102,14 @@ export interface AdminClient {
   ): Promise<ApiResult<AdminMedia>>;
   updateMedia(id: string, alt: string): Promise<ApiResult<AdminMedia>>;
   listMessages(query?: MessagesQuery): Promise<ApiResult<ContactMessagePage>>;
+  /** Everything stored about one email address (right of access). */
+  exportPersonData(email: string): Promise<ApiResult<PersonDataExport>>;
+  /** Deletes everything stored about one email address (cannot be undone). */
+  erasePersonData(email: string): Promise<ApiResult<PersonDataErasure>>;
+  /** Audit trail of exports and erasures, newest first. */
+  listDataRequests(
+    query?: DataRequestsQuery,
+  ): Promise<ApiResult<DataRequestPage>>;
   /** Current CSRF token, or null when signed out. */
   csrfToken(): string | null;
   setCsrfToken(token: string | null): void;
@@ -294,6 +309,19 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
       request<ContactMessagePage>(
         "GET",
         `/v1/admin/contact-messages${queryString(query)}`,
+      ),
+    exportPersonData: (email) =>
+      request<PersonDataExport>("POST", "/v1/admin/data-requests/export", {
+        email,
+      }),
+    erasePersonData: (email) =>
+      request<PersonDataErasure>("POST", "/v1/admin/data-requests/erase", {
+        email,
+      }),
+    listDataRequests: (query) =>
+      request<DataRequestPage>(
+        "GET",
+        `/v1/admin/data-requests${queryString(query)}`,
       ),
     csrfToken: () => csrf,
     setCsrfToken: (token) => {
