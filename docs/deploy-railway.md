@@ -67,15 +67,20 @@ cannot opt in.
 
 Publishing in the admin rebuilds the static site. With Vercel the API calls a
 deploy hook (`VERCEL_DEPLOY_HOOK_URL`). With Railway it calls the public API's
-`environmentTriggersDeploy` mutation instead:
+`serviceInstanceDeploy` mutation with `latestCommit`, which builds the
+frontend again from its branch (what `railway redeploy --from-source` does).
+`environmentTriggersDeploy` does not work here: Railway answers "Bad Access"
+to project tokens.
 
-1. Create a project token (project settings → Tokens) for the environment.
+1. Create a project token (project settings → Tokens) for the frontend's
+   environment.
 2. On the API service set `RAILWAY_FRONTEND_TOKEN` (the token) and
-   `RAILWAY_FRONTEND_SERVICE_ID` (the frontend service id). The project and
-   environment default to the ones Railway injects into the API service.
+   `RAILWAY_FRONTEND_SERVICE_ID` (the frontend service id). The environment
+   defaults to the one Railway injects into the API service
+   (`RAILWAY_FRONTEND_ENVIRONMENT_ID` overrides it).
 3. Unset `VERCEL_DEPLOY_HOOK_URL`: the API refuses to start with both.
-4. Publish something and confirm a new frontend deployment starts. This first
-   run is the real check that the project token may trigger deploys.
+4. Publish something and confirm a new frontend deployment starts. If it does
+   not, the API logs `site rebuild failed` with Railway's message.
 
 ## Switching emoj.cl (only once the migration is approved)
 
