@@ -58,11 +58,37 @@ const csp = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+/**
+ * Old WordPress addresses (emoj.cl before the redesign) and where they live
+ * now. Permanent (301) so search engines move their ranking to the new page.
+ * The four real articles keep their content under a new slug; placeholder
+ * posts, categories, tags and the author archive go to the news index. Exact
+ * paths first: Vercel uses the first match. The Caddyfile (Railway) has the
+ * same rules (tests/caddyfile.test.ts).
+ */
+const legacyRedirects: [source: string, destination: string][] = [
+  ["/archivo/2939", "/noticias/visita-tecnica-canal-la-petaca"],
+  ["/archivo/2899", "/noticias/de-sitios-abandonados-a-plazas-comunitarias"],
+  ["/archivo/2873", "/noticias/redisenar-para-evolucionar"],
+  ["/archivo/2841", "/noticias/emojita-supervisora-felina"],
+  ["/archivo/:path*", "/noticias"],
+  ["/jobs/:path*", "/contacto"],
+  ["/feed/:path*", "/noticias"],
+  ["/comments/feed", "/noticias"],
+  ["/wp-admin/:path*", "/admin/login"],
+  ["/wp-login.php", "/admin/login"],
+];
+
 const config: VercelConfig = {
   framework: "astro",
   installCommand: "pnpm install --frozen-lockfile",
   buildCommand: "pnpm build",
   outputDirectory: "dist",
+  redirects: legacyRedirects.map(([source, destination]) => ({
+    source,
+    destination,
+    statusCode: 301,
+  })),
   rewrites: [routes.rewrite("/api/(.*)", `${apiOrigin()}/$1`)],
   headers: [
     routes.header("/(.*)", [

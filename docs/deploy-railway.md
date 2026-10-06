@@ -101,9 +101,10 @@ this order:
    records it shows. Set `ALLOWED_ORIGINS` on the API to the final origin.
 4. **Content rebuilds:** switch the API from the Vercel hook to Railway (see
    above).
-5. **Legacy URLs:** the WordPress paths need redirects to the new pages
-   (planned for Phase 14). On Railway they go in the Caddyfile as `redir`
-   rules.
+5. **Legacy URLs:** the old WordPress addresses already redirect (301) to
+   the new pages, on Vercel (`legacyRedirects` in `vercel.ts`) and on Railway
+   (`redir` lines in the Caddyfile). Check a few after the switch, e.g.
+   `curl -sI https://emoj.cl/archivo/2939`.
 6. Keep the Vercel project for a while. Rolling back is pointing DNS back.
 
 ## Running the image locally

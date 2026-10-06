@@ -50,6 +50,19 @@
 		Cache-Control "public, max-age=31557600, immutable"
 	}
 
+	# Old WordPress addresses -> new pages, 301 (same list as vercel.ts).
+	# Caddy tries exact paths before prefixes, like the order there.
+	redir /archivo/2939 /noticias/visita-tecnica-canal-la-petaca 301
+	redir /archivo/2899 /noticias/de-sitios-abandonados-a-plazas-comunitarias 301
+	redir /archivo/2873 /noticias/redisenar-para-evolucionar 301
+	redir /archivo/2841 /noticias/emojita-supervisora-felina 301
+	redir /archivo* /noticias 301
+	redir /jobs* /contacto 301
+	redir /feed* /noticias 301
+	redir /comments/feed /noticias 301
+	redir /wp-admin* /admin/login 301
+	redir /wp-login.php /admin/login 301
+
 	# Same-origin API for the admin (first-party session cookie). The prefix
 	# is stripped: /api/v1/auth/me -> <API_UPSTREAM>/v1/auth/me.
 	handle_path /api/* {
