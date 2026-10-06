@@ -162,4 +162,99 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     expect(lines).toContain("try_files {path} {path}/index.html");
     expect(lines).toContain("rewrite * /404.html");
   });
+
+  it("redirects the same legacy URLs to the same pages", () => {
+    expect(caddyRedirects()).toEqual(vercelRedirects());
+  });
+});
+
+/** `/old/:path*` (Vercel) is `/old*` in Caddy: the prefix and everything below. */
+function caddyRedirectPath(source: string): string {
+  return source.replace(/\/:path\*$/, "*");
+}
+
+function caddyRedirects(): string[][] {
+  return stripComments(caddyfile)
+    .filter((line) => line.startsWith("redir "))
+    .map((line) => {
+      const [, path = "", to = "", code = ""] = line.split(/\s+/);
+      return [path, to, code];
+    })
+    .sort();
+}
+
+function vercelRedirects(): string[][] {
+  return (vercel.redirects ?? [])
+    .map((r) => [
+      caddyRedirectPath(r.source),
+      r.destination,
+      String(r.statusCode ?? (r.permanent === false ? 307 : 308)),
+    ])
+    .sort();
+}
+
+/** First vercel.ts redirect that matches `path`, in order, as Vercel does. */
+function resolveRedirect(path: string): string | undefined {
+  for (const r of vercel.redirects ?? []) {
+    const prefix = /^(.*)\/:path\*$/.exec(r.source)?.[1];
+    const matches = prefix
+      ? path === prefix || path.startsWith(`${prefix}/`)
+      : path === r.source;
+    if (matches) return r.destination;
+  }
+  return undefined;
+}
+
+describe("legacy WordPress URLs (emoj.cl before the redesign)", () => {
+  // Every URL in the old site's sitemap (wp-sitemap.xml), plus the feeds and
+  // admin entry points people and bots still request.
+  const expected: Record<string, string> = {
+    "/archivo/2939": "/noticias/visita-tecnica-canal-la-petaca",
+    "/archivo/2899": "/noticias/de-sitios-abandonados-a-plazas-comunitarias",
+    "/archivo/2873": "/noticias/redisenar-para-evolucionar",
+    "/archivo/2841": "/noticias/emojita-supervisora-felina",
+    // Published placeholders (Lorem Ipsum) and duplicates: no new article.
+    "/archivo/380": "/noticias",
+    "/archivo/389": "/noticias",
+    "/archivo/1821": "/noticias",
+    "/archivo/2598": "/noticias",
+    "/archivo/category/noticias": "/noticias",
+    "/archivo/category/sin-categoria": "/noticias",
+    "/archivo/tag/ingenieria-hidraulica": "/noticias",
+    "/archivo/author/inginfhotmail-com": "/noticias",
+    "/archivo": "/noticias",
+    "/jobs": "/contacto",
+    "/jobs/dibujante-proyectista": "/contacto",
+    "/feed": "/noticias",
+    "/comments/feed": "/noticias",
+    "/wp-admin": "/admin/login",
+    "/wp-admin/post.php": "/admin/login",
+    "/wp-login.php": "/admin/login",
+  };
+
+  it.each(Object.entries(expected))("%s -> %s", (from, to) => {
+    expect(resolveRedirect(from)).toBe(to);
+  });
+
+  it("leaves the pages that kept their address alone", () => {
+    for (const path of [
+      "/",
+      "/nosotros",
+      "/proyectos",
+      "/noticias",
+      "/contacto",
+    ]) {
+      expect(resolveRedirect(path)).toBeUndefined();
+    }
+  });
+
+  it("never redirects into a loop", () => {
+    for (const r of vercel.redirects ?? []) {
+      expect(resolveRedirect(r.destination)).toBeUndefined();
+    }
+  });
+
+  it("sends permanent redirects (301)", () => {
+    for (const r of vercel.redirects ?? []) expect(r.statusCode).toBe(301);
+  });
 });
