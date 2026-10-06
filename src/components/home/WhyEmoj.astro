@@ -58,17 +58,16 @@ const DIFFERENTIATORS = [
       />
     </div>
 
-    <!-- Phones: a horizontal, snap-scrolling row (no autoplay) to keep the
-         page short; from sm up, a 2x2 grid. -->
+    <!-- Phones: one card under the other; from sm up, a 2x2 grid. -->
     <ul
       aria-label="Diferenciadores"
-      class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:self-center"
+      class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:self-center"
       data-reveal-stagger
     >
       {DIFFERENTIATORS.map(({ icon: Icon, title, text }, index) => (
         <li
           class:list={[
-            "group radius-signature flex w-[82%] shrink-0 snap-start flex-col gap-4 p-6 pl-8 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:w-auto md:p-8 md:pl-10",
+            "group radius-signature flex flex-col gap-3 p-6 pl-8 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:gap-4 md:p-8 md:pl-10",
             background === "surface"
               ? "bg-surface-sunken"
               : "bg-surface-raised",
