@@ -8,6 +8,8 @@
  * `hidden` would make it a scroll container and freeze the view timeline)
  * and keep its content above the trace (`relative z-[2]`). Decorative and
  * hidden from assistive tech; reduced motion shows the finished mark.
+ * Desktop only (from 1024px): in one column there is no free space and the
+ * mark would run under the text.
  */
 import StrokeLine from "./StrokeLine.astro";
 
@@ -15,14 +17,9 @@ interface Props {
   corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   /** "inverse" on `surface-inverse` (brand on plum is a forbidden pair). */
   tone?: "brand" | "inverse";
-  /**
-   * Also show it below 1024px. Off by default: in one column there is no
-   * free space and the mark would run under the text.
-   */
-  mobile?: boolean;
 }
 
-const { corner, tone = "brand", mobile = false } = Astro.props;
+const { corner, tone = "brand" } = Astro.props;
 
 // Inside the section, so the whole mark (both dots) stays visible.
 const CORNERS = {
@@ -38,7 +35,7 @@ const CORNERS = {
   dots
   class:list={[
     "section-trace absolute -z-10",
-    !mobile && "hidden lg:block",
+    "hidden lg:block",
     "w-[min(92vw,420px)] md:w-[640px] lg:w-[760px]",
     CORNERS[corner],
     tone === "inverse"
