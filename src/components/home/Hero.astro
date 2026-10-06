@@ -3,19 +3,17 @@
  * Home hero, "del croquis a la obra". Three real photos from the original
  * emoj.cl hero (water, a pumping station and an aerial industrial view).
  *
- * The section is a scroll track: its inner frame sticks to the viewport
- * while the page scrolls through the track, and photos 2 and 3 enter with a
- * left-to-right wipe (like a stroke being drawn) driven by the scroll
- * (CSS view timeline, no JavaScript). Headline and buttons stay put; a
- * counter with a drawn progress line shows the current photo. On load the
- * first photo is revealed with the same wipe.
+ * The photos play on their own (src/scripts/hero-slideshow.ts): each one
+ * zooms in slowly and the next enters with a left-to-right wipe, like a
+ * stroke being drawn. A counter with a progress line shows the current
+ * photo, and a button pauses the change (WCAG 2.2.2). The slideshow holds
+ * while the hero is off screen or the tab is hidden.
  *
- * Without scroll-driven animations or with reduced motion the hero is a
- * single, non-sticky screen with the first photo (no autoplay, no carousel).
- * The section slides under the transparent header (BaseLayout
- * `headerOverlay`).
+ * Without JavaScript or with reduced motion the hero shows the first photo
+ * only (no autoplay, no counter). The section slides under the transparent
+ * header (BaseLayout `headerOverlay`).
  */
-import { ArrowRight } from "@lucide/astro";
+import { ArrowRight, Pause, Play } from "@lucide/astro";
 import { Picture } from "astro:assets";
 import water from "../../assets/photos/agua-manos.jpg";
 import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
@@ -47,13 +45,15 @@ const photos = [
 ---
 
 <section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
-  <div class="hero__frame relative isolate overflow-hidden">
+  <div class="hero__frame relative isolate overflow-hidden" data-hero>
     {photos.map((photo, i) => (
       <div
         class:list={[
           "hero__media absolute inset-0 -z-10 overflow-hidden",
           `hero__media--${i + 1}`,
         ]}
+        data-hero-slide
+        data-state={i === 0 ? "active" : undefined}
       >
         <Picture
           src={photo.src}
@@ -113,24 +113,39 @@ const photos = [
       </div>
     </div>
 
-    {/* Photo counter with a drawn progress line (decorative). */}
-    <div
-      class="hero__counter absolute right-[max(1rem,calc((100vw-1200px)/2+1.5rem))] bottom-8 hidden items-center gap-4 text-[13px] leading-4 font-semibold tracking-[0.14em] text-sand-100 tabular-nums md:flex"
-      aria-hidden="true"
-    >
-      <span class="relative inline-block w-[2ch]">
-        <span class="hero__count hero__count--1">01</span>
-        <span class="hero__count hero__count--2 absolute inset-0 opacity-0">
-          02
+    {/* Photo counter with a progress line, and the pause button. */}
+    <div class="hero__counter absolute right-[max(1rem,calc((100vw-1200px)/2+1.5rem))] bottom-6 items-center gap-4 text-[13px] leading-4 font-semibold tracking-[0.14em] text-sand-100 tabular-nums md:bottom-8">
+      <span class="flex items-center gap-4" aria-hidden="true">
+        <span class="w-[2ch]" data-hero-count>
+          01
         </span>
-        <span class="hero__count hero__count--3 absolute inset-0 opacity-0">
-          03
+        <span class="relative block h-0.5 w-16 overflow-hidden rounded-full bg-sand-50/25 md:w-24">
+          <span
+            class="hero__progress absolute inset-0 origin-left rounded-full bg-sand-50"
+            data-hero-progress
+          ></span>
         </span>
+        <span>{String(photos.length).padStart(2, "0")}</span>
       </span>
-      <span class="relative block h-0.5 w-24 overflow-hidden rounded-full bg-sand-50/25">
-        <span class="hero__progress absolute inset-0 origin-left scale-x-[0.3333] rounded-full bg-sand-50"></span>
-      </span>
-      <span>03</span>
+      <button
+        type="button"
+        class="hero__toggle grid size-9 place-items-center rounded-full border border-sand-50/40 text-sand-50 transition-colors hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-50"
+        aria-label="Pausar el cambio de fotos"
+        data-hero-toggle
+      >
+        <Pause
+          class="hero__icon-pause"
+          size={16}
+          stroke-width={2}
+          aria-hidden="true"
+        />
+        <Play
+          class="hero__icon-play"
+          size={16}
+          stroke-width={2}
+          aria-hidden="true"
+        />
+      </button>
     </div>
 
     <div
@@ -145,6 +160,7 @@ const photos = [
 
 <script>
   import "../../scripts/dot-grid";
+  import "../../scripts/hero-slideshow";
 </script>
 
 <style>
@@ -180,13 +196,72 @@ const photos = [
     display: none;
   }
 
+  /*
+   * Slideshow, armed by src/scripts/hero-slideshow.ts (never with reduced
+   * motion). `data-state` on each photo: "active" is on top and wipes in,
+   * "prev" stays visible underneath until the wipe covers it; the rest are
+   * hidden. The slow zoom keeps running from "active" to "prev" (same
+   * animation), so the outgoing photo never jumps.
+   */
+  .hero__frame[data-slideshow] .hero__media {
+    display: block;
+    visibility: hidden;
+  }
+
+  .hero__frame[data-slideshow] .hero__media[data-state] {
+    visibility: visible;
+  }
+
+  .hero__frame[data-slideshow] .hero__media[data-state="prev"] {
+    z-index: -11;
+  }
+
+  .hero__frame[data-slideshow] .hero__counter {
+    display: flex;
+  }
+
+  .hero__icon-play,
+  .hero__frame[data-paused] .hero__icon-pause {
+    display: none;
+  }
+
+  .hero__frame[data-paused] .hero__icon-play {
+    display: block;
+  }
+
+  .hero__media--1 {
+    --zoom-origin: 70% 55%;
+  }
+
+  .hero__media--2 {
+    --zoom-origin: 30% 40%;
+  }
+
+  .hero__media--3 {
+    --zoom-origin: 55% 65%;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
-    .hero__media--1 {
+    .hero__media[data-state="active"] {
       animation: wipe-right 1300ms var(--ease-in-out) both;
     }
 
-    .hero__media--1 :global(.hero__img) {
-      animation: settle 3200ms var(--ease-out) both;
+    .hero__media[data-state] :global(.hero__img) {
+      transform-origin: var(--zoom-origin, center);
+      animation: hero-zoom var(--hero-zoom-ms, 9000ms) linear both;
+    }
+
+    .hero__frame[data-slideshow] .hero__progress[data-run] {
+      animation: hero-fill var(--hero-slide-ms, 6500ms) linear both;
+    }
+
+    /* Paused by the person or off screen: everything holds still. */
+    .hero__frame:is([data-paused], [data-held]) .hero__progress[data-run],
+    .hero__frame:is([data-paused], [data-held]) .hero__media[data-state],
+    .hero__frame:is([data-paused], [data-held])
+      .hero__media[data-state]
+      :global(.hero__img) {
+      animation-play-state: paused;
     }
 
     .hero__grid {
@@ -220,106 +295,6 @@ const photos = [
     .hero__cue-line::after {
       animation: cue 2400ms var(--ease-in-out) 1800ms infinite;
     }
-
-    /*
-     * Scroll track: the section is taller than the viewport and its frame
-     * sticks while the page scrolls through it. Progress runs over the
-     * `contain` range (from the section's top at the top of the viewport to
-     * its bottom at the bottom). `animation-timeline` goes through var()
-     * (see motion.css: the minifier would otherwise fold it away).
-     */
-    @supports (animation-timeline: view()) {
-      /*
-       * The overlay header stays transparent while the frame is pinned and
-       * solidifies once the page really moves: track height minus one
-       * viewport, minus the header the section slides under (motion.css).
-       */
-      :global(body:has(.hero__frame)) {
-        --header-solid-start: calc(260svh - 100svh - var(--header-h));
-      }
-
-      .hero {
-        --hero-timeline: --hero;
-        height: 260svh;
-        view-timeline-name: --hero;
-      }
-
-      .hero__frame {
-        position: sticky;
-        top: 0;
-        height: 100svh;
-      }
-
-      .hero__frame > .container-site {
-        min-height: 100%;
-      }
-
-      .hero__media--2,
-      .hero__media--3 {
-        display: block;
-        animation: hero-wipe linear both;
-        animation-timeline: var(--hero-timeline);
-      }
-
-      .hero__media--2 :global(.hero__img),
-      .hero__media--3 :global(.hero__img) {
-        animation: hero-settle linear both;
-        animation-timeline: var(--hero-timeline);
-      }
-
-      .hero__media--2,
-      .hero__media--2 :global(.hero__img) {
-        animation-range: contain 14% contain 40%;
-      }
-
-      .hero__media--3,
-      .hero__media--3 :global(.hero__img) {
-        animation-range: contain 54% contain 80%;
-      }
-
-      @media (min-width: 48rem) {
-        .hero__counter {
-          display: flex;
-        }
-      }
-
-      .hero__count--1,
-      .hero__count--2,
-      .hero__count--3,
-      .hero__progress,
-      .hero__cue {
-        animation-timeline: var(--hero-timeline);
-        animation-range: contain 0% contain 100%;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-      }
-
-      .hero__count--1 {
-        animation-name: hero-count-1;
-      }
-
-      .hero__count--2 {
-        animation-name: hero-count-2;
-      }
-
-      .hero__count--3 {
-        animation-name: hero-count-3;
-      }
-
-      .hero__progress {
-        animation-name: hero-progress;
-      }
-
-      /* The scroll cue fades out once the photos start changing. */
-      .hero__cue {
-        animation-name: hero-cue-out;
-        animation-delay: 0ms;
-      }
-
-      .hero__cue-line::after {
-        animation: none;
-      }
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -328,89 +303,22 @@ const photos = [
     }
   }
 
-  @keyframes hero-wipe {
+  /* A slow push-in, from slightly zoomed so the first frames already move. */
+  @keyframes hero-zoom {
     from {
-      clip-path: inset(0 100% 0 0);
+      transform: scale(1.02);
     }
     to {
-      clip-path: inset(0 0 0 0);
+      transform: scale(1.14);
     }
   }
 
-  @keyframes hero-settle {
+  @keyframes hero-fill {
     from {
-      transform: scale(1.12);
+      transform: scaleX(0);
     }
     to {
-      transform: scale(1);
-    }
-  }
-
-  @keyframes hero-count-1 {
-    0%,
-    26% {
-      opacity: 1;
-    }
-    30%,
-    100% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-count-2 {
-    0%,
-    26% {
-      opacity: 0;
-    }
-    30%,
-    66% {
-      opacity: 1;
-    }
-    70%,
-    100% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes hero-count-3 {
-    0%,
-    66% {
-      opacity: 0;
-    }
-    70%,
-    100% {
-      opacity: 1;
-    }
-  }
-
-  /*
-   * Animates `scale` (not `transform`): the bar's resting width comes from
-   * Tailwind's `scale-x-*`, which sets the `scale` property, and a transform
-   * keyframe would multiply with it (the bar stopped at a third).
-   */
-  @keyframes hero-progress {
-    0%,
-    14% {
-      scale: 0.3333 1;
-    }
-    40%,
-    54% {
-      scale: 0.6667 1;
-    }
-    80%,
-    100% {
-      scale: 1 1;
-    }
-  }
-
-  @keyframes hero-cue-out {
-    0%,
-    6% {
-      opacity: 1;
-    }
-    14%,
-    100% {
-      opacity: 0;
+      transform: scaleX(1);
     }
   }
 </style>
