@@ -58,31 +58,32 @@
 }
 
 /*
- * Type scale. Fluid with clamp(): bold, tight display sizes; body text stays
+ * Type scale. Fluid with clamp(), capped so headings stay contained (display
+ * 72px, h1 56px, h2 44px) with a little air between lines; body text stays
  * at 17px (never below 16px), left aligned, max ~65ch.
  */
 @layer components {
   .text-display {
-    font-size: clamp(2.5rem, 1.55rem + 4.7vw, 6rem);
-    line-height: 0.98;
+    font-size: clamp(2.5rem, 1.7rem + 3.4vw, 4.5rem);
+    line-height: 1.05;
     font-weight: 600;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
   .text-h1 {
-    font-size: clamp(2.25rem, 1.6rem + 2.9vw, 4.25rem);
-    line-height: 1.04;
+    font-size: clamp(2.25rem, 1.65rem + 2.2vw, 3.5rem);
+    line-height: 1.1;
     font-weight: 600;
     letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
   .text-h2 {
-    font-size: clamp(1.875rem, 1.4rem + 2vw, 3.25rem);
-    line-height: 1.06;
+    font-size: clamp(1.875rem, 1.45rem + 1.5vw, 2.75rem);
+    line-height: 1.15;
     font-weight: 600;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
     text-wrap: balance;
   }
 
