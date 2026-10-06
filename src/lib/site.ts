@@ -5,6 +5,8 @@
 
 export const SITE_NAME = "EMOJ Consultora";
 export const LEGAL_NAME = "EMOJ Consultora SpA";
+/** Tax ID (RUT) of EMOJ Consultora SpA. */
+export const RUT = "76.956.190-0";
 export const TAGLINE = "Humanizamos la ingeniería";
 
 export const CONTACT = {

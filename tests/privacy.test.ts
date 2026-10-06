@@ -29,6 +29,12 @@ describe("privacyGaps", () => {
 });
 
 describe("PRIVACY", () => {
+  it("names EMOJ by its RUT and only waits for the legal review", () => {
+    expect(PRIVACY.controller.rut).toBe("76.956.190-0");
+    expect(PRIVACY.requestsEmail).toBe("coordinacion@emoj.cl");
+    expect(privacyGaps(PRIVACY)).toEqual(["Revisión de un abogado"]);
+  });
+
   it("covers every right the law gives to data subjects", () => {
     expect(PRIVACY.rights.map((r) => r.name)).toEqual([
       "Acceso",

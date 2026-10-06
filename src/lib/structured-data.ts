@@ -1,4 +1,4 @@
-import { CONTACT, LEGAL_NAME, SITE_NAME, SOCIAL, TAGLINE } from "./site";
+import { CONTACT, LEGAL_NAME, RUT, SITE_NAME, SOCIAL, TAGLINE } from "./site";
 
 const DEFAULT_SITE = new URL("https://emoj.cl");
 
@@ -11,6 +11,7 @@ export function organizationJsonLd(site: URL | undefined = DEFAULT_SITE) {
     "@id": new URL("/#organizacion", base).href,
     name: SITE_NAME,
     legalName: LEGAL_NAME,
+    taxID: RUT,
     slogan: TAGLINE,
     description:
       "Consultora de ingeniería civil con más de 30 años de experiencia: obras sanitarias, viales, cálculo estructural, geotecnia, estudios de tránsito, arquitectura y aguas lluvias.",

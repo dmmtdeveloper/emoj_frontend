@@ -8,7 +8,7 @@
  * `privacyGaps` lists what is still missing, and while anything is missing
  * the page is kept out of search engines.
  */
-import { CONTACT, LEGAL_NAME } from "./site";
+import { CONTACT, LEGAL_NAME, RUT } from "./site";
 
 export interface ProcessingActivity {
   /** Where the data comes from, in the visitor's words. */
@@ -52,8 +52,8 @@ export interface PrivacyPolicy {
 const address = `${CONTACT.address.street}, ${CONTACT.address.locality}, ${CONTACT.address.region}, Chile`;
 
 export const PRIVACY: PrivacyPolicy = {
-  controller: { name: LEGAL_NAME, rut: null, address },
-  requestsEmail: null,
+  controller: { name: LEGAL_NAME, rut: RUT, address },
+  requestsEmail: CONTACT.email,
   legalReview: null,
   updated: "2026-10-06",
   activities: [

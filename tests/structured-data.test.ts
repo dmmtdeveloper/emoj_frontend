@@ -12,6 +12,7 @@ describe("organizationJsonLd", () => {
     expect(data["@type"]).toBe("ProfessionalService");
     expect(data.url).toBe("https://emoj.cl/");
     expect(data.email).toBe("coordinacion@emoj.cl");
+    expect(data.taxID).toBe("76.956.190-0");
     expect(data.telephone).toEqual(["+56322927790", "+56322920784"]);
     expect(data.address).toMatchObject({
       addressLocality: "Quilpué",
