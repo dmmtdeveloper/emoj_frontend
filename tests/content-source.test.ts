@@ -125,6 +125,30 @@ describe("createContentSource", () => {
     expect(detail.title).toBe("Proyecto 2");
   });
 
+  it("finds a project by slug, or null when the API has no such project", async () => {
+    const { source } = fakeApi(2);
+    await expect(source.findProject("proyecto-1")).resolves.toMatchObject({
+      title: "Proyecto 1",
+    });
+    await expect(source.findProject("missing")).resolves.toBeNull();
+  });
+
+  it("finds an article by slug, or null when it does not exist", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) =>
+      String(input).endsWith("/v1/news/hito")
+        ? json(200, { slug: "hito", title: "Hito" })
+        : json(404, { type: "about:blank", title: "Not Found", status: 404 }),
+    );
+    const source = createContentSource(
+      createApiClient({ baseUrl: BASE, fetch: fetchMock }),
+      BASE,
+    );
+    await expect(source.findArticle("hito")).resolves.toMatchObject({
+      title: "Hito",
+    });
+    await expect(source.findArticle("otro")).resolves.toBeNull();
+  });
+
   it("stops at an inconsistent API instead of looping forever", async () => {
     const fetchMock = vi.fn<typeof fetch>(async () =>
       json(200, { items: [], page: 1, pageSize: PAGE_SIZE, total: 999 }),
@@ -184,6 +208,20 @@ describe("createContentSource failures fail the build", () => {
     const { source } = fakeApi(1);
     await expect(source.getProject("missing")).rejects.toThrow(
       /project "missing".*HTTP 404/s,
+    );
+  });
+
+  it("still throws on API errors other than 404 when finding by slug", async () => {
+    const source = createContentSource(
+      createApiClient({
+        baseUrl: BASE,
+        fetch: async () =>
+          json(503, { type: "about:blank", title: "Unavailable", status: 503 }),
+      }),
+      BASE,
+    );
+    await expect(source.findProject("x")).rejects.toBeInstanceOf(
+      ContentFetchError,
     );
   });
 

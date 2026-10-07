@@ -90,11 +90,9 @@ const ADAPTER: EditorAdapter<AdminProject, ProjectFormValues, ProjectInput> = {
   listPath: LIST_PATH,
   editPath: "/admin/proyectos/editar",
   editHref: editProjectHref,
-  messages: {
-    published: "Proyecto publicado. Aparecerá en el sitio en unos 2 minutos.",
-    unpublished:
-      "Proyecto despublicado. Dejará de verse en el sitio en unos 2 minutos.",
-  },
+  kind: "project",
+  noun: { singular: "proyecto", feminine: false },
+  sitePath: (slug) => `/proyectos/${slug}`,
   toForm: projectToForm,
   toInput: formToProjectInput,
   create: (input) => adminApi.createProject(input),
@@ -178,7 +176,7 @@ function EditorForm({
     <form
       noValidate
       onSubmit={editor.onSave}
-      className="mx-auto flex max-w-6xl flex-col gap-6"
+      className="mx-auto flex max-w-6xl flex-col gap-6 pb-24 lg:pb-0"
       aria-labelledby="editor-title"
     >
       <EditorHeader

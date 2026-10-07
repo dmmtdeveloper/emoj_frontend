@@ -13,6 +13,7 @@ import { MapPin } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 import ArrowLink from "../ui/ArrowLink.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
@@ -81,7 +82,7 @@ const chip =
             >
               {lead.cover && (
                 <Image
-                  src={lead.cover.url}
+                  src={mediaPath("proyectos", lead.slug, lead.cover)}
                   alt={lead.cover.alt}
                   {...fitWidth(lead.cover, 1200)}
                   widths={[480, 800, 1200]}
@@ -139,7 +140,7 @@ const chip =
             >
               {project.cover && (
                 <Image
-                  src={project.cover.url}
+                  src={mediaPath("proyectos", project.slug, project.cover)}
                   alt={project.cover.alt}
                   {...fitWidth(project.cover, 640)}
                   widths={[224, 400, 640]}

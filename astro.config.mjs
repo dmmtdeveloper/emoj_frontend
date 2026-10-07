@@ -1,5 +1,7 @@
 // @ts-check
+import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
+import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { PRIVACY, privacyGaps } from "./src/lib/privacy.ts";
@@ -14,14 +16,55 @@ const devApiTarget = process.env["PUBLIC_API_URL"] || "http://localhost:8080";
 // https://docs.astro.build/en/reference/configuration-reference/
 const privacyReady = privacyGaps(PRIVACY).length === 0;
 
+/**
+ * Vercel sets VERCEL=1 in its builds. Anywhere else (Railway, a local
+ * `pnpm build`) the site runs as a Node server behind Caddy (Dockerfile,
+ * Caddyfile): pages with API content render on every request, so a change
+ * in the panel shows on the next visit, with no rebuild.
+ */
+const onVercel = process.env["VERCEL"] === "1";
+
+/** Public address (canonical URLs, sitemaps); www.emoj.cl once on Railway. */
+const site = process.env["PUBLIC_SITE_URL"] || "https://emoj.cl";
+
+const vercelAdapter = () =>
+  vercel({
+    isr: {
+      ...(process.env["REVALIDATE_TOKEN"]
+        ? { bypassToken: process.env["REVALIDATE_TOKEN"] }
+        : {}),
+      expiration: 60 * 60,
+      exclude: [/^\/admin\/revalidar$/],
+    },
+  });
+
 export default defineConfig({
-  site: "https://emoj.cl",
+  site,
+  // Pages are built ahead of time, except those that show API content (home,
+  // projects, news, their images and sitemap): `prerender = false`, rendered
+  // on demand. On Vercel they stay in its cache (ISR) and publishing in the
+  // panel refreshes them through /admin/revalidar, which sends
+  // REVALIDATE_TOKEN; `expiration` is a fallback if that ever fails. On the
+  // Node server they are rendered on every request.
   output: "static",
+  adapter: onVercel ? vercelAdapter() : node({ mode: "standalone" }),
+  security: {
+    // Behind Caddy and Railway's edge the request reaches Node over plain
+    // HTTP; trust X-Forwarded-Host/Proto for the site's own hosts so
+    // Astro.url (and the origin checks of POST routes) see https://.
+    allowedDomains: [
+      { protocol: "https", hostname: "emoj.cl" },
+      { protocol: "https", hostname: "www.emoj.cl" },
+      { protocol: "https", hostname: "**.up.railway.app" },
+    ],
+  },
   trailingSlash: "ignore",
   integrations: [
     // The admin panel (/admin) is React started by a plain module script
     // (src/admin/mount.tsx); no Astro islands, so no inline scripts.
     sitemap({
+      // Pages rendered on demand are listed by src/pages/sitemap-content.xml.ts.
+      customSitemaps: [new URL("/sitemap-content.xml", site).href],
       filter: (page) => {
         const path = new URL(page).pathname;
         if (path.startsWith("/admin")) return false;
@@ -32,15 +75,20 @@ export default defineConfig({
     }),
   ],
   image: {
-    // Project and news photos come from the API as presigned, expiring URLs.
-    // They are downloaded and optimized at build time (astro:assets) and
-    // served from this site, never hotlinked, so CSP img-src stays 'self'.
-    remotePatterns: [
-      // Railway buckets (virtual-hosted style: <bucket>.t3.storageapi.dev).
-      { protocol: "https", hostname: "**.t3.storageapi.dev" },
-      // Local SeaweedFS from the backend's docker compose (path style).
-      { protocol: "http", hostname: "localhost", port: "9000" },
-    ],
+    // Content photos are served from this site at stable addresses and
+    // resized on demand (src/lib/image-service.ts, src/lib/content/media.ts),
+    // never hotlinked from the bucket, so CSP img-src stays 'self'.
+    // No remote patterns: /_image only resizes this site's own files.
+    service: { entrypoint: "./src/lib/image-service.ts" },
+    // Node only: content photos are loaded in-process (src/lib/image-endpoint.ts).
+    ...(onVercel
+      ? {}
+      : {
+          endpoint: {
+            route: "/_image",
+            entrypoint: "./src/lib/image-endpoint.ts",
+          },
+        }),
   },
   build: {
     // Always emit CSS as files so the CSP needs no 'unsafe-inline' for styles.

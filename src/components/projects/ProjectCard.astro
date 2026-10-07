@@ -2,12 +2,13 @@
 /**
  * Project card: photo, title (the card's single link), location and service
  * labels. Compact row on phones, stacked card from `sm` up.
- * The photo is a presigned API URL downloaded and optimized at build time.
+ * The photo comes from its stable address and is resized on demand.
  */
 import { MapPin } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 
 interface Props {
@@ -31,7 +32,7 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
 <article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
   {project.cover ? (
     <Image
-      src={project.cover.url}
+      src={mediaPath("proyectos", project.slug, project.cover)}
       alt={project.cover.alt}
       {...fitWidth(project.cover, 800)}
       widths={[208, 400, 640, 800]}

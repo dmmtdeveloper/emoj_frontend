@@ -3,9 +3,11 @@
  *
  * - `useContentEditor`: save (create or update), publish, unpublish and
  *   delete, with the API's field errors put on the form, the leave guard for
- *   unsaved changes, the message banner and the site-rebuild indicator.
+ *   unsaved changes, the error banner and the success dialog. Public changes
+ *   refresh the site's pages right away (src/lib/admin/site-refresh.ts).
  *   Each editor passes an adapter with its API calls, mapping and wording.
- * - Pieces of the page: header with the actions, publishing checklist,
+ * - Pieces of the page: header with the actions (a bar that stays in view:
+ *   under the navbar on desktop, at the bottom on phones), publishing checklist,
  *   "Google y redes sociales" card, single image chooser, delete card and
  *   the confirmation dialogs.
  */
@@ -51,6 +53,12 @@ import {
   type SearchPreviewInput,
   type SeoLength,
 } from "../lib/admin/seo";
+import {
+  refreshSite,
+  successNotice,
+  type ContentNoun,
+  type EditorAction,
+} from "../lib/admin/site-refresh";
 import type { ApiResult, FieldError } from "../lib/api/client";
 import { useApp } from "./app-context";
 import { formatDateTime, replaceParam } from "./common";
@@ -91,7 +99,12 @@ export interface EditorAdapter<
   listPath: string;
   editPath: string;
   editHref: (id: string) => string;
-  messages: { published: string; unpublished: string };
+  /** What the site refresh is told changed (src/lib/admin/site-refresh.ts). */
+  kind: "news" | "project";
+  /** For the success dialog: "noticia" (feminine) / "proyecto". */
+  noun: ContentNoun;
+  /** Public page of an item, e.g. "/noticias/{slug}". */
+  sitePath: (slug: string) => string;
   toForm: (item: T) => V;
   toInput: (values: V, options: { isNew: boolean }) => I;
   create: (input: I) => Promise<ApiResult<T>>;
@@ -107,7 +120,7 @@ export interface EditorAdapter<
 }
 
 export type Banner = {
-  tone: "success" | "error" | "info";
+  tone: "error" | "info";
   text: string;
 } | null;
 export type Busy = null | "save" | "publish" | "unpublish" | "delete";
@@ -240,11 +253,43 @@ export function useContentEditor<
     return result.data;
   }
 
-  function goToEditor(saved: T, message: string) {
+  function goToEditor(saved: T, flash?: string) {
     // The new item now has an address: continue on its edit page.
     app.setLeaveGuard(null);
-    app.setFlash(message, adapter.editPath);
+    if (flash) app.setFlash(flash, adapter.editPath);
     app.navigate(adapter.editHref(saved.id), { replace: true });
+  }
+
+  /**
+   * Opens the success dialog. A public change first refreshes the site's
+   * pages for this item (and its old address when the slug changed).
+   */
+  function announce(
+    action: EditorAction,
+    saved: { slug: string; title: string },
+    options: { isPublic: boolean; previousSlug?: string | null },
+  ) {
+    const refresh = options.isPublic
+      ? refreshSite({
+          kind: adapter.kind,
+          slug: saved.slug,
+          previousSlug:
+            options.previousSlug && options.previousSlug !== saved.slug
+              ? options.previousSlug
+              : null,
+        })
+      : undefined;
+    app.showSuccess(
+      {
+        build: (state) =>
+          successNotice(action, adapter.noun, saved.title, state),
+        siteHref:
+          action === "deleted" || action === "unpublished"
+            ? null
+            : adapter.sitePath(saved.slug),
+      },
+      refresh,
+    );
   }
 
   function invalid(errors: Record<string, unknown>) {
@@ -254,23 +299,21 @@ export function useContentEditor<
   }
 
   async function saveValid(values: V) {
+    const previousSlug = item?.slug ?? null;
     setBusy("save");
     const saved = await save(values);
     setBusy(null);
     if (!saved) return;
+    setBanner(null);
     if (isNew) {
-      goToEditor(saved, "Borrador guardado.");
+      goToEditor(saved);
+      announce("created", saved, { isPublic: false });
       return;
     }
-    if (saved.status === "published") {
-      app.markRebuild();
-      show({
-        tone: "success",
-        text: "Cambios guardados. El sitio se actualiza en unos 2 minutos.",
-      });
-    } else {
-      show({ tone: "success", text: "Borrador guardado." });
-    }
+    announce("saved", saved, {
+      isPublic: saved.status === "published",
+      previousSlug,
+    });
   }
 
   async function publishValid(values: V) {
@@ -293,6 +336,7 @@ export function useContentEditor<
       return;
     }
     setBusy("publish");
+    const previousSlug = item?.slug ?? null;
     let current = item;
     if (!current || isDirty) {
       current = await save(values);
@@ -311,9 +355,9 @@ export function useContentEditor<
       return;
     }
     stored(result.data);
-    app.markRebuild();
-    if (isNew) goToEditor(result.data, adapter.messages.published);
-    else show({ tone: "success", text: adapter.messages.published });
+    setBanner(null);
+    if (isNew) goToEditor(result.data);
+    announce("published", result.data, { isPublic: true, previousSlug });
   }
 
   async function unpublish() {
@@ -331,8 +375,8 @@ export function useContentEditor<
     const dirty = isDirty;
     stored(result.data);
     if (dirty) reset(edits, { keepDefaultValues: true });
-    app.markRebuild();
-    show({ tone: "success", text: adapter.messages.unpublished });
+    setBanner(null);
+    announce("unpublished", result.data, { isPublic: true });
   }
 
   async function remove() {
@@ -345,13 +389,12 @@ export function useContentEditor<
       show({ tone: "error", text: problemMessage(result) });
       return;
     }
-    if (item.status === "published") app.markRebuild();
     queryClient.removeQueries({ queryKey: [adapter.itemKey, item.id] });
     void queryClient.invalidateQueries({ queryKey: [adapter.listKey] });
     void queryClient.invalidateQueries({ queryKey: ["dashboard-counts"] });
     app.setLeaveGuard(null);
-    app.setFlash(`Se eliminó «${item.title}».`, adapter.listPath);
     app.navigate(adapter.listPath);
+    announce("deleted", item, { isPublic: item.status === "published" });
   }
 
   function leave(proceed: () => void) {
@@ -422,8 +465,59 @@ export function EditorHeader({
   onAskUnpublish: () => void;
 }) {
   const published = status === "published";
+  const actions = (
+    <>
+      {published && siteHref && (
+        <a
+          href={siteHref}
+          target="_blank"
+          rel="noopener"
+          className="hidden min-h-11 items-center gap-2 rounded-md px-3 text-base font-semibold text-ink no-underline hover:bg-surface-sunken hover:text-ink xl:inline-flex"
+        >
+          <ExternalLink size={18} strokeWidth={1.75} aria-hidden="true" />
+          Ver en el sitio
+          <span className="sr-only">(se abre en una pestaña nueva)</span>
+        </a>
+      )}
+      <Button
+        type="submit"
+        variant="secondary"
+        disabled={busy !== null}
+        className="flex-1 px-4 lg:flex-none lg:px-5"
+      >
+        {busy === "save" ? (
+          "Guardando…"
+        ) : (
+          <>
+            Guardar
+            <span className="sr-only sm:not-sr-only">
+              {published ? " cambios" : " borrador"}
+            </span>
+          </>
+        )}
+      </Button>
+      {published ? (
+        <Button
+          variant="secondary"
+          disabled={busy !== null}
+          onClick={onAskUnpublish}
+          className="flex-1 px-4 lg:flex-none lg:px-5"
+        >
+          {busy === "unpublish" ? "Despublicando…" : "Despublicar"}
+        </Button>
+      ) : (
+        <Button
+          disabled={busy !== null}
+          onClick={onPublish}
+          className="flex-1 px-4 lg:flex-none lg:px-5"
+        >
+          {busy === "publish" ? "Publicando…" : "Publicar"}
+        </Button>
+      )}
+    </>
+  );
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <>
       <div className="flex min-w-0 flex-col gap-2">
         <a
           href={listPath}
@@ -440,9 +534,6 @@ export function EditorHeader({
             {title}
           </h2>
           <StatusBadge status={status} />
-          {isDirty && (
-            <span className="text-sm text-ink-muted">Cambios sin guardar</span>
-          )}
         </div>
         {item && (
           <p className="text-sm text-ink-muted">
@@ -452,41 +543,28 @@ export function EditorHeader({
           </p>
         )}
       </div>
-      <div className="flex flex-wrap gap-2 lg:shrink-0 lg:flex-nowrap">
-        {published && siteHref && (
-          <a
-            href={siteHref}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-base font-semibold text-ink no-underline hover:bg-surface-sunken hover:text-ink"
+      {/* The actions stay in view: a bar under the navbar on desktop and
+          fixed at the bottom of the screen on phones (the form leaves room
+          for it), so saving or publishing never needs scrolling back up. */}
+      <div
+        role="group"
+        aria-label="Acciones"
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-border bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:sticky lg:top-16 lg:bottom-auto lg:z-10 lg:-mx-8 lg:-mt-2 lg:border-t-0 lg:border-b lg:px-8 lg:py-3"
+      >
+        <p className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
+          <span className="truncate font-semibold text-ink">{title}</span>
+          <span
+            className={cx(
+              "shrink-0 text-sm",
+              isDirty ? "font-medium text-ink" : "text-ink-muted",
+            )}
           >
-            <ExternalLink size={18} strokeWidth={1.75} aria-hidden="true" />
-            Ver en el sitio
-            <span className="sr-only">(se abre en una pestaña nueva)</span>
-          </a>
-        )}
-        <Button type="submit" variant="secondary" disabled={busy !== null}>
-          {busy === "save"
-            ? "Guardando…"
-            : published
-              ? "Guardar cambios"
-              : "Guardar borrador"}
-        </Button>
-        {published ? (
-          <Button
-            variant="secondary"
-            disabled={busy !== null}
-            onClick={onAskUnpublish}
-          >
-            {busy === "unpublish" ? "Despublicando…" : "Despublicar"}
-          </Button>
-        ) : (
-          <Button disabled={busy !== null} onClick={onPublish}>
-            {busy === "publish" ? "Publicando…" : "Publicar"}
-          </Button>
-        )}
+            {isDirty ? "Cambios sin guardar" : item ? "Todo guardado" : ""}
+          </span>
+        </p>
+        {actions}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -568,7 +646,7 @@ export function ChecklistCard({
         <p className="text-sm text-ink-muted">
           {n === 0
             ? published
-              ? "Publicado. Al guardar cambios, el sitio se actualiza en unos 2 minutos."
+              ? "Publicado. Los cambios que guardes se ven en el sitio al momento."
               : "Listo para publicar."
             : `Falta${n === 1 ? "" : "n"} ${n} dato${n === 1 ? "" : "s"} obligatorio${n === 1 ? "" : "s"} para publicar.`}
         </p>
@@ -1095,7 +1173,7 @@ export function EditorDialogs({
     return (
       <Dialog
         title={`¿Despublicar ${noun}?`}
-        description="Dejará de verse en el sitio en unos 2 minutos. Queda guardado como borrador y puedes volver a publicarlo cuando quieras."
+        description="Dejará de verse en el sitio. Queda guardado como borrador y puedes volver a publicarlo cuando quieras."
         onClose={onCancel}
         footer={
           <>

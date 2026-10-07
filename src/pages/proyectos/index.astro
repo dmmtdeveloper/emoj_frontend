@@ -8,11 +8,13 @@ import CtaBlock from "../../components/ui/CtaBlock.astro";
 import EmptyState from "../../components/ui/EmptyState.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { content } from "../../lib/content";
+import { contentSource } from "../../lib/content";
 import { projectFacets } from "../../lib/content/format";
 import { getServiceTitles } from "../../lib/get-services";
 
-const projects = await content.getProjects();
+export const prerender = false;
+
+const projects = await contentSource().getProjects();
 const serviceTitles = await getServiceTitles();
 const facets = projectFacets(projects);
 ---

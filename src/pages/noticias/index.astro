@@ -1,9 +1,11 @@
 ---
 import NewsListing from "../../components/news/NewsListing.astro";
-import { content } from "../../lib/content";
+import { contentSource } from "../../lib/content";
 import { NEWS_PER_PAGE, paginate } from "../../lib/content/format";
 
-const pages = paginate(await content.getNews(), NEWS_PER_PAGE);
+export const prerender = false;
+
+const pages = paginate(await contentSource().getNews(), NEWS_PER_PAGE);
 ---
 
 <NewsListing articles={pages[0] ?? []} page={1} pages={pages.length} />

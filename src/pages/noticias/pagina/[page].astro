@@ -1,26 +1,19 @@
 ---
-import type { GetStaticPaths } from "astro";
 import NewsListing from "../../../components/news/NewsListing.astro";
-import type { NewsSummary } from "../../../lib/api/client";
-import { content } from "../../../lib/content";
+import { contentSource } from "../../../lib/content";
 import { NEWS_PER_PAGE, paginate } from "../../../lib/content/format";
 
-/** Pages 2..n; page 1 is /noticias. */
-export const getStaticPaths = (async () => {
-  const pages = paginate(await content.getNews(), NEWS_PER_PAGE);
-  return pages.slice(1).map((articles, i) => ({
-    params: { page: String(i + 2) },
-    props: { articles, page: i + 2, pages: pages.length },
-  }));
-}) satisfies GetStaticPaths;
+/** Pages 2..n, rendered on demand; page 1 is /noticias. */
+export const prerender = false;
 
-interface Props {
-  articles: NewsSummary[];
-  page: number;
-  pages: number;
-}
-
-const { articles, page, pages } = Astro.props;
+const page = /^[2-9]$|^[1-9][0-9]+$/.test(Astro.params.page ?? "")
+  ? Number(Astro.params.page)
+  : NaN;
+const pages = Number.isNaN(page)
+  ? []
+  : paginate(await contentSource().getNews(), NEWS_PER_PAGE);
+const articles = pages[page - 1];
+if (!articles) return Astro.rewrite("/no-encontrada");
 ---
 
-<NewsListing articles={articles} page={page} pages={pages} />
+<NewsListing articles={articles} page={page} pages={pages.length} />

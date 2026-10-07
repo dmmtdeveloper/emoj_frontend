@@ -1,33 +1,22 @@
 ---
 import { ArrowLeft, Link as LinkIcon } from "@lucide/astro";
-import type { GetStaticPaths } from "astro";
 import { getImage, Image } from "astro:assets";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import SocialIcon from "../../components/ui/SocialIcon.astro";
 import WhatsAppIcon from "../../components/ui/WhatsAppIcon.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import type { NewsDetail } from "../../lib/api/client";
-import { content } from "../../lib/content";
+import { contentSource } from "../../lib/content";
 import { fitWidth, formatDate, shareLinks } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
 import { renderTipTap } from "../../lib/content/tiptap";
 import { articleJsonLd } from "../../lib/structured-data";
 
-export const getStaticPaths = (async () => {
-  const news = await content.getNews();
-  return Promise.all(
-    news.map(async (summary) => ({
-      params: { slug: summary.slug },
-      props: { article: await content.getArticle(summary.slug) },
-    })),
-  );
-}) satisfies GetStaticPaths;
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
+export const prerender = false;
 
-interface Props {
-  article: NewsDetail;
-}
-
-const { article } = Astro.props;
+const article = await contentSource().findArticle(Astro.params.slug ?? "");
+if (!article) return Astro.rewrite("/no-encontrada");
 const site = Astro.site ?? new URL("https://emoj.cl");
 const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
 const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
@@ -36,7 +25,7 @@ const share = shareLinks(pageUrl, article.title);
 const ogSource = article.seo.ogImage ?? article.cover;
 const ogImage = ogSource
   ? await getImage({
-      src: ogSource.url,
+      src: mediaPath("noticias", article.slug, ogSource),
       width: 1200,
       height: 630,
       fit: "cover",
@@ -99,7 +88,7 @@ const shareLink =
       <div class="container-site flex flex-col gap-10 py-10 md:py-16">
         {article.cover && (
           <Image
-            src={article.cover.url}
+            src={mediaPath("noticias", article.slug, article.cover)}
             alt={article.cover.alt}
             {...fitWidth(article.cover, 1600)}
             widths={[480, 800, 1200, 1600]}

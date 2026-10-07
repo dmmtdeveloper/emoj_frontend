@@ -46,16 +46,20 @@ export function ButtonLink({
   href,
   variant = "primary",
   className,
+  newTab = false,
   children,
 }: {
   href: string;
   variant?: keyof typeof buttonVariants;
   className?: string;
+  /** Opens in a new tab (and says so to screen readers). */
+  newTab?: boolean;
   children: ReactNode;
 }) {
   return (
     <a
       href={href}
+      {...(newTab ? { target: "_blank", rel: "noopener" } : {})}
       className={cx(
         buttonBase,
         buttonVariants[variant],
@@ -66,6 +70,9 @@ export function ButtonLink({
       )}
     >
       {children}
+      {newTab && (
+        <span className="sr-only">(se abre en una pestaña nueva)</span>
+      )}
     </a>
   );
 }

@@ -10,10 +10,13 @@ import CtaBlock from "../components/ui/CtaBlock.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
-import { content } from "../lib/content";
+import { contentSource } from "../lib/content";
 import { getServiceTitles } from "../lib/get-services";
 
-const featured = await content.getFeaturedProjects(3);
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
+export const prerender = false;
+
+const featured = await contentSource().getFeaturedProjects(3);
 const serviceTitles = await getServiceTitles();
 const hasFeatured = featured.length > 0;
 ---

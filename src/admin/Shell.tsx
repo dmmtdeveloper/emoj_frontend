@@ -33,7 +33,7 @@ import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
 import { useApp } from "./app-context";
 import { useUser } from "./session";
-import { cx, Isotype, Notice } from "./ui";
+import { Button, ButtonLink, cx, Dialog, Isotype, Notice } from "./ui";
 
 const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -136,41 +136,55 @@ function Brand({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/** "Actualizando el sitio…" while a rebuild is running (about 2 minutes). */
-function RebuildStatus() {
-  const { rebuild, hadRebuild } = useApp();
-  if (!rebuild.building && !hadRebuild) return null;
-  const minutes = rebuild.building
-    ? Math.max(1, Math.ceil(rebuild.remainingMs / 60_000))
-    : 0;
+/**
+ * Confirms a save, publication, unpublication or deletion (opened by the
+ * editors through `showSuccess`). While the site refreshes it says so; then
+ * it says whether the change is already public. The text is a live region,
+ * so screen readers hear the update.
+ */
+function SuccessNoticeDialog() {
+  const { success, closeSuccess } = useApp();
+  if (!success) return null;
+  const notice = success.build(success.state);
+  const pending = success.state === "pending";
   return (
-    <p
-      role="status"
-      title={
-        rebuild.building
-          ? "Los cambios publicados tardan unos 2 minutos en verse en el sitio."
-          : undefined
+    <Dialog
+      title={notice.title}
+      description={
+        <p className="flex items-start gap-2 pt-1">
+          {pending ? (
+            <LoaderCircle
+              size={20}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-ink motion-safe:animate-spin"
+            />
+          ) : (
+            <CircleCheck
+              size={20}
+              strokeWidth={2}
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-ink"
+            />
+          )}
+          <span role="status" className="text-ink">
+            {notice.text}
+          </span>
+        </p>
       }
-      className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-full bg-surface-sunken px-3 text-sm font-semibold whitespace-nowrap text-ink"
-    >
-      {rebuild.building ? (
+      onClose={closeSuccess}
+      footer={
         <>
-          <LoaderCircle
-            size={16}
-            strokeWidth={2}
-            aria-hidden="true"
-            className="motion-safe:animate-spin"
-          />
-          <span className="sr-only sm:not-sr-only">Actualizando el sitio</span>
-          <span className="font-medium text-ink-muted">~{minutes} min</span>
+          {notice.showLink && success.siteHref && (
+            <ButtonLink href={success.siteHref} variant="secondary" newTab>
+              <ExternalLink size={18} strokeWidth={1.75} aria-hidden="true" />
+              Ver en el sitio
+            </ButtonLink>
+          )}
+          <Button onClick={closeSuccess}>Listo</Button>
         </>
-      ) : (
-        <>
-          <CircleCheck size={16} strokeWidth={2} aria-hidden="true" />
-          <span className="sr-only sm:not-sr-only">Sitio actualizado</span>
-        </>
-      )}
-    </p>
+      }
+    />
   );
 }
 
@@ -374,7 +388,6 @@ export function Shell({
               </p>
             )}
           </div>
-          <RebuildStatus />
           <a
             href="/"
             target="_blank"
@@ -395,6 +408,7 @@ export function Shell({
           <FlashNotice />
           {children}
         </main>
+        <SuccessNoticeDialog />
       </div>
     </div>
   );

@@ -1,0 +1,36 @@
+---
+/**
+ * "Page not found", shared by the static 404 page and by pages rendered on
+ * demand whose item does not exist (they rewrite to /no-encontrada).
+ */
+import { ArrowLeft } from "@lucide/astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Página no encontrada"
+  description="La página que buscas no existe o cambió de dirección."
+  noindex
+>
+  <section class="container-site flex flex-col gap-6 py-16 md:py-24">
+    <p class="text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase">
+      Error 404
+    </p>
+    <h1 class="text-[32px] leading-[38px] font-semibold tracking-[-0.015em] md:text-[44px] md:leading-[50px]">
+      No encontramos esta página
+    </h1>
+    <p class="max-w-[65ch] text-ink-muted">
+      Puede que la dirección esté mal escrita o que la página haya cambiado de
+      lugar.
+    </p>
+    <p>
+      <a
+        href="/"
+        class="inline-flex min-h-10 items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-[15px] leading-5 font-medium text-on-brand no-underline hover:bg-brand-hover hover:text-on-brand"
+      >
+        <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
+        Volver al inicio
+      </a>
+    </p>
+  </section>
+</BaseLayout>

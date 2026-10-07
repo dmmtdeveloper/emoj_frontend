@@ -1,0 +1,14 @@
+---
+/**
+ * Target of `Astro.rewrite("/no-encontrada")` from pages rendered on demand
+ * when the project or article does not exist: the visitor keeps the address
+ * and gets the 404 page with a 404 status. (A rewrite cannot target the
+ * static 404.astro, which is built ahead of time.)
+ */
+import NotFound from "../components/NotFound.astro";
+
+export const prerender = false;
+Astro.response.status = 404;
+---
+
+<NotFound />

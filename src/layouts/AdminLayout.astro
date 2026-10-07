@@ -103,8 +103,10 @@ const { title } = Astro.props;
       opacity: 1;
     }
 
+    /* "backwards", not "both": a fill that outlives the animation keeps a
+       `translate`, which would trap the editors' fixed action bar. */
     .admin-enter {
-      animation: admin-enter 280ms var(--ease-out) both;
+      animation: admin-enter 280ms var(--ease-out) backwards;
     }
   }
 
