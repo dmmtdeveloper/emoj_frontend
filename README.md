@@ -8,17 +8,17 @@ The site is built with Astro and deployed on Vercel: most pages are static, and 
 
 ## Stack
 
-| Concern         | Choice                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Framework       | [Astro](https://astro.build) 7, `output: "static"` + `@astrojs/vercel` (ISR for content pages)                                             |
-| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties                                                             |
-| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                                                                              |
-| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)                                                                         |
-| Language        | TypeScript, `astro/tsconfigs/strictest`                                                                                                    |
-| Tests           | Vitest                                                                                                                                     |
-| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier                                                                 |
-| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`); Railway-ready, see [docs/deploy-railway.md](./docs/deploy-railway.md) |
-| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)                                                                          |
+| Concern         | Choice                                                                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | [Astro](https://astro.build) 7, `output: "static"` + `@astrojs/vercel` (ISR for content pages)                                                                        |
+| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties                                                                                        |
+| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                                                                                                         |
+| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)                                                                                                    |
+| Language        | TypeScript, `astro/tsconfigs/strictest`                                                                                                                               |
+| Tests           | Vitest                                                                                                                                                                |
+| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier                                                                                            |
+| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`); or Railway as a Node server behind Caddy, see [docs/deploy-railway.md](./docs/deploy-railway.md) |
+| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)                                                                                                     |
 
 ## Getting started
 
@@ -75,18 +75,18 @@ Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the clie
 
 ## Content from the API (rendered on demand)
 
-Projects and news are not in this repo: the editor publishes them in the admin panel and the API serves them. The pages that show them (home, `/proyectos`, `/noticias` and their pages and details, and `/sitemap-content.xml`) have `prerender = false`: Vercel renders them on the first visit and keeps them cached (ISR). Everything else is built ahead of time.
+Projects and news are not in this repo: the editor publishes them in the admin panel and the API serves them. The pages that show them (home, `/proyectos`, `/noticias` and their pages and details, and `/sitemap-content.xml`) have `prerender = false`. On Vercel they are rendered on the first visit and kept cached (ISR); on Railway the Node server renders them on every request (no page cache, so nothing to refresh). Everything else is built ahead of time. `astro.config.mjs` picks the adapter: `@astrojs/vercel` when `VERCEL=1` (set by Vercel), `@astrojs/node` anywhere else.
 
 ```
 panel saves or publishes -> API -> panel POSTs /admin/revalidar -> those pages are rendered again and cached (seconds)
 ```
 
-- **Refresh:** `src/pages/admin/revalidar.ts` checks the editor's session against the API (`/v1/auth/me`) and asks again for every page that shows the item (`src/lib/content/revalidation.ts`) with the `x-prerender-revalidate` header and `REVALIDATE_TOKEN`; Vercel replaces the cached copy. The panel then shows a dialog saying the change is live (or, if the refresh failed, that it shows within the hour). Cached pages also expire after an hour as a fallback.
+- **Refresh (Vercel):** `src/pages/admin/revalidar.ts` checks the editor's session against the API (`/v1/auth/me`) and asks again for every page that shows the item (`src/lib/content/revalidation.ts`) with the `x-prerender-revalidate` header and `REVALIDATE_TOKEN`; Vercel replaces the cached copy. The panel then shows a dialog saying the change is live (or, if the refresh failed, that it shows within the hour). Cached pages also expire after an hour as a fallback. On the Node server it only checks the session and answers right away (`refreshPolicy`).
 - `src/lib/content/source.ts` reads the API with the typed client. Create a source per page render (`contentSource()`), never share one across requests: it memoizes.
 - **Failure policy:** if the API answers with an error or is unreachable, the page answers 503 with a short notice and `Cache-Control: no-store` (`src/middleware.ts`), so the cache keeps the last good version. A slug the API does not know rewrites to `/no-encontrada` (the 404 page, status 404).
 - **Empty states:** a valid empty list is not an error. `/proyectos` and `/noticias` show an empty state with links to services and contact, and the home hides "Proyectos destacados" until a project is featured.
-- **Rebuilds:** no longer needed for content. If the backend still has `VERCEL_DEPLOY_HOOK_URL`, each change also triggers a full deploy, which is harmless but empties the page cache; remove it once `REVALIDATE_TOKEN` works.
-- **Images:** the API returns presigned URLs that expire (6 h by default), so pages never point at them. They use `/media/{proyectos|noticias}/{slug}/{key}` (`src/lib/content/media.ts`): the key is a hash of the object's path, and the route streams that image of that published item from the bucket. `src/lib/image-service.ts` makes `<Image>` resize those addresses through `/_image` (WebP, with srcset; a 1200×630 JPEG for Open Graph), and `src/middleware.ts` lets Vercel's CDN keep every size for a year. No remote image patterns are allowed, so CSP `img-src 'self'` keeps working.
+- **Rebuilds:** no longer needed for content. If the backend still has `VERCEL_DEPLOY_HOOK_URL`, each change also triggers a full deploy, which is harmless but empties the page cache; remove it once `REVALIDATE_TOKEN` works. On Railway, remove `RAILWAY_FRONTEND_TOKEN` from the API for the same reason: a redeploy is not needed for content anymore.
+- **Images:** the API returns presigned URLs that expire (6 h by default), so pages never point at them. They use `/media/{proyectos|noticias}/{slug}/{key}` (`src/lib/content/media.ts`): the key is a hash of the object's path, and the route streams that image of that published item from the bucket. `src/lib/image-service.ts` makes `<Image>` resize those addresses through `/_image` (WebP, with srcset; a 1200×630 JPEG for Open Graph), and `src/middleware.ts` lets Vercel's CDN keep every size for a year. The Node server has no CDN, so the middleware keeps each size on disk instead (`src/lib/image-cache.ts`, `IMAGE_CACHE_MAX_MB`, 512 by default), and `src/lib/image-endpoint.ts` loads `/media/...` in-process because Astro's Node endpoint only reads files from disk. No remote image patterns are allowed, so CSP `img-src 'self'` keeps working.
 - **Rich text:** news bodies are TipTap JSON. `src/lib/content/tiptap.ts` renders the same allowlist as the API (paragraphs, headings 2-4, lists, blockquotes, breaks, rules; bold, italic, underline, strike and http/https/mailto links) with every text and attribute escaped and unknown nodes dropped. External links get `rel="noopener noreferrer"`. Body images only carry a media ID in the public API, so they are not rendered yet (backend follow-up: resolve them to URLs).
 - `/proyectos` renders every project; the service and region chips are a progressive enhancement (`src/scripts/project-filter.ts`, a same-origin module). They reserve their space from the first paint (no layout shift); without JavaScript `public/noscript.css` hides them and all projects stay visible. With it, the URL keeps `?servicio=&region=` so filtered views can be shared.
 - `/noticias` shows 12 articles per page (`/noticias/pagina/2`, ...).

@@ -88,3 +88,20 @@ export async function refreshPaths(
     failed: results.filter((r) => !r.ok).map((r) => r.path),
   };
 }
+
+/**
+ * What /admin/revalidar does after a change:
+ * - "fresh": no page cache to refresh, every request already renders the
+ *   current content (astro dev, and the Node server on Railway).
+ * - "refresh": ask Vercel to render the affected pages again (ISR).
+ * - "not-configured": on Vercel without REVALIDATE_TOKEN; the change shows
+ *   when the cached pages expire.
+ */
+export function refreshPolicy(env: {
+  dev: boolean;
+  onVercel: boolean;
+  token: string;
+}): "fresh" | "refresh" | "not-configured" {
+  if (env.dev || !env.onVercel) return "fresh";
+  return env.token ? "refresh" : "not-configured";
+}

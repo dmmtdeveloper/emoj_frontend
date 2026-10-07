@@ -5,8 +5,9 @@
  * Only a signed-in editor may ask: the session cookie is checked against the
  * API (/v1/auth/me), and the request must come from this site. Answers:
  * 200 {refreshed, failed}, 401, 403, 400, or 503 {reason: "not-configured"}
- * while REVALIDATE_TOKEN is missing (the panel then says the change shows in
- * a few minutes, when the rebuild started by the API finishes).
+ * on Vercel while REVALIDATE_TOKEN is missing (the panel then says the change
+ * shows in a few minutes). On the Node server (Railway) pages are rendered on
+ * every request, so there is nothing to refresh and it answers 200 at once.
  */
 import type { APIRoute } from "astro";
 import { contentSource } from "../../lib/content";
@@ -15,6 +16,7 @@ import {
   parseChange,
   pathsToRefresh,
   refreshPaths,
+  refreshPolicy,
 } from "../../lib/content/revalidation";
 import { API_URL } from "../../lib/env";
 
@@ -53,12 +55,15 @@ export const POST: APIRoute = async ({ request, url }) => {
     return json(401, { reason: "session" });
   }
 
-  const token = process.env["REVALIDATE_TOKEN"];
-  if (!token) {
-    // Without a cache (astro dev) every request is already fresh.
-    return import.meta.env.DEV
-      ? json(200, { refreshed: [], failed: [] })
-      : json(503, { reason: "not-configured" });
+  const token = process.env["REVALIDATE_TOKEN"] ?? "";
+  const policy = refreshPolicy({
+    dev: import.meta.env.DEV,
+    onVercel: process.env["VERCEL"] === "1",
+    token,
+  });
+  if (policy === "fresh") return json(200, { refreshed: [], failed: [] });
+  if (policy === "not-configured") {
+    return json(503, { reason: "not-configured" });
   }
 
   const newsPages =

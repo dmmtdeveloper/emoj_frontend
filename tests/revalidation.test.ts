@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   parseChange,
+  refreshPolicy,
   pathsToRefresh,
   refreshPaths,
 } from "../src/lib/content/revalidation";
@@ -82,5 +83,29 @@ describe("refreshPaths", () => {
       (async () => new Response(null, { status: 404 })) as typeof fetch,
     );
     expect(result.failed).toEqual([]);
+  });
+});
+
+describe("refreshPolicy", () => {
+  it("has nothing to refresh where pages are rendered on every request", () => {
+    // astro dev, and the Node server on Railway: no page cache.
+    expect(refreshPolicy({ dev: true, onVercel: false, token: "" })).toBe(
+      "fresh",
+    );
+    expect(refreshPolicy({ dev: false, onVercel: false, token: "" })).toBe(
+      "fresh",
+    );
+    expect(refreshPolicy({ dev: false, onVercel: false, token: "t" })).toBe(
+      "fresh",
+    );
+  });
+
+  it("refreshes Vercel's cache with the token, and says so when it is missing", () => {
+    expect(refreshPolicy({ dev: false, onVercel: true, token: "t" })).toBe(
+      "refresh",
+    );
+    expect(refreshPolicy({ dev: false, onVercel: true, token: "" })).toBe(
+      "not-configured",
+    );
   });
 });
