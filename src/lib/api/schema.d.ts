@@ -518,8 +518,8 @@ export interface paths {
         /**
          * List contact form messages
          * @description Read-only inbox, newest first. Each message carries `deleteAfter`, the
-         *     date it is erased automatically under the retention period
-         *     (`CONTACT_RETENTION_MONTHS`, 24 by default).
+         *     date it is erased automatically: 24 months after it was received
+         *     (the retention period stated in the site's privacy policy).
          */
         get: operations["adminListContactMessages"];
         put?: never;
