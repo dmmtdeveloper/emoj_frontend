@@ -39,8 +39,8 @@ describe("PRIVACY", () => {
   it("names EMOJ by its RUT and lists what EMOJ still has to provide", () => {
     expect(PRIVACY.controller.rut).toBe("76.956.190-0");
     expect(PRIVACY.requestsEmail).toBe("coordinacion@emoj.cl");
+    expect(PRIVACY.controller.representative).toBe("Eduardo Moisés Olguín Jil");
     expect(privacyGaps(PRIVACY)).toEqual([
-      "Nombre del representante legal",
       "Acuerdo de tratamiento de datos firmado con Railway",
       "Acuerdo de tratamiento de datos firmado con Chilecom Datacenter",
     ]);
