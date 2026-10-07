@@ -1,111 +1,123 @@
 # Deploying on Railway
 
-The site is deployed on Vercel today. This repository is also ready to run
-on Railway, next to the API, without changing anything on Vercel: the
-Railway files are ignored there. This guide covers a test deployment, the
-content rebuilds and the eventual switch of `emoj.cl`.
+The site runs on Vercel or on Railway from the same code. `astro.config.mjs`
+picks the adapter: `@astrojs/vercel` when `VERCEL=1` (Vercel sets it in its
+builds), `@astrojs/node` anywhere else. This guide covers Railway: the
+container, its settings, a test deployment and the switch of the public
+address.
 
-## What is in the repository
+## How it runs
 
-| File                      | Role                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `Dockerfile`              | Builds the site with pnpm (Node 22) and serves `dist/` with Caddy.                                        |
-| `Caddyfile`               | Same security headers, `/api` rewrite and cache rules as `vercel.ts`; 404 page; gzip/zstd.                |
-| `tests/caddyfile.test.ts` | Fails when the Caddyfile and `vercel.ts` disagree on headers or the `/api` rewrite. Change both together. |
+One container, two processes (`scripts/start.sh`):
 
-Static output, so nothing runs on the server but Caddy. The backend has a
-matching `railway` site rebuilder (see "Content rebuilds").
+```
+visitor -> Railway edge (TLS) -> Caddy :$PORT -+-> built pages and assets, from disk
+                                               +-> /api/* -> the API (prefix stripped)
+                                               +-> everything else -> Astro Node server 127.0.0.1:$NODE_PORT
+```
+
+- **Caddy** (`Caddyfile`) sends the same security headers, redirects, `/api`
+  rewrite and cache rules as `vercel.ts`, and serves the pages built ahead
+  of time. `tests/caddyfile.test.ts` fails when the two disagree: change both
+  together.
+- **The Astro server** renders the pages with API content (home, projects,
+  news, the content sitemap) on every request, so a change in the panel shows
+  on the next visit. There is no page cache and no rebuild.
+- **Images** are resized on demand through `/_image` and kept on disk
+  (`src/lib/image-cache.ts`): each size is processed once per deploy, then
+  served from the cache. The cache starts empty after each deploy.
+- If either process exits, the container exits and Railway restarts it.
+
+| File                      | Role                                                                    |
+| ------------------------- | ----------------------------------------------------------------------- |
+| `Dockerfile`              | Builds with pnpm (Node 22); runtime is Node plus the Caddy binary.      |
+| `Caddyfile`               | Headers, redirects, `/api`, static files; the rest to the Astro server. |
+| `scripts/start.sh`        | Starts both processes and stops the container if one exits.             |
+| `tests/caddyfile.test.ts` | Keeps the Caddyfile in sync with `vercel.ts`.                           |
 
 ## Service variables
 
 | Variable                    | When    | Value                                                                                                                                                  |
 | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PUBLIC_API_URL`            | build   | Public API URL. Must answer during the build (projects and news are fetched).                                                                          |
-| `PUBLIC_SITE_URL`           | build   | `https://emoj.cl`. Keep it on test deployments too, so canonical URLs never point at the test domain.                                                  |
+| `PUBLIC_API_URL`            | build   | Public API URL. Compiled into the server; the pages call it on every request.                                                                          |
+| `PUBLIC_SITE_URL`           | build   | The public address, e.g. `https://www.emoj.cl`. Keep it on test deployments too, so canonical URLs never point at the test domain.                     |
 | `PUBLIC_TURNSTILE_SITE_KEY` | build   | Turnstile site key (the test key is used when unset).                                                                                                  |
 | `API_ORIGIN`                | runtime | Origin of the API for the CSP `connect-src` (the contact form calls it directly), e.g. `https://api.emoj.cl`.                                          |
 | `API_UPSTREAM`              | runtime | Where `/api/*` is proxied. The public origin works; the private network is better: `http://${{<backend>.RAILWAY_PRIVATE_DOMAIN}}:${{<backend>.PORT}}`. |
 | `PORT`                      | runtime | Caddy listens on it; 8080 when unset. The domain's target port must match.                                                                             |
+| `IMAGE_CACHE_MAX_MB`        | runtime | Optional. Disk for resized images, 512 by default.                                                                                                     |
 
 Railway passes service variables to the Dockerfile as build arguments, so the
 `PUBLIC_*` values only need to be defined once on the service.
 
+`NO_CACHE` is no longer needed: content is not baked into the build anymore,
+so Railway's build cache is safe and code deploys are faster with it. Remove
+the variable from the service.
+
 ## Service settings
 
-Set these in the service's Settings on Railway. There is no `railway.json`:
-Railway deprecated config-as-code, and services created after 2026-08-28
-cannot opt in.
+Set these in the service's Settings on Railway (Railway deprecated
+`railway.json`; services created after 2026-08-28 cannot use it).
 
 - **Source:** this repository and the branch to deploy.
 - **Build → Builder:** Dockerfile (`/Dockerfile`).
-- **Deploy → Healthcheck Path:** `/`.
+- **Deploy → Healthcheck Path:** `/healthz`. It answers from the Astro server
+  without calling the API, so a site deploy does not fail while the API
+  restarts.
 - **Networking → Generate Domain:** target port `8080`.
+
+## The API side
+
+Content changes need no redeploy of the site anymore:
+
+- On the API service, remove `RAILWAY_FRONTEND_TOKEN` (and
+  `RAILWAY_FRONTEND_SERVICE_ID`). Otherwise every publish still redeploys the
+  site: harmless, but it empties the image cache for nothing.
+- Keep the site's domain in the API's `ALLOWED_ORIGINS`.
+
+The panel still calls `/admin/revalidar` after each change. On the Node
+server it checks the session and answers at once (there is no page cache to
+refresh), so the editor sees "Ya está en el sitio" right away.
 
 ## Test deployment (no DNS changes)
 
 1. In the Railway project that holds the API, add an empty service, connect
    this repository and apply the settings above before the first deploy.
 2. Set the variables above, pointing at the staging API.
-3. Generate a Railway domain (`*.up.railway.app`) for the service.
-4. On the API service, add that domain to `ALLOWED_ORIGINS`. The contact form
-   calls the API cross-origin, and the admin's Origin check accepts the
-   allowed origins (or, through the private network, the forwarded host).
-5. Check, on the Railway domain:
+3. Generate a Railway domain (`*.up.railway.app`) for the service and add it
+   to the API's `ALLOWED_ORIGINS`.
+4. Check, on the Railway domain:
    - `curl -sI https://<domain>/` shows the CSP, HSTS and the other headers;
      `/_astro/*` files are `immutable`; `/admin` is `no-store` and `noindex`.
-   - The home page shows the client logos and the header wordmark animation,
-     with no CSP errors in the browser console.
+   - Publish a news item in the panel: it shows in `/noticias` on the next
+     reload, with no new deployment on Railway.
+   - Open a project twice: the second time its photos load from the cache
+     (`/_image` answers in milliseconds).
    - `/nosotros` and `/nosotros/` both load; an unknown path returns the 404
-     page with status 404.
-   - The contact form submits (Turnstile loads).
-   - Admin sign-in works and the session survives a reload (the cookie is
-     first-party through `/api`).
-6. Remove the Railway domain (or the service) when done; the test site
-   should not stay public.
+     page with status 404; `/archivo/2939` redirects (301).
+   - The contact form submits (Turnstile loads) and admin sign-in survives a
+     reload (the cookie is first-party through `/api`).
 
-## Content rebuilds
+## Switching the public address (only once the migration is approved)
 
-Publishing in the admin rebuilds the static site. With Vercel the API calls a
-deploy hook (`VERCEL_DEPLOY_HOOK_URL`). With Railway it calls the public API's
-`environmentTriggersDeploy` mutation instead:
+Decided on 2026-10-06: the domain, its DNS and the `@emoj.cl` mail stay at
+Chilecom. The site's address becomes `www.emoj.cl`; `emoj.cl` keeps pointing
+at Chilecom, whose hosting redirects it to `www`. Mail is not touched.
 
-1. Create a project token (project settings → Tokens) for the environment.
-2. On the API service set `RAILWAY_FRONTEND_TOKEN` (the token) and
-   `RAILWAY_FRONTEND_SERVICE_ID` (the frontend service id). The project and
-   environment default to the ones Railway injects into the API service.
-3. Unset `VERCEL_DEPLOY_HOOK_URL`: the API refuses to start with both.
-4. Publish something and confirm a new frontend deployment starts. This first
-   run is the real check that the project token may trigger deploys.
-
-## Switching emoj.cl (only once the migration is approved)
-
-Email for `@emoj.cl` stays on Chilecom (the current hosting). Today the MX
-record points at `emoj.cl` itself and `mail.emoj.cl` is an alias of
-`emoj.cl`, so moving the apex record to Railway would also move mail. Do it in
-this order:
-
-1. **Detach mail from the apex record.**
-   - `mail.emoj.cl` → `A 200.63.96.7` (instead of the alias to `emoj.cl`).
-   - `MX emoj.cl` → `mail.emoj.cl` (priority 0 or 10).
-   - Keep `webmail.emoj.cl` and the SPF record as they are (SPF already lists
-     `200.63.96.7` explicitly).
-   - Check that mail clients use `mail.emoj.cl` as the IMAP/SMTP server.
-   - Wait for the old TTL (4 h) and send/receive a test message.
-2. **Pick how the apex reaches Railway.** Railway custom domains use a CNAME,
-   which the apex can only have with CNAME flattening/ALIAS:
-   - Move DNS to Cloudflare (free), copy every record (mail ones included),
-     then point `emoj.cl` and `www` at Railway; or
-   - keep DNS at Chilecom, serve the site on `www.emoj.cl` (CNAME) and
-     redirect the apex there from the old hosting.
-3. **Add the custom domains** on the Railway service and create the DNS
-   records it shows. Set `ALLOWED_ORIGINS` on the API to the final origin.
-4. **Content rebuilds:** switch the API from the Vercel hook to Railway (see
-   above).
-5. **Legacy URLs:** the old WordPress addresses already redirect (301) to
-   the new pages, on Vercel (`legacyRedirects` in `vercel.ts`) and on Railway
-   (`redir` lines in the Caddyfile). Check a few after the switch, e.g.
-   `curl -sI https://emoj.cl/archivo/2939`.
-6. Keep the Vercel project for a while. Rolling back is pointing DNS back.
+1. Lower the DNS TTL 48 h before and back up the WordPress site (files and
+   database, from the Chilecom panel).
+2. Add `www.emoj.cl` as a custom domain of this service on Railway and
+   create, in Chilecom's DNS, the `www` CNAME record Railway shows. Do not
+   change the `emoj.cl` record or the mail records.
+3. On Chilecom's hosting for `emoj.cl`, replace the WordPress site with a
+   301 redirect to `https://www.emoj.cl` that keeps the path (in cPanel, a
+   rewrite in `.htaccess`). Keep the WordPress files for 30 days.
+4. Set `PUBLIC_SITE_URL=https://www.emoj.cl` here and
+   `ADMIN_BASE_URL=https://www.emoj.cl` on the API.
+5. Check mail (send and receive), the form, the phone/WhatsApp/map links, a
+   few legacy URLs (`curl -sI https://emoj.cl/archivo/2939` ends on the new
+   article) and the panel; submit the sitemap to Search Console.
+6. Rolling back: point `www` back to its old record and remove the redirect.
 
 ## Running the image locally
 
@@ -116,3 +128,7 @@ docker run --rm -p 8080:8080 \
   -e API_UPSTREAM=https://api-staging-25e9.up.railway.app \
   emoj-frontend
 ```
+
+Without Docker: `pnpm build`, then `HOST=127.0.0.1 PORT=4321 node
+dist/server/entry.mjs` runs the Astro server alone (no headers, redirects or
+`/api`; those come from Caddy).

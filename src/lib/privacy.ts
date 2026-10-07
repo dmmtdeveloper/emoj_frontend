@@ -48,7 +48,7 @@ export interface PrivacyPolicy {
     /** Company tax ID; null until EMOJ confirms it. */
     rut: string | null;
     address: string;
-    /** Art. 14 ter b: legal representative; null until EMOJ confirms it. */
+    /** Art. 14 ter b: legal representative (EMOJ's general manager). */
     representative: string | null;
   };
   /** Mailbox for data requests; null until it exists. */
@@ -84,7 +84,7 @@ export const PRIVACY: PrivacyPolicy = {
     name: LEGAL_NAME,
     rut: RUT,
     address,
-    representative: null,
+    representative: "Eduardo Moisés Olguín Jil",
   },
   requestsEmail: CONTACT.email,
   audience: [
