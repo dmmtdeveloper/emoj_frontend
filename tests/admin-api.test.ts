@@ -320,4 +320,27 @@ describe("createAdminClient", () => {
         .every(([, i]) => new Headers(i.headers).get("X-CSRF-Token") === "tok"),
     ).toBe(true);
   });
+
+  it("handles data subject requests: export, erase and the audit list", async () => {
+    const fetch = vi.fn(async () => jsonResponse(200, {}));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+    await client.exportPersonData("Ana@Empresa.cl");
+    await client.erasePersonData("ana@empresa.cl");
+    await client.listDataRequests({ page: 2 });
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "POST /api/v1/admin/data-requests/export",
+      "POST /api/v1/admin/data-requests/erase",
+      "GET /api/v1/admin/data-requests?page=2",
+    ]);
+    expect(JSON.parse(String(calls[0]?.[1].body))).toEqual({
+      email: "Ana@Empresa.cl",
+    });
+    expect(
+      calls
+        .slice(0, 2)
+        .every(([, i]) => new Headers(i.headers).get("X-CSRF-Token") === "tok"),
+    ).toBe(true);
+  });
 });
