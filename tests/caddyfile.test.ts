@@ -156,11 +156,16 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     expect(lines[start + 1]).toMatch(/^reverse_proxy \{\$API_UPSTREAM\}/);
   });
 
-  it("serves the built pages and the 404 page", () => {
+  it("serves the built pages from disk and the rest from the Astro server", () => {
     const lines = stripComments(caddyfile);
-    expect(lines).toContain("root * /srv");
+    expect(lines).toContain("root * /app/dist/client");
     expect(lines).toContain("try_files {path} {path}/index.html");
-    expect(lines).toContain("rewrite * /404.html");
+    expect(lines).toContain("reverse_proxy 127.0.0.1:{$NODE_PORT:4321}");
+    // The built files win over the server; the server gets everything else.
+    expect(lines.indexOf("handle @built {")).toBeGreaterThan(-1);
+    expect(lines.indexOf("handle @built {")).toBeLessThan(
+      lines.indexOf("reverse_proxy 127.0.0.1:{$NODE_PORT:4321}"),
+    );
   });
 
   it("redirects the same legacy URLs to the same pages", () => {

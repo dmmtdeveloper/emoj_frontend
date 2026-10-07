@@ -1,11 +1,15 @@
-# Serves the static build (dist/, copied to /srv) on Railway.
+# Front door of the site on Railway: Caddy serves the pages built ahead of
+# time from disk and passes everything else to the Astro Node server
+# (pages with API content, images, /admin/revalidar), which listens only on
+# localhost inside the same container (scripts/start.sh).
 #
-# Mirrors vercel.ts: the same security headers, the /api rewrite to the
-# backend and the cache rules. tests/caddyfile.test.ts fails when the two
-# drift, so change both together. See docs/deploy-railway.md.
+# Mirrors vercel.ts: the same security headers, redirects, the /api rewrite
+# to the backend and the cache rules. tests/caddyfile.test.ts fails when the
+# two drift, so change both together. See docs/deploy-railway.md.
 #
 # Environment (Railway service variables):
 #   PORT          set by Railway (8080 by default here).
+#   NODE_PORT     where the Astro server listens on localhost (4321).
 #   API_ORIGIN    public API origin for the CSP connect-src, e.g.
 #                 https://api.emoj.cl (the contact form calls it directly).
 #   API_UPSTREAM  where /api/* is proxied: the public origin, or the
@@ -23,7 +27,7 @@
 }
 
 :{$PORT:8080} {
-	root * /srv
+	root * /app/dist/client
 	encode zstd gzip
 
 	@admin path /admin*
@@ -71,19 +75,24 @@
 		}
 	}
 
-	handle {
-		# trailingSlash "ignore": /nosotros and /nosotros/ both serve the page.
+	# Pages built ahead of time and the build's assets, straight from disk.
+	# trailingSlash "ignore": /nosotros and /nosotros/ both serve the page.
+	@built file {
 		try_files {path} {path}/index.html
+	}
+	handle @built {
+		rewrite * {file_match.relative}
 		file_server
 	}
 
-	# The site's 404 page, sent with status 404. Other errors stay plain.
+	# Everything else is rendered by the Astro server: the home, projects,
+	# news, their images, the 404 page and the panel's refresh endpoint.
+	handle {
+		reverse_proxy 127.0.0.1:{$NODE_PORT:4321}
+	}
+
+	# Only when the Astro server does not answer (starting or crashed).
 	handle_errors {
-		@notfound expression {err.status_code} == 404
-		handle @notfound {
-			rewrite * /404.html
-			file_server
-		}
 		respond "{err.status_code} {err.status_text}"
 	}
 }
