@@ -26,9 +26,17 @@ matching `railway` site rebuilder (see "Content rebuilds").
 | `API_ORIGIN`                | runtime | Origin of the API for the CSP `connect-src` (the contact form calls it directly), e.g. `https://api.emoj.cl`.                                          |
 | `API_UPSTREAM`              | runtime | Where `/api/*` is proxied. The public origin works; the private network is better: `http://${{<backend>.RAILWAY_PRIVATE_DOMAIN}}:${{<backend>.PORT}}`. |
 | `PORT`                      | runtime | Caddy listens on it; 8080 when unset. The domain's target port must match.                                                                             |
+| `NO_CACHE`                  | build   | `1`. Required: see below.                                                                                                                              |
 
 Railway passes service variables to the Dockerfile as build arguments, so the
 `PUBLIC_*` values only need to be defined once on the service.
+
+`NO_CACHE=1` turns off Railway's build layer cache. Without it, a content
+rebuild (the API redeploys the service when something is published) changes
+no source file, so Docker reuses the cached `pnpm build` layer: the deploy
+finishes in seconds with the old pages and the new content never shows up.
+Every build then installs dependencies again, about a minute more, which is
+the price of always building against the current API content.
 
 ## Service settings
 
@@ -67,15 +75,21 @@ cannot opt in.
 
 Publishing in the admin rebuilds the static site. With Vercel the API calls a
 deploy hook (`VERCEL_DEPLOY_HOOK_URL`). With Railway it calls the public API's
-`environmentTriggersDeploy` mutation instead:
+`serviceInstanceDeploy` mutation with `latestCommit`, which builds the
+frontend again from its branch (what `railway redeploy --from-source` does).
+`environmentTriggersDeploy` does not work here: Railway answers "Bad Access"
+to project tokens.
 
-1. Create a project token (project settings → Tokens) for the environment.
+1. Create a project token (project settings → Tokens) for the frontend's
+   environment.
 2. On the API service set `RAILWAY_FRONTEND_TOKEN` (the token) and
-   `RAILWAY_FRONTEND_SERVICE_ID` (the frontend service id). The project and
-   environment default to the ones Railway injects into the API service.
+   `RAILWAY_FRONTEND_SERVICE_ID` (the frontend service id). The environment
+   defaults to the one Railway injects into the API service
+   (`RAILWAY_FRONTEND_ENVIRONMENT_ID` overrides it).
 3. Unset `VERCEL_DEPLOY_HOOK_URL`: the API refuses to start with both.
-4. Publish something and confirm a new frontend deployment starts. This first
-   run is the real check that the project token may trigger deploys.
+4. Publish something and confirm a new frontend deployment starts and its
+   build logs run `pnpm build` (not `CACHED`); see `NO_CACHE` above. If it does
+   not, the API logs `site rebuild failed` with Railway's message.
 
 ## Switching emoj.cl (only once the migration is approved)
 
