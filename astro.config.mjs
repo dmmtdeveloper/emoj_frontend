@@ -34,7 +34,8 @@ const vercelAdapter = () =>
         ? { bypassToken: process.env["REVALIDATE_TOKEN"] }
         : {}),
       expiration: 60 * 60,
-      exclude: [/^\/admin\/revalidar$/],
+      // Never cache previews: every /preview?token=… would share one entry.
+      exclude: [/^\/admin\/revalidar$/, /^\/preview$/],
     },
   });
 

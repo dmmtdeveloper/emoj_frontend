@@ -100,6 +100,7 @@ const ADAPTER: EditorAdapter<AdminProject, ProjectFormValues, ProjectInput> = {
   publish: (id) => adminApi.publishProject(id),
   unpublish: (id) => adminApi.unpublishProject(id),
   remove: (id) => adminApi.deleteProject(id),
+  previewToken: (id) => adminApi.createPreviewToken("project", id),
   fieldErrors: formErrorsFromProblem,
   checklist: publishChecklist,
 };
@@ -189,6 +190,7 @@ function EditorForm({
         siteHref={project ? `/proyectos/${project.slug}` : null}
         busy={editor.busy}
         publishedLabel="Publicado"
+        onPreview={editor.onPreview}
         onPublish={editor.onPublish}
         onAskUnpublish={() => editor.setConfirm("unpublish")}
       />

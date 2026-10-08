@@ -76,6 +76,7 @@ const ADAPTER: EditorAdapter<AdminNews, NewsFormValues, NewsInput> = {
   publish: (id) => adminApi.publishNews(id),
   unpublish: (id) => adminApi.unpublishNews(id),
   remove: (id) => adminApi.deleteNews(id),
+  previewToken: (id) => adminApi.createPreviewToken("news", id),
   fieldErrors: newsFormErrorsFromProblem,
   checklist: newsPublishChecklist,
 };
@@ -166,6 +167,7 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
         siteHref={news ? `/noticias/${news.slug}` : null}
         busy={editor.busy}
         publishedLabel="Publicada"
+        onPreview={editor.onPreview}
         onPublish={editor.onPublish}
         onAskUnpublish={() => editor.setConfirm("unpublish")}
       />

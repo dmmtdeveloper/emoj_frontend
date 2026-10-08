@@ -1,8 +1,8 @@
 /**
  * What the project and news editors share:
  *
- * - `useContentEditor`: save (create or update), publish, unpublish and
- *   delete, with the API's field errors put on the form, the leave guard for
+ * - `useContentEditor`: save (create or update), preview, publish, unpublish
+ *   and delete, with the API's field errors put on the form, the leave guard for
  *   unsaved changes, the error banner and the success dialog. Public changes
  *   refresh the site's pages right away (src/lib/admin/site-refresh.ts).
  *   Each editor passes an adapter with its API calls, mapping and wording.
@@ -18,6 +18,7 @@ import {
   Check,
   Circle,
   ExternalLink,
+  Eye,
   ImagePlus,
   Trash2,
   TriangleAlert,
@@ -36,7 +37,7 @@ import type {
   UseFormRegisterReturn,
   UseFormReturn,
 } from "react-hook-form";
-import type { AdminMedia } from "../lib/admin/api";
+import type { AdminMedia, PreviewToken } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { smallForCover } from "../lib/admin/media";
 import {
@@ -60,6 +61,7 @@ import {
   type EditorAction,
 } from "../lib/admin/site-refresh";
 import type { ApiResult, FieldError } from "../lib/api/client";
+import { previewPath } from "../lib/content/preview";
 import { useApp } from "./app-context";
 import { formatDateTime, replaceParam } from "./common";
 import { MediaThumb } from "./MediaPicker";
@@ -112,6 +114,8 @@ export interface EditorAdapter<
   publish: (id: string) => Promise<ApiResult<T>>;
   unpublish: (id: string) => Promise<ApiResult<T>>;
   remove: (id: string) => Promise<ApiResult<null>>;
+  /** A 15-minute link to see the item, draft included, on the site. */
+  previewToken: (id: string) => Promise<ApiResult<PreviewToken>>;
   fieldErrors: (
     status: number,
     errors: readonly FieldError[] | undefined,
@@ -123,7 +127,8 @@ export type Banner = {
   tone: "error" | "info";
   text: string;
 } | null;
-export type Busy = null | "save" | "publish" | "unpublish" | "delete";
+export type Busy =
+  null | "save" | "preview" | "publish" | "unpublish" | "delete";
 export type Confirm = null | "unpublish" | "delete" | { leave: () => void };
 
 const REVIEW = "Revisa los campos marcados en rojo.";
@@ -316,6 +321,50 @@ export function useContentEditor<
     });
   }
 
+  /**
+   * Saves pending changes, then shows the item on the site in `tab`, a
+   * window opened in the click itself (opened later, popup blockers stop it).
+   */
+  async function previewValid(values: V, tab: Window | null) {
+    setBusy("preview");
+    let current = item;
+    if (!current || isDirty) {
+      current = await save(values);
+      if (!current) {
+        setBusy(null);
+        tab?.close();
+        return;
+      }
+    }
+    const result = await adapter.previewToken(current.id);
+    setBusy(null);
+    if (!result.ok) {
+      tab?.close();
+      show({ tone: "error", text: problemMessage(result) });
+    } else {
+      setBanner(null);
+      const href = previewPath(result.data.token);
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = href;
+      } else {
+        window.open(href, "_blank", "noopener");
+      }
+    }
+    if (isNew) goToEditor(current);
+  }
+
+  function onPreview() {
+    const tab = window.open("", "_blank");
+    void handleSubmit(
+      (values) => previewValid(values, tab),
+      (errors) => {
+        tab?.close();
+        invalid(errors);
+      },
+    )();
+  }
+
   async function publishValid(values: V) {
     const missing = adapter
       .checklist(values)
@@ -418,6 +467,7 @@ export function useContentEditor<
     onSave: (event?: BaseSyntheticEvent) =>
       void handleSubmit(saveValid, invalid)(event),
     onPublish: () => void handleSubmit(publishValid, invalid)(),
+    onPreview,
     unpublish,
     remove,
     leave,
@@ -447,6 +497,7 @@ export function EditorHeader({
   siteHref,
   busy,
   publishedLabel,
+  onPreview,
   onPublish,
   onAskUnpublish,
 }: {
@@ -461,6 +512,8 @@ export function EditorHeader({
   busy: Busy;
   /** "Publicado" / "Publicada" for the first publication date. */
   publishedLabel: string;
+  /** Saves pending changes and opens the item on the site in a new tab. */
+  onPreview: () => void;
   onPublish: () => void;
   onAskUnpublish: () => void;
 }) {
@@ -479,6 +532,18 @@ export function EditorHeader({
           <span className="sr-only">(se abre en una pestaña nueva)</span>
         </a>
       )}
+      <Button
+        variant="ghost"
+        disabled={busy !== null}
+        onClick={onPreview}
+        className="shrink-0 px-3 lg:px-4"
+      >
+        <Eye size={18} strokeWidth={1.75} aria-hidden="true" />
+        <span className="sr-only sm:not-sr-only">
+          {busy === "preview" ? "Preparando…" : "Vista previa"}
+        </span>
+        <span className="sr-only"> (se abre en una pestaña nueva)</span>
+      </Button>
       <Button
         type="submit"
         variant="secondary"
