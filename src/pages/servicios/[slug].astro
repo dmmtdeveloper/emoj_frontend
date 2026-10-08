@@ -4,10 +4,12 @@ import type { GetStaticPaths } from "astro";
 import { Image } from "astro:assets";
 import { render } from "astro:content";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
+import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getServices, type Service } from "../../lib/get-services";
 
@@ -41,8 +43,6 @@ const { Content } = await render(service);
 const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
 const ctaHref = `/contacto?servicio=${slug}`;
 const hasExamples = examples.length > 0;
-const labelClass =
-  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 <BaseLayout
@@ -117,13 +117,11 @@ const labelClass =
           />
         )}
         <div class="flex flex-col gap-6">
-          <p class={labelClass}>Experiencia</p>
-          <h2
+          <SectionHeading
             id="proyectos-relacionados"
-            class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
-          >
-            Proyectos en los que hemos trabajado
-          </h2>
+            eyebrow="Experiencia"
+            title="Proyectos en los que hemos trabajado"
+          />
           <ul class="flex flex-col divide-y divide-border border-y border-border">
             {examples.map((example) => (
               <li class="flex flex-col gap-1 py-4">
@@ -144,14 +142,17 @@ const labelClass =
     class:list={[hasExamples ? "bg-surface-sunken" : "bg-surface"]}
     aria-labelledby="otros-servicios"
   >
-    <div class="container-site py-16 md:py-24">
-      <h2
+    <div class="container-site flex flex-col gap-8 py-16 md:py-24">
+      <SectionHeading
         id="otros-servicios"
-        class="text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10"
+        eyebrow="Especialidades"
+        title="Otros servicios"
       >
-        Otros servicios
-      </h2>
-      <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ArrowLink slot="action" href="/servicios">
+          Ver todos los servicios
+        </ArrowLink>
+      </SectionHeading>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal-stagger>
         {others.map((other) => (
           <li>
             <a

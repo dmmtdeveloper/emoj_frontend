@@ -6,6 +6,7 @@ import ClientsStrip from "../components/home/ClientsStrip.astro";
 import Breadcrumb from "../components/ui/Breadcrumb.astro";
 import CtaBlock from "../components/ui/CtaBlock.astro";
 import PageHeader from "../components/ui/PageHeader.astro";
+import SectionHeading from "../components/ui/SectionHeading.astro";
 import teamPhoto from "../assets/photos/equipo-emoj.jpg";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { MISSION } from "../lib/site";
@@ -22,11 +23,6 @@ const organization = {
     })),
   ),
 };
-
-const labelClass =
-  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
-const h2Class =
-  "text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10";
 ---
 
 <BaseLayout
@@ -63,14 +59,17 @@ const h2Class =
           Equipo de EMOJ Consultora SpA.
         </figcaption>
       </figure>
-      <div class="flex flex-col gap-4">
-        <p class={labelClass}>Trayectoria</p>
-        <h2 id="trayectoria" class={h2Class}>
-          Proyectos complejos, plazos cumplidos
-        </h2>
-        {ABOUT_POSITIONING.map((text) => (
-          <p class="max-w-[60ch]">{text}</p>
-        ))}
+      <div class="flex flex-col gap-6">
+        <SectionHeading
+          id="trayectoria"
+          eyebrow="Trayectoria"
+          title="Proyectos complejos, plazos cumplidos"
+        />
+        <div class="flex flex-col gap-4" data-reveal>
+          {ABOUT_POSITIONING.map((text) => (
+            <p class="max-w-[60ch]">{text}</p>
+          ))}
+        </div>
       </div>
     </div>
   </section>
@@ -101,16 +100,12 @@ const h2Class =
 
   <section class="bg-surface-sunken" aria-labelledby="equipo">
     <div class="container-site flex flex-col gap-12 py-16 md:py-24">
-      <div class="flex max-w-[60ch] flex-col gap-4">
-        <p class={labelClass}>Equipo</p>
-        <h2 id="equipo" class={h2Class}>
-          Las personas detrás de cada proyecto
-        </h2>
-        <p class="text-ink-muted">
-          Ingenieros civiles, dibujantes proyectistas y un equipo de
-          administración que coordinan cada especialidad desde Quilpué.
-        </p>
-      </div>
+      <SectionHeading
+        id="equipo"
+        eyebrow="Equipo"
+        title="Las personas detrás de cada proyecto"
+        lead="Ingenieros civiles, dibujantes proyectistas y un equipo de administración que coordinan cada especialidad desde Quilpué."
+      />
       {TEAM.map((department) => (
         <div class="flex flex-col gap-5">
           <h3 class="border-b border-border pb-3 text-lg leading-6 font-semibold">
