@@ -19,6 +19,7 @@ export const prerender = false;
 
 const project = await contentSource().findProject(Astro.params.slug ?? "");
 if (!project) return Astro.rewrite("/no-encontrada");
+const whatsapp = { kind: "project", title: project.title } as const;
 const allServices = await getServices();
 const services = project.services
   .map((slug) => allServices.find((s) => s.data.slug === slug))
@@ -70,6 +71,7 @@ const h2Class =
 ---
 
 <BaseLayout
+  whatsapp={whatsapp}
   title={project.seo.title}
   description={project.seo.description}
   {...(ogImage
@@ -234,5 +236,6 @@ const h2Class =
     href={ctaHref}
     label="Cotiza un proyecto similar"
     background={project.gallery.length > 0 ? "surface-sunken" : "surface"}
+    whatsapp={whatsapp}
   />
 </BaseLayout>
