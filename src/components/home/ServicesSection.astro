@@ -1,11 +1,13 @@
 ---
 /**
- * Home services as an asymmetric bento: the first service as a large photo
- * tile, the other six as compact tiles and a closing "not sure?" tile
- * with a few real team faces, so the question is answered by people.
- * Phones get a dense two-column grid (titles only) to keep the page short.
- * Hovering a compact tile reveals a photo of a real project of that service
- * (the newest published one with a cover), or the service's own photo.
+ * Home services as a bento of quiet blocks: the first service as a large
+ * photo tile, the other six as compact blocks and a closing sage block that
+ * invites the visitor to ask ("¿No sabes cuál necesitas?"). Phones get a
+ * dense two-column grid (titles only) to keep the page short. Hovering a
+ * compact block reveals a photo of a real project of that service (the
+ * newest published one with a cover), or the service's own photo.
+ *
+ * The title ends on one emphasized word in Urbanist italic, in `brand`.
  */
 import { ArrowRight } from "@lucide/astro";
 import { contentSource } from "../../lib/content";
@@ -15,12 +17,10 @@ import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
 import ArrowLink from "../ui/ArrowLink.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
-import DotField from "../ui/DotField.astro";
-import SectionHeading from "../ui/SectionHeading.astro";
-import SectionTrace from "../ui/SectionTrace.astro";
-import TeamAvatars from "../ui/TeamAvatars.astro";
 
-const [first, ...rest] = await getServices();
+const services = await getServices();
+const [first, ...rest] = services;
+const count = String(services.length).padStart(2, "0");
 const covers = coversByService(
   rest.map((s) => s.data.slug),
   await contentSource().getProjects(),
@@ -37,70 +37,66 @@ const photoFor = (service: (typeof rest)[number]) => {
 };
 ---
 
-<section
-  aria-labelledby="servicios"
-  class="relative isolate overflow-clip bg-surface-sunken"
->
-  <DotField />
-  <SectionTrace corner="top-right" />
-  <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
-    <SectionHeading
-      id="servicios"
-      eyebrow="Servicios"
-      title="Siete especialidades, un mismo equipo"
-      lead="Desde el agua potable hasta las fundaciones: coordinamos todas las especialidades de tu proyecto para que avance sin interfaces perdidas."
+<section aria-labelledby="servicios" class="bg-surface">
+  <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
+    <div
+      data-reveal
+      class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12"
     >
-      <ArrowLink slot="action" href="/servicios">
-        Ver todos los servicios
-      </ArrowLink>
-    </SectionHeading>
+      <div class="flex flex-col gap-4">
+        <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase">
+          Servicios · {count}
+        </p>
+        <h2
+          id="servicios"
+          class="text-[clamp(2.5rem,1.6rem+3.6vw,5rem)] leading-[0.95] font-semibold tracking-[-0.045em] text-balance"
+        >
+          Siete especialidades.
+          <br />
+          Un solo <em class="font-medium text-brand">equipo</em>.
+        </h2>
+      </div>
+      <div class="flex max-w-[38ch] flex-col items-start gap-4">
+        <p class="text-lg leading-7 text-ink-muted">
+          Coordinamos todas las especialidades de tu proyecto para que avance
+          sin interfaces perdidas.
+        </p>
+        <ArrowLink href="/servicios">Ver todos los servicios</ArrowLink>
+      </div>
+    </div>
 
     <ul
-      class="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4 lg:auto-rows-[minmax(232px,auto)]"
+      class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 lg:auto-rows-[minmax(208px,auto)]"
       data-reveal-stagger
     >
       {first && (
         <li class="col-span-2 lg:row-span-2">
-          <ServiceCard service={first} variant="featured" index={1} />
+          <ServiceCard service={first} variant="featured" />
         </li>
       )}
-      {rest.map((service, i) => (
+      {rest.map((service) => (
         <li>
           <ServiceCard
             service={service}
             variant="compact"
-            index={i + 2}
             photo={photoFor(service)}
           />
         </li>
       ))}
       <li class="col-span-2">
-        <div class="radius-signature group flex h-full flex-col justify-between gap-8 bg-accent p-6 pl-8 text-on-accent md:p-8 md:pl-10">
-          <div class="flex flex-col gap-3">
-            <p class="max-w-[18ch] text-[24px] leading-[30px] font-semibold tracking-[-0.01em] md:text-[34px] md:leading-[40px]">
-              ¿No sabes qué especialidad necesitas?
-            </p>
-            <p class="max-w-[40ch]">
-              Cuéntanos tu proyecto y te orientamos sin compromiso.
-            </p>
-          </div>
-          <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-3">
-              <TeamAvatars limit={3} />
-              <p class="text-sm leading-5 font-medium whitespace-nowrap">
-                Ingenieros y proyectistas
-                <br />
-                en Quilpué
-              </p>
-            </div>
-            <ButtonLink
-              href="/contacto"
-              class="shrink-0 self-start sm:self-auto"
-            >
-              Escríbenos
-              <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-            </ButtonLink>
-          </div>
+        <div class="flex h-full flex-col justify-between gap-6 rounded-lg bg-accent p-6 text-on-accent sm:flex-row sm:items-center md:p-8">
+          <p class="max-w-[16ch] text-[26px] leading-[30px] font-semibold tracking-[-0.025em] md:text-[32px] md:leading-[36px]">
+            ¿No sabes cuál necesitas?
+          </p>
+          <ButtonLink
+            href="/contacto"
+            variant="on-accent"
+            pill
+            class="min-h-12 shrink-0 self-start px-6 text-base sm:self-auto"
+          >
+            Cuéntanos tu proyecto
+            <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+          </ButtonLink>
         </div>
       </li>
     </ul>
