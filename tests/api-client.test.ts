@@ -201,3 +201,20 @@ describe("createApiClient() public content reads", () => {
     expect(result).toMatchObject({ ok: false, kind: "problem", status: 404 });
   });
 });
+
+describe("createApiClient().getPreview", () => {
+  it("GETs /v1/preview/{token} with the token encoded", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      jsonResponse(200, { type: "news", news: { slug: "hito" } }),
+    );
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetch: fetchMock,
+    });
+    const result = await client.getPreview("a.b/c");
+    expect(result.ok).toBe(true);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      "https://api.example.com/v1/preview/a.b%2Fc",
+    );
+  });
+});

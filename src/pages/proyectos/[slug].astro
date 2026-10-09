@@ -8,9 +8,11 @@ import CtaBlock from "../../components/ui/CtaBlock.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import type { MediaRef } from "../../lib/api/client";
 import { contentSource } from "../../lib/content";
 import { fitWidth } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
+import { setPreviewHeaders } from "../../lib/content/preview";
 import { projectTransitionName } from "../../lib/content/transition";
 import { getServices } from "../../lib/get-services";
 import { projectJsonLd } from "../../lib/structured-data";
@@ -18,9 +20,19 @@ import { projectJsonLd } from "../../lib/structured-data";
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
-const project = await contentSource().findProject(Astro.params.slug ?? "");
+// /preview rewrites here with the draft in locals (src/pages/preview.astro).
+const draft = Astro.locals.preview;
+const isPreview = draft?.kind === "project";
+const project = isPreview
+  ? draft.project
+  : await contentSource().findProject(Astro.params.slug ?? "");
 if (!project) return Astro.rewrite("/no-encontrada");
 const whatsapp = { kind: "project", title: project.title } as const;
+if (isPreview) setPreviewHeaders(Astro.response.headers);
+
+/** Published photos come from /media; a draft's are not there yet. */
+const photo = (image: MediaRef) =>
+  isPreview ? image.url : mediaPath("proyectos", project.slug, image);
 const allServices = await getServices();
 const services = project.services
   .map((slug) => allServices.find((s) => s.data.slug === slug))
@@ -31,15 +43,16 @@ const pageUrl = new URL(`/proyectos/${project.slug}`, site).href;
 const place = [project.location, project.region].filter(Boolean).join(", ");
 
 const ogSource = project.seo.ogImage ?? project.cover;
-const ogImage = ogSource
-  ? await getImage({
-      src: mediaPath("proyectos", project.slug, ogSource),
-      width: 1200,
-      height: 630,
-      fit: "cover",
-      format: "jpeg",
-    })
-  : undefined;
+const ogImage =
+  ogSource && !isPreview
+    ? await getImage({
+        src: mediaPath("proyectos", project.slug, ogSource),
+        width: 1200,
+        height: 630,
+        fit: "cover",
+        format: "jpeg",
+      })
+    : undefined;
 
 /** Plain-text long fields: blank lines separate paragraphs. */
 function paragraphs(text: string): string[] {
@@ -73,6 +86,7 @@ const h2Class =
 
 <BaseLayout
   whatsapp={whatsapp}
+  preview={isPreview}
   title={project.seo.title}
   description={project.seo.description}
   {...(ogImage
@@ -132,7 +146,7 @@ const h2Class =
     <div class="bg-surface">
       <div class="container-site pt-8 md:pt-12">
         <Image
-          src={mediaPath("proyectos", project.slug, project.cover)}
+          src={photo(project.cover)}
           alt={project.cover.alt}
           {...fitWidth(project.cover, 1600)}
           widths={[480, 800, 1200, 1600]}
@@ -170,12 +184,12 @@ const h2Class =
       <div class="container-site flex flex-col gap-8 py-16 md:py-24">
         <SectionHeading id="galeria" eyebrow="En terreno" title="Galería" />
         <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
-          {project.gallery.map((photo) => (
+          {project.gallery.map((image) => (
             <li>
               <Image
-                src={mediaPath("proyectos", project.slug, photo)}
-                alt={photo.alt}
-                {...fitWidth(photo, 800)}
+                src={photo(image)}
+                alt={image.alt}
+                {...fitWidth(image, 800)}
                 widths={[320, 640, 800]}
                 sizes="(min-width: 1200px) 373px, (min-width: 768px) 31vw, 46vw"
                 loading="lazy"

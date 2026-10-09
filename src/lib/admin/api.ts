@@ -37,6 +37,8 @@ export type DataRequest = Schemas["DataRequest"];
 export type DataRequestPage = Schemas["DataRequestPage"];
 export type PersonDataExport = Schemas["PersonDataExport"];
 export type PersonDataErasure = Schemas["PersonDataErasure"];
+export type PreviewToken = Schemas["PreviewToken"];
+export type PreviewKind = Schemas["PreviewKind"];
 
 export type AdminListQuery = NonNullable<
   operations["adminListProjects"]["parameters"]["query"]
@@ -110,6 +112,11 @@ export interface AdminClient {
   listDataRequests(
     query?: DataRequestsQuery,
   ): Promise<ApiResult<DataRequestPage>>;
+  /** A 15-minute token for the site's /preview page (drafts included). */
+  createPreviewToken(
+    type: PreviewKind,
+    id: string,
+  ): Promise<ApiResult<PreviewToken>>;
   /** Current CSRF token, or null when signed out. */
   csrfToken(): string | null;
   setCsrfToken(token: string | null): void;
@@ -318,6 +325,8 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
       request<PersonDataErasure>("POST", "/v1/admin/data-requests/erase", {
         email,
       }),
+    createPreviewToken: (type, id) =>
+      request<PreviewToken>("POST", "/v1/admin/preview-tokens", { type, id }),
     listDataRequests: (query) =>
       request<DataRequestPage>(
         "GET",

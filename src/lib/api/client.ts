@@ -25,6 +25,7 @@ export type NewsSummary = Schemas["NewsSummary"];
 export type NewsDetail = Schemas["NewsDetail"];
 export type NewsPage = Schemas["NewsPage"];
 export type TipTapDocument = Schemas["TipTapDocument"];
+export type Preview = Schemas["Preview"];
 
 export type ProjectQuery = NonNullable<
   operations["listProjects"]["parameters"]["query"]
@@ -71,6 +72,8 @@ export interface ApiClient {
   getProject(slug: string): Promise<ApiResult<ProjectDetail>>;
   listNews(query?: NewsQuery): Promise<ApiResult<NewsPage>>;
   getNews(slug: string): Promise<ApiResult<NewsDetail>>;
+  /** A project or article, drafts included, from a preview token. */
+  getPreview(token: string): Promise<ApiResult<Preview>>;
 }
 
 /** Serialize defined query parameters, in the given order. */
@@ -166,5 +169,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       request<NewsPage>("GET", `/v1/news${queryString(query)}`),
     getNews: (slug) =>
       request<NewsDetail>("GET", `/v1/news/${encodeURIComponent(slug)}`),
+    getPreview: (token) =>
+      request<Preview>("GET", `/v1/preview/${encodeURIComponent(token)}`),
   };
 }

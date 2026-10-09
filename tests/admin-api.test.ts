@@ -344,3 +344,20 @@ describe("createAdminClient", () => {
     ).toBe(true);
   });
 });
+
+describe("createAdminClient().createPreviewToken", () => {
+  it("POSTs the item's type and id with the CSRF token", async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse(201, { token: "tk", expiresAt: "2026-10-08T23:00:00Z" }),
+    );
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("csrf");
+    const result = await client.createPreviewToken("news", "n-1");
+    expect(result).toMatchObject({ ok: true, data: { token: "tk" } });
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/v1/admin/preview-tokens");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({ type: "news", id: "n-1" });
+    expect(new Headers(init.headers).get("X-CSRF-Token")).toBe("csrf");
+  });
+});

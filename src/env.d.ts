@@ -10,3 +10,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare namespace App {
+  interface Locals {
+    /**
+     * Set by /preview before it rewrites to the item's page: that page shows
+     * this draft instead of reading the published item (src/pages/preview.astro).
+     */
+    preview?:
+      | { kind: "project"; project: import("./lib/api/client").ProjectDetail }
+      | { kind: "news"; news: import("./lib/api/client").NewsDetail };
+  }
+}

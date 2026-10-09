@@ -9,30 +9,38 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
 import { fitWidth, formatDate, shareLinks } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
+import { setPreviewHeaders } from "../../lib/content/preview";
 import { renderTipTap } from "../../lib/content/tiptap";
 import { articleJsonLd } from "../../lib/structured-data";
 
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
-const article = await contentSource().findArticle(Astro.params.slug ?? "");
+// /preview rewrites here with the draft in locals (src/pages/preview.astro).
+const draft = Astro.locals.preview;
+const isPreview = draft?.kind === "news";
+const article = isPreview
+  ? draft.news
+  : await contentSource().findArticle(Astro.params.slug ?? "");
 if (!article) return Astro.rewrite("/no-encontrada");
 const whatsapp = { kind: "article", title: article.title } as const;
+if (isPreview) setPreviewHeaders(Astro.response.headers);
 const site = Astro.site ?? new URL("https://emoj.cl");
 const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
 const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
 const share = shareLinks(pageUrl, article.title);
 
 const ogSource = article.seo.ogImage ?? article.cover;
-const ogImage = ogSource
-  ? await getImage({
-      src: mediaPath("noticias", article.slug, ogSource),
-      width: 1200,
-      height: 630,
-      fit: "cover",
-      format: "jpeg",
-    })
-  : undefined;
+const ogImage =
+  ogSource && !isPreview
+    ? await getImage({
+        src: mediaPath("noticias", article.slug, ogSource),
+        width: 1200,
+        height: 630,
+        fit: "cover",
+        format: "jpeg",
+      })
+    : undefined;
 
 const shareLink =
   "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink";
@@ -40,6 +48,7 @@ const shareLink =
 
 <BaseLayout
   whatsapp={whatsapp}
+  preview={isPreview}
   title={article.seo.title}
   description={article.seo.description}
   {...(ogImage
@@ -90,7 +99,11 @@ const shareLink =
       <div class="container-site flex flex-col gap-10 py-10 md:py-16">
         {article.cover && (
           <Image
-            src={mediaPath("noticias", article.slug, article.cover)}
+            src={
+              isPreview
+                ? article.cover.url
+                : mediaPath("noticias", article.slug, article.cover)
+            }
             alt={article.cover.alt}
             {...fitWidth(article.cover, 1600)}
             widths={[480, 800, 1200, 1600]}
