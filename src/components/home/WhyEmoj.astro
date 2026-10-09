@@ -1,8 +1,13 @@
 ---
+/**
+ * Home: why EMOJ. The intro and an aerial photo on the left, four quiet
+ * blocks on the right (radius-lg, line icon in `ink`, no index numbers),
+ * in the redesign's voice (DisplayHeading).
+ */
 import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
 import { Image } from "astro:assets";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
-import SectionHeading from "../ui/SectionHeading.astro";
+import DisplayHeading from "../ui/DisplayHeading.astro";
 
 interface Props {
   /** Section background, to keep the page's surface rhythm. */
@@ -41,10 +46,12 @@ const DIFFERENTIATORS = [
 >
   <div class="container-site relative z-[2] grid gap-10 py-16 md:py-28 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:py-32">
     <div class="flex flex-col gap-8">
-      <SectionHeading
+      <DisplayHeading
         id="por-que-emoj"
         eyebrow="Por qué EMOJ"
-        title="Ingeniería precisa, trato cercano"
+        title="Ingeniería precisa, trato cercano."
+        emphasis="cercano"
+        size="md"
         lead="Humanizar la ingeniería es explicarte cada decisión técnica con claridad, cumplir lo que acordamos y estar disponibles cuando nos necesitas."
       />
       <Image
@@ -64,27 +71,19 @@ const DIFFERENTIATORS = [
       class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:self-center"
       data-reveal-stagger
     >
-      {DIFFERENTIATORS.map(({ icon: Icon, title, text }, index) => (
+      {DIFFERENTIATORS.map(({ icon: Icon, title, text }) => (
         <li
           class:list={[
-            "group radius-signature flex flex-col gap-3 p-6 pl-8 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:gap-4 md:p-8 md:pl-10",
-            background === "surface"
-              ? "bg-surface-sunken"
-              : "bg-surface-raised",
+            "group flex flex-col gap-3 rounded-lg p-6 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:gap-4 md:p-7",
+            background === "surface" ? "bg-surface-sunken" : "bg-surface",
           ]}
         >
-          <div class="flex items-center justify-between">
-            <span class="icon-draw text-brand">
-              <Icon size={24} stroke-width={1.75} aria-hidden="true" />
-            </span>
-            <span
-              class="text-[13px] leading-4 font-medium tracking-[0.14em] text-ink-muted"
-              aria-hidden="true"
-            >
-              {String(index + 1).padStart(2, "0")}
-            </span>
-          </div>
-          <h3 class="text-h3">{title}</h3>
+          <span class="icon-draw text-ink">
+            <Icon size={24} stroke-width={1.75} aria-hidden="true" />
+          </span>
+          <h3 class="pt-4 text-[22px] leading-7 font-semibold tracking-[-0.015em]">
+            {title}
+          </h3>
           <p class="text-ink-muted">{text}</p>
         </li>
       ))}

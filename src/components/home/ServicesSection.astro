@@ -6,8 +6,6 @@
  * dense two-column grid (titles only) to keep the page short. Hovering a
  * compact block reveals a photo of a real project of that service (the
  * newest published one with a cover), or the service's own photo.
- *
- * The title ends on one emphasized word in Urbanist italic, in `brand`.
  */
 import { ArrowRight } from "@lucide/astro";
 import { contentSource } from "../../lib/content";
@@ -17,6 +15,7 @@ import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
 import ArrowLink from "../ui/ArrowLink.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
+import DisplayHeading from "../ui/DisplayHeading.astro";
 
 const services = await getServices();
 const [first, ...rest] = services;
@@ -39,31 +38,17 @@ const photoFor = (service: (typeof rest)[number]) => {
 
 <section aria-labelledby="servicios" class="bg-surface">
   <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
-    <div
-      data-reveal
-      class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12"
+    <DisplayHeading
+      id="servicios"
+      eyebrow={`Servicios · ${count}`}
+      title="Siete especialidades. Un solo equipo."
+      emphasis="equipo"
+      lead="Coordinamos todas las especialidades de tu proyecto para que avance sin interfaces perdidas."
     >
-      <div class="flex flex-col gap-4">
-        <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase">
-          Servicios · {count}
-        </p>
-        <h2
-          id="servicios"
-          class="text-[clamp(2.25rem,1.6rem+2.6vw,4rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
-        >
-          Siete especialidades.
-          <br />
-          Un solo <em class="font-medium text-brand">equipo</em>.
-        </h2>
-      </div>
-      <div class="flex max-w-[38ch] flex-col items-start gap-4">
-        <p class="text-lg leading-7 text-ink-muted">
-          Coordinamos todas las especialidades de tu proyecto para que avance
-          sin interfaces perdidas.
-        </p>
-        <ArrowLink href="/servicios">Ver todos los servicios</ArrowLink>
-      </div>
-    </div>
+      <ArrowLink slot="action" href="/servicios">
+        Ver todos los servicios
+      </ArrowLink>
+    </DisplayHeading>
 
     <ul
       class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 lg:auto-rows-[minmax(208px,auto)]"
