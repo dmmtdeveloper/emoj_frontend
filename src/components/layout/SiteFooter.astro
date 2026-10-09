@@ -7,7 +7,8 @@
  * - Columns: every service (internal links that also help SEO), company
  *   pages, direct contact and social profiles with their names.
  * - Bottom bar: legal line, location, the Ley 21.719 notice with links to
- *   the privacy policy and to exercising rights, and "back to top".
+ *   the privacy policy and to exercising rights, "back to top" and the
+ *   credit to the studio that built the site (deivid.space).
  *
  * Only inverse tokens (with opacity) are used, so it works in both themes;
  * `brand` on plum is a forbidden pair. A faint isotype stroke signs the
@@ -225,18 +226,33 @@ const link =
           </a>
         </div>
       </div>
-      <a
-        href="#top"
-        class="group inline-flex min-h-11 items-center gap-2 self-start font-medium text-ink-inverse/80 no-underline hover:text-ink-inverse sm:self-auto md:min-h-9"
-      >
-        Volver arriba
-        <ArrowUp
-          size={16}
-          stroke-width={2}
-          aria-hidden="true"
-          class="transition-transform duration-200 group-hover:-translate-y-0.5"
-        />
-      </a>
+      <div class="flex flex-col gap-1 sm:items-end">
+        <a
+          href="#top"
+          class="group inline-flex min-h-11 items-center gap-2 self-start font-medium text-ink-inverse/80 no-underline hover:text-ink-inverse sm:self-auto md:min-h-9"
+        >
+          Volver arriba
+          <ArrowUp
+            size={16}
+            stroke-width={2}
+            aria-hidden="true"
+            class="transition-transform duration-200 group-hover:-translate-y-0.5"
+          />
+        </a>
+        {/* Credit to the studio that built the site. */}
+        <p>
+          Realizado por{" "}
+          <a
+            href="https://deivid.space"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex min-h-11 items-center font-medium text-ink-inverse/80 underline-offset-4 hover:text-ink-inverse hover:underline md:min-h-9"
+          >
+            deivid.space
+            <span class="sr-only"> (se abre en una pestaña nueva)</span>
+          </a>
+        </p>
+      </div>
     </div>
   </div>
 </footer>
