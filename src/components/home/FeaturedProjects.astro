@@ -7,8 +7,10 @@
  * arrows, the "01 / 07" counter and the progress line. The parent renders
  * this section only when there is at least one featured project.
  *
- * Each card is one link. The photo keeps its view-transition name, so it
- * morphs into the cover of the project page (motion.css `.vt-project`).
+ * Each card is one link. The photo of the card being opened morphs into the
+ * cover of the project page (motion.css `.vt-project`, named on navigation
+ * by src/scripts/project-transition.ts); it carries its own rounding so the
+ * snapshot keeps the card's corners.
  * The section is plum in both themes; text and controls are cream and the
  * accents sage (brand on plum is a forbidden pair).
  */
@@ -112,7 +114,7 @@ const round =
                 sizes="(min-width: 1024px) 400px, (min-width: 640px) 360px, 78vw"
                 loading="lazy"
                 data-vt={projectTransitionName(project.slug)}
-                class="vt-project absolute inset-0 -z-20 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
+                class="vt-project absolute inset-0 -z-20 h-full w-full rounded-lg object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
               />
             )}
             <span
