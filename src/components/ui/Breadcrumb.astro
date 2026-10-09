@@ -1,16 +1,18 @@
 ---
 /**
  * Breadcrumb trail plus its `BreadcrumbList` JSON-LD.
- * The last item is the current page (not a link).
+ * The last item is the current page (not a link). `inverse` is for a dark
+ * plum section (cream text; `ink-muted` and `brand` fail there).
  */
 import { ChevronRight } from "@lucide/astro";
 import { serializeJsonLd } from "../../lib/json-ld";
 
 interface Props {
   items: { label: string; href: string }[];
+  inverse?: boolean;
 }
 
-const { items } = Astro.props;
+const { items, inverse = false } = Astro.props;
 const site = Astro.site ?? new URL("https://emoj.cl");
 
 const jsonLd = {
@@ -26,20 +28,33 @@ const jsonLd = {
 ---
 
 <nav aria-label="Ruta de navegación">
-  <ol class="flex flex-wrap items-center gap-1 text-sm leading-5 font-medium text-ink-muted">
+  <ol
+    class:list={[
+      "flex flex-wrap items-center gap-1 text-sm leading-5 font-medium",
+      inverse ? "text-sand-300" : "text-ink-muted",
+    ]}
+  >
     {items.map((item, index) => {
       const last = index === items.length - 1;
       return (
         <li class="flex items-center gap-1">
           {last ? (
-            <span aria-current="page" class="text-ink">
+            <span
+              aria-current="page"
+              class={inverse ? "text-sand-50" : "text-ink"}
+            >
               {item.label}
             </span>
           ) : (
             <>
               <a
                 href={item.href}
-                class="inline-flex min-h-6 items-center text-ink-muted underline-offset-4 hover:text-brand hover:underline"
+                class:list={[
+                  "inline-flex min-h-6 items-center underline-offset-4 hover:underline",
+                  inverse
+                    ? "text-sand-300 hover:text-sand-50"
+                    : "text-ink-muted hover:text-brand",
+                ]}
               >
                 {item.label}
               </a>

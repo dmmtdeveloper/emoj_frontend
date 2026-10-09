@@ -8,6 +8,7 @@
  * - `on-photo-solid`: cream fill, the main action over that photo (home hero).
  * - `on-inverse`: cream fill, only on `surface-inverse` (brand is forbidden there).
  * - `on-accent`: plum fill, on an `accent` (sage) block; same in both themes.
+ * - `sage`: sage fill with plum text, the main action on a dark plum section.
  */
 import type { HTMLAttributes } from "astro/types";
 
@@ -19,7 +20,8 @@ interface Props extends HTMLAttributes<"a"> {
     | "on-photo"
     | "on-photo-solid"
     | "on-inverse"
-    | "on-accent";
+    | "on-accent"
+    | "sage";
   /** Fully rounded ends, for buttons inside a rounded container (header). */
   pill?: boolean;
 }
@@ -49,6 +51,7 @@ const variants = {
   "on-inverse":
     "bg-ink-inverse text-surface-inverse hover:bg-surface-sunken hover:text-ink",
   "on-accent": "bg-plum-950 text-sand-50 hover:bg-plum-900 hover:text-sand-50",
+  sage: "bg-sage-300 text-plum-950 hover:bg-sage-200 hover:text-plum-950",
 } as const;
 ---
 

@@ -5,7 +5,7 @@ import ServiceIcon from "../../components/services/ServiceIcon.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
-import PageHeader from "../../components/ui/PageHeader.astro";
+import ButtonLink from "../../components/ui/ButtonLink.astro";
 import SectionHeading from "../../components/ui/SectionHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import type { MediaRef } from "../../lib/api/client";
@@ -68,20 +68,20 @@ const story = [
   { id: "resultado", title: "El resultado", text: project.result },
 ].filter((section) => section.text.trim() !== "");
 
-const meta = [
-  { label: "Cliente", value: project.client },
+/** The project sheet: the place first (the big sage block), then the rest. */
+const sheet = [
   { label: "Ubicación", value: place },
+  { label: "Cliente", value: project.client },
   { label: "Año", value: project.year ? String(project.year) : "" },
 ].filter((item) => item.value !== "");
+const eyebrow = [services[0]?.data.title, project.location]
+  .filter(Boolean)
+  .join(" · ");
 
 const firstService = project.services[0];
 const ctaHref = firstService
   ? `/contacto?servicio=${firstService}`
   : "/contacto";
-const labelClass =
-  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
-const h2Class =
-  "text-[26px] leading-8 font-semibold tracking-[-0.01em] md:text-[34px] md:leading-10";
 ---
 
 <BaseLayout
@@ -109,75 +109,152 @@ const h2Class =
     ),
   ]}
 >
-  <PageHeader eyebrow="Proyecto" title={project.title} lead={project.summary}>
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Proyectos", href: "/proyectos" },
-        { label: project.title, href: `/proyectos/${project.slug}` },
-      ]}
-    />
-    <dl class="grid grid-cols-2 gap-x-8 gap-y-4 pt-2 sm:flex sm:flex-wrap">
-      {meta.map((item) => (
-        <div class="flex flex-col gap-1">
-          <dt class={labelClass}>{item.label}</dt>
-          <dd class="font-medium text-ink">{item.value}</dd>
+  <section aria-labelledby="ficha-titulo" class="bg-plum-950 text-sand-50">
+    <div class="container-site grid gap-8 py-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:py-20">
+      <div class="flex min-w-0 flex-col gap-8 lg:col-start-1 lg:row-start-1">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Proyectos", href: "/proyectos" },
+            { label: project.title, href: `/proyectos/${project.slug}` },
+          ]}
+        />
+        <div class="flex flex-col gap-5">
+          {eyebrow && (
+            <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+              {eyebrow}
+            </p>
+          )}
+          <h1
+            id="ficha-titulo"
+            class="text-[clamp(2.25rem,1.6rem+2.8vw,4.25rem)] leading-[1.02] font-semibold tracking-[-0.045em] text-balance"
+          >
+            {project.title}
+          </h1>
+          {project.summary && (
+            <p class="text-lead max-w-[52ch] text-sand-100">
+              {project.summary}
+            </p>
+          )}
         </div>
-      ))}
-      <div class="col-span-2 flex flex-col gap-1">
-        <dt class={labelClass}>
-          {services.length === 1 ? "Servicio" : "Servicios"}
-        </dt>
-        <dd>
-          <ul class="flex flex-wrap gap-1.5">
-            {services.map((service) => (
-              <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-medium text-on-accent">
-                {service.data.title}
+      </div>
+
+      {project.cover && (
+        <div class="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <Image
+            src={photo(project.cover)}
+            alt={project.cover.alt}
+            {...fitWidth(project.cover, 1600)}
+            widths={[480, 800, 1200, 1600]}
+            sizes="(min-width: 1200px) 600px, (min-width: 1024px) 50vw, calc(100vw - 32px)"
+            loading="eager"
+            fetchpriority="high"
+            data-vt={projectTransitionName(project.slug)}
+            class="vt-project aspect-[4/3] w-full rounded-l-signature object-cover lg:sticky lg:top-24 lg:aspect-auto lg:h-[min(80vh,760px)]"
+          />
+        </div>
+      )}
+
+      <div class="flex min-w-0 flex-col gap-8 lg:col-start-1 lg:row-start-2">
+        {sheet.length > 0 && (
+          <dl class="grid grid-cols-2 gap-3">
+            {sheet.map((item, i) => (
+              <div
+                class:list={[
+                  "flex flex-col gap-1.5 rounded-lg px-5 py-4 md:px-6 md:py-5",
+                  i === 0
+                    ? "col-span-2 bg-accent text-on-accent"
+                    : "bg-plum-900",
+                  i > 0 &&
+                    i === sheet.length - 1 &&
+                    i % 2 === 1 &&
+                    "col-span-2",
+                ]}
+              >
+                <dt
+                  class:list={[
+                    "font-data text-[12px] leading-4 font-medium tracking-[0.1em] uppercase",
+                    i === 0 ? "text-on-accent" : "text-sand-300",
+                  ]}
+                >
+                  {item.label}
+                </dt>
+                <dd
+                  class:list={[
+                    "font-data font-medium tracking-[-0.02em]",
+                    i === 0
+                      ? "text-[28px] leading-9 md:text-[36px] md:leading-10"
+                      : "text-xl leading-7",
+                  ]}
+                >
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {services.length > 0 && (
+          <div class="flex flex-col gap-3">
+            <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+              {services.length === 1 ? "Especialidad" : "Especialidades"}
+            </p>
+            <ul class="flex flex-wrap gap-2">
+              {services.map((service) => (
+                <li>
+                  <a
+                    href={`/servicios/${service.data.slug}`}
+                    class="inline-flex min-h-9 items-center rounded-full border border-sand-50/30 px-3.5 text-sm leading-5 font-medium text-sand-50 no-underline transition-colors hover:border-sand-50/70 hover:text-sand-50"
+                  >
+                    {service.data.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {story.length > 0 && (
+          <ol class="flex flex-col border-b border-plum-800">
+            {story.map((section, i) => (
+              <li class="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-t border-plum-800 py-6">
+                <span
+                  class="font-data text-sm leading-7 font-medium text-sage-300"
+                  aria-hidden="true"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div class="flex flex-col gap-3">
+                  <h2
+                    id={section.id}
+                    class="text-[22px] leading-7 font-semibold"
+                  >
+                    {section.title}
+                  </h2>
+                  <div class="flex max-w-[65ch] flex-col gap-4 text-sand-100">
+                    {paragraphs(section.text).map((p) => (
+                      <p>{p}</p>
+                    ))}
+                  </div>
+                </div>
               </li>
             ))}
-          </ul>
-        </dd>
-      </div>
-    </dl>
-  </PageHeader>
+          </ol>
+        )}
 
-  {project.cover && (
-    <div class="bg-surface">
-      <div class="container-site pt-8 md:pt-12">
-        <Image
-          src={photo(project.cover)}
-          alt={project.cover.alt}
-          {...fitWidth(project.cover, 1600)}
-          widths={[480, 800, 1200, 1600]}
-          sizes="(min-width: 1200px) 1152px, (min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)"
-          loading="eager"
-          fetchpriority="high"
-          data-vt={projectTransitionName(project.slug)}
-          class="vt-project aspect-[4/3] max-h-[640px] w-full rounded-lg object-cover md:aspect-[16/9]"
-        />
+        <ButtonLink
+          href={ctaHref}
+          variant="sage"
+          pill
+          class="min-h-13 self-start px-7 text-base"
+        >
+          Cotiza un proyecto similar
+          <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+        </ButtonLink>
       </div>
     </div>
-  )}
-
-  {story.length > 0 && (
-    <section class="bg-surface" aria-label="Detalle del proyecto">
-      <div class="container-site flex flex-col gap-12 py-16 md:py-24">
-        {story.map((section) => (
-          <div class="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)] md:gap-12">
-            <h2 id={section.id} class={h2Class}>
-              {section.title}
-            </h2>
-            <div class="flex max-w-[65ch] flex-col gap-4">
-              {paragraphs(section.text).map((p) => (
-                <p>{p}</p>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  )}
+  </section>
 
   {project.gallery.length > 0 && (
     <section class="bg-surface-sunken" aria-labelledby="galeria">
