@@ -131,6 +131,9 @@ describe("buildTokensCss with the EMOJ design tokens", () => {
     expect(theme).toContain(
       '--font-sans: "Urbanist", ui-sans-serif, system-ui, "Segoe UI", sans-serif;',
     );
+    expect(theme).toContain(
+      '--font-data: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;',
+    );
     // Tailwind's default palette is reset so only brand colors are available.
     expect(theme).toContain("--color-*: initial;");
   });
