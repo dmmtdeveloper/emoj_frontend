@@ -15,7 +15,7 @@ import { getServiceTitles } from "../lib/get-services";
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
-const featured = await contentSource().getFeaturedProjects(3);
+const featured = await contentSource().getFeaturedProjects(8);
 const serviceTitles = await getServiceTitles();
 const hasFeatured = featured.length > 0;
 ---
