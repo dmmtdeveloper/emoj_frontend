@@ -1,23 +1,23 @@
 ---
 /**
- * Home: up to three featured projects from the API, as an editorial layout:
- * the first project as a large photo card, the others as compact rows beside
- * it (stacked on phones). The parent renders this section only when there is
- * at least one featured project.
+ * Home: featured projects from the API as a horizontal rail of tall photo
+ * cards on a dark section ("Ya son obra."). The rail scrolls natively
+ * (scroll-snap, touch, trackpad); src/scripts/project-rail.ts adds the
+ * arrows, the "01 / 07" counter and the progress line. The parent renders
+ * this section only when there is at least one featured project.
  *
- * Each card is a single link (the title, stretched with ::after). Photos
- * reveal with a wipe on scroll and carry a view-transition name so they
- * morph into the cover of the project page (motion.css `.vt-project`).
+ * Each card is one link. The photo keeps its view-transition name, so it
+ * morphs into the cover of the project page (motion.css `.vt-project`).
+ * The section is plum in both themes; text and controls are cream and the
+ * accents sage (brand on plum is a forbidden pair).
  */
-import { MapPin } from "@lucide/astro";
+import { ArrowLeft, ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
-import ArrowLink from "../ui/ArrowLink.astro";
-import SectionHeading from "../ui/SectionHeading.astro";
-import SectionTrace from "../ui/SectionTrace.astro";
+import ButtonLink from "../ui/ButtonLink.astro";
 
 interface Props {
   projects: ProjectSummary[];
@@ -25,158 +25,169 @@ interface Props {
 }
 
 const { projects, serviceTitles } = Astro.props;
-const [lead, ...rest] = projects;
-const single = rest.length === 0;
-
-const place = (project: ProjectSummary) =>
-  [project.location, project.region].filter(Boolean).join(", ");
-const number = (index: number) => String(index + 1).padStart(2, "0");
-
-const card =
-  "group relative isolate has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-focus-ring";
-const link =
-  "text-ink no-underline after:absolute after:inset-0 after:z-10 hover:text-ink focus-visible:outline-none";
-const photo =
-  "h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]";
-const chip =
-  "rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-medium text-on-accent";
+const total = String(projects.length).padStart(2, "0");
+const facts = (project: ProjectSummary) =>
+  [project.location || project.region, project.year]
+    .filter(Boolean)
+    .join(" · ");
+const firstService = (project: ProjectSummary) => {
+  const slug = project.services[0];
+  return slug ? (serviceTitles[slug] ?? slug) : null;
+};
+const round =
+  "inline-flex size-12 items-center justify-center rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-50 disabled:cursor-default disabled:opacity-40 md:size-14";
 ---
 
 <section
   aria-labelledby="proyectos-destacados"
-  class="relative isolate overflow-clip bg-surface"
+  class="overflow-clip bg-plum-950 text-sand-50"
+  data-rail
 >
-  <SectionTrace corner="bottom-right" />
-  <div class="container-site relative z-[2] flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
-    <SectionHeading
-      id="proyectos-destacados"
-      eyebrow="Proyectos"
-      title="Proyectos que ya son obra"
-      lead="Una selección del trabajo que hemos desarrollado para empresas de las regiones de Valparaíso y Coquimbo."
+  <div class="flex flex-col gap-10 py-16 md:gap-12 md:py-28 lg:py-32">
+    <div
+      class="container-site flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
+      data-reveal
     >
-      <ArrowLink slot="action" href="/proyectos">
-        Ver todos los proyectos
-      </ArrowLink>
-    </SectionHeading>
+      <div class="flex flex-col gap-4">
+        <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+          Proyectos · <span data-rail-count>01</span> / {total}
+        </p>
+        <h2
+          id="proyectos-destacados"
+          class="text-[clamp(2.75rem,1.8rem+4vw,6rem)] leading-[0.92] font-semibold tracking-[-0.05em]"
+        >
+          Ya son <em class="font-medium text-sage-300">obra</em>.
+        </h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <ButtonLink
+          href="/proyectos"
+          variant="on-photo"
+          pill
+          class="min-h-12 px-6 text-base md:min-h-14"
+        >
+          Ver todos
+        </ButtonLink>
+        <div class="rail-controls items-center gap-3">
+          <button
+            type="button"
+            class:list={[
+              round,
+              "border border-sand-50/30 text-sand-100 hover:border-sand-50/60 hover:text-sand-50",
+            ]}
+            aria-label="Proyecto anterior"
+            data-rail-prev
+          >
+            <ArrowLeft size={22} stroke-width={2} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class:list={[round, "bg-sage-300 text-plum-950 hover:bg-sage-200"]}
+            aria-label="Proyecto siguiente"
+            data-rail-next
+          >
+            <ArrowRight size={22} stroke-width={2} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
 
     <ul
-      class="grid gap-8 md:gap-10 lg:grid-cols-12 lg:grid-rows-[auto_auto_1fr] lg:gap-x-10 lg:gap-y-8"
-      data-reveal-stagger
+      class="rail flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain md:gap-5"
+      data-rail-list
     >
-      {lead && (
-        <li
-          class:list={[
-            single ? "lg:col-span-12" : "lg:col-span-7",
-            rest.length > 0 && "lg:row-span-3",
-          ]}
-        >
-          <article class:list={[card, "flex flex-col gap-5"]}>
-            <div
-              class:list={[
-                "overflow-hidden rounded-lg bg-surface-sunken",
-                single
-                  ? "aspect-[4/3] md:aspect-[16/7]"
-                  : "aspect-[4/3] lg:aspect-[3/2]",
-              ]}
-              data-reveal="wipe"
-            >
-              {lead.cover && (
-                <Image
-                  src={mediaPath("proyectos", lead.slug, lead.cover)}
-                  alt={lead.cover.alt}
-                  {...fitWidth(lead.cover, 1200)}
-                  widths={[480, 800, 1200]}
-                  sizes="(min-width: 1200px) 660px, (min-width: 1024px) 56vw, 100vw"
-                  loading="lazy"
-                  data-vt={projectTransitionName(lead.slug)}
-                  class:list={["vt-project", photo]}
-                />
-              )}
-            </div>
-            <div class="flex flex-col gap-3">
-              <p
-                class="text-[13px] leading-4 font-medium tracking-[0.14em] text-ink-muted"
-                aria-hidden="true"
-              >
-                {number(0)}
-              </p>
-              <h3 class="max-w-[28ch] text-[24px] leading-[1.2] font-semibold tracking-[-0.015em] md:text-[30px]">
-                <a href={`/proyectos/${lead.slug}`} class={link}>
-                  {lead.title}
-                </a>
-              </h3>
-              {place(lead) && (
-                <p class="inline-flex items-start gap-1.5 text-sm leading-5 font-medium text-ink-muted">
-                  <MapPin
-                    size={20}
-                    stroke-width={1.75}
-                    aria-hidden="true"
-                    class="mt-px shrink-0"
-                  />
-                  <span>{place(lead)}</span>
-                </p>
-              )}
-              <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
-                {lead.services.map((service) => (
-                  <li class={chip}>{serviceTitles[service] ?? service}</li>
-                ))}
-              </ul>
-            </div>
-          </article>
-        </li>
-      )}
-
-      {rest.map((project, i) => (
-        <li class="lg:col-span-5">
-          <article
-            class:list={[
-              card,
-              "grid grid-cols-[112px_minmax(0,1fr)] gap-4 border-t border-border pt-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-6 lg:pt-8",
-            ]}
+      {projects.map((project) => (
+        <li class="w-[78vw] max-w-[440px] shrink-0 snap-start sm:w-[360px] lg:w-[400px]">
+          <a
+            href={`/proyectos/${project.slug}`}
+            class="group relative isolate flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-lg bg-plum-900 p-6 text-sand-50 no-underline hover:text-sand-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sand-50 md:p-7"
           >
-            <div
-              class="aspect-square overflow-hidden rounded-lg bg-surface-sunken sm:aspect-[4/3]"
-              data-reveal="wipe"
-            >
-              {project.cover && (
-                <Image
-                  src={mediaPath("proyectos", project.slug, project.cover)}
-                  alt={project.cover.alt}
-                  {...fitWidth(project.cover, 640)}
-                  widths={[224, 400, 640]}
-                  sizes="(min-width: 1200px) 190px, (min-width: 640px) 36vw, 112px"
-                  loading="lazy"
-                  data-vt={projectTransitionName(project.slug)}
-                  class:list={["vt-project", photo]}
-                />
-              )}
-            </div>
-            <div class="flex min-w-0 flex-col gap-2">
-              <p
-                class="text-[13px] leading-4 font-medium tracking-[0.14em] text-ink-muted"
-                aria-hidden="true"
-              >
-                {number(i + 1)}
+            {project.cover && (
+              <Image
+                src={mediaPath("proyectos", project.slug, project.cover)}
+                alt=""
+                {...fitWidth(project.cover, 880)}
+                widths={[320, 480, 640, 880]}
+                sizes="(min-width: 1024px) 400px, (min-width: 640px) 360px, 78vw"
+                loading="lazy"
+                data-vt={projectTransitionName(project.slug)}
+                class="vt-project absolute inset-0 -z-20 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
+              />
+            )}
+            <span
+              class="absolute inset-0 -z-10 bg-linear-to-b from-plum-950/10 via-plum-950/30 to-plum-950/95"
+              aria-hidden="true"
+            ></span>
+            {firstService(project) && (
+              <span class="absolute top-5 left-5 inline-flex min-h-8 items-center rounded-full border border-sand-50/25 bg-plum-950/60 px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.06em] uppercase backdrop-blur-sm">
+                {firstService(project)}
+              </span>
+            )}
+            <h3 class="text-[24px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance md:text-[28px]">
+              {project.title}
+            </h3>
+            {facts(project) && (
+              <p class="mt-2 font-data text-sm leading-5 text-sand-200">
+                {facts(project)}
               </p>
-              <h3 class="text-lg leading-6 font-semibold md:text-[20px] md:leading-7">
-                <a href={`/proyectos/${project.slug}`} class={link}>
-                  {project.title}
-                </a>
-              </h3>
-              {place(project) && (
-                <p class="text-sm leading-5 font-medium text-ink-muted">
-                  {place(project)}
-                </p>
-              )}
-              <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
-                {project.services.map((service) => (
-                  <li class={chip}>{serviceTitles[service] ?? service}</li>
-                ))}
-              </ul>
-            </div>
-          </article>
+            )}
+          </a>
         </li>
       ))}
     </ul>
+
+    <div class="rail-controls container-site items-center gap-6">
+      <div class="h-0.5 flex-1 overflow-hidden rounded-full bg-sand-50/15">
+        <div
+          class="h-full origin-left scale-x-0 rounded-full bg-sage-300 transition-transform duration-200"
+          data-rail-progress
+        ></div>
+      </div>
+      <p
+        class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase"
+        aria-hidden="true"
+      >
+        Desliza para ver más
+      </p>
+    </div>
   </div>
 </section>
+
+<script>
+  import "../../scripts/project-rail";
+</script>
+
+<style>
+  /* Aligned with the page container, bleeding to the right edge. */
+  .rail {
+    --rail-inset: max(
+      var(--space-4),
+      calc((100% - 1200px) / 2 + var(--space-4))
+    );
+    padding-inline: var(--rail-inset);
+    scroll-padding-inline: var(--rail-inset);
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 48rem) {
+    .rail {
+      --rail-inset: max(
+        var(--space-6),
+        calc((100% - 1200px) / 2 + var(--space-6))
+      );
+    }
+  }
+
+  /* Arrows and progress only once the script runs and there is overflow. */
+  .rail-controls {
+    display: none;
+  }
+
+  [data-rail-ready][data-rail-scrollable] .rail-controls {
+    display: flex;
+  }
+</style>
