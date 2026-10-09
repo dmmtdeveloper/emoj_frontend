@@ -1,4 +1,10 @@
 ---
+/**
+ * The line icon of a service (Lucide). Each icon carries
+ * `svc-icon--<name>`, so on a card it plays its own gesture on hover, focus
+ * or, on touch screens, once when the card comes into view (motion.css
+ * "Service icon gestures", src/scripts/service-icons.ts).
+ */
 import {
   Bridge,
   CloudRain,
@@ -30,4 +36,9 @@ const { name, size = 24, class: className = "" } = Astro.props;
 const Icon = ICONS[name];
 ---
 
-<Icon size={size} stroke-width={1.75} aria-hidden="true" class={className} />
+<Icon
+  size={size}
+  stroke-width={1.75}
+  aria-hidden="true"
+  class:list={["svc-icon", `svc-icon--${name}`, className]}
+/>
