@@ -17,6 +17,9 @@ importers:
       '@astrojs/vercel':
         specifier: ^11
         version: 11.0.12(astro@7.3.5(@types/node@22.20.4)(@vercel/functions@3.9.11)(jiti@2.7.0)(yaml@2.9.1))(react@19.3.0)
+      '@fontsource/space-grotesk':
+        specifier: ^5
+        version: 5.3.0
       '@fontsource/urbanist':
         specifier: ^5.3.0
         version: 5.3.0
@@ -684,6 +687,9 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource/space-grotesk@5.3.0':
+    resolution: {integrity: sha512-ksnGizDPXIDuvqcTYTSrmZ+evx9sDlS8rp7+42BQ7wU+spt3twEoXfbJz672C+5CLg6VeUQwRy5RXshWb67LcQ==}
 
   '@fontsource/urbanist@5.3.0':
     resolution: {integrity: sha512-588s006ey+ygDqZtnJ1qehGNzIfNDl49ibAKifeYmU3juExX39LfMuCSkvT4nMktbvc07hg/8zc3qABh8zoxeA==}
@@ -4136,6 +4142,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.12':
     optional: true
+
+  '@fontsource/space-grotesk@5.3.0': {}
 
   '@fontsource/urbanist@5.3.0': {}
 

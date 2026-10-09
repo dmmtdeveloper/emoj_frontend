@@ -238,6 +238,8 @@ export function buildTokensCss(doc) {
   const type = isRecord(doc["type"]) ? doc["type"] : {};
   const families = isRecord(type["families"]) ? type["families"] : {};
   const sans = typeof families["sans"] === "string" ? families["sans"] : null;
+  // Figures and data labels (hero facts, project sheets, numbers).
+  const data = typeof families["data"] === "string" ? families["data"] : null;
 
   const themeLines = [
     "/* Only brand colors and radii are available as utilities. */",
@@ -249,6 +251,7 @@ export function buildTokensCss(doc) {
       (t) => `--radius-${t.name.replace(/^radius-/, "")}: ${t.light};`,
     ),
     ...(sans ? [`--font-sans: ${sans};`] : []),
+    ...(data ? [`--font-data: ${data};`] : []),
   ];
 
   return [

@@ -15,9 +15,19 @@
  * hover, on focus and with the pause toggle (a checkbox, so it works without
  * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
  * list.
+ *
+ * `tone="inverse"` is the band at the foot of the home hero: cream logos on
+ * a dark glass strip over the photo (same tones in both themes).
  */
 import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
+
+interface Props {
+  tone?: "surface" | "inverse";
+}
+
+const { tone = "surface" } = Astro.props;
+const inverse = tone === "inverse";
 
 /**
  * Logo file per client (public/logos/clientes/<file>.svg). Its aspect ratio
@@ -31,22 +41,47 @@ const LOGOS: Partial<Record<(typeof CLIENTS)[number], string>> = {
   CODELCO: "codelco",
 };
 
-const item =
-  "flex items-center text-ink-muted transition-colors duration-200 hover:text-ink";
+const item = inverse
+  ? "flex items-center text-sand-100 transition-colors duration-200 hover:text-sand-50"
+  : "flex items-center text-ink-muted transition-colors duration-200 hover:text-ink";
 const wordmark =
   "text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap md:text-[26px]";
 ---
 
 <section
   aria-labelledby="clientes"
-  class="marquee-wrap border-b border-border bg-surface"
+  class:list={[
+    "marquee-wrap",
+    inverse
+      ? "border-t border-sand-50/15 bg-plum-950/75 text-sand-100 backdrop-blur-md"
+      : "border-b border-border bg-surface",
+  ]}
 >
-  <div class="container-site relative z-[2] flex flex-col gap-5 py-10 md:py-12 lg:flex-row lg:items-center lg:gap-12">
+  <div
+    class:list={[
+      "container-site relative z-[2] flex flex-col lg:flex-row lg:items-center lg:gap-12",
+      inverse ? "gap-3 py-5 md:py-6" : "gap-5 py-10 md:py-12",
+    ]}
+  >
     <div class="flex items-center justify-between gap-4 lg:shrink-0">
-      <h2 id="clientes" class="eyebrow">
+      <h2
+        id="clientes"
+        class:list={[
+          inverse
+            ? "font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase"
+            : "eyebrow",
+        ]}
+      >
         Han confiado en nosotros
       </h2>
-      <label class="marquee__control inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring lg:order-first">
+      <label
+        class:list={[
+          "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
+          inverse
+            ? "rounded-full border border-sand-50/30 text-sand-100 hover:bg-sand-50/10 hover:text-sand-50 has-focus-visible:outline-sand-50"
+            : "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
+        ]}
+      >
         <input type="checkbox" class="marquee__toggle peer sr-only" />
         <Pause
           size={20}

@@ -1,6 +1,5 @@
 ---
 import AboutTeaser from "../components/home/AboutTeaser.astro";
-import ClientsStrip from "../components/home/ClientsStrip.astro";
 import FactsBand from "../components/home/FactsBand.astro";
 import FeaturedProjects from "../components/home/FeaturedProjects.astro";
 import Hero from "../components/home/Hero.astro";
@@ -28,7 +27,6 @@ const hasFeatured = featured.length > 0;
   headerOverlay
 >
   <Hero />
-  <ClientsStrip />
   {/* `data-nav-section`: the header highlights that link while the
       section is on screen (src/scripts/nav-spy.ts). */}
   <div data-nav-section="/servicios">

@@ -13,6 +13,7 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Use semantic tokens only (`bg-surface`, `text-ink`, `bg-brand`, `text-on-brand`, `bg-accent`, `text-on-accent`…). Never hard-code hex colors or use Tailwind's default palette (it is reset in the theme).
 - Forbidden pairs: cream/white text on `accent` (1.69:1), `brand` on `surface-inverse`/plum (2.24:1), `brand` on `accent` below 24px (4.17:1).
 - Font: Urbanist 400/500/600. Body ≥ 16px, left-aligned, max ~65ch; never justified.
+- Data font: Space Grotesk 400/500/600 (`font-data`), only for figures and data labels (hero facts, project sheets, numbers); never for headings, body copy or buttons.
 - Signature shape: `rounded-l-signature` (50px on the left corners only).
 - Icons: `@lucide/astro` in the site; `lucide-react` only inside the admin island.
 - Tagline: "Humanizamos la ingeniería".
