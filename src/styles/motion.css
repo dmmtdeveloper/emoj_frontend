@@ -877,9 +877,241 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Service icons have their own gestures (below). */
   .group:is(:hover, :focus-within)
     .icon-draw
-    :is(path, line, circle, rect, polyline, polygon, ellipse) {
+    :not(.svc-icon)
+    > :is(path, line, circle, rect, polyline, polygon, ellipse) {
     animation: icon-draw 900ms var(--ease-out) both;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Service icon gestures (Lucide, CSS only)                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Each service icon plays one short gesture that matches what it draws,
+ * on card hover or keyboard focus, or once when the card comes into view
+ * on touch screens (`data-icon-play`, src/scripts/service-icons.ts). The
+ * child order follows the Lucide source of each icon. Strokes are traced
+ * with `--len`, a little over each path's length in the 24px grid.
+ */
+
+@keyframes icon-trace {
+  from {
+    stroke-dashoffset: var(--len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes icon-pop {
+  0% {
+    scale: 0.3;
+    opacity: 0;
+  }
+  60% {
+    scale: 1.2;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes icon-rise {
+  from {
+    scale: 1 0;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes icon-wobble {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -12deg;
+  }
+  45% {
+    rotate: 8deg;
+  }
+  70% {
+    rotate: -4deg;
+  }
+}
+
+@keyframes icon-open {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  45% {
+    rotate: var(--open);
+  }
+}
+
+@keyframes icon-drop {
+  0% {
+    translate: 0 -6px;
+    opacity: 0;
+  }
+  55% {
+    translate: 0 1px;
+    opacity: 1;
+  }
+  78% {
+    translate: 0 -1px;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes icon-lift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 var(--lift);
+  }
+}
+
+@keyframes icon-rain {
+  0% {
+    translate: 0 -5px;
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+.svc-icon > * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.group:is(:hover, :focus-within), [data-icon-play]) .svc-icon {
+    --trace: icon-trace 700ms var(--ease-out) both;
+
+    /* Route: start point, the road traced, end point. */
+    &.svc-icon--route {
+      & > circle:first-child {
+        animation: icon-pop 420ms var(--ease-out) both;
+      }
+      & > path {
+        --len: 52;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-delay: 120ms;
+      }
+      & > circle:last-child {
+        animation: icon-pop 420ms var(--ease-out) 640ms both;
+      }
+    }
+
+    /* Bridge: the deck, the towers rise, the arch, the hangers. */
+    &.svc-icon--bridge {
+      & > :nth-child(5) {
+        --len: 21;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-duration: 450ms;
+      }
+      & > :is(:nth-child(3), :nth-child(6)) {
+        transform-origin: bottom;
+        animation: icon-rise 450ms var(--ease-out) 120ms both;
+      }
+      & > :nth-child(4) {
+        --len: 27;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-delay: 380ms;
+      }
+      & > :is(:nth-child(1), :nth-child(2)) {
+        transform-origin: bottom;
+        animation: icon-rise 300ms var(--ease-out) 720ms both;
+      }
+    }
+
+    /* Traffic cone: set down on the road, then the stripes. */
+    &.svc-icon--traffic-cone {
+      transform-origin: 50% 92%;
+      animation: icon-wobble 800ms var(--ease-out) both;
+
+      & > :is(:nth-child(1), :nth-child(4)) {
+        --len: 11;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-duration: 400ms;
+        animation-delay: 300ms;
+      }
+      & > :nth-child(1) {
+        animation-delay: 420ms;
+      }
+    }
+
+    /* Drafting compass: the legs open and close, the arc is drawn. */
+    &.svc-icon--drafting-compass {
+      & > :is(:nth-child(1), :nth-child(3), :nth-child(4)) {
+        transform-box: view-box;
+        transform-origin: 12px 5px;
+        animation: icon-open 800ms var(--ease-in-out) both;
+      }
+      & > :nth-child(4) {
+        --open: 9deg;
+      }
+      & > :is(:nth-child(1), :nth-child(3)) {
+        --open: -9deg;
+      }
+      & > :nth-child(2) {
+        --len: 17;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-delay: 380ms;
+      }
+    }
+
+    /* Droplets: fall and settle, one after the other. */
+    &.svc-icon--droplets > * {
+      animation: icon-drop 620ms var(--ease-out) both;
+    }
+    &.svc-icon--droplets > :nth-child(1) {
+      animation-delay: 180ms;
+    }
+
+    /* Layers (soil): the strata part and settle back. */
+    &.svc-icon--layers > :is(:nth-child(1), :nth-child(2)) {
+      animation: icon-lift 700ms var(--ease-in-out) both;
+    }
+    &.svc-icon--layers > :nth-child(1) {
+      --lift: -4px;
+    }
+    &.svc-icon--layers > :nth-child(2) {
+      --lift: -2px;
+      animation-delay: 60ms;
+    }
+
+    /* Cloud rain: the drops fall in turn. */
+    &.svc-icon--cloud-rain > :not(:first-child) {
+      animation: icon-rain 520ms var(--ease-out) both;
+    }
+    &.svc-icon--cloud-rain > :nth-child(4) {
+      animation-delay: 120ms;
+    }
+    &.svc-icon--cloud-rain > :nth-child(2) {
+      animation-delay: 240ms;
+    }
   }
 }
