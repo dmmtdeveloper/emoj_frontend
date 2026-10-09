@@ -887,7 +887,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Service icon gestures (Lucide, CSS only)                            */
+/* Icon gestures (Lucide, CSS only): services and "Por qué EMOJ"      */
 /* ------------------------------------------------------------------ */
 
 /*
@@ -992,6 +992,50 @@
     opacity: 1;
   }
   100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes icon-turn {
+  from {
+    rotate: -90deg;
+  }
+  to {
+    rotate: 0deg;
+  }
+}
+
+@keyframes icon-step-in {
+  from {
+    translate: -5px 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@keyframes icon-shake {
+  0%,
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+  20% {
+    rotate: -8deg;
+    translate: 0 1px;
+  }
+  40% {
+    rotate: 6deg;
+    translate: 0 -1px;
+  }
+  60% {
+    rotate: -4deg;
+    translate: 0 1px;
+  }
+  80% {
+    rotate: 2deg;
     translate: 0 0;
   }
 }
@@ -1101,6 +1145,56 @@
     &.svc-icon--layers > :nth-child(2) {
       --lift: -2px;
       animation-delay: 60ms;
+    }
+
+    /* Calendar: the rings hop, the check is ticked. */
+    &.svc-icon--calendar-check {
+      & > :is(:nth-child(1), :nth-child(2)) {
+        --lift: -3px;
+        animation: icon-lift 420ms var(--ease-out) both;
+      }
+      & > :nth-child(2) {
+        animation-delay: 80ms;
+      }
+      & > :nth-child(5) {
+        --len: 10;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-duration: 450ms;
+        animation-delay: 240ms;
+      }
+    }
+
+    /* Badge: the seal turns, the check is ticked. */
+    &.svc-icon--badge-check {
+      & > :nth-child(1) {
+        animation: icon-turn 700ms var(--ease-out) both;
+      }
+      & > :nth-child(2) {
+        --len: 13;
+        stroke-dasharray: var(--len);
+        animation: var(--trace);
+        animation-duration: 450ms;
+        animation-delay: 260ms;
+      }
+    }
+
+    /* Team: the second person steps in beside the first. */
+    &.svc-icon--users {
+      & > :is(:nth-child(2), :nth-child(3)) {
+        animation: icon-step-in 520ms var(--ease-out) both;
+      }
+      & > :nth-child(3) {
+        animation-delay: 60ms;
+      }
+      & > :nth-child(4) {
+        animation: icon-pop 420ms var(--ease-out) both;
+      }
+    }
+
+    /* Handshake: a firm shake. */
+    &.svc-icon--handshake {
+      animation: icon-shake 650ms var(--ease-in-out) both;
     }
 
     /* Cloud rain: the drops fall in turn. */

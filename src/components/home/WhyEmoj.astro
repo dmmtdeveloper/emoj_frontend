@@ -2,7 +2,9 @@
 /**
  * Home: why EMOJ. The intro and an aerial photo on the left, four quiet
  * blocks on the right (radius-lg, line icon in `ink`, no index numbers),
- * in the redesign's voice (DisplayHeading).
+ * in the redesign's voice (DisplayHeading at the same size as the other
+ * section titles). Each icon plays its own gesture on hover, focus or, on
+ * touch screens, once in view (motion.css "Icon gestures").
  */
 import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
 import { Image } from "astro:assets";
@@ -19,21 +21,25 @@ const { background = "surface" } = Astro.props;
 const DIFFERENTIATORS = [
   {
     icon: CalendarCheck,
+    gesture: "calendar-check",
     title: "Cumplimiento de plazos",
     text: "Acordamos contigo un calendario de entregas desde el inicio y te mantenemos al tanto del avance en cada etapa.",
   },
   {
     icon: BadgeCheck,
+    gesture: "badge-check",
     title: "Calidad garantizada",
     text: "Diseñamos según la normativa chilena vigente y revisamos cada memoria y cada plano antes de entregártelo.",
   },
   {
     icon: Users,
+    gesture: "users",
     title: "Trabajo colaborativo",
     text: "Ingenieros civiles y dibujantes proyectistas trabajan en un mismo equipo, coordinando las especialidades desde el primer día.",
   },
   {
     icon: Handshake,
+    gesture: "handshake",
     title: "Confianza y respaldo",
     text: "Más de 30 años trabajando con empresas como ESVAL, Aguas del Valle y SAAM respaldan cada proyecto que firmamos.",
   },
@@ -51,7 +57,6 @@ const DIFFERENTIATORS = [
         eyebrow="Por qué EMOJ"
         title="Ingeniería precisa, trato cercano."
         emphasis="cercano"
-        size="md"
         lead="Humanizar la ingeniería es explicarte cada decisión técnica con claridad, cumplir lo que acordamos y estar disponibles cuando nos necesitas."
       />
       <Image
@@ -71,15 +76,20 @@ const DIFFERENTIATORS = [
       class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:self-center"
       data-reveal-stagger
     >
-      {DIFFERENTIATORS.map(({ icon: Icon, title, text }) => (
+      {DIFFERENTIATORS.map(({ icon: Icon, gesture, title, text }) => (
         <li
           class:list={[
             "group flex flex-col gap-3 rounded-lg p-6 transition-[translate,box-shadow] duration-300 ease-(--ease-out) hover:-translate-y-1 hover:shadow-(--shadow-md) sm:gap-4 md:p-7",
             background === "surface" ? "bg-surface-sunken" : "bg-surface",
           ]}
         >
-          <span class="icon-draw text-ink">
-            <Icon size={24} stroke-width={1.75} aria-hidden="true" />
+          <span class="inline-flex text-ink">
+            <Icon
+              size={24}
+              stroke-width={1.75}
+              aria-hidden="true"
+              class={`svc-icon svc-icon--${gesture}`}
+            />
           </span>
           <h3 class="pt-4 text-[22px] leading-7 font-semibold tracking-[-0.015em]">
             {title}
@@ -90,3 +100,7 @@ const DIFFERENTIATORS = [
     </ul>
   </div>
 </section>
+
+<script>
+  import "../../scripts/service-icons";
+</script>
