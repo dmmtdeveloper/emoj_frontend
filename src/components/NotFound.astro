@@ -2,9 +2,28 @@
 /**
  * "Page not found", shared by the static 404 page and by pages rendered on
  * demand whose item does not exist (they rewrite to /no-encontrada).
+ *
+ * Most lost visitors come from an old or mistyped address and were looking
+ * for a service or a project, so the page offers the seven services and the
+ * main sections instead of a single way back home.
  */
 import { ArrowLeft } from "@lucide/astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getServices } from "../lib/get-services";
+import ServiceIcon from "./services/ServiceIcon.astro";
+import ArrowLink from "./ui/ArrowLink.astro";
+import ButtonLink from "./ui/ButtonLink.astro";
+
+const services = await getServices();
+
+const sections = [
+  { href: "/proyectos", label: "Proyectos" },
+  { href: "/noticias", label: "Noticias" },
+  { href: "/nosotros", label: "Nosotros" },
+  { href: "/contacto", label: "Contacto" },
+];
+const labelClass =
+  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 <BaseLayout
@@ -12,25 +31,61 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   description="La página que buscas no existe o cambió de dirección."
   noindex
 >
-  <section class="container-site flex flex-col gap-6 py-16 md:py-24">
-    <p class="text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase">
-      Error 404
-    </p>
-    <h1 class="text-[32px] leading-[38px] font-semibold tracking-[-0.015em] md:text-[44px] md:leading-[50px]">
-      No encontramos esta página
-    </h1>
-    <p class="max-w-[65ch] text-ink-muted">
-      Puede que la dirección esté mal escrita o que la página haya cambiado de
-      lugar.
-    </p>
-    <p>
-      <a
-        href="/"
-        class="inline-flex min-h-10 items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-[15px] leading-5 font-medium text-on-brand no-underline hover:bg-brand-hover hover:text-on-brand"
+  <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-24">
+    <section class="flex flex-col gap-6" aria-labelledby="no-encontrada">
+      <p class={labelClass}>Error 404</p>
+      <h1
+        id="no-encontrada"
+        class="text-[32px] leading-[38px] font-semibold tracking-[-0.015em] md:text-[44px] md:leading-[50px]"
       >
-        <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
-        Volver al inicio
-      </a>
-    </p>
-  </section>
+        No encontramos esta página
+      </h1>
+      <p class="max-w-[65ch] text-ink-muted">
+        Puede que la dirección esté mal escrita o que la página haya cambiado de
+        lugar. Prueba con alguna de estas:
+      </p>
+      <p>
+        <ButtonLink href="/">
+          <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
+          Volver al inicio
+        </ButtonLink>
+      </p>
+    </section>
+
+    <nav aria-labelledby="servicios-404" class="flex flex-col gap-5">
+      <h2 id="servicios-404" class="text-h3">
+        Nuestros servicios
+      </h2>
+      <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service) => (
+          <li>
+            <a
+              href={`/servicios/${service.data.slug}`}
+              class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-medium text-ink no-underline transition-colors duration-200 hover:border-brand hover:text-ink"
+            >
+              <ServiceIcon
+                name={service.data.icon}
+                size={20}
+                class="shrink-0 text-brand"
+              />
+              {service.data.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="secciones-404" class="flex flex-col gap-3">
+      <h2 id="secciones-404" class="text-h3">
+        También puedes ir a
+      </h2>
+      <ul class="flex flex-wrap gap-x-8">
+        {sections.map((section) => (
+          <li>
+            <ArrowLink href={section.href}>{section.label}</ArrowLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
 </BaseLayout>
