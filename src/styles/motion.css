@@ -669,6 +669,42 @@
   }
 }
 
+/*
+ * Quote button: brand fill on the solid bar; over the hero photo, an
+ * outlined cream pill (brand on plum is a forbidden pair).
+ */
+.header-cta {
+  border: 1px solid
+    color-mix(
+      in oklab,
+      var(--brand) calc(var(--header-solid) * 100%),
+      color-mix(in oklab, var(--sand-50) 60%, transparent)
+    );
+  background-color: color-mix(
+    in oklab,
+    var(--brand) calc(var(--header-solid) * 100%),
+    transparent
+  );
+  color: color-mix(
+    in oklab,
+    var(--on-brand) calc(var(--header-solid) * 100%),
+    var(--sand-50)
+  );
+}
+
+.header-cta:hover {
+  background-color: color-mix(
+    in oklab,
+    var(--brand-hover) calc(var(--header-solid) * 100%),
+    color-mix(in oklab, var(--sand-50) 12%, transparent)
+  );
+  color: color-mix(
+    in oklab,
+    var(--on-brand) calc(var(--header-solid) * 100%),
+    var(--sand-50)
+  );
+}
+
 /* IntersectionObserver fallback (src/scripts/motion.ts). */
 .site-header[data-overlay][data-solid="false"] {
   --header-solid: 0;

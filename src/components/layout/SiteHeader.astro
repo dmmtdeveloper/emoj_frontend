@@ -2,7 +2,8 @@
 /**
  * Sticky site header: a floating capsule, centred and inset from the top,
  * with the isotype (+ "EMOJ" wordmark on the home page), the primary
- * navigation as pill links and a compact quote CTA.
+ * navigation as pill links and a compact quote CTA. Over the hero photo the
+ * quote CTA is an outlined cream pill (motion.css `.header-cta`).
  *
  * - The capsule is frosted `surface` with a hairline border and a soft
  *   shadow, on every page and at every scroll position.
@@ -94,9 +95,12 @@ const drawMark = pathname === "/";
 
     <div class="flex items-center gap-1">
       <div class="hidden sm:block">
-        <ButtonLink href="/contacto" pill>
+        <a
+          href="/contacto"
+          class="header-cta inline-flex min-h-10 items-center justify-center rounded-full px-5 py-2.5 text-[15px] leading-5 font-medium no-underline transition-[color,background-color,border-color,scale] duration-200 active:scale-[0.97]"
+        >
           Cotizar proyecto
-        </ButtonLink>
+        </a>
       </div>
       <button
         type="button"
