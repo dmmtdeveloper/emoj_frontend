@@ -2,7 +2,7 @@
 /**
  * Home: the published projects (featured first, src/lib/content/
  * rail-projects.ts) as a horizontal rail of tall photo cards on a dark
- * section ("Ya son obra."). The rail scrolls natively
+ * section ("Ya son obra."), showing whole cards within the page container. The rail scrolls natively
  * (scroll-snap, touch, trackpad); src/scripts/project-rail.ts adds the
  * arrows, the "01 / 07" counter and the progress line. The parent renders
  * this section only when there is at least one featured project.
@@ -95,49 +95,51 @@ const round =
       </div>
     </div>
 
-    <ul
-      class="rail flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain md:gap-5"
-      data-rail-list
-    >
-      {projects.map((project) => (
-        <li class="w-[78vw] max-w-[440px] shrink-0 snap-start sm:w-[360px] lg:w-[400px]">
-          <a
-            href={`/proyectos/${project.slug}`}
-            class="group relative isolate flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-lg bg-plum-900 p-6 text-sand-50 no-underline hover:text-sand-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sand-50 md:p-7"
-          >
-            {project.cover && (
-              <Image
-                src={mediaPath("proyectos", project.slug, project.cover)}
-                alt=""
-                {...fitWidth(project.cover, 880)}
-                widths={[320, 480, 640, 880]}
-                sizes="(min-width: 1024px) 400px, (min-width: 640px) 360px, 78vw"
-                loading="lazy"
-                data-vt={projectTransitionName(project.slug)}
-                class="vt-project absolute inset-0 -z-20 h-full w-full rounded-lg object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
-              />
-            )}
-            <span
-              class="absolute inset-0 -z-10 bg-linear-to-b from-plum-950/10 via-plum-950/30 to-plum-950/95"
-              aria-hidden="true"
-            ></span>
-            {firstService(project) && (
-              <span class="absolute top-5 left-5 inline-flex min-h-8 items-center rounded-full border border-sand-50/25 bg-plum-950/60 px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.06em] uppercase backdrop-blur-sm">
-                {firstService(project)}
-              </span>
-            )}
-            <h3 class="text-[24px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance md:text-[28px]">
-              {project.title}
-            </h3>
-            {facts(project) && (
-              <p class="mt-2 font-data text-sm leading-5 text-sand-200">
-                {facts(project)}
-              </p>
-            )}
-          </a>
-        </li>
-      ))}
-    </ul>
+    <div class="container-site">
+      <ul
+        class="rail -mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain p-2 md:gap-5"
+        data-rail-list
+      >
+        {projects.map((project) => (
+          <li class="shrink-0 basis-[85%] snap-start sm:basis-[calc((100%-1rem)/2)] md:basis-[calc((100%-1.25rem)/2)] lg:basis-[calc((100%-2.5rem)/3)]">
+            <a
+              href={`/proyectos/${project.slug}`}
+              class="group relative isolate flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-lg bg-plum-900 p-6 text-sand-50 no-underline hover:text-sand-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sand-50 md:p-7"
+            >
+              {project.cover && (
+                <Image
+                  src={mediaPath("proyectos", project.slug, project.cover)}
+                  alt=""
+                  {...fitWidth(project.cover, 880)}
+                  widths={[320, 480, 640, 880]}
+                  sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 85vw"
+                  loading="lazy"
+                  data-vt={projectTransitionName(project.slug)}
+                  class="vt-project absolute inset-0 -z-20 h-full w-full rounded-lg object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
+                />
+              )}
+              <span
+                class="absolute inset-0 -z-10 bg-linear-to-b from-plum-950/10 via-plum-950/30 to-plum-950/95"
+                aria-hidden="true"
+              ></span>
+              {firstService(project) && (
+                <span class="absolute top-5 left-5 inline-flex min-h-8 items-center rounded-full border border-sand-50/25 bg-plum-950/60 px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.06em] uppercase backdrop-blur-sm">
+                  {firstService(project)}
+                </span>
+              )}
+              <h3 class="text-[24px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance md:text-[28px]">
+                {project.title}
+              </h3>
+              {facts(project) && (
+                <p class="mt-2 font-data text-sm leading-5 text-sand-200">
+                  {facts(project)}
+                </p>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
 
     <div class="rail-controls container-site items-center gap-6">
       <div class="h-0.5 flex-1 overflow-hidden rounded-full bg-sand-50/15">
@@ -161,28 +163,18 @@ const round =
 </script>
 
 <style>
-  /* Aligned with the page container, bleeding to the right edge. */
+  /*
+   * Whole cards only, inside the page container: three on desktop, two on
+   * tablets, and on phones one with a peek of the next to invite a swipe.
+   * The 8px padding (cancelled by -mx-2) keeps focus rings from clipping.
+   */
   .rail {
-    --rail-inset: max(
-      var(--space-4),
-      calc((100% - 1200px) / 2 + var(--space-4))
-    );
-    padding-inline: var(--rail-inset);
-    scroll-padding-inline: var(--rail-inset);
+    scroll-padding-inline: var(--space-2);
     scrollbar-width: none;
   }
 
   .rail::-webkit-scrollbar {
     display: none;
-  }
-
-  @media (min-width: 48rem) {
-    .rail {
-      --rail-inset: max(
-        var(--space-6),
-        calc((100% - 1200px) / 2 + var(--space-6))
-      );
-    }
   }
 
   /* Arrows and progress only once the script runs and there is overflow. */
