@@ -2,14 +2,21 @@
 /**
  * Floating WhatsApp button (56px, bottom right, safe-area aware): the
  * official green glyph on a raised surface. Pages reserve bottom space in
- * the footer so it never covers content.
+ * the footer so it never covers content. `href` carries the page's
+ * message (src/lib/whatsapp.ts).
  */
 import WhatsAppIcon from "../ui/WhatsAppIcon.astro";
 import { CONTACT } from "../../lib/site";
+
+interface Props {
+  href?: string;
+}
+
+const { href = CONTACT.whatsapp.href } = Astro.props;
 ---
 
 <a
-  href={CONTACT.whatsapp.href}
+  href={href}
   target="_blank"
   rel="noopener noreferrer"
   aria-label="Escríbenos por WhatsApp"

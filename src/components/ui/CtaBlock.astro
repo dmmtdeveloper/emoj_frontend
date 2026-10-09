@@ -11,6 +11,7 @@
 import { ArrowRight, Mail } from "@lucide/astro";
 import { splitEmphasis } from "../../lib/emphasis";
 import { CONTACT } from "../../lib/site";
+import { whatsappHref, type WhatsAppContext } from "../../lib/whatsapp";
 import ButtonLink from "./ButtonLink.astro";
 import Scribble from "./Scribble.astro";
 import WhatsAppIcon from "./WhatsAppIcon.astro";
@@ -23,6 +24,8 @@ interface Props {
   label?: string;
   /** Background of the surrounding section, to keep the page rhythm. */
   background?: "surface" | "surface-sunken";
+  /** What the page is about, for the WhatsApp message (src/lib/whatsapp.ts). */
+  whatsapp?: WhatsAppContext;
 }
 
 const {
@@ -32,6 +35,7 @@ const {
   href = "/contacto",
   label = "Cotizar proyecto",
   background = "surface",
+  whatsapp,
 } = Astro.props;
 
 const parts = splitEmphasis(title, emphasis);
@@ -82,7 +86,7 @@ const contactLink =
         <ul class="flex flex-col">
           <li>
             <a
-              href={CONTACT.whatsapp.href}
+              href={whatsappHref(whatsapp)}
               target="_blank"
               rel="noopener noreferrer"
               class={contactLink}

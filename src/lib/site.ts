@@ -3,6 +3,8 @@
  * Keep this the single source: every value here is real, public data.
  */
 
+import { whatsappHref } from "./whatsapp";
+
 export const SITE_NAME = "EMOJ Consultora";
 export const LEGAL_NAME = "EMOJ Consultora SpA";
 /** Tax ID (RUT) of EMOJ Consultora SpA. */
@@ -13,7 +15,8 @@ export const CONTACT = {
   email: "coordinacion@emoj.cl",
   whatsapp: {
     display: "+56 9 9158 9934",
-    href: "https://wa.me/56991589934?text=Hola%2C%20quiero%20cotizar%20un%20proyecto",
+    /** Default message; pages about a service, project or article pass their own (whatsapp.ts). */
+    href: whatsappHref(),
   },
   phones: [
     { display: "(32) 292 7790", href: "tel:+56322927790" },

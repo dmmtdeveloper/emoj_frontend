@@ -4,6 +4,7 @@ import SiteHeader from "../components/layout/SiteHeader.astro";
 import WhatsAppButton from "../components/layout/WhatsAppButton.astro";
 import { serializeJsonLd } from "../lib/json-ld";
 import { SITE_NAME } from "../lib/site";
+import { whatsappHref, type WhatsAppContext } from "../lib/whatsapp";
 import "../styles/global.css";
 
 interface Props {
@@ -21,6 +22,8 @@ interface Props {
   jsonLd?: Record<string, unknown>[];
   /** The page opens with a full-bleed photo hero under a transparent header. */
   headerOverlay?: boolean;
+  /** What the page is about, for the floating WhatsApp button's message. */
+  whatsapp?: WhatsAppContext;
 }
 
 const DEFAULT_IMAGE = "/og-default.jpg";
@@ -34,6 +37,7 @@ const {
   noindex = false,
   jsonLd = [],
   headerOverlay = false,
+  whatsapp,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://emoj.cl");
@@ -111,7 +115,7 @@ const isDefaultImage = image === DEFAULT_IMAGE;
       <slot />
     </main>
     <SiteFooter />
-    <WhatsAppButton />
+    <WhatsAppButton href={whatsappHref(whatsapp)} />
     <script>
       import "../scripts/motion";
     </script>

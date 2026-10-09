@@ -40,12 +40,14 @@ const {
 const { Content } = await render(service);
 const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
 const ctaHref = `/contacto?servicio=${slug}`;
+const whatsapp = { kind: "service", title } as const;
 const hasExamples = examples.length > 0;
 const labelClass =
   "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
 ---
 
 <BaseLayout
+  whatsapp={whatsapp}
   title={seo.title}
   description={seo.description}
   {...(image ? { image: image.src, imageAlt: imageAlt ?? title } : {})}
@@ -179,5 +181,6 @@ const labelClass =
     background={hasExamples ? "surface" : "surface-sunken"}
     href={ctaHref}
     label={ctaLabel}
+    whatsapp={whatsapp}
   />
 </BaseLayout>

@@ -17,6 +17,7 @@ export const prerender = false;
 
 const article = await contentSource().findArticle(Astro.params.slug ?? "");
 if (!article) return Astro.rewrite("/no-encontrada");
+const whatsapp = { kind: "article", title: article.title } as const;
 const site = Astro.site ?? new URL("https://emoj.cl");
 const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
 const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
@@ -38,6 +39,7 @@ const shareLink =
 ---
 
 <BaseLayout
+  whatsapp={whatsapp}
   title={article.seo.title}
   description={article.seo.description}
   {...(ogImage
@@ -157,7 +159,7 @@ const shareLink =
     </div>
   </article>
 
-  <CtaBlock background="surface-sunken" />
+  <CtaBlock background="surface-sunken" whatsapp={whatsapp} />
 </BaseLayout>
 
 <script>
