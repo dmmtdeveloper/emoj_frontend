@@ -1,7 +1,6 @@
 /**
- * Interactive 3D dot grid: in the home hero (Hero.astro) a canvas replaces
- * the CSS blueprint grid on mouse devices with motion allowed; sections can
- * also carry a subtle version behind their content (DotField.astro). Nodes sit on
+ * Interactive 3D dot grid: sections can carry a subtle version behind their
+ * content (DotField.astro). Nodes sit on
  * springs (src/lib/motion/dot-grid.ts); the pointer pushes them aside and
  * lifts them toward the viewer, the plane tilts slightly toward it, and
  * lifted dots grow, brighten and show relief (highlight + cast shadow).
@@ -48,29 +47,6 @@ export interface DotGridLook {
     h: number,
     lifted: number,
   ) => number;
-}
-
-/** Base visibility, like the CSS grid's mask: strongest at the bottom left. */
-function baseAlpha(x: number, y: number, w: number, h: number): number {
-  const nx = x / (w * 1.2);
-  const ny = (h - y) / (h * 0.9);
-  const d = Math.hypot(nx, ny);
-  return Math.max(0, 1 - d / 0.7);
-}
-
-/** The hero: light dots over the photo, brightest at the bottom left. */
-function heroLook(frame: HTMLElement): DotGridLook {
-  const style = getComputedStyle(frame);
-  return {
-    palette: {
-      dot: style.getPropertyValue("--sand-50").trim() || "white",
-      shadow: style.getPropertyValue("--plum-950").trim() || "black",
-    },
-    lineAlpha: 0.07,
-    maxDpr: 2,
-    dotAlpha: (x, y, w, h, lifted) =>
-      Math.min(0.85, 0.08 + 0.3 * baseAlpha(x, y, w, h) + 0.55 * lifted),
-  };
 }
 
 const EDGE_FADE = 160;
@@ -255,7 +231,7 @@ export function initDotGrid(
   };
 
   if (interactive) listen();
-  // Marks the frame (the hero then hides its CSS grid); the canvas is sized
+  // Marks the frame (a section can then hide a CSS fallback); the canvas is sized
   // when it comes near the screen and emptied when it leaves.
   frame.dataset["dotGrid"] = "";
   new ResizeObserver(resize).observe(canvas);
@@ -289,12 +265,6 @@ const enabled = spotlightEnabled({
   prefersReducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
   finePointer: matchMedia("(hover: hover) and (pointer: fine)").matches,
 });
-
-const heroFrame = document.querySelector<HTMLElement>(".hero__frame");
-const heroCanvas = document.querySelector<HTMLCanvasElement>(".hero__dots");
-if (heroFrame && heroCanvas && enabled) {
-  initDotGrid(heroFrame, heroCanvas, heroLook(heroFrame));
-}
 
 // Section backgrounds: still on touch screens and with reduced motion.
 for (const canvas of document.querySelectorAll<HTMLCanvasElement>(

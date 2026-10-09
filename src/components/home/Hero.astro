@@ -1,7 +1,12 @@
 ---
 /**
  * Home hero, "del croquis a la obra". Three real photos from the original
- * emoj.cl hero (water, a pumping station and an aerial industrial view).
+ * emoj.cl hero (water, a pumping station and an aerial industrial view)
+ * under a plum veil and a faint four-column grid, like a drawing sheet.
+ *
+ * At its foot, a data strip in the data typeface (`font-data`, facts from
+ * src/lib/hero-facts.ts) and the reference clients as a moving band of
+ * logos (ClientsStrip, `tone="inverse"`).
  *
  * The photos play on their own (src/scripts/hero-slideshow.ts): each one
  * zooms in slowly and the next enters with a left-to-right wipe, like a
@@ -18,9 +23,11 @@ import { Picture } from "astro:assets";
 import water from "../../assets/photos/agua-manos.jpg";
 import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
+import { getServices } from "../../lib/get-services";
+import { heroFacts } from "../../lib/hero-facts";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
-import Scribble from "../ui/Scribble.astro";
+import ClientsStrip from "./ClientsStrip.astro";
 
 const photos = [
   {
@@ -42,6 +49,8 @@ const photos = [
     widths: [640, 960, 1280, 1600, 2000],
   },
 ];
+
+const facts = heroFacts((await getServices()).length);
 ---
 
 <section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
@@ -68,127 +77,121 @@ const photos = [
         />
       </div>
     ))}
+    <div class="absolute inset-0 -z-10 bg-plum-950/65" aria-hidden="true"></div>
     <div
-      class="absolute inset-0 -z-10 bg-plum-950/65 md:bg-transparent md:bg-linear-to-r md:from-plum-950/80 md:via-plum-950/55 md:to-plum-950/15"
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/55 to-transparent to-70% md:block"
       aria-hidden="true"
     ></div>
+    {/* Drawing-sheet grid: four columns, hairlines only. */}
     <div
-      class="hero__grid blueprint absolute inset-0 -z-10 text-sand-50 opacity-50"
+      class="pointer-events-none absolute inset-0 -z-10 hidden md:block"
       aria-hidden="true"
-    ></div>
-    {/* Interactive 3D dot grid (src/scripts/dot-grid.ts), mouse only. */}
-    <canvas
-      class="hero__dots absolute inset-0 -z-10 h-full w-full"
-      aria-hidden="true"
-    ></canvas>
-
-    <div class="container-site flex min-h-[max(560px,88svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-20 md:min-h-[max(680px,100svh)] md:justify-center md:gap-8 md:pb-24">
-      <p class="hero-in eyebrow eyebrow-inverse [--eyebrow-rule:var(--sage-300)]">
-        {TAGLINE}
-      </p>
-      <h1 class="hero-in hero-in--2 text-display max-w-[14ch]">
-        Ingeniería civil del{" "}
-        <span class="hero__em relative inline-block whitespace-nowrap">
-          primer trazo
-          <Scribble
-            draw="load"
-            class="absolute -bottom-[0.14em] left-[-2%] h-[0.3em] w-[104%] text-brick-400"
-          />
-        </span>{" "}
-        a la obra
-      </h1>
-      <p class="hero-in hero-in--3 text-lead max-w-[46ch] text-sand-100">
-        Más de 30 años diseñando agua potable, caminos, estructuras y
-        fundaciones para empresas de las regiones de Valparaíso y Coquimbo, con
-        un equipo que te acompaña de principio a fin.
-      </p>
-      <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row">
-        <ButtonLink href="/contacto">
-          Cotizar proyecto
-          <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-        </ButtonLink>
-        <ButtonLink href="/servicios" variant="on-photo">
-          Ver servicios
-        </ButtonLink>
+    >
+      <div class="container-site h-full">
+        <div class="grid h-full grid-cols-4 border-r border-sand-50/[0.07]">
+          <span class="border-l border-sand-50/[0.07]"></span>
+          <span class="border-l border-sand-50/[0.07]"></span>
+          <span class="border-l border-sand-50/[0.07]"></span>
+          <span class="border-l border-sand-50/[0.07]"></span>
+        </div>
       </div>
     </div>
 
-    {/* Photo counter with a progress line, and the pause button. */}
-    <div class="hero__counter absolute right-[max(1rem,calc((100vw-1200px)/2+1.5rem))] bottom-6 items-center gap-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums md:bottom-8">
-      <span class="flex items-center gap-4" aria-hidden="true">
-        <span class="w-[2ch]" data-hero-count>
-          01
-        </span>
-        <span class="relative block h-0.5 w-16 overflow-hidden rounded-full bg-sand-50/25 md:w-24">
-          <span
-            class="hero__progress absolute inset-0 origin-left rounded-full bg-sand-50"
-            data-hero-progress
-          ></span>
-        </span>
-        <span>{String(photos.length).padStart(2, "0")}</span>
-      </span>
-      <button
-        type="button"
-        class="hero__toggle grid size-9 place-items-center rounded-full border border-sand-50/40 text-sand-50 transition-colors hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-50"
-        aria-label="Pausar el cambio de fotos"
-        data-hero-toggle
-      >
-        <Pause
-          class="hero__icon-pause"
-          size={16}
-          stroke-width={2}
-          aria-hidden="true"
-        />
-        <Play
-          class="hero__icon-play"
-          size={16}
-          stroke-width={2}
-          aria-hidden="true"
-        />
-      </button>
-    </div>
+    <div class="flex min-h-[max(640px,100svh)] flex-col">
+      <div class="container-site flex flex-1 flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-10 md:justify-center md:gap-7 md:pb-12">
+        <p class="hero-in font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+          {TAGLINE}
+        </p>
+        <h1 class="hero-in hero-in--2 text-display max-w-[15ch] font-medium tracking-[-0.035em]">
+          Ingeniería civil del primer trazo a la obra
+        </h1>
+        <p class="hero-in hero-in--3 text-lead max-w-[46ch] text-sand-100">
+          Agua potable, caminos, estructuras y fundaciones para empresas de
+          Valparaíso y Coquimbo. Un equipo que te acompaña de principio a fin.
+        </p>
+        <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:gap-7">
+          <ButtonLink
+            href="/contacto"
+            variant="on-photo-solid"
+            class="min-h-12 px-6 text-base"
+          >
+            Cotizar proyecto
+          </ButtonLink>
+          <a
+            href="/proyectos"
+            class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+          >
+            Ver proyectos
+            <ArrowRight
+              size={20}
+              stroke-width={1.75}
+              aria-hidden="true"
+              class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+            />
+          </a>
+        </div>
+      </div>
 
-    <div
-      class="hero__cue absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 text-[12px] leading-4 font-medium tracking-[0.18em] text-sand-100 uppercase md:flex"
-      aria-hidden="true"
-    >
-      Desliza
-      <span class="hero__cue-line relative block h-12 w-px overflow-hidden bg-sand-50/30"></span>
+      <div class="container-site">
+        {/* Photo counter with a progress line, and the pause button. */}
+        <div class="hero__counter items-center justify-end gap-4 pb-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
+          <span class="flex items-center gap-4 font-data" aria-hidden="true">
+            <span class="w-[2ch]" data-hero-count>
+              01
+            </span>
+            <span class="relative block h-0.5 w-16 overflow-hidden rounded-full bg-sand-50/25 md:w-24">
+              <span
+                class="hero__progress absolute inset-0 origin-left rounded-full bg-sand-50"
+                data-hero-progress
+              ></span>
+            </span>
+            <span>{String(photos.length).padStart(2, "0")}</span>
+          </span>
+          <button
+            type="button"
+            class="hero__toggle grid size-9 place-items-center rounded-full border border-sand-50/40 text-sand-50 transition-colors hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-50"
+            aria-label="Pausar el cambio de fotos"
+            data-hero-toggle
+          >
+            <Pause
+              class="hero__icon-pause"
+              size={16}
+              stroke-width={2}
+              aria-hidden="true"
+            />
+            <Play
+              class="hero__icon-play"
+              size={16}
+              stroke-width={2}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+
+        <dl class="hero-in hero-in--4 grid grid-cols-2 border-t border-sand-50/20 md:grid-cols-4">
+          {facts.map((fact) => (
+            <div class="flex flex-col gap-1.5 border-sand-50/20 py-4 pr-4 even:border-l even:pl-4 md:border-l md:px-6 md:py-5 md:first:border-l-0 md:first:pl-0">
+              <dt class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+                {fact.label}
+              </dt>
+              <dd class="font-data text-[17px] leading-6 font-medium text-sand-50 md:text-xl md:leading-7">
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <ClientsStrip tone="inverse" />
     </div>
   </div>
 </section>
 
 <script>
-  import "../../scripts/dot-grid";
   import "../../scripts/hero-slideshow";
 </script>
 
 <style>
-  .hero__grid {
-    mask-image: radial-gradient(120% 90% at 0% 100%, white 0%, transparent 70%);
-  }
-
-  /* The canvas grid replaces the CSS one once the script runs. */
-  .hero__dots {
-    display: none;
-  }
-
-  .hero__frame[data-dot-grid] .hero__dots {
-    display: block;
-  }
-
-  .hero__frame[data-dot-grid] .hero__grid {
-    display: none;
-  }
-
-  .hero__cue-line::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--sand-50);
-    transform: translateY(-100%);
-  }
-
   /* Static fallback: only the first photo; no counter. */
   .hero__media--2,
   .hero__media--3,
@@ -264,10 +267,6 @@ const photos = [
       animation-play-state: paused;
     }
 
-    .hero__grid {
-      animation: fade-in 1400ms ease 700ms both;
-    }
-
     .hero-in {
       animation: rise 900ms var(--ease-out) 250ms both;
     }
@@ -282,24 +281,6 @@ const photos = [
 
     .hero-in--4 {
       animation-delay: 700ms;
-    }
-
-    .hero__em :global(svg) {
-      --draw-delay: 1150ms;
-    }
-
-    .hero__cue {
-      animation: fade-in 800ms ease 1600ms both;
-    }
-
-    .hero__cue-line::after {
-      animation: cue 2400ms var(--ease-in-out) 1800ms infinite;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero__cue-line::after {
-      transform: none;
     }
   }
 

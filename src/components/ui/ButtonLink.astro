@@ -5,13 +5,15 @@
  * - `primary`: brand fill. Use on `surface`, `surface-sunken`, `surface-raised`.
  * - `secondary`: outlined in `ink`. Use on light surfaces.
  * - `on-photo`: outlined cream, only over a photo with the plum overlay.
+ * - `on-photo-solid`: cream fill, the main action over that photo (home hero).
  * - `on-inverse`: cream fill, only on `surface-inverse` (brand is forbidden there).
  */
 import type { HTMLAttributes } from "astro/types";
 
 interface Props extends HTMLAttributes<"a"> {
   href: string;
-  variant?: "primary" | "secondary" | "on-photo" | "on-inverse";
+  variant?:
+    "primary" | "secondary" | "on-photo" | "on-photo-solid" | "on-inverse";
   /** Fully rounded ends, for buttons inside a rounded container (header). */
   pill?: boolean;
 }
@@ -34,6 +36,10 @@ const variants = {
     "border border-ink bg-transparent text-ink hover:bg-ink hover:text-surface",
   "on-photo":
     "border border-sand-50 bg-transparent text-sand-50 hover:bg-sand-50 hover:text-plum-950",
+  // Main action over a dark photo (home hero): `brand` on plum is a
+  // forbidden pair, so the fill is cream in both themes.
+  "on-photo-solid":
+    "bg-sand-50 text-plum-950 hover:bg-sand-100 hover:text-plum-950",
   "on-inverse":
     "bg-ink-inverse text-surface-inverse hover:bg-surface-sunken hover:text-ink",
 } as const;
