@@ -1,9 +1,9 @@
 ---
 /**
  * Sticky site header: a floating capsule, centred and inset from the top,
- * with the isotype and the "emoj" wordmark, the primary navigation as pill
- * links and a compact quote CTA. On the home page the isotype draws itself
- * and the pen then writes the name, which stays.
+ * with the isotype (+ "EMOJ" wordmark on the home page), the primary
+ * navigation as pill links and a compact quote CTA. Over the hero photo the
+ * quote CTA is an outlined cream pill (motion.css `.header-cta`).
  *
  * - The capsule is frosted `surface` with a hairline border and a soft
  *   shadow, on every page and at every scroll position.
@@ -47,7 +47,7 @@ const drawMark = pathname === "/";
     ></div>
     <a
       href="/"
-      class="mark-link relative -m-2 inline-flex shrink-0 items-center gap-1 p-2 text-current no-underline hover:text-current"
+      class="mark-link relative -m-2 inline-flex shrink-0 items-center p-2 text-current no-underline hover:text-current"
     >
       <IsotipoMark
         label="EMOJ Consultora — Inicio"
@@ -56,10 +56,14 @@ const drawMark = pathname === "/";
         height="26"
         class="h-6 w-auto lg:h-[26px]"
       />
-      <Wordmark
-        draw={drawMark}
-        class="pointer-events-none h-[19px] w-auto lg:h-5"
-      />
+      {/* Home only: the name is written after the mark, then erased. It is
+          out of the flow, so the header layout is the mark alone. */}
+      {drawMark && (
+        <Wordmark
+          draw
+          class="pointer-events-none absolute top-1/2 left-full ml-0.5 h-[19px] w-auto -translate-y-1/2 lg:h-5"
+        />
+      )}
     </a>
 
     <nav aria-label="Principal" class="hidden lg:block" data-nav-spy>

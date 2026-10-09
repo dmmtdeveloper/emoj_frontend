@@ -3,8 +3,9 @@
  * The "emoj" wordmark as inline SVG outlines, so it can be written with the
  * same pen as the isotype: with `draw`, each letter's contours are traced
  * (stroke dash, `pathLength="1"`) left to right right after the isotype
- * stroke ends, then fill in, and the name stays. With reduced motion, or
- * without `draw`, it is plain filled.
+ * stroke ends, then fill in; after a hold it is erased last letter first and
+ * hidden, leaving the isotype alone. With `draw` and reduced motion it is
+ * never shown. Without `draw` it is plain filled.
  *
  * The outlines are Urbanist 600 glyphs (e, m, o, j) extracted from
  * `@fontsource/urbanist` at font-size 100, baseline at y=0, so the drawing
