@@ -1115,3 +1115,116 @@
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Desktop scroll motion (scroll-driven, CSS only)                     */
+/* ------------------------------------------------------------------ */
+
+/*
+ * On wide screens the page has room for motion tied to the scroll: the
+ * hero photo drifts slower than the page while its text fades away, the
+ * reveals travel further and unfold over a longer stretch of scroll, the
+ * project cards slide in from the right one after another and the team
+ * photo eases out of a slight zoom. Phones keep the short reveals; reduced
+ * motion and browsers without scroll timelines get none of it.
+ */
+
+@keyframes rise-far {
+  from {
+    opacity: 0;
+    translate: 0 64px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-drift {
+  to {
+    translate: 0 30vh;
+  }
+}
+
+@keyframes hero-leave {
+  to {
+    opacity: 0;
+    translate: 0 -48px;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    translate: 140px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes settle {
+  from {
+    scale: 1.14;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+  @supports (animation-timeline: view()) {
+    [data-reveal]:not([data-reveal="fade"], [data-reveal="wipe"]),
+    [data-reveal-stagger] > * {
+      animation-name: rise-far;
+      animation-range: entry calc(10% + var(--reveal-shift, 0%)) cover
+        calc(35% + var(--reveal-shift, 0%));
+    }
+
+    [data-reveal="wipe"] {
+      animation-range: entry 10% cover 50%;
+    }
+
+    /*
+     * Timelines go through var(): the CSS minifier would otherwise fold
+     * them into the `animation` shorthand, which browsers reject.
+     */
+    .hero__parallax {
+      animation: hero-drift linear both;
+      animation-timeline: var(--timeline-page, scroll(root));
+      animation-range: 0 100vh;
+    }
+
+    .hero__content {
+      animation: hero-leave linear both;
+      animation-timeline: var(--timeline-page, scroll(root));
+      animation-range: 0 70vh;
+    }
+
+    [data-rail] {
+      view-timeline: --rail block;
+    }
+
+    /* The link, not the li: moving a snap child would move the snap points. */
+    [data-rail-list] > li > a {
+      animation: slide-in-right var(--ease-out) both;
+      animation-timeline: var(--timeline-rail, --rail);
+      animation-range: entry 20% cover 45%;
+    }
+
+    [data-rail-list] > li:nth-child(2) > a {
+      animation-range: entry 30% cover 52%;
+    }
+
+    [data-rail-list] > li:nth-child(n + 3) > a {
+      animation-range: entry 40% cover 60%;
+    }
+
+    .about__photo {
+      animation: settle linear both;
+      animation-timeline: var(--timeline-view, view());
+      animation-range: entry 0% exit 20%;
+    }
+  }
+}

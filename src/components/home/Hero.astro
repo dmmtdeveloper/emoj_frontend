@@ -56,28 +56,34 @@ const facts = heroFacts((await getServices()).length);
 
 <section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
   <div class="hero__frame relative isolate overflow-hidden" data-hero>
-    {photos.map((photo, i) => (
-      <div
-        class:list={[
-          "hero__media absolute inset-0 -z-10 overflow-hidden",
-          `hero__media--${i + 1}`,
-        ]}
-        data-hero-slide
-        data-state={i === 0 ? "active" : undefined}
-      >
-        <Picture
-          src={photo.src}
-          alt={photo.alt}
-          formats={["avif", "webp"]}
-          widths={photo.widths}
-          sizes="100vw"
-          loading={i === 0 ? "eager" : "lazy"}
-          fetchpriority={i === 0 ? "high" : "low"}
-          class:list={["hero__img h-full w-full object-cover", photo.position]}
-          pictureAttributes={{ class: "contents" }}
-        />
-      </div>
-    ))}
+    {/* Photos, drifting slower than the page on desktop (motion.css). */}
+    <div class="hero__parallax absolute inset-0 -z-10">
+      {photos.map((photo, i) => (
+        <div
+          class:list={[
+            "hero__media absolute inset-0 -z-10 overflow-hidden",
+            `hero__media--${i + 1}`,
+          ]}
+          data-hero-slide
+          data-state={i === 0 ? "active" : undefined}
+        >
+          <Picture
+            src={photo.src}
+            alt={photo.alt}
+            formats={["avif", "webp"]}
+            widths={photo.widths}
+            sizes="100vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchpriority={i === 0 ? "high" : "low"}
+            class:list={[
+              "hero__img h-full w-full object-cover",
+              photo.position,
+            ]}
+            pictureAttributes={{ class: "contents" }}
+          />
+        </div>
+      ))}
+    </div>
     <div class="absolute inset-0 -z-10 bg-plum-950/65" aria-hidden="true"></div>
     <div
       class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/55 to-transparent to-70% md:block"
@@ -99,7 +105,7 @@ const facts = heroFacts((await getServices()).length);
     </div>
 
     <div class="flex min-h-[max(640px,100svh)] flex-col">
-      <div class="container-site flex flex-1 flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-10 md:justify-center md:gap-7 md:pb-12">
+      <div class="hero__content container-site flex flex-1 flex-col justify-end gap-6 pt-[calc(var(--header-h)+48px)] pb-10 md:justify-center md:gap-7 md:pb-12">
         <p class="hero-in font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
           {TAGLINE}
         </p>
