@@ -2,7 +2,8 @@
  * Home hero slideshow (Hero.astro): the photos play on their own. Timing
  * lives in src/lib/motion/slideshow.ts; this file wires it to the page:
  * `data-state` on the photos, the counter and its progress line, the pause
- * button, and holding while the hero is off screen or the tab is hidden.
+ * checkbox (it also stops the logo band, in CSS), and holding while the hero
+ * is off screen or the tab is hidden.
  *
  * Nothing runs with reduced motion: the hero keeps its first photo.
  */
@@ -10,9 +11,6 @@ import { createSlideshow } from "../lib/motion/slideshow";
 
 /** Time each photo stays before the next one wipes in. */
 const SLIDE_MS = 6500;
-
-const LABEL_PAUSE = "Pausar el cambio de fotos";
-const LABEL_PLAY = "Reanudar el cambio de fotos";
 
 function init(): void {
   const frame = document.querySelector<HTMLElement>("[data-hero]");
@@ -22,7 +20,7 @@ function init(): void {
   if (slides.length < 2) return;
   const count = frame.querySelector<HTMLElement>("[data-hero-count]");
   const progress = frame.querySelector<HTMLElement>("[data-hero-progress]");
-  const toggle = frame.querySelector<HTMLButtonElement>("[data-hero-toggle]");
+  const toggle = frame.querySelector<HTMLInputElement>("[data-hero-toggle]");
 
   const imageOf = (i: number) =>
     slides[i]?.querySelector<HTMLImageElement>("img") ?? null;
@@ -67,18 +65,17 @@ function init(): void {
     if (visible && show.playing) restartProgress();
   };
 
-  toggle?.addEventListener("click", () => {
-    if (show.playing) {
-      show.pause();
-      frame.setAttribute("data-paused", "");
-      toggle.setAttribute("aria-label", LABEL_PLAY);
-    } else {
+  /** Follow the checkbox (also when the browser restores it checked). */
+  const syncPause = () => {
+    const paused = toggle?.checked ?? false;
+    frame.toggleAttribute("data-paused", paused);
+    if (paused && show.playing) show.pause();
+    else if (!paused && !show.playing) {
       show.play();
-      frame.removeAttribute("data-paused");
-      toggle.setAttribute("aria-label", LABEL_PAUSE);
       restartProgress();
     }
-  });
+  };
+  toggle?.addEventListener("change", syncPause);
 
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(
@@ -96,6 +93,7 @@ function init(): void {
   restartProgress();
   prepare(1);
   show.start();
+  syncPause();
 }
 
 init();

@@ -24,9 +24,14 @@ import { CLIENTS } from "../../lib/site";
 
 interface Props {
   tone?: "surface" | "inverse";
+  /**
+   * Its own pause toggle. Off when a parent already pauses the band (the
+   * home hero has one control for its photos and these logos).
+   */
+  control?: boolean;
 }
 
-const { tone = "surface" } = Astro.props;
+const { tone = "surface", control = true } = Astro.props;
 const inverse = tone === "inverse";
 
 /**
@@ -74,31 +79,33 @@ const wordmark =
       >
         Han confiado en nosotros
       </h2>
-      <label
-        class:list={[
-          "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
-          inverse
-            ? "rounded-full border border-sand-50/30 text-sand-100 hover:bg-sand-50/10 hover:text-sand-50 has-focus-visible:outline-sand-50"
-            : "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
-        ]}
-      >
-        <input type="checkbox" class="marquee__toggle peer sr-only" />
-        <Pause
-          size={20}
-          stroke-width={1.75}
-          aria-hidden="true"
-          class="peer-checked:hidden"
-        />
-        <Play
-          size={20}
-          stroke-width={1.75}
-          aria-hidden="true"
-          class="hidden peer-checked:block"
-        />
-        <span class="sr-only">
-          Pausar el movimiento de la lista de clientes
-        </span>
-      </label>
+      {control && (
+        <label
+          class:list={[
+            "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
+            inverse
+              ? "rounded-full border border-sand-50/30 text-sand-100 hover:bg-sand-50/10 hover:text-sand-50 has-focus-visible:outline-sand-50"
+              : "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
+          ]}
+        >
+          <input type="checkbox" class="marquee__toggle peer sr-only" />
+          <Pause
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="peer-checked:hidden"
+          />
+          <Play
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="hidden peer-checked:block"
+          />
+          <span class="sr-only">
+            Pausar el movimiento de la lista de clientes
+          </span>
+        </label>
+      )}
     </div>
     <div class="marquee min-w-0 flex-1">
       <div class="marquee__track">

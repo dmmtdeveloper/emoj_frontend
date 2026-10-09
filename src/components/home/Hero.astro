@@ -11,8 +11,9 @@
  * The photos play on their own (src/scripts/hero-slideshow.ts): each one
  * zooms in slowly and the next enters with a left-to-right wipe, like a
  * stroke being drawn. A counter with a progress line shows the current
- * photo, and a button pauses the change (WCAG 2.2.2). The slideshow holds
- * while the hero is off screen or the tab is hidden.
+ * photo, and one plain pause icon beside it stops both the photos and the
+ * logo band (WCAG 2.2.2). The slideshow holds while the hero is off screen
+ * or the tab is hidden.
  *
  * Without JavaScript or with reduced motion the hero shows the first photo
  * only (no autoplay, no counter). The section slides under the transparent
@@ -133,9 +134,16 @@ const facts = heroFacts((await getServices()).length);
       </div>
 
       <div class="container-site">
-        {/* Photo counter with a progress line, and the pause button. */}
-        <div class="hero__counter items-center justify-end gap-4 pb-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
-          <span class="flex items-center gap-4 font-data" aria-hidden="true">
+        {/*
+          One quiet control pauses everything that moves in the hero: the
+          photos and the client logos (WCAG 2.2.2). A checkbox, so the logos
+          also pause without JavaScript; the counter needs the slideshow.
+        */}
+        <div class="hero__counter items-center justify-end gap-3 pb-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
+          <span
+            class="hero__count items-center gap-4 font-data"
+            aria-hidden="true"
+          >
             <span class="w-[2ch]" data-hero-count>
               01
             </span>
@@ -147,25 +155,26 @@ const facts = heroFacts((await getServices()).length);
             </span>
             <span>{String(photos.length).padStart(2, "0")}</span>
           </span>
-          <button
-            type="button"
-            class="hero__toggle grid size-9 place-items-center rounded-full border border-sand-50/40 text-sand-50 transition-colors hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand-50"
-            aria-label="Pausar el cambio de fotos"
-            data-hero-toggle
-          >
+          <label class="-mr-2 inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-sand-200 transition-colors hover:text-sand-50 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-sand-50">
+            <input
+              type="checkbox"
+              class="hero__pause peer sr-only"
+              data-hero-toggle
+            />
             <Pause
-              class="hero__icon-pause"
               size={16}
               stroke-width={2}
               aria-hidden="true"
+              class="peer-checked:hidden"
             />
             <Play
-              class="hero__icon-play"
               size={16}
               stroke-width={2}
               aria-hidden="true"
+              class="hidden peer-checked:block"
             />
-          </button>
+            <span class="sr-only">Pausar el movimiento de fotos y logos</span>
+          </label>
         </div>
 
         <dl class="hero-in hero-in--4 grid grid-cols-2 border-t border-sand-50/20 md:grid-cols-4">
@@ -182,7 +191,7 @@ const facts = heroFacts((await getServices()).length);
         </dl>
       </div>
 
-      <ClientsStrip tone="inverse" />
+      <ClientsStrip tone="inverse" control={false} />
     </div>
   </div>
 </section>
@@ -195,8 +204,19 @@ const facts = heroFacts((await getServices()).length);
   /* Static fallback: only the first photo; no counter. */
   .hero__media--2,
   .hero__media--3,
-  .hero__counter {
+  .hero__count {
     display: none;
+  }
+
+  /* The pause control shows wherever something moves. */
+  .hero__counter {
+    display: flex;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__counter {
+      display: none;
+    }
   }
 
   /*
@@ -219,17 +239,13 @@ const facts = heroFacts((await getServices()).length);
     z-index: -11;
   }
 
-  .hero__frame[data-slideshow] .hero__counter {
+  .hero__frame[data-slideshow] .hero__count {
     display: flex;
   }
 
-  .hero__icon-play,
-  .hero__frame[data-paused] .hero__icon-pause {
-    display: none;
-  }
-
-  .hero__frame[data-paused] .hero__icon-play {
-    display: block;
+  /* The same control stops the client logos at the foot of the hero. */
+  .hero__frame:has(.hero__pause:checked) :global(.marquee__track) {
+    animation-play-state: paused;
   }
 
   .hero__media--1 {
