@@ -1,18 +1,20 @@
 ---
 /**
- * Key facts on `surface-inverse` (first of the two inverse sections allowed
- * per page; the footer is the second). Only verifiable facts.
+ * Key facts as a full-bleed sage band (`accent`, plum text: 9.35:1, the
+ * same in both themes): the years of experience as one huge figure and the
+ * other facts beside it, all in the data typeface (`font-data`). A thin,
+ * faint isotype stroke runs behind. Only verifiable facts.
+ *
  * The numbers count up when they scroll into view (src/scripts/motion.ts):
  * the HTML holds the final value, the animated copy is hidden from AT and a
  * static copy is read instead. Reduced motion shows the final values.
  */
 import { CLIENTS } from "../../lib/site";
-import SectionTrace from "../ui/SectionTrace.astro";
+import IsotipoMark from "../IsotipoMark.astro";
 
-const clients = `${CLIENTS.slice(0, -1).join(", ")} y ${CLIENTS.at(-1)}`;
+const LEAD = { value: "30+", label: "años de experiencia en ingeniería civil" };
 
 const FACTS = [
-  { value: "30+", label: "años de experiencia en ingeniería civil" },
   { value: "7", label: "especialidades coordinadas por un mismo equipo" },
   { value: "2", label: "regiones: Valparaíso y Coquimbo" },
   { value: String(CLIENTS.length), label: "clientes de referencia" },
@@ -21,23 +23,38 @@ const FACTS = [
 
 <section
   aria-labelledby="cifras"
-  class="relative isolate z-[3] overflow-clip bg-surface-inverse text-ink-inverse"
+  class="relative isolate z-[3] overflow-clip bg-accent text-on-accent"
 >
-  <SectionTrace corner="bottom-right" tone="inverse" />
-  <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-28 lg:py-32">
-    <h2 id="cifras" class="eyebrow eyebrow-inverse" data-reveal>
+  <IsotipoMark
+    tone="mono"
+    class="facts-mark pointer-events-none absolute -bottom-24 -left-10 -z-10 h-auto w-[140%] max-w-none opacity-15 md:w-[110%]"
+  />
+  <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
+    <h2
+      id="cifras"
+      class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] uppercase"
+      data-reveal
+    >
       EMOJ en cifras
     </h2>
-    <dl
-      class="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4 lg:gap-x-8"
-      data-reveal-stagger
-    >
+    <dl class="grid lg:grid-cols-2 lg:gap-x-16" data-reveal-stagger>
+      <div class="flex flex-col justify-end gap-3 pb-10 lg:row-span-3 lg:pb-0">
+        <dt class="order-2 max-w-[24ch] text-xl leading-7 font-medium md:text-2xl md:leading-8">
+          {LEAD.label}
+        </dt>
+        <dd class="order-1 font-data text-[clamp(7rem,4rem+14vw,18rem)] leading-[0.8] font-semibold tracking-[-0.07em] tabular-nums">
+          <span aria-hidden="true" data-count>
+            {LEAD.value}
+          </span>
+          <span class="sr-only">{LEAD.value}</span>
+        </dd>
+      </div>
       {FACTS.map(({ value, label }) => (
-        <div class="flex flex-col gap-3 border-l border-ink-inverse/30 pl-4 md:pl-6">
-          <dt class="order-2 max-w-[22ch] text-base leading-6 md:text-[17px]">
+        <div class="flex items-baseline gap-6 border-t-2 border-plum-950 py-5 md:gap-8 md:py-6 lg:col-start-2">
+          <dt class="order-2 text-base leading-6 font-medium md:text-[17px]">
             {label}
           </dt>
-          <dd class="order-1 text-[clamp(3rem,2rem+5vw,6rem)] leading-[0.95] font-semibold tracking-[-0.04em] tabular-nums">
+          <dd class="order-1 w-[2.2ch] shrink-0 font-data text-[clamp(3.5rem,2.5rem+3.5vw,6rem)] leading-[0.9] font-semibold tracking-[-0.05em] tabular-nums">
             <span aria-hidden="true" data-count>
               {value}
             </span>
@@ -46,11 +63,12 @@ const FACTS = [
         </div>
       ))}
     </dl>
-    <p
-      class="max-w-[65ch] text-sm leading-5 font-medium opacity-90"
-      data-reveal
-    >
-      Clientes de referencia: {clients}.
-    </p>
   </div>
 </section>
+
+<style>
+  /* A thin pen line, not the logo's weight. */
+  .facts-mark :global(path) {
+    stroke-width: 2.5;
+  }
+</style>
