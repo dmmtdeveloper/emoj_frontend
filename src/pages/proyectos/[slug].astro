@@ -2,10 +2,11 @@
 import { ArrowRight } from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
+import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
-import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import PageHeader from "../../components/ui/PageHeader.astro";
+import SectionHeading from "../../components/ui/SectionHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
 import { fitWidth } from "../../lib/content/format";
@@ -167,9 +168,7 @@ const h2Class =
   {project.gallery.length > 0 && (
     <section class="bg-surface-sunken" aria-labelledby="galeria">
       <div class="container-site flex flex-col gap-8 py-16 md:py-24">
-        <h2 id="galeria" class={h2Class}>
-          Galería
-        </h2>
+        <SectionHeading id="galeria" eyebrow="En terreno" title="Galería" />
         <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
           {project.gallery.map((photo) => (
             <li>
@@ -196,11 +195,20 @@ const h2Class =
       ]}
       aria-labelledby="servicios-relacionados"
     >
-      <div class="container-site py-16 md:py-24">
-        <h2 id="servicios-relacionados" class={h2Class}>
-          Servicios relacionados
-        </h2>
-        <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="container-site flex flex-col gap-8 py-16 md:py-24">
+        <SectionHeading
+          id="servicios-relacionados"
+          eyebrow="Especialidades"
+          title="Servicios relacionados"
+        >
+          <ArrowLink slot="action" href="/proyectos">
+            Ver todos los proyectos
+          </ArrowLink>
+        </SectionHeading>
+        <ul
+          class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          data-reveal-stagger
+        >
           {services.map((service) => (
             <li>
               <a
@@ -221,11 +229,6 @@ const h2Class =
             </li>
           ))}
         </ul>
-        <div class="mt-8">
-          <ButtonLink href="/proyectos" variant="secondary">
-            Ver todos los proyectos
-          </ButtonLink>
-        </div>
       </div>
     </section>
   )}
