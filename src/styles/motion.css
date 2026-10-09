@@ -772,13 +772,6 @@
 /* Cross-document view transitions                                     */
 /* ------------------------------------------------------------------ */
 
-@keyframes vt-out {
-  to {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-}
-
 @keyframes vt-in {
   from {
     opacity: 0;
@@ -787,12 +780,19 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /*
+   * The old page stays opaque underneath while the new one fades and rises
+   * over it. Fading both at once let the light canvas show through between
+   * two dark pages (a pale flash with both texts ghosted).
+   */
   ::view-transition-old(root) {
-    animation: vt-out 180ms ease-in both;
+    animation: none;
+    mix-blend-mode: normal;
   }
 
   ::view-transition-new(root) {
-    animation: vt-in 420ms var(--ease-out) 80ms both;
+    animation: vt-in 380ms var(--ease-out) both;
+    mix-blend-mode: normal;
   }
 
   /* Project photos morph from the card to the detail page. */
@@ -801,15 +801,34 @@
     animation-timing-function: var(--ease-out);
   }
 
+  /* Both snapshots fill the moving box and crop, like the photos do. */
+  ::view-transition-image-pair(.project) {
+    overflow: clip;
+  }
+
   ::view-transition-old(.project),
   ::view-transition-new(.project) {
+    width: 100%;
     height: 100%;
     object-fit: cover;
   }
+
+  /* A cover with no card to land on just fades with the page. */
+  ::view-transition-old(.project):only-child {
+    animation: fade-out 160ms ease both;
+  }
+
+  ::view-transition-new(.project):only-child {
+    animation: fade-in 380ms var(--ease-out) both;
+  }
 }
 
-/* The photo names come from data attributes (CSP forbids style=""). */
-.vt-project {
+/*
+ * The photo names come from data attributes (CSP forbids style=""). The
+ * project page cover is always named; a card only once
+ * src/scripts/project-transition.ts marks it as the one being opened.
+ */
+.vt-project:is(.vt-cover, [data-vt-on]) {
   view-transition-name: attr(data-vt type(<custom-ident>), none);
   view-transition-class: project;
 }
