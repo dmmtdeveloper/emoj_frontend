@@ -10,12 +10,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
 import { contentSource } from "../lib/content";
+import { railProjects } from "../lib/content/rail-projects";
 import { getServiceTitles } from "../lib/get-services";
 
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
-const featured = await contentSource().getFeaturedProjects(8);
+/** The home rail shows every published project, the featured ones first. */
+const featured = railProjects(await contentSource().getProjects(), 12);
 const serviceTitles = await getServiceTitles();
 const hasFeatured = featured.length > 0;
 ---
