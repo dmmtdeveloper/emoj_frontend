@@ -1,0 +1,96 @@
+---
+/**
+ * Home section intro in the redesign's voice: a short label in the data
+ * typeface, a large title with one emphasized word in Urbanist italic, an
+ * optional lead and an optional action (`action` slot) on the right.
+ *
+ * - `size`: `lg` (up to 64px) for short titles, `md` (up to 52px) for
+ *   longer ones. The hero headline (up to 96px) always stays the largest.
+ * - `inverse`: on a dark plum section; the emphasis turns sage (brand on
+ *   plum is a forbidden pair) and the label cream.
+ */
+import { splitEmphasis } from "../../lib/emphasis";
+
+interface Props {
+  id: string;
+  eyebrow: string;
+  title: string;
+  /** Word or phrase of `title` set in italic. Ignored if not found. */
+  emphasis?: string;
+  lead?: string;
+  size?: "lg" | "md";
+  inverse?: boolean;
+}
+
+const {
+  id,
+  eyebrow,
+  title,
+  emphasis = "",
+  lead,
+  size = "lg",
+  inverse = false,
+} = Astro.props;
+const parts = splitEmphasis(title, emphasis);
+const hasAction = Astro.slots.has("action");
+---
+
+<div
+  data-reveal
+  class:list={[
+    "flex flex-col gap-6",
+    hasAction && "lg:flex-row lg:items-end lg:justify-between lg:gap-12",
+  ]}
+>
+  <div class="flex max-w-[48rem] flex-col gap-4">
+    <p
+      class:list={[
+        "font-data text-[13px] leading-4 font-medium tracking-[0.1em] uppercase",
+        inverse ? "text-sand-300" : "text-ink-muted",
+      ]}
+    >
+      {eyebrow}
+    </p>
+    <h2
+      id={id}
+      class:list={[
+        "font-semibold text-balance",
+        size === "lg"
+          ? "text-[clamp(2.25rem,1.6rem+2.6vw,4rem)] leading-[0.98] tracking-[-0.045em]"
+          : "text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.02] tracking-[-0.04em]",
+      ]}
+    >
+      {parts ? (
+        <>
+          {parts.before}
+          <em
+            class:list={[
+              "font-medium",
+              inverse ? "text-sage-300" : "text-brand",
+            ]}
+          >
+            {parts.word}
+          </em>
+          {parts.after}
+        </>
+      ) : (
+        title
+      )}
+    </h2>
+    {lead && (
+      <p
+        class:list={[
+          "text-lead max-w-[54ch]",
+          inverse ? "text-sand-100" : "text-ink-muted",
+        ]}
+      >
+        {lead}
+      </p>
+    )}
+  </div>
+  {hasAction && (
+    <div class="shrink-0">
+      <slot name="action" />
+    </div>
+  )}
+</div>

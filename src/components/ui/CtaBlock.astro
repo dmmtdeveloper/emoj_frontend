@@ -4,16 +4,15 @@
  * Sits on `surface-sunken`/`surface-raised` with the signature shape (not
  * `surface-inverse`, which is reserved for the facts band and the footer).
  *
- * `emphasis`: a word or phrase of the title that gets the hand-drawn
- * underline (drawn when it scrolls into view). Ignored when the title does
- * not contain it.
+ * `emphasis`: a word or phrase of the title set in Urbanist italic, in
+ * `brand` (the redesign's emphasis). Ignored when the title does not
+ * contain it.
  */
 import { ArrowRight, Mail } from "@lucide/astro";
 import { splitEmphasis } from "../../lib/emphasis";
 import { CONTACT } from "../../lib/site";
 import { whatsappHref, type WhatsAppContext } from "../../lib/whatsapp";
 import ButtonLink from "./ButtonLink.astro";
-import Scribble from "./Scribble.astro";
 import WhatsAppIcon from "./WhatsAppIcon.astro";
 
 interface Props {
@@ -59,17 +58,11 @@ const contactLink =
       data-reveal
     >
       <div class="flex flex-col gap-5">
-        <h2 class="text-h2 max-w-[18ch] text-ink">
+        <h2 class="max-w-[18ch] text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.04em] text-balance text-ink">
           {parts ? (
             <>
               {parts.before}
-              <span class="relative inline-block whitespace-nowrap">
-                {parts.word}
-                <Scribble
-                  draw="view"
-                  class="absolute -bottom-[0.16em] left-[-3%] h-[0.3em] w-[106%] text-brand"
-                />
-              </span>
+              <em class="font-medium text-brand">{parts.word}</em>
               {parts.after}
             </>
           ) : (

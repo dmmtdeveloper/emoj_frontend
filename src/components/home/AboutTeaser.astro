@@ -2,46 +2,44 @@
 /**
  * Home: who we are. The real team photo (study U7) next to a short intro,
  * the mission and a link to Nosotros. The photo reveals with a wipe and
- * keeps the signature shape; a drawn line crosses behind it.
+ * keeps the signature shape, one of the few places it appears.
  */
 import { Image } from "astro:assets";
 import team from "../../assets/photos/equipo-emoj.jpg";
 import { MISSION } from "../../lib/site";
 import ArrowLink from "../ui/ArrowLink.astro";
-import SectionHeading from "../ui/SectionHeading.astro";
-import SignatureFrame from "../ui/SignatureFrame.astro";
+import DisplayHeading from "../ui/DisplayHeading.astro";
 ---
 
 <section aria-labelledby="quienes-somos" class="relative bg-surface">
   <div class="container-site relative z-[2] grid gap-10 py-16 md:gap-14 md:py-28 lg:grid-cols-12 lg:items-center lg:gap-16 lg:py-32">
     <div class="lg:col-span-7">
-      <div class="signature-photo relative">
-        <SignatureFrame />
-        <div
-          class="radius-signature relative overflow-hidden bg-surface-sunken"
-          data-reveal="wipe"
-        >
-          <Image
-            src={team}
-            alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
-            widths={[480, 800, 1200, 1600]}
-            sizes="(min-width: 1200px) 660px, (min-width: 1024px) 56vw, 100vw"
-            loading="lazy"
-            class="signature-photo__img aspect-[16/10] w-full object-cover"
-          />
-        </div>
+      <div
+        class="radius-signature relative overflow-hidden bg-surface-sunken"
+        data-reveal="wipe"
+      >
+        <Image
+          src={team}
+          alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
+          widths={[480, 800, 1200, 1600]}
+          sizes="(min-width: 1200px) 660px, (min-width: 1024px) 56vw, 100vw"
+          loading="lazy"
+          class="aspect-[16/10] w-full object-cover"
+        />
       </div>
     </div>
 
     <div class="flex flex-col gap-8 lg:col-span-5">
-      <SectionHeading
+      <DisplayHeading
         id="quienes-somos"
         eyebrow="Quiénes somos"
-        title="Una consultora de ingeniería con base en Quilpué"
+        title="Una consultora de ingeniería con base en Quilpué."
+        emphasis="Quilpué"
+        size="md"
         lead="Nacimos en la Región de Valparaíso y llevamos más de 30 años proyectando obras sanitarias, viales y estructurales en Valparaíso y Coquimbo."
       />
       <blockquote
-        class="max-w-[52ch] border-l-2 border-brand pl-6 text-ink-muted"
+        class="max-w-[52ch] border-l-2 border-border-strong pl-6 text-ink-muted"
         data-reveal
       >
         <p>
