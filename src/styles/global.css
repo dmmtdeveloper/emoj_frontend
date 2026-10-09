@@ -6,6 +6,8 @@
 @import "@fontsource/urbanist/400.css";
 @import "@fontsource/urbanist/500.css";
 @import "@fontsource/urbanist/600.css";
+/* One italic, for the emphasized word of a few section titles. */
+@import "@fontsource/urbanist/500-italic.css";
 
 /* Space Grotesk, self-hosted: figures and data labels only (`font-data`). */
 @import "@fontsource/space-grotesk/400.css";

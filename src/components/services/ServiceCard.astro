@@ -1,24 +1,24 @@
 ---
 /**
- * Clickable service tile with the EMOJ signature shape. The whole tile is
- * one link (the title, stretched with ::after), so there is a single tab stop.
+ * Clickable service tile. The whole tile is one link (the title, stretched
+ * with ::after), so there is a single tab stop.
  *
  * Variants:
- * - `default`: icon, title, summary, "Ver servicio".
- * - `compact`: icon and title only on phones (summary from `md`), for the
- *   two-column home grid.
+ * - `default`: EMOJ signature shape; icon, title, summary, "Ver servicio"
+ *   (the /servicios list).
+ * - `compact`: a quiet block (radius-lg, sunken fill) for the home bento:
+ *   line icon, an arrow in a circle, the title, and the summary from `md`.
  * - `featured`: large photo tile for the home bento (needs `service.image`).
  *
- * Hover/focus: the tile lifts, the border turns brand, the icon redraws its
- * strokes and the arrow slides (motion.css `.icon-draw`; none under reduced
- * motion).
+ * Hover/focus: the tile lifts, the icon redraws its strokes and the arrow
+ * moves (motion.css `.icon-draw`; none under reduced motion).
  *
  * `photo` (compact and default tiles): a project photo that fades in behind
  * the content on hover or keyboard focus, under a plum overlay; the text
  * switches to light colors so it keeps its contrast. Decorative (`alt=""`):
  * the link names the service. Touch screens never show it (no hover).
  */
-import { ArrowRight } from "@lucide/astro";
+import { ArrowRight, ArrowUpRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import type { Service } from "../../lib/get-services";
@@ -62,14 +62,14 @@ const photoImage =
 const photoLayer =
   "pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 ease-(--ease-out) group-hover:opacity-100 group-has-[a:focus-visible]:opacity-100";
 const shell =
-  "group radius-signature relative isolate flex h-full flex-col overflow-hidden transition-[translate,box-shadow,border-color] duration-300 ease-(--ease-out) hover:-translate-y-1 has-[a:focus-visible]:-translate-y-1 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring";
+  "group relative isolate flex h-full flex-col overflow-hidden transition-[translate,box-shadow,border-color] duration-300 ease-(--ease-out) hover:-translate-y-1 has-[a:focus-visible]:-translate-y-1 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring";
 ---
 
 {featured ? (
   <article
     class:list={[
       shell,
-      "min-h-[340px] justify-end gap-4 bg-plum-950 p-6 pl-8 text-sand-50 shadow-(--shadow-md) md:p-10 md:pl-12 lg:min-h-full",
+      "min-h-[340px] justify-end gap-4 rounded-lg bg-plum-950 p-6 text-sand-50 md:p-8 lg:min-h-full",
     ]}
   >
     <Image
@@ -84,19 +84,9 @@ const shell =
       class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/90 via-plum-950/65 to-plum-950/25"
       aria-hidden="true"
     />
-    <div class="flex items-center justify-between gap-4">
-      <span class="icon-draw inline-flex size-14 items-center justify-center rounded-full bg-sand-50 text-plum-950">
-        <ServiceIcon name={icon} />
-      </span>
-      {number && (
-        <span
-          class="text-sm leading-5 font-medium tracking-[0.14em] opacity-80"
-          aria-hidden="true"
-        >
-          {number}
-        </span>
-      )}
-    </div>
+    <span class="inline-flex min-h-8 items-center self-start rounded-full border border-sand-50/30 bg-sand-50/15 px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.08em] uppercase">
+      Especialidad principal
+    </span>
     <Heading class="text-h2 mt-auto max-w-[14ch] pt-10">
       <a
         href={`/servicios/${slug}`}
@@ -107,25 +97,17 @@ const shell =
     </Heading>
     <p class="max-w-[44ch] text-sand-100">{summary}</p>
     <span
-      class="inline-flex items-center gap-2 pt-2 text-base leading-5 font-medium"
+      class="inline-flex size-14 items-center justify-center self-end rounded-full bg-sand-50 text-plum-950 transition-transform duration-300 ease-(--ease-out) group-hover:-translate-y-0.5 group-hover:translate-x-0.5 md:-mt-14"
       aria-hidden="true"
     >
-      Ver servicio
-      <ArrowRight
-        size={20}
-        stroke-width={1.75}
-        class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
-      />
+      <ArrowUpRight size={24} stroke-width={2} />
     </span>
   </article>
-) : (
+) : variant === "compact" ? (
   <article
     class:list={[
       shell,
-      "gap-4 border border-border bg-surface-raised shadow-(--shadow-sm) hover:border-brand hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md)",
-      variant === "compact"
-        ? "p-4 pl-6 md:p-8 md:pl-10"
-        : "p-6 pl-8 md:p-8 md:pl-10",
+      "justify-between gap-4 rounded-lg bg-surface-sunken p-5 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) md:p-6",
     ]}
   >
     {photo && (
@@ -155,8 +137,85 @@ const shell =
     <div class="flex items-start justify-between gap-3">
       <span
         class:list={[
-          "icon-draw inline-flex shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand",
-          variant === "compact" ? "size-11 md:size-12" : "size-12",
+          "icon-draw inline-flex text-ink transition-colors duration-300",
+          onPhoto.title,
+        ]}
+      >
+        <ServiceIcon name={icon} />
+      </span>
+      <span
+        class:list={[
+          "inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-sand-50/60",
+          onPhoto.title,
+        ]}
+        aria-hidden="true"
+      >
+        <ArrowUpRight size={16} stroke-width={2} />
+      </span>
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <Heading
+        class:list={[
+          "text-[18px] leading-6 font-semibold tracking-[-0.01em] text-ink hyphens-auto transition-colors duration-300 md:text-[22px] md:leading-7",
+          onPhoto.title,
+        ]}
+      >
+        <a
+          href={`/servicios/${slug}`}
+          class:list={[
+            link,
+            "text-ink hover:text-ink",
+            photo && "group-hover:text-sand-50 hover:text-sand-50",
+          ]}
+        >
+          {title}
+        </a>
+      </Heading>
+      <p
+        class:list={[
+          "hidden text-ink-muted transition-colors duration-300 md:block md:text-base md:leading-6",
+          onPhoto.muted,
+        ]}
+      >
+        {summary}
+      </p>
+    </div>
+  </article>
+) : (
+  <article
+    class:list={[
+      shell,
+      "radius-signature gap-4 border border-border bg-surface-raised p-6 pl-8 shadow-(--shadow-sm) hover:border-brand hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) md:p-8 md:pl-10",
+    ]}
+  >
+    {photo && (
+      <div class={photoLayer} aria-hidden="true">
+        {"width" in photo ? (
+          <Image
+            src={photo.src}
+            alt=""
+            {...fitWidth(photo, 640)}
+            sizes="(min-width: 1024px) 300px, 50vw"
+            loading="lazy"
+            class={photoImage}
+          />
+        ) : (
+          <Image
+            src={photo.src}
+            alt=""
+            widths={[400, 640]}
+            sizes="(min-width: 1024px) 300px, 50vw"
+            loading="lazy"
+            class={photoImage}
+          />
+        )}
+        <div class="absolute inset-0 bg-linear-to-t from-plum-950/85 via-plum-950/70 to-plum-950/60" />
+      </div>
+    )}
+    <div class="flex items-start justify-between gap-3">
+      <span
+        class:list={[
+          "icon-draw inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand",
         ]}
       >
         <ServiceIcon name={icon} />
@@ -177,9 +236,7 @@ const shell =
       class:list={[
         "font-semibold text-ink hyphens-auto transition-colors duration-300",
         onPhoto.title,
-        variant === "compact"
-          ? "text-[17px] leading-[22px] md:text-[22px] md:leading-7"
-          : "text-[22px] leading-7",
+        "text-[22px] leading-7",
       ]}
     >
       <a
@@ -197,7 +254,6 @@ const shell =
       class:list={[
         "text-ink-muted transition-colors duration-300",
         onPhoto.muted,
-        variant === "compact" && "hidden md:block",
       ]}
     >
       {summary}
@@ -206,7 +262,7 @@ const shell =
       class:list={[
         "mt-auto items-center gap-2 pt-1 text-base leading-5 font-medium text-brand transition-colors duration-300",
         onPhoto.link,
-        variant === "compact" ? "hidden md:inline-flex" : "inline-flex",
+        "inline-flex",
       ]}
       aria-hidden="true"
     >
@@ -217,13 +273,5 @@ const shell =
         class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
       />
     </span>
-    {variant === "compact" && (
-      <ArrowRight
-        size={20}
-        stroke-width={1.75}
-        aria-hidden="true"
-        class="mt-auto text-brand transition-transform duration-300 group-hover:translate-x-1 md:hidden"
-      />
-    )}
   </article>
 )}
