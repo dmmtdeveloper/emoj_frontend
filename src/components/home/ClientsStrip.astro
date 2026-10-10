@@ -12,7 +12,7 @@
  * `style-src 'self'`, which blocks inline style attributes.
  *
  * The second copy of the list is hidden from assistive tech. It pauses on
- * hover, on focus and with the pause toggle (a checkbox, so it works without
+ * hover (with a mouse), on focus and with the pause toggle (a checkbox, so it works without
  * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
  * list.
  *
@@ -31,7 +31,8 @@ const { tone = "surface" } = Astro.props;
 
 const TONES = {
   surface: {
-    section: "border-b border-border bg-surface",
+    section:
+      "border-b border-border bg-surface [--marquee-fade:var(--surface)]",
     container: "gap-5 py-10 md:py-12",
     heading: "eyebrow",
     control:
@@ -39,7 +40,7 @@ const TONES = {
     item: "text-ink-muted hover:text-ink",
   },
   accent: {
-    section: "text-on-accent",
+    section: "text-on-accent [--marquee-fade:var(--accent)]",
     // The rule spans the content width, like the facts rows above it.
     container:
       "gap-5 py-8 before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-plum-950 md:py-10 md:before:inset-x-6",
