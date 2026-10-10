@@ -23,6 +23,7 @@ function project(overrides: Partial<AdminProject> = {}): AdminProject {
     year: 0,
     services: ["obras-sanitarias"],
     summary: "Resumen",
+    magnitude: { label: "", value: "", unit: "" },
     challenge: "",
     solution: "",
     result: "",
@@ -68,6 +69,33 @@ describe("projectToForm / formToProjectInput", () => {
     );
     expect(input.title).toBe("Puente");
     expect(input.year).toBe(2019);
+  });
+
+  it("round-trips the magnitude, trimmed", () => {
+    const values = projectToForm(
+      project({ magnitude: { label: "Caudal", value: "1.200", unit: "l/s" } }),
+    );
+    expect(values).toMatchObject({
+      magnitudeLabel: "Caudal",
+      magnitudeValue: "1.200",
+      magnitudeUnit: "l/s",
+    });
+    const input = formToProjectInput(
+      { ...values, magnitudeLabel: " Caudal ", magnitudeUnit: " l/s " },
+      { isNew: false },
+    );
+    expect(input.magnitude).toEqual({
+      label: "Caudal",
+      value: "1.200",
+      unit: "l/s",
+    });
+  });
+
+  it("sends an empty magnitude to clear it", () => {
+    const input = formToProjectInput(form({ title: "Puente" }), {
+      isNew: false,
+    });
+    expect(input.magnitude).toEqual({ label: "", value: "", unit: "" });
   });
 
   it("leaves the slug out of a new project when it is empty", () => {
@@ -130,6 +158,29 @@ describe("projectFormSchema", () => {
     ).toHaveProperty("seoDescription");
   });
 
+  it("checks the magnitude like the API", () => {
+    const errorsOf = (values: Partial<ProjectFormValues>) => {
+      const r = projectFormSchema(NOW).safeParse(
+        form({ title: "P", services: ["geotecnia"], ...values }),
+      );
+      return r.success ? [] : r.error.issues.map((i) => i.path.join("."));
+    };
+    expect(errorsOf({ magnitudeValue: "1.200", magnitudeUnit: "l/s" })).toEqual(
+      [],
+    );
+    expect(errorsOf({ magnitudeUnit: "l/s" })).toEqual(["magnitudeValue"]);
+    expect(errorsOf({ magnitudeValue: "mucho" })).toEqual(["magnitudeValue"]);
+    expect(
+      errorsOf({ magnitudeValue: "1", magnitudeLabel: "x".repeat(41) }),
+    ).toEqual(["magnitudeLabel"]);
+    expect(errorsOf({ magnitudeValue: "1".repeat(25) })).toEqual([
+      "magnitudeValue",
+    ]);
+    expect(
+      errorsOf({ magnitudeValue: "1", magnitudeUnit: "u".repeat(17) }),
+    ).toEqual(["magnitudeUnit"]);
+  });
+
   it("rejects the same image twice in the gallery", () => {
     expect(errors({ ...valid, gallery: ["m1", "m1"] })).toHaveProperty(
       "gallery",
@@ -179,6 +230,17 @@ describe("formErrorsFromProblem", () => {
       coverMediaId: "Revisa este campo.",
     });
     expect(result.other).toEqual(["status"]);
+  });
+
+  it("maps magnitude errors to their fields", () => {
+    const result = formErrorsFromProblem(422, [
+      { field: "magnitude.value", message: "must contain a number" },
+      { field: "magnitude.unit", message: "must be at most 16 characters" },
+    ]);
+    expect(result.fields.magnitudeValue).toBeTruthy();
+    expect(result.fields.magnitudeUnit).toBe(
+      "Puede tener hasta 16 caracteres.",
+    );
   });
 
   it("explains a slug already in use", () => {
