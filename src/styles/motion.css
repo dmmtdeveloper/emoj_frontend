@@ -1326,3 +1326,48 @@
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Brand pattern and supergraphic (2025 brand book)                    */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The official pattern (design/brand/oficial/patron-1.svg) as a seamless
+ * tile, public/brand/patron.svg: the isotype repeated like a river current.
+ * It is decoration (aria-hidden, under the content) and only moves with the
+ * scroll, one tile across the element's pass through the viewport, so
+ * nothing plays on its own.
+ */
+.brand-pattern {
+  background-image: url("/brand/patron.svg");
+  background-repeat: repeat;
+  background-size: 260px 195px;
+  opacity: 0.16;
+  mask-image: linear-gradient(to left, black 25%, transparent 95%);
+}
+
+@keyframes pattern-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -260px 0;
+  }
+}
+
+/* The big stroke behind the facts draws itself as the band scrolls in. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .brand-pattern {
+      animation: pattern-flow linear both;
+      animation-timeline: var(--timeline-view, view());
+    }
+
+    .facts-mark .isotipo-mark__stroke {
+      stroke-dasharray: 1;
+      animation: draw-back linear both;
+      animation-timeline: var(--timeline-view, view());
+      animation-range: entry 0% cover 55%;
+    }
+  }
+}

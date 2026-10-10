@@ -1,8 +1,11 @@
 ---
 /**
  * The EMOJ isotype (hand-drawn stroke + two dots) as inline SVG, so it can
- * be drawn with CSS (`pathLength="1"` + stroke-dashoffset). Source:
- * `src/assets/brand/emoj-isotipo-nav.svg` (keep the paths in sync).
+ * be drawn with CSS (`pathLength="1"` + stroke-dashoffset). Geometry from
+ * the official brand files (design/brand/oficial): `weight="bold"` (default)
+ * is `isotipo-bold.svg`, the heavy stroke for small sizes such as the
+ * header; `weight="fine"` uses the `isotipo-recorte` stroke and dots on the
+ * same path.
  *
  * Colors come from tokens through custom properties, so the same mark works
  * on every surface:
@@ -22,15 +25,21 @@ interface Props extends Omit<HTMLAttributes<"svg">, "viewBox" | "role"> {
   /** Draw the stroke and pop the dots when the page loads. */
   draw?: boolean;
   tone?: "brand" | "mono";
+  /** Official stroke: `bold` for small sizes, `fine` (recorte) for large. */
+  weight?: "bold" | "fine";
 }
 
 const {
   label = "",
   draw = false,
   tone = "brand",
+  weight = "bold",
   class: className,
   ...rest
 } = Astro.props;
+
+const stroke = weight === "bold" ? "20" : "10.19";
+const dot = weight === "bold" ? "10.5" : "7.93";
 
 const a11y =
   label === ""
@@ -39,7 +48,7 @@ const a11y =
 ---
 
 <svg
-  viewBox="0 0 470 171"
+  viewBox="100 46 652 245"
   fill="none"
   focusable="false"
   class:list={[
@@ -54,23 +63,27 @@ const a11y =
   <path
     class="isotipo-mark__ghost"
     pathLength="1"
-    stroke-width="10.19"
+    stroke-width={stroke}
     stroke-miterlimit="10"
-    d="M443.892 73.2754C392.381 90.721 379.186 47.7751 352.023 91.6072C326.849 132.223 319.501 169.773 287.429 165.192C223.931 156.123 309.383 20.7239 259.651 6.52299C189.931 -13.3955 142.36 183.217 67.5435 164.091C5.30653 148.182 97.9414 -11.7446 129.202 14.0773C152.5 33.324 84.6338 85.6253 25.7069 101.949"
+    d="M704.94,151.52c-68.63,24.41-86.21-35.68-122.4,25.65-33.54,56.83-43.33,109.37-86.06,102.96-84.6-12.69,29.25-202.14-37.01-222.01-92.89-27.87-156.27,247.23-255.95,220.47-82.92-22.26,40.5-246.03,82.15-209.9,31.04,26.93-59.38,100.11-137.89,122.95"
   ></path>
   <path
     class="isotipo-mark__stroke"
     pathLength="1"
-    stroke-width="10.19"
+    stroke-width={stroke}
     stroke-miterlimit="10"
-    d="M443.892 73.2754C392.381 90.721 379.186 47.7751 352.023 91.6072C326.849 132.223 319.501 169.773 287.429 165.192C223.931 156.123 309.383 20.7239 259.651 6.52299C189.931 -13.3955 142.36 183.217 67.5435 164.091C5.30653 148.182 97.9414 -11.7446 129.202 14.0773C152.5 33.324 84.6338 85.6253 25.7069 101.949"
+    d="M704.94,151.52c-68.63,24.41-86.21-35.68-122.4,25.65-33.54,56.83-43.33,109.37-86.06,102.96-84.6-12.69,29.25-202.14-37.01-222.01-92.89-27.87-156.27,247.23-255.95,220.47-82.92-22.26,40.5-246.03,82.15-209.9,31.04,26.93-59.38,100.11-137.89,122.95"
   ></path>
-  <path
+  <circle
     class="isotipo-mark__dot isotipo-mark__dot--start"
-    d="M5.95199 112.333C9.23918 112.333 11.904 109.796 11.904 106.666C11.904 103.535 9.23918 100.998 5.95199 100.998C2.6648 100.998 0 103.535 0 106.666C0 109.796 2.6648 112.333 5.95199 112.333Z"
-  ></path>
-  <path
+    cx="121.46"
+    cy="198.25"
+    r={dot}
+  ></circle>
+  <circle
     class="isotipo-mark__dot isotipo-mark__dot--end"
-    d="M463.625 71.7677C466.912 71.7677 469.577 69.2302 469.577 66.1001C469.577 62.9701 466.912 60.4326 463.625 60.4326C460.337 60.4326 457.673 62.9701 457.673 66.1001C457.673 69.2302 460.337 71.7677 463.625 71.7677Z"
-  ></path>
+    cx="731.23"
+    cy="141.49"
+    r={dot}
+  ></circle>
 </svg>

@@ -2,7 +2,8 @@
 /**
  * Closing call to action: quote button plus WhatsApp and email.
  * Sits on `surface-sunken`/`surface-raised` with the signature shape (not
- * `surface-inverse`, which is reserved for the facts band and the footer).
+ * `surface-inverse`, which is reserved for the facts band and the footer),
+ * with the official brand pattern fading in from the right.
  *
  * `emphasis`: a word or phrase of the title set in Urbanist italic, in
  * `brand` (the redesign's emphasis). Ignored when the title does not
@@ -57,6 +58,11 @@ const contactLink =
       ]}
       data-reveal
     >
+      {/* The brand pattern, fading in from the right (motion.css). */}
+      <span
+        class="brand-pattern pointer-events-none absolute inset-y-0 right-0 -z-10 w-full md:w-3/5"
+        aria-hidden="true"
+      ></span>
       <div class="flex flex-col gap-5">
         <h2 class="max-w-[18ch] text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.04em] text-balance text-ink">
           {parts ? (
