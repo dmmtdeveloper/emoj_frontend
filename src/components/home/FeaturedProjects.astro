@@ -1,8 +1,10 @@
 ---
 /**
- * Home: the published projects (featured first, src/lib/content/
- * rail-projects.ts) as a horizontal rail of tall photo cards on a dark
- * section ("Ya son obra."), showing whole cards within the page container. The rail scrolls natively
+ * The published projects as a horizontal rail of tall photo cards on a
+ * dark section, showing whole cards within the page container. On the home
+ * it is "Ya son obra." (featured first, src/lib/content/rail-projects.ts);
+ * at the foot of a project page it is "Más proyectos", with its own heading
+ * (`id`, `title`, `emphasis`) and a `footer` slot. The rail scrolls natively
  * (scroll-snap, touch, trackpad); src/scripts/project-rail.ts adds the
  * arrows, the "01 / 07" counter and the progress line. The parent renders
  * this section only when there is at least one featured project.
@@ -20,14 +22,30 @@ import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
+import { splitEmphasis } from "../../lib/emphasis";
 import ButtonLink from "../ui/ButtonLink.astro";
 
 interface Props {
   projects: ProjectSummary[];
   serviceTitles: Record<string, string>;
+  /** Heading id, title and its emphasized word (the home: "Ya son obra."). */
+  id?: string;
+  title?: string;
+  emphasis?: string;
+  /** A hairline on top, when it follows another plum section. */
+  divided?: boolean;
 }
 
-const { projects, serviceTitles } = Astro.props;
+const {
+  projects,
+  serviceTitles,
+  id = "proyectos-destacados",
+  title = "Ya son obra.",
+  emphasis = "obra",
+  divided = false,
+} = Astro.props;
+const parts = splitEmphasis(title, emphasis);
+const hasFooter = Astro.slots.has("footer");
 const total = String(projects.length).padStart(2, "0");
 const facts = (project: ProjectSummary) =>
   [project.location || project.region, project.year]
@@ -42,8 +60,11 @@ const round =
 ---
 
 <section
-  aria-labelledby="proyectos-destacados"
-  class="overflow-clip bg-plum-950 text-sand-50"
+  aria-labelledby={id}
+  class:list={[
+    "overflow-clip bg-plum-950 text-sand-50",
+    divided && "border-t border-sand-50/10",
+  ]}
   data-rail
 >
   <div class="flex flex-col gap-10 py-16 md:gap-12 md:py-28 lg:py-32">
@@ -56,10 +77,18 @@ const round =
           Proyectos · <span data-rail-count>01</span> / {total}
         </p>
         <h2
-          id="proyectos-destacados"
+          id={id}
           class="text-[clamp(2.25rem,1.6rem+2.6vw,4rem)] leading-[0.98] font-semibold tracking-[-0.05em]"
         >
-          Ya son <em class="font-medium text-sage-300">obra</em>.
+          {parts ? (
+            <>
+              {parts.before}
+              <em class="font-medium text-sage-300">{parts.word}</em>
+              {parts.after}
+            </>
+          ) : (
+            title
+          )}
         </h2>
       </div>
       <div class="flex items-center gap-3">
@@ -155,6 +184,11 @@ const round =
         Desliza para ver más
       </p>
     </div>
+    {hasFooter && (
+      <div class="container-site">
+        <slot name="footer" />
+      </div>
+    )}
   </div>
 </section>
 
