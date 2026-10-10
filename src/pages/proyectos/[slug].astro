@@ -1,12 +1,30 @@
 ---
-import { ArrowRight } from "@lucide/astro";
+/**
+ * Project page, in the home's voice:
+ * - A photo-led hero: the cover full-bleed with a slow push-in and light
+ *   veils under the transparent header (it is also where the card's photo
+ *   lands in the view transition), the title, the summary and the quote
+ *   action, and a data strip like the home hero's (specialty, place,
+ *   client, year: only what the project has).
+ * - The story (challenge, solution, result), only when it has text.
+ * - The gallery as a mosaic that opens a full-screen viewer.
+ * - "Más proyectos": the home's rail, projects sharing a specialty first,
+ *   with the previous and next project, so the page never ends empty.
+ * - The closing call to action, with the project in the WhatsApp message.
+ */
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
-import ServiceIcon from "../../components/services/ServiceIcon.astro";
-import ArrowLink from "../../components/ui/ArrowLink.astro";
+import FeaturedProjects from "../../components/home/FeaturedProjects.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
-import CtaBlock from "../../components/ui/CtaBlock.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
-import SectionHeading from "../../components/ui/SectionHeading.astro";
+import CtaBlock from "../../components/ui/CtaBlock.astro";
+import DisplayHeading from "../../components/ui/DisplayHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import type { MediaRef } from "../../lib/api/client";
 import { contentSource } from "../../lib/content";
@@ -14,7 +32,11 @@ import { fitWidth } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { setPreviewHeaders } from "../../lib/content/preview";
 import { projectTransitionName } from "../../lib/content/transition";
-import { getServices } from "../../lib/get-services";
+import {
+  adjacentProjects,
+  relatedProjects,
+} from "../../lib/content/related-projects";
+import { getServices, getServiceTitles } from "../../lib/get-services";
 import { projectJsonLd } from "../../lib/structured-data";
 
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
@@ -68,15 +90,42 @@ const story = [
   { id: "resultado", title: "El resultado", text: project.result },
 ].filter((section) => section.text.trim() !== "");
 
-/** The project sheet: the place first (the big sage block), then the rest. */
-const sheet = [
+/** The data strip: only what the project has. */
+const facts = [
   { label: "Ubicación", value: place },
   { label: "Cliente", value: project.client },
   { label: "Año", value: project.year ? String(project.year) : "" },
 ].filter((item) => item.value !== "");
+const factCount = facts.length + (services.length > 0 ? 1 : 0);
+const factCols =
+  ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3", "md:grid-cols-4"][
+    factCount
+  ] ?? "md:grid-cols-4";
 const eyebrow = [services[0]?.data.title, project.location]
   .filter(Boolean)
   .join(" · ");
+
+/**
+ * Mosaic tiles: one photo fills the row; two share it; from three on, the
+ * first is a large 2×2 tile.
+ */
+function galleryTile(index: number, count: number): string {
+  if (count === 1) return "col-span-2 md:col-span-4";
+  if (count === 2) return "md:col-span-2";
+  return index === 0 ? "col-span-2 row-span-2" : "";
+}
+
+/** Full-size versions for the gallery viewer. */
+const galleryFull = await Promise.all(
+  project.gallery.map((image) =>
+    getImage({ src: photo(image), ...fitWidth(image, 1920) }),
+  ),
+);
+
+const portfolio = await contentSource().getProjects();
+const more = relatedProjects(portfolio, project, 8);
+const { prev, next } = adjacentProjects(portfolio, project.slug);
+const serviceTitles = await getServiceTitles();
 
 const firstService = project.services[0];
 const ctaHref = firstService
@@ -87,6 +136,7 @@ const ctaHref = firstService
 <BaseLayout
   whatsapp={whatsapp}
   preview={isPreview}
+  headerOverlay={Boolean(project.cover)}
   title={project.seo.title}
   description={project.seo.description}
   {...(ogImage
@@ -109,17 +159,69 @@ const ctaHref = firstService
     ),
   ]}
 >
-  <section aria-labelledby="ficha-titulo" class="bg-plum-950 text-sand-50">
-    <div class="container-site grid gap-8 py-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:py-20">
-      <div class="flex min-w-0 flex-col gap-8 lg:col-start-1 lg:row-start-1">
-        <Breadcrumb
-          inverse
-          items={[
-            { label: "Inicio", href: "/" },
-            { label: "Proyectos", href: "/proyectos" },
-            { label: project.title, href: `/proyectos/${project.slug}` },
-          ]}
-        />
+  <section
+    aria-labelledby="ficha-titulo"
+    class:list={[
+      "relative isolate overflow-hidden bg-plum-950 text-sand-50",
+      project.cover && "-mt-(--header-h)",
+    ]}
+  >
+    {project.cover && (
+      <>
+        {/* The cover, drifting slower than the page on desktop (motion.css). */}
+        <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+          <Image
+            src={photo(project.cover)}
+            alt={project.cover.alt}
+            {...fitWidth(project.cover, 2000)}
+            widths={[640, 960, 1280, 1600, 2000]}
+            sizes="100vw"
+            loading="eager"
+            fetchpriority="high"
+            data-vt={projectTransitionName(project.slug)}
+            class="vt-project vt-cover photo-zoom h-full w-full object-cover"
+          />
+        </div>
+        {/* Light veils, as on the home hero: the photo leads. */}
+        <div class="ficha-veils pointer-events-none absolute inset-0 -z-10">
+          <div
+            class="absolute inset-0 bg-linear-to-t from-plum-950/95 via-plum-950/50 via-55% to-plum-950/25 md:bg-plum-950/20 md:bg-none"
+            aria-hidden="true"
+          ></div>
+          <div
+            class="absolute inset-0 hidden bg-linear-to-r from-plum-950/85 via-plum-950/45 via-45% to-transparent to-75% md:block"
+            aria-hidden="true"
+          ></div>
+          <div
+            class="absolute inset-0 hidden bg-linear-to-t from-plum-950/80 to-transparent to-40% md:block"
+            aria-hidden="true"
+          ></div>
+        </div>
+      </>
+    )}
+
+    <div
+      class:list={[
+        "ficha-content flex flex-col",
+        project.cover && "min-h-[max(620px,92svh)]",
+      ]}
+    >
+      <div
+        class:list={[
+          "hero__content container-site flex flex-1 flex-col justify-end gap-6 pb-10 md:gap-7 md:pb-12",
+          project.cover ? "pt-[calc(var(--header-h)+40px)]" : "pt-12",
+        ]}
+      >
+        <div class="hidden md:block">
+          <Breadcrumb
+            inverse
+            items={[
+              { label: "Inicio", href: "/" },
+              { label: "Proyectos", href: "/proyectos" },
+              { label: project.title, href: `/proyectos/${project.slug}` },
+            ]}
+          />
+        </div>
         <div class="flex flex-col gap-5">
           {eyebrow && (
             <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
@@ -128,7 +230,7 @@ const ctaHref = firstService
           )}
           <h1
             id="ficha-titulo"
-            class="text-[clamp(2.25rem,1.6rem+2.8vw,4.25rem)] leading-[1.02] font-semibold tracking-[-0.045em] text-balance"
+            class="max-w-[24ch] text-[clamp(2rem,1.4rem+2.2vw,3.25rem)] leading-[1.04] font-semibold tracking-[-0.04em] text-balance"
           >
             {project.title}
           </h1>
@@ -138,198 +240,296 @@ const ctaHref = firstService
             </p>
           )}
         </div>
+        <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-7">
+          <ButtonLink
+            href={ctaHref}
+            variant="on-photo-solid"
+            class="min-h-12 px-6 text-base"
+          >
+            Cotiza un proyecto similar
+          </ButtonLink>
+          <a
+            href="/proyectos"
+            class="group hidden min-h-12 items-center gap-2 text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:inline-flex"
+          >
+            Ver todos los proyectos
+            <ArrowRight
+              size={20}
+              stroke-width={1.75}
+              aria-hidden="true"
+              class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+            />
+          </a>
+        </div>
       </div>
 
-      {project.cover && (
-        <div class="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <Image
-            src={photo(project.cover)}
-            alt={project.cover.alt}
-            {...fitWidth(project.cover, 1600)}
-            widths={[480, 800, 1200, 1600]}
-            sizes="(min-width: 1200px) 600px, (min-width: 1024px) 50vw, calc(100vw - 32px)"
-            loading="eager"
-            fetchpriority="high"
-            data-vt={projectTransitionName(project.slug)}
-            class="vt-project vt-cover aspect-[4/3] w-full rounded-l-signature object-cover lg:sticky lg:top-24 lg:aspect-auto lg:h-[min(80vh,760px)]"
-          />
-        </div>
-      )}
-
-      <div class="flex min-w-0 flex-col gap-8 lg:col-start-1 lg:row-start-2">
-        {sheet.length > 0 && (
-          <dl class="grid grid-cols-2 gap-3">
-            {sheet.map((item, i) => (
-              <div
-                class:list={[
-                  "flex flex-col gap-1.5 rounded-lg px-5 py-4 md:px-6 md:py-5",
-                  i === 0
-                    ? "col-span-2 bg-accent text-on-accent"
-                    : "bg-plum-900",
-                  i > 0 &&
-                    i === sheet.length - 1 &&
-                    i % 2 === 1 &&
-                    "col-span-2",
-                ]}
-              >
-                <dt
-                  class:list={[
-                    "font-data text-[12px] leading-4 font-medium tracking-[0.1em] uppercase",
-                    i === 0 ? "text-on-accent" : "text-sand-300",
-                  ]}
-                >
-                  {item.label}
+      {factCount > 0 && (
+        <div class="container-site">
+          <dl
+            class:list={[
+              "grid grid-cols-2 border-t border-sand-50/20",
+              factCols,
+            ]}
+          >
+            {services.length > 0 && (
+              <div class="flex flex-col gap-1.5 border-sand-50/20 py-4 pr-4 even:border-l even:pl-4 md:border-l md:px-6 md:py-5 md:first:border-l-0 md:first:pl-0">
+                <dt class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+                  {services.length === 1 ? "Especialidad" : "Especialidades"}
                 </dt>
-                <dd
-                  class:list={[
-                    "font-data font-medium tracking-[-0.02em]",
-                    i === 0
-                      ? "text-[28px] leading-9 md:text-[36px] md:leading-10"
-                      : "text-xl leading-7",
-                  ]}
-                >
-                  {item.value}
+                <dd class="font-data text-[17px] leading-6 font-medium md:text-xl md:leading-7">
+                  {services.map((service, i) => (
+                    <>
+                      {i > 0 && ", "}
+                      <a
+                        href={`/servicios/${service.data.slug}`}
+                        class="text-sand-50 underline decoration-sand-50/40 underline-offset-4 hover:text-sand-50 hover:decoration-sand-50"
+                      >
+                        {service.data.title}
+                      </a>
+                    </>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {facts.map((fact) => (
+              <div class="flex flex-col gap-1.5 border-sand-50/20 py-4 pr-4 even:border-l even:pl-4 md:border-l md:px-6 md:py-5 md:first:border-l-0 md:first:pl-0">
+                <dt class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+                  {fact.label}
+                </dt>
+                <dd class="font-data text-[17px] leading-6 font-medium text-sand-50 md:text-xl md:leading-7">
+                  {fact.value}
                 </dd>
               </div>
             ))}
           </dl>
-        )}
-
-        {services.length > 0 && (
-          <div class="flex flex-col gap-3">
-            <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
-              {services.length === 1 ? "Especialidad" : "Especialidades"}
-            </p>
-            <ul class="flex flex-wrap gap-2">
-              {services.map((service) => (
-                <li>
-                  <a
-                    href={`/servicios/${service.data.slug}`}
-                    class="inline-flex min-h-9 items-center rounded-full border border-sand-50/30 px-3.5 text-sm leading-5 font-medium text-sand-50 no-underline transition-colors hover:border-sand-50/70 hover:text-sand-50"
-                  >
-                    {service.data.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {story.length > 0 && (
-          <ol class="flex flex-col border-b border-plum-800">
-            {story.map((section, i) => (
-              <li class="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-t border-plum-800 py-6">
-                <span
-                  class="font-data text-sm leading-7 font-medium text-sage-300"
-                  aria-hidden="true"
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div class="flex flex-col gap-3">
-                  <h2
-                    id={section.id}
-                    class="text-[22px] leading-7 font-semibold"
-                  >
-                    {section.title}
-                  </h2>
-                  <div class="flex max-w-[65ch] flex-col gap-4 text-sand-100">
-                    {paragraphs(section.text).map((p) => (
-                      <p>{p}</p>
-                    ))}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-
-        <ButtonLink
-          href={ctaHref}
-          variant="sage"
-          pill
-          class="min-h-13 self-start px-7 text-base"
-        >
-          Cotiza un proyecto similar
-          <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-        </ButtonLink>
-      </div>
+        </div>
+      )}
     </div>
   </section>
 
-  {project.gallery.length > 0 && (
-    <section class="bg-surface-sunken" aria-labelledby="galeria">
-      <div class="container-site flex flex-col gap-8 py-16 md:py-24">
-        <SectionHeading id="galeria" eyebrow="En terreno" title="Galería" />
-        <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
-          {project.gallery.map((image) => (
-            <li>
-              <Image
-                src={photo(image)}
-                alt={image.alt}
-                {...fitWidth(image, 800)}
-                widths={[320, 640, 800]}
-                sizes="(min-width: 1200px) 373px, (min-width: 768px) 31vw, 46vw"
-                loading="lazy"
-                class="aspect-[4/3] w-full rounded-lg object-cover"
-              />
+  {story.length > 0 && (
+    <section aria-labelledby="ficha-relato" class="bg-surface">
+      <div class="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:py-28">
+        <div class="lg:sticky lg:top-28 lg:self-start">
+          <DisplayHeading
+            id="ficha-relato"
+            eyebrow="El proyecto"
+            title="Del desafío a la obra."
+            emphasis="obra"
+          />
+        </div>
+        <ol class="flex flex-col border-b border-border" data-reveal-stagger>
+          {story.map((section, i) => (
+            <li class="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-t border-border py-7">
+              <span
+                class="font-data text-sm leading-7 font-medium text-brand"
+                aria-hidden="true"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div class="flex flex-col gap-3">
+                <h3
+                  id={section.id}
+                  class="text-[22px] leading-7 font-semibold tracking-[-0.015em]"
+                >
+                  {section.title}
+                </h3>
+                <div class="flex max-w-[65ch] flex-col gap-4 text-ink-muted">
+                  {paragraphs(section.text).map((p) => (
+                    <p>{p}</p>
+                  ))}
+                </div>
+              </div>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
     </section>
   )}
 
-  {services.length > 0 && (
+  {project.gallery.length > 0 && (
     <section
-      class:list={[
-        project.gallery.length > 0 ? "bg-surface" : "bg-surface-sunken",
-      ]}
-      aria-labelledby="servicios-relacionados"
+      aria-labelledby="galeria"
+      class:list={[story.length > 0 ? "bg-surface-sunken" : "bg-surface"]}
     >
-      <div class="container-site flex flex-col gap-8 py-16 md:py-24">
-        <SectionHeading
-          id="servicios-relacionados"
-          eyebrow="Especialidades"
-          title="Servicios relacionados"
-        >
-          <ArrowLink slot="action" href="/proyectos">
-            Ver todos los proyectos
-          </ArrowLink>
-        </SectionHeading>
+      <div class="container-site flex flex-col gap-10 py-16 md:gap-12 md:py-24">
+        <DisplayHeading
+          id="galeria"
+          eyebrow={`En terreno · ${String(project.gallery.length).padStart(2, "0")} fotos`}
+          title="Así se ve en terreno."
+          emphasis="terreno"
+        />
         <ul
-          class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5"
           data-reveal-stagger
         >
-          {services.map((service) => (
-            <li>
-              <a
-                href={`/servicios/${service.data.slug}`}
-                class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
+          {project.gallery.map((image, i) => (
+            <li class:list={[galleryTile(i, project.gallery.length)]}>
+              <button
+                type="button"
+                class="group relative block h-full w-full cursor-zoom-in overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
+                data-lightbox-item
+                data-index={i}
+                data-full={galleryFull[i]?.src}
+                data-alt={image.alt}
               >
-                <span class="text-brand">
-                  <ServiceIcon name={service.data.icon} size={20} />
-                </span>
-                <span class="flex-1">{service.data.title}</span>
-                <ArrowRight
-                  size={20}
-                  stroke-width={1.75}
-                  aria-hidden="true"
-                  class="text-ink-muted transition-transform duration-200 group-hover:translate-x-1"
+                <Image
+                  src={photo(image)}
+                  alt={image.alt}
+                  {...fitWidth(image, i === 0 ? 1600 : 640)}
+                  widths={i === 0 ? [640, 960, 1200, 1600] : [320, 480, 640]}
+                  sizes={
+                    i === 0
+                      ? "(min-width: 1200px) 1150px, 100vw"
+                      : "(min-width: 1200px) 285px, (min-width: 768px) 25vw, 50vw"
+                  }
+                  loading="lazy"
+                  class:list={[
+                    "h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]",
+                    project.gallery.length === 1
+                      ? "aspect-[4/3] md:aspect-[21/9]"
+                      : "aspect-[4/3]",
+                  ]}
                 />
-              </a>
+                <span class="sr-only">
+                  Ver la foto {i + 1} de {project.gallery.length} en grande
+                </span>
+              </button>
             </li>
           ))}
         </ul>
       </div>
+
+      <dialog
+        class="lightbox m-0 h-dvh max-h-none w-full max-w-none bg-plum-950/95 p-0 text-sand-50 backdrop:bg-plum-950/80"
+        aria-label="Galería de fotos"
+        data-lightbox
+      >
+        <div class="flex h-full flex-col">
+          <div class="container-site flex h-(--header-h) shrink-0 items-center justify-between">
+            <p
+              class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 tabular-nums"
+              aria-live="polite"
+              data-lightbox-count
+            >
+              01 / {String(project.gallery.length).padStart(2, "0")}
+            </p>
+            <button
+              type="button"
+              class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] leading-5 font-medium text-sand-50 hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-sand-50"
+              data-lightbox-close
+            >
+              <X size={20} stroke-width={1.75} aria-hidden="true" />
+              Cerrar
+            </button>
+          </div>
+          <figure class="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-6 md:px-20">
+            <img
+              class="max-h-full max-w-full rounded-lg object-contain"
+              alt=""
+              data-lightbox-image
+            />
+            {project.gallery.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  class="absolute top-1/2 left-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:left-6"
+                  aria-label="Foto anterior"
+                  data-lightbox-prev
+                >
+                  <ChevronLeft
+                    size={24}
+                    stroke-width={1.75}
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  class="absolute top-1/2 right-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:right-6"
+                  aria-label="Foto siguiente"
+                  data-lightbox-next
+                >
+                  <ChevronRight
+                    size={24}
+                    stroke-width={1.75}
+                    aria-hidden="true"
+                  />
+                </button>
+              </>
+            )}
+          </figure>
+        </div>
+      </dialog>
     </section>
+  )}
+
+  {more.length > 0 && (
+    <FeaturedProjects
+      projects={more}
+      serviceTitles={serviceTitles}
+      id="mas-proyectos"
+      title="Más proyectos."
+      emphasis="proyectos"
+      divided={story.length === 0 && project.gallery.length === 0}
+    >
+      {prev && next && (
+        <nav
+          slot="footer"
+          aria-label="Proyecto anterior y siguiente"
+          class="grid gap-3 border-t border-sand-50/15 pt-8 sm:grid-cols-2 sm:gap-8"
+        >
+          <a
+            href={`/proyectos/${prev.slug}`}
+            rel="prev"
+            class="group flex min-h-11 flex-col gap-1 text-sand-50 no-underline hover:text-sand-50"
+          >
+            <span class="inline-flex items-center gap-2 font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+              <ArrowLeft
+                size={16}
+                stroke-width={2}
+                aria-hidden="true"
+                class="transition-transform duration-300 group-hover:-translate-x-1"
+              />
+              Anterior
+            </span>
+            <span class="text-lg leading-6 font-semibold text-balance">
+              {prev.title}
+            </span>
+          </a>
+          <a
+            href={`/proyectos/${next.slug}`}
+            rel="next"
+            class="group flex min-h-11 flex-col gap-1 text-sand-50 no-underline hover:text-sand-50 sm:items-end sm:text-right"
+          >
+            <span class="inline-flex items-center gap-2 font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
+              Siguiente
+              <ArrowRight
+                size={16}
+                stroke-width={2}
+                aria-hidden="true"
+                class="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </span>
+            <span class="text-lg leading-6 font-semibold text-balance">
+              {next.title}
+            </span>
+          </a>
+        </nav>
+      )}
+    </FeaturedProjects>
   )}
 
   <CtaBlock
     title="¿Tienes un proyecto similar?"
+    emphasis="similar"
     text="Cuéntanos dónde está y qué necesitas. Te ayudamos a definir el alcance, los plazos y los entregables."
     href={ctaHref}
     label="Cotiza un proyecto similar"
-    background={project.gallery.length > 0 ? "surface-sunken" : "surface"}
+    background="surface"
     whatsapp={whatsapp}
   />
 </BaseLayout>
+
+<script>
+  import "../../scripts/lightbox";
+</script>

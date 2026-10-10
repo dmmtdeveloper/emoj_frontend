@@ -1409,3 +1409,49 @@
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Project page cover                                                  */
+/* ------------------------------------------------------------------ */
+
+/* A slow push-in on the project page cover, like the home hero photos. */
+@keyframes photo-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .photo-zoom {
+    animation: photo-zoom 16s var(--ease-out) both;
+  }
+}
+
+/*
+ * In the card-to-cover transition the photo is its own layer on top of the
+ * page; the cover's veils and the hero text get theirs too, so they sit
+ * above the photo and fade in once it has landed, instead of popping in
+ * when the transition ends.
+ */
+.ficha-veils {
+  view-transition-name: ficha-veils;
+}
+
+.ficha-content {
+  view-transition-name: ficha-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-new(ficha-veils),
+  ::view-transition-new(ficha-content) {
+    animation: fade-in 320ms ease 380ms both;
+  }
+
+  ::view-transition-old(ficha-veils),
+  ::view-transition-old(ficha-content) {
+    animation: fade-out 160ms ease both;
+  }
+}
