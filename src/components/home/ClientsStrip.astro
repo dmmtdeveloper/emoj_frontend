@@ -16,23 +16,41 @@
  * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
  * list.
  *
- * `tone="inverse"` is the band at the foot of the home hero: cream logos on
- * a dark glass strip over the photo (same tones in both themes).
+ * `tone="accent"` sits at the foot of the home's sage facts band ("EMOJ en
+ * cifras"), next to the client count: plum logos on sage, under a plum
+ * rule like the facts (same tones in both themes).
  */
 import { Pause, Play } from "@lucide/astro";
 import { CLIENTS } from "../../lib/site";
 
 interface Props {
-  tone?: "surface" | "inverse";
-  /**
-   * Its own pause toggle. Off when a parent already pauses the band (the
-   * home hero has one control for its photos and these logos).
-   */
-  control?: boolean;
+  tone?: "surface" | "accent";
 }
 
-const { tone = "surface", control = true } = Astro.props;
-const inverse = tone === "inverse";
+const { tone = "surface" } = Astro.props;
+
+const TONES = {
+  surface: {
+    section: "border-b border-border bg-surface",
+    container: "gap-5 py-10 md:py-12",
+    heading: "eyebrow",
+    control:
+      "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
+    item: "text-ink-muted hover:text-ink",
+  },
+  accent: {
+    section: "text-on-accent",
+    // The rule spans the content width, like the facts rows above it.
+    container:
+      "gap-5 py-8 before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-plum-950 md:py-10 md:before:inset-x-6",
+    heading:
+      "font-data text-[13px] leading-4 font-medium tracking-[0.1em] uppercase",
+    control:
+      "rounded-full border border-plum-950/30 text-plum-950 hover:bg-plum-950/10 has-focus-visible:outline-plum-950",
+    item: "text-plum-950/80 hover:text-plum-950",
+  },
+} as const;
+const t = TONES[tone];
 
 /**
  * Logo file per client (public/logos/clientes/<file>.svg). Its aspect ratio
@@ -46,66 +64,45 @@ const LOGOS: Partial<Record<(typeof CLIENTS)[number], string>> = {
   CODELCO: "codelco",
 };
 
-const item = inverse
-  ? "flex items-center text-sand-100 transition-colors duration-200 hover:text-sand-50"
-  : "flex items-center text-ink-muted transition-colors duration-200 hover:text-ink";
+const item = `flex items-center transition-colors duration-200 ${t.item}`;
 const wordmark =
   "text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap md:text-[26px]";
 ---
 
-<section
-  aria-labelledby="clientes"
-  class:list={[
-    "marquee-wrap",
-    inverse
-      ? "border-t border-sand-50/15 bg-plum-950/75 text-sand-100 backdrop-blur-md"
-      : "border-b border-border bg-surface",
-  ]}
->
+<section aria-labelledby="clientes" class:list={["marquee-wrap", t.section]}>
   <div
     class:list={[
       "container-site relative z-[2] flex flex-col lg:flex-row lg:items-center lg:gap-12",
-      inverse ? "gap-3 py-5 md:py-6" : "gap-5 py-10 md:py-12",
+      t.container,
     ]}
   >
     <div class="flex items-center justify-between gap-4 lg:shrink-0">
-      <h2
-        id="clientes"
-        class:list={[
-          inverse
-            ? "font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase"
-            : "eyebrow",
-        ]}
-      >
+      <h2 id="clientes" class={t.heading}>
         Han confiado en nosotros
       </h2>
-      {control && (
-        <label
-          class:list={[
-            "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
-            inverse
-              ? "rounded-full border border-sand-50/30 text-sand-100 hover:bg-sand-50/10 hover:text-sand-50 has-focus-visible:outline-sand-50"
-              : "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
-          ]}
-        >
-          <input type="checkbox" class="marquee__toggle peer sr-only" />
-          <Pause
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="peer-checked:hidden"
-          />
-          <Play
-            size={20}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="hidden peer-checked:block"
-          />
-          <span class="sr-only">
-            Pausar el movimiento de la lista de clientes
-          </span>
-        </label>
-      )}
+      <label
+        class:list={[
+          "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
+          t.control,
+        ]}
+      >
+        <input type="checkbox" class="marquee__toggle peer sr-only" />
+        <Pause
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="peer-checked:hidden"
+        />
+        <Play
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="hidden peer-checked:block"
+        />
+        <span class="sr-only">
+          Pausar el movimiento de la lista de clientes
+        </span>
+      </label>
     </div>
     <div class="marquee min-w-0 flex-1">
       <div class="marquee__track">

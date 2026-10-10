@@ -8,9 +8,13 @@
  * The numbers count up when they scroll into view (src/scripts/motion.ts):
  * the HTML holds the final value, the animated copy is hidden from AT and a
  * static copy is read instead. Reduced motion shows the final values.
+ *
+ * At its foot, the reference clients as a moving band of logos
+ * (ClientsStrip `tone="accent"`), right under the client count.
  */
 import { CLIENTS } from "../../lib/site";
 import IsotipoMark from "../IsotipoMark.astro";
+import ClientsStrip from "./ClientsStrip.astro";
 
 const LEAD = { value: "30+", label: "años de experiencia en ingeniería civil" };
 
@@ -29,7 +33,7 @@ const FACTS = [
     tone="mono"
     class="facts-mark pointer-events-none absolute -bottom-24 -left-10 -z-10 h-auto w-[140%] max-w-none opacity-15 md:w-[110%]"
   />
-  <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-28 lg:py-32">
+  <div class="container-site flex flex-col gap-10 pt-16 pb-10 md:gap-14 md:pt-28 md:pb-14 lg:pt-32 lg:pb-16">
     <h2
       id="cifras"
       class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] uppercase"
@@ -64,6 +68,7 @@ const FACTS = [
       ))}
     </dl>
   </div>
+  <ClientsStrip tone="accent" />
 </section>
 
 <style>

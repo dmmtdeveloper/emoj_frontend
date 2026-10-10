@@ -1,20 +1,19 @@
 ---
 /**
  * Home hero: 30 years of consulting, water supply and sanitation, and the
- * experience, technology and quality behind each project. Three real photos from the original
- * emoj.cl hero (water, a pumping station and an aerial industrial view)
+ * experience, technology and quality behind each project. Three real photos
+ * from the original emoj.cl hero (water, a pumping station and an aerial industrial view)
  * under a plum veil and a faint four-column grid, like a drawing sheet.
  *
  * At its foot, a data strip in the data typeface (`font-data`, facts from
- * src/lib/hero-facts.ts) and the reference clients as a moving band of
- * logos (ClientsStrip, `tone="inverse"`).
+ * src/lib/hero-facts.ts). The client logos live in the facts band
+ * (FactsBand, ClientsStrip `tone="accent"`).
  *
  * The photos play on their own (src/scripts/hero-slideshow.ts): each one
  * zooms in slowly and the next enters with a left-to-right wipe, like a
  * stroke being drawn. A counter with a progress line shows the current
- * photo, and one plain pause icon beside it stops both the photos and the
- * logo band (WCAG 2.2.2). The slideshow holds while the hero is off screen
- * or the tab is hidden.
+ * photo, and one plain pause icon beside it stops the change (WCAG 2.2.2).
+ * The slideshow holds while the hero is off screen or the tab is hidden.
  *
  * Without JavaScript or with reduced motion the hero shows the first photo
  * only (no autoplay, no counter). The section slides under the transparent
@@ -29,7 +28,6 @@ import { getServices } from "../../lib/get-services";
 import { heroFacts } from "../../lib/hero-facts";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
-import ClientsStrip from "./ClientsStrip.astro";
 
 const photos = [
   {
@@ -144,9 +142,8 @@ const facts = heroFacts((await getServices()).length);
 
       <div class="container-site">
         {/*
-          One quiet control pauses everything that moves in the hero: the
-          photos and the client logos (WCAG 2.2.2). A checkbox, so the logos
-          also pause without JavaScript; the counter needs the slideshow.
+          Photo counter and one quiet pause control (WCAG 2.2.2), both
+          shown only while the slideshow runs.
         */}
         <div class="hero__counter items-center justify-end gap-3 pb-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
           <span
@@ -182,7 +179,7 @@ const facts = heroFacts((await getServices()).length);
               aria-hidden="true"
               class="hidden peer-checked:block"
             />
-            <span class="sr-only">Pausar el movimiento de fotos y logos</span>
+            <span class="sr-only">Pausar el cambio de fotos</span>
           </label>
         </div>
 
@@ -199,8 +196,6 @@ const facts = heroFacts((await getServices()).length);
           ))}
         </dl>
       </div>
-
-      <ClientsStrip tone="inverse" control={false} />
     </div>
   </div>
 </section>
@@ -210,22 +205,11 @@ const facts = heroFacts((await getServices()).length);
 </script>
 
 <style>
-  /* Static fallback: only the first photo; no counter. */
+  /* Static fallback: only the first photo; no counter, no pause. */
   .hero__media--2,
   .hero__media--3,
-  .hero__count {
-    display: none;
-  }
-
-  /* The pause control shows wherever something moves. */
   .hero__counter {
-    display: flex;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero__counter {
-      display: none;
-    }
+    display: none;
   }
 
   /*
@@ -248,13 +232,8 @@ const facts = heroFacts((await getServices()).length);
     z-index: -11;
   }
 
-  .hero__frame[data-slideshow] .hero__count {
+  .hero__frame[data-slideshow] :is(.hero__counter, .hero__count) {
     display: flex;
-  }
-
-  /* The same control stops the client logos at the foot of the hero. */
-  .hero__frame:has(.hero__pause:checked) :global(.marquee__track) {
-    animation-play-state: paused;
   }
 
   .hero__media--1 {
