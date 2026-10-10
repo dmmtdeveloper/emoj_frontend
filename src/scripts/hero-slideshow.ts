@@ -2,8 +2,7 @@
  * Home hero slideshow (Hero.astro): the photos play on their own. Timing
  * lives in src/lib/motion/slideshow.ts; this file wires it to the page:
  * `data-state` on the photos, the counter and its progress line, the pause
- * checkbox (it also stops the logo band, in CSS), and holding while the hero
- * is off screen or the tab is hidden.
+ * checkbox, and holding while the hero is off screen or the tab is hidden.
  *
  * Nothing runs with reduced motion: the hero keeps its first photo.
  */
