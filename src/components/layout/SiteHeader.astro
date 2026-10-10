@@ -54,16 +54,16 @@ const drawMark = pathname === "/";
       <IsotipoMark
         label="EMOJ Consultora — Inicio"
         draw={drawMark}
-        width="72"
-        height="26"
-        class="h-6 w-auto lg:h-[26px]"
+        width="85"
+        height="32"
+        class="h-7 w-auto lg:h-8"
       />
       {/* Home only: the name is written after the mark, then erased. It is
           out of the flow, so the header layout is the mark alone. */}
       {drawMark && (
         <Wordmark
           draw
-          class="pointer-events-none absolute top-1/2 left-full ml-0.5 h-[19px] w-auto -translate-y-1/2 lg:h-5"
+          class="pointer-events-none absolute top-1/2 left-full ml-1 h-[21px] w-auto -translate-y-1/2 lg:h-6"
         />
       )}
     </a>
@@ -170,7 +170,7 @@ const drawMark = pathname === "/";
         tone="mono"
         draw
         width="160"
-        height="58"
+        height="60"
         class="menu-mark h-auto w-40 self-end opacity-80"
       />
       <ButtonLink href="/contacto" variant="on-inverse" class="w-full">
