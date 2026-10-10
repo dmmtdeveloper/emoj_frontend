@@ -3,7 +3,9 @@
  * Home hero: 30 years of consulting, water supply and sanitation, and the
  * experience, technology and quality behind each project. Three real photos
  * from the original emoj.cl hero (water, a pumping station and an aerial industrial view)
- * under a plum veil and a faint four-column grid, like a drawing sheet.
+ * under light plum veils (the photos lead, with a calmer headline up to
+ * 72px) and a faint four-column grid, like a drawing sheet. Each photo has
+ * its own crop on phones.
  *
  * At its foot, a data strip in the data typeface (`font-data`, facts from
  * src/lib/hero-facts.ts). The client logos live in the facts band
@@ -33,19 +35,19 @@ const photos = [
   {
     src: water,
     alt: "Manos recibiendo un chorro de agua limpia.",
-    position: "object-[72%_center]",
+    position: "object-[60%_center] md:object-[58%_center]",
     widths: [640, 960, 1280, 1600, 2130],
   },
   {
     src: pumping,
     alt: "Estación de bombeo con tuberías blancas y bombas azules sobre una losa de hormigón.",
-    position: "object-center",
+    position: "object-[48%_center] md:object-center",
     widths: [640, 960, 1280, 1600, 2000],
   },
   {
     src: aerial,
     alt: "Vista aérea de un complejo industrial costero con una chimenea alta.",
-    position: "object-center",
+    position: "object-[38%_center] md:object-center",
     widths: [640, 960, 1280, 1600, 2000],
   },
 ];
@@ -83,9 +85,21 @@ const facts = heroFacts((await getServices()).length);
         </div>
       ))}
     </div>
-    <div class="absolute inset-0 -z-10 bg-plum-950/65" aria-hidden="true"></div>
+    {/*
+      Veils kept light so the photos lead. Phones: a fade from the foot,
+      where the text sits. Wider screens: a faint wash, a fade behind the
+      text on the left and one under the data strip.
+    */}
     <div
-      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/55 to-transparent to-70% md:block"
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/90 via-plum-950/45 via-55% to-plum-950/25 md:bg-plum-950/20 md:bg-none"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/80 via-plum-950/40 via-40% to-transparent to-70% md:block"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-t from-plum-950/70 to-transparent to-35% md:block"
       aria-hidden="true"
     ></div>
     {/* Drawing-sheet grid: four columns, hairlines only. */}
@@ -108,7 +122,7 @@ const facts = heroFacts((await getServices()).length);
         <p class="hero-in font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
           {TAGLINE}
         </p>
-        <h1 class="hero-in hero-in--2 max-w-[15ch] text-[clamp(2.75rem,1.6rem+4.6vw,6rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance">
+        <h1 class="hero-in hero-in--2 max-w-[15ch] text-[clamp(2.5rem,1.5rem+3.2vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance">
           Más de 30&nbsp;años{" "}
           <em class="font-medium text-sage-300">innovando</em> en consultoría
         </h1>
@@ -183,7 +197,9 @@ const facts = heroFacts((await getServices()).length);
           </label>
         </div>
 
-        <dl class="hero-in hero-in--4 grid grid-cols-2 border-t border-sand-50/20 md:grid-cols-4">
+        {/* Phones skip the strip (the same facts close the page's facts band),
+            so the photo keeps half the screen. */}
+        <dl class="hero-in hero-in--4 hidden border-t border-sand-50/20 md:grid md:grid-cols-4">
           {facts.map((fact) => (
             <div class="flex flex-col gap-1.5 border-sand-50/20 py-4 pr-4 even:border-l even:pl-4 md:border-l md:px-6 md:py-5 md:first:border-l-0 md:first:pl-0">
               <dt class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
@@ -237,7 +253,7 @@ const facts = heroFacts((await getServices()).length);
   }
 
   .hero__media--1 {
-    --zoom-origin: 70% 55%;
+    --zoom-origin: 55% 50%;
   }
 
   .hero__media--2 {
@@ -288,13 +304,13 @@ const facts = heroFacts((await getServices()).length);
     }
   }
 
-  /* A slow push-in, from slightly zoomed so the first frames already move. */
+  /* A clear push-in (1 → 1.22) across each photo's time on screen. */
   @keyframes hero-zoom {
     from {
-      transform: scale(1.02);
+      transform: scale(1);
     }
     to {
-      transform: scale(1.14);
+      transform: scale(1.22);
     }
   }
 
