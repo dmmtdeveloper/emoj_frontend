@@ -141,8 +141,11 @@
 }
 
 @keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -722,15 +725,42 @@
 /* Marquee (clients strip)                                             */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Smooth on phones too: the track is its own compositor layer (will-change
+ * + translate3d), painted once with its masked logos and then only slid,
+ * and the soft edges are gradient overlays in the band's color
+ * (`--marquee-fade`) rather than a mask on the moving layer's parent, which
+ * made Safari and many Android browsers repaint every frame. Hover pauses
+ * it only with a real pointer: on touch screens a tap leaves `:hover`
+ * stuck and the band kept stopping.
+ */
 .marquee {
+  position: relative;
   overflow: hidden;
-  mask-image: linear-gradient(
-    90deg,
-    transparent,
-    white 8%,
-    white 92%,
+}
+
+.marquee::before,
+.marquee::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  z-index: 1;
+  width: 8%;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    var(--marquee-fade, var(--surface)),
     transparent
   );
+}
+
+.marquee::before {
+  left: 0;
+}
+
+.marquee::after {
+  right: 0;
+  rotate: 180deg;
 }
 
 .marquee__track {
@@ -741,18 +771,26 @@
 @media (prefers-reduced-motion: no-preference) {
   .marquee__track {
     animation: marquee 45s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
   }
 
-  .marquee:hover .marquee__track,
   .marquee:focus-within .marquee__track,
   .marquee-wrap:has(.marquee__toggle:checked) .marquee__track {
     animation-play-state: paused;
   }
+
+  @media (hover: hover) and (pointer: fine) {
+    .marquee:hover .marquee__track {
+      animation-play-state: paused;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee {
-    mask-image: none;
+  .marquee::before,
+  .marquee::after {
+    display: none;
   }
 
   .marquee__track {
