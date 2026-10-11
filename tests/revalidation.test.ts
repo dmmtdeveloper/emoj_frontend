@@ -46,7 +46,7 @@ describe("pathsToRefresh", () => {
     ]);
   });
 
-  it("refreshes a project, the home (featured and service photos), the listing and the services page (counts and photos)", () => {
+  it("refreshes a project, the home (featured and service photos), the listing and the services pages (counts, photos and project rails)", () => {
     expect(
       pathsToRefresh(
         { kind: "project", slug: "planta", previousSlug: null },
@@ -56,6 +56,13 @@ describe("pathsToRefresh", () => {
       "/",
       "/proyectos",
       "/servicios",
+      "/servicios/obras-sanitarias",
+      "/servicios/obras-viales",
+      "/servicios/calculo-estructural",
+      "/servicios/estudios-de-transito",
+      "/servicios/proyectos-arquitectonicos",
+      "/servicios/geotecnia",
+      "/servicios/aguas-lluvias",
       "/proyectos/planta",
       "/sitemap-content.xml",
     ]);

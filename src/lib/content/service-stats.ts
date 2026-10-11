@@ -19,3 +19,11 @@ export function projectCountLabel(count: number): string {
   if (count <= 0) return "";
   return count === 1 ? "1 proyecto" : `${count} proyectos`;
 }
+
+/** The projects that list `service`, in the order given (newest first from the API). */
+export function projectsOfService<T extends { services: readonly string[] }>(
+  projects: readonly T[],
+  service: string,
+): T[] {
+  return projects.filter((project) => project.services.includes(service));
+}
