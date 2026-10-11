@@ -1,3 +1,5 @@
+import { SERVICE_SLUGS } from "../services";
+
 /**
  * Refreshing cached pages after the panel changes content.
  *
@@ -60,6 +62,7 @@ export function pathsToRefresh(
     "/",
     "/proyectos",
     "/servicios",
+    ...SERVICE_SLUGS.map((service) => `/servicios/${service}`),
     ...unique.map((s) => `/proyectos/${s}`),
     "/sitemap-content.xml",
   ];

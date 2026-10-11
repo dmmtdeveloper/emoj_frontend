@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   projectCountByService,
   projectCountLabel,
+  projectsOfService,
 } from "../src/lib/content/service-stats";
 
 const p = (services: string[]) => ({ services });
@@ -37,5 +38,24 @@ describe("projectCountLabel", () => {
   it("uses the singular for one project and the plural otherwise", () => {
     expect(projectCountLabel(1)).toBe("1 proyecto");
     expect(projectCountLabel(12)).toBe("12 proyectos");
+  });
+});
+
+describe("projectsOfService", () => {
+  const list = [
+    { slug: "a", services: ["obras-viales"] },
+    { slug: "b", services: ["geotecnia"] },
+    { slug: "c", services: ["geotecnia", "obras-viales"] },
+  ];
+
+  it("keeps the projects that list the service, in the given order", () => {
+    expect(projectsOfService(list, "obras-viales").map((x) => x.slug)).toEqual([
+      "a",
+      "c",
+    ]);
+  });
+
+  it("returns nothing for a service without projects", () => {
+    expect(projectsOfService(list, "aguas-lluvias")).toEqual([]);
   });
 });

@@ -1,0 +1,155 @@
+---
+/**
+ * "Ya son obra." on a service page: the published projects of that service
+ * on a plum section, like the home rail. One project gets a wide tile
+ * (photo and text side by side); two or more a grid of tall photo tiles,
+ * the last one stretched over the empty cells of its row. Up to six; the
+ * rest are a click away in /proyectos.
+ *
+ * The photos carry the project transition name, so opening one morphs it
+ * into the project page cover (src/scripts/project-transition.ts).
+ * Plum in both themes; text cream and accents sage (brand on plum is a
+ * forbidden pair).
+ */
+import { ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import type { ProjectSummary } from "../../lib/api/client";
+import { fitWidth } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
+import { projectTransitionName } from "../../lib/content/transition";
+import { lastItemSpan } from "../../lib/layout/grid-span";
+import DisplayHeading from "../ui/DisplayHeading.astro";
+
+interface Props {
+  id: string;
+  projects: ProjectSummary[];
+}
+
+const { id, projects } = Astro.props;
+const shown = projects.slice(0, 6);
+const [only] = shown.length === 1 ? shown : [];
+const count = String(projects.length).padStart(2, "0");
+const facts = (project: ProjectSummary) =>
+  [project.location || project.region, project.year]
+    .filter(Boolean)
+    .join(" · ");
+const span = lastItemSpan(shown.length);
+---
+
+<section aria-labelledby={id} class="bg-plum-950 text-sand-50">
+  <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-24 lg:py-28">
+    <DisplayHeading
+      id={id}
+      eyebrow={`Proyectos · ${count}`}
+      title="Ya son obra."
+      emphasis="obra"
+      inverse
+    >
+      <a
+        slot="action"
+        href="/proyectos"
+        class="group inline-flex min-h-12 shrink-0 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 lg:self-auto"
+      >
+        Ver todos los proyectos
+        <ArrowRight
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+        />
+      </a>
+    </DisplayHeading>
+
+    {only ? (
+      <article
+        data-reveal
+        class="group relative isolate grid overflow-hidden rounded-lg bg-plum-900 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-sand-50 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]"
+      >
+        <div class="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-[440px]">
+          {only.cover && (
+            <Image
+              src={mediaPath("proyectos", only.slug, only.cover)}
+              alt=""
+              {...fitWidth(only.cover, 1200)}
+              widths={[480, 800, 1200]}
+              sizes="(min-width: 1024px) 680px, 100vw"
+              loading="lazy"
+              data-vt={projectTransitionName(only.slug)}
+              class="vt-project absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
+            />
+          )}
+        </div>
+        <div class="flex flex-col justify-end gap-4 p-6 md:p-10">
+          {facts(only) && (
+            <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+              {facts(only)}
+            </p>
+          )}
+          <h3 class="text-[clamp(1.5rem,1.2rem+1.2vw,2.25rem)] leading-[1.1] font-semibold tracking-[-0.03em] text-balance">
+            <a
+              href={`/proyectos/${only.slug}`}
+              class="text-sand-50 no-underline after:absolute after:inset-0 hover:text-sand-50 focus-visible:outline-none"
+            >
+              {only.title}
+            </a>
+          </h3>
+          {only.summary && (
+            <p class="line-clamp-3 max-w-[48ch] text-sand-100">
+              {only.summary}
+            </p>
+          )}
+          <span
+            class="inline-flex items-center gap-2 pt-2 text-base font-semibold text-sage-300"
+            aria-hidden="true"
+          >
+            Ver proyecto
+            <ArrowRight
+              size={20}
+              stroke-width={1.75}
+              class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
+            />
+          </span>
+        </div>
+      </article>
+    ) : (
+      <ul
+        class="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3"
+        data-reveal-stagger
+      >
+        {shown.map((project, i) => (
+          <li class:list={[i === shown.length - 1 && span]}>
+            <a
+              href={`/proyectos/${project.slug}`}
+              class="group relative isolate flex h-full min-h-[360px] flex-col justify-end overflow-hidden rounded-lg bg-plum-900 p-6 text-sand-50 no-underline hover:text-sand-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sand-50 md:min-h-[440px] md:p-7"
+            >
+              {project.cover && (
+                <Image
+                  src={mediaPath("proyectos", project.slug, project.cover)}
+                  alt=""
+                  {...fitWidth(project.cover, 1200)}
+                  widths={[480, 800, 1200]}
+                  sizes="(min-width: 1024px) 31vw, (min-width: 640px) 46vw, 100vw"
+                  loading="lazy"
+                  data-vt={projectTransitionName(project.slug)}
+                  class="vt-project absolute inset-0 -z-20 h-full w-full rounded-lg object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]"
+                />
+              )}
+              <span
+                class="absolute inset-0 -z-10 bg-linear-to-b from-plum-950/10 via-plum-950/30 to-plum-950/95"
+                aria-hidden="true"
+              />
+              <h3 class="text-[24px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance md:text-[28px]">
+                {project.title}
+              </h3>
+              {facts(project) && (
+                <p class="mt-2 font-data text-sm leading-5 text-sand-200">
+                  {facts(project)}
+                </p>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</section>

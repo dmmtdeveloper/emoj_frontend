@@ -1,32 +1,49 @@
 ---
-import { ArrowRight, CircleCheck, MapPin } from "@lucide/astro";
-import type { GetStaticPaths } from "astro";
-import { Image } from "astro:assets";
+/**
+ * Service page, in the home's voice:
+ * - A photo-led header under the transparent header: the newest published
+ *   project of the service (or the service's own photo), the title, the
+ *   summary and the quote action. Without any photo it is a plain plum band.
+ * - "El servicio": the text from src/content/servicios, with "Cuándo nos
+ *   necesitas" as numbered rows.
+ * - "Qué te entregamos": the usual deliverables as numbered blocks.
+ * - "Ya son obra.": the service's published projects (ServiceProjects);
+ *   until there are any, the reference projects listed in the service file.
+ * - The other six specialties as the home's quiet blocks, and the closing
+ *   call to action.
+ *
+ * Rendered on demand like the home: the rail and the photos follow the
+ * published projects (refreshed on publish, src/lib/content/revalidation.ts).
+ */
+import { ArrowRight, MapPin } from "@lucide/astro";
 import { render } from "astro:content";
+import ServiceCard from "../../components/services/ServiceCard.astro";
+import ServiceProjects from "../../components/services/ServiceProjects.astro";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
+import ServicePhoto, {
+  type ServicePhotoSource,
+} from "../../components/services/ServicePhoto.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
-import PageHeader from "../../components/ui/PageHeader.astro";
-import SectionHeading from "../../components/ui/SectionHeading.astro";
+import DisplayHeading from "../../components/ui/DisplayHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getServices, type Service } from "../../lib/get-services";
+import { contentSource } from "../../lib/content";
+import { mediaPath } from "../../lib/content/media";
+import { coversByService } from "../../lib/content/service-covers";
+import { projectsOfService } from "../../lib/content/service-stats";
+import { lastItemSpan } from "../../lib/layout/grid-span";
+import { getServices } from "../../lib/get-services";
 
-export const getStaticPaths = (async () => {
-  const services = await getServices();
-  return services.map((service) => ({
-    params: { slug: service.data.slug },
-    props: { service, others: services.filter((s) => s.id !== service.id) },
-  }));
-}) satisfies GetStaticPaths;
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
+export const prerender = false;
 
-interface Props {
-  service: Service;
-  others: Service[];
-}
+const services = await getServices();
+const position = services.findIndex((s) => s.data.slug === Astro.params.slug);
+const service = services[position];
+if (!service) return Astro.rewrite("/no-encontrada");
 
-const { service, others } = Astro.props;
 const {
   title,
   summary,
@@ -43,135 +60,260 @@ const { Content } = await render(service);
 const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
 const ctaHref = `/contacto?servicio=${slug}`;
 const whatsapp = { kind: "service", title } as const;
-const hasExamples = examples.length > 0;
+const number = String(position + 1).padStart(2, "0");
+
+const portfolio = await contentSource().getProjects();
+const projects = projectsOfService(portfolio, slug);
+
+/** Header photo: the newest project of this service, else its own photo. */
+const ownCover = coversByService([slug], portfolio).get(slug);
+const headerPhoto: { photo: ServicePhotoSource; alt: string } | undefined =
+  ownCover
+    ? {
+        photo: {
+          src: mediaPath("proyectos", ownCover.slug, ownCover.cover),
+          width: ownCover.cover.width,
+          height: ownCover.cover.height,
+        },
+        alt: ownCover.cover.alt,
+      }
+    : image
+      ? { photo: { src: image }, alt: imageAlt ?? "" }
+      : undefined;
+
+/** The other specialties, each with a real project photo on hover. */
+const others = services.filter((s) => s.data.slug !== slug);
+const otherCovers = coversByService(
+  others.map((s) => s.data.slug),
+  portfolio,
+);
+const photoFor = (other: (typeof others)[number]) => {
+  const found = otherCovers.get(other.data.slug);
+  if (found)
+    return {
+      src: mediaPath("proyectos", found.slug, found.cover),
+      width: found.cover.width,
+      height: found.cover.height,
+    };
+  return other.data.image ? { src: other.data.image } : undefined;
+};
+
+const total = String(deliverables.length).padStart(2, "0");
+const hasProjects = projects.length > 0;
+const hasExamples = !hasProjects && examples.length > 0;
 ---
 
 <BaseLayout
   whatsapp={whatsapp}
   title={seo.title}
   description={seo.description}
+  headerOverlay={headerPhoto !== undefined}
   {...(image ? { image: image.src, imageAlt: imageAlt ?? title } : {})}
 >
-  <PageHeader eyebrow="Servicio" title={title} lead={summary}>
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Servicios", href: "/servicios" },
-        { label: title, href: `/servicios/${slug}` },
+  <section
+    aria-labelledby="servicio-titulo"
+    class:list={[
+      "relative isolate overflow-hidden bg-plum-950 text-sand-50",
+      headerPhoto && "-mt-(--header-h)",
+    ]}
+  >
+    {headerPhoto && (
+      <>
+        <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+          <ServicePhoto
+            photo={headerPhoto.photo}
+            alt={headerPhoto.alt}
+            sizes="100vw"
+            max={1600}
+            loading="eager"
+            class="photo-zoom h-full w-full object-cover"
+          />
+        </div>
+        {/* Light veils, as on the home hero: the photo leads. */}
+        <div
+          class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/55 via-55% to-plum-950/30 md:bg-plum-950/25 md:bg-none"
+          aria-hidden="true"
+        />
+        <div
+          class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/85 via-plum-950/45 via-45% to-transparent to-75% md:block"
+          aria-hidden="true"
+        />
+      </>
+    )}
+
+    <div
+      class:list={[
+        "hero__content container-site flex flex-col justify-end gap-6 pb-12 md:gap-7 md:pb-16",
+        headerPhoto
+          ? "min-h-[max(560px,78svh)] pt-[calc(var(--header-h)+40px)]"
+          : "pt-12 md:pt-16",
       ]}
-    />
-    <div class="flex flex-wrap gap-3 pt-2">
-      <ButtonLink href={ctaHref}>{ctaLabel}</ButtonLink>
-    </div>
-  </PageHeader>
-
-  <section class="bg-surface-sunken">
-    <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-16">
-      <div class="flex max-w-[65ch] flex-col gap-4 text-ink [&_h2]:mt-8 [&_h2]:text-[26px] [&_h2]:leading-8 [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] md:[&_h2]:text-[34px] md:[&_h2]:leading-10 [&_li]:relative [&_li]:pl-6 [&_li]:before:absolute [&_li]:before:top-[11px] [&_li]:before:left-0 [&_li]:before:size-2 [&_li]:before:rounded-full [&_li]:before:bg-brand [&_p:first-child]:text-xl [&_p:first-child]:leading-[30px] [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-3">
-        <Content />
+    >
+      <div class="hidden md:block">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Servicios", href: "/servicios" },
+            { label: title, href: `/servicios/${slug}` },
+          ]}
+        />
       </div>
-
-      <aside
-        aria-labelledby="entregables"
-        class="radius-signature h-fit border border-border bg-surface-raised p-8 pl-10 shadow-(--shadow-sm) lg:sticky lg:top-24"
-      >
-        <span class="mb-6 inline-flex size-12 items-center justify-center rounded-full bg-surface-sunken text-brand">
+      <div class="flex items-center gap-4">
+        <span class="inline-flex size-12 items-center justify-center rounded-full border border-sand-50/25 bg-sand-50/10 text-sage-300">
           <ServiceIcon name={icon} />
         </span>
-        <h2 id="entregables" class="text-[22px] leading-7 font-semibold">
-          Qué te entregamos
-        </h2>
-        <p class="mt-2 text-sm leading-5 font-medium text-ink-muted">
-          Entregables habituales; el alcance final se define contigo.
+        <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+          Especialidad · {number}
         </p>
-        <ul class="mt-6 flex flex-col gap-3">
-          {deliverables.map((item) => (
-            <li class="flex gap-3">
-              <CircleCheck
-                size={20}
-                stroke-width={1.75}
-                aria-hidden="true"
-                class="mt-[3px] shrink-0 text-brand"
-              />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-        <ButtonLink href={ctaHref} class="mt-8 w-full">
+      </div>
+      <h1
+        id="servicio-titulo"
+        class="max-w-[16ch] text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
+      >
+        {title}
+      </h1>
+      <p class="text-lead max-w-[52ch] text-sand-100">{summary}</p>
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-7">
+        <ButtonLink
+          href={ctaHref}
+          variant="on-photo-solid"
+          class="min-h-12 px-6 text-base"
+        >
           {ctaLabel}
         </ButtonLink>
-      </aside>
+        {hasProjects && (
+          <a
+            href="#proyectos-servicio"
+            class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+          >
+            Ver proyectos
+            <ArrowRight
+              size={20}
+              stroke-width={1.75}
+              aria-hidden="true"
+              class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+            />
+          </a>
+        )}
+      </div>
     </div>
   </section>
 
+  <section aria-labelledby="el-servicio" class="bg-surface">
+    <div class="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:py-28">
+      <div class="lg:sticky lg:top-28 lg:self-start">
+        <DisplayHeading
+          id="el-servicio"
+          eyebrow="El servicio"
+          title="Cómo te ayudamos."
+          emphasis="ayudamos"
+        />
+      </div>
+      <div class="service-prose flex max-w-[65ch] flex-col gap-5 text-ink-muted">
+        <Content />
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="entregables" class="bg-surface-sunken">
+    <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-24 lg:py-28">
+      <DisplayHeading
+        id="entregables"
+        eyebrow={`Entregables · ${total}`}
+        title="Qué te entregamos."
+        emphasis="entregamos"
+        lead="Entregables habituales; el alcance final se define contigo."
+        size="md"
+      />
+      <ol
+        class="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3"
+        data-reveal-stagger
+      >
+        {deliverables.map((item, i) => (
+          <li
+            class:list={[
+              "grid grid-cols-[2.25rem_minmax(0,1fr)] items-baseline gap-x-3 rounded-lg bg-surface-raised p-5 sm:flex sm:min-h-36 sm:flex-col sm:items-stretch sm:justify-between sm:gap-6 md:p-7",
+              i === deliverables.length - 1 &&
+                lastItemSpan(deliverables.length),
+            ]}
+          >
+            <span
+              class="font-data text-sm leading-5 font-medium text-brand"
+              aria-hidden="true"
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span class="text-[17px] leading-6 font-medium text-ink sm:text-[18px] sm:leading-7 md:text-[20px]">
+              {item}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  {hasProjects && (
+    <div id="proyectos-servicio" class="scroll-mt-(--header-h)">
+      <ServiceProjects id="proyectos-del-servicio" projects={projects} />
+    </div>
+  )}
+
   {hasExamples && (
-    <section class="bg-surface" aria-labelledby="proyectos-relacionados">
-      <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
-        {image && (
-          <Image
-            src={image}
-            alt={imageAlt ?? ""}
-            widths={[480, 800, 1200]}
-            sizes="(min-width: 1200px) 560px, (min-width: 1024px) 46vw, 100vw"
-            loading="lazy"
-            class="aspect-[4/3] w-full rounded-lg object-cover"
-          />
-        )}
-        <div class="flex flex-col gap-6">
-          <SectionHeading
-            id="proyectos-relacionados"
-            eyebrow="Experiencia"
-            title="Proyectos en los que hemos trabajado"
-          />
-          <ul class="flex flex-col divide-y divide-border border-y border-border">
-            {examples.map((example) => (
-              <li class="flex flex-col gap-1 py-4">
-                <span class="font-semibold text-ink">{example.title}</span>
-                <span class="inline-flex items-center gap-2 text-sm leading-5 font-medium text-ink-muted">
-                  <MapPin size={20} stroke-width={1.75} aria-hidden="true" />
-                  {example.location}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+    <section aria-labelledby="experiencia" class="bg-surface">
+      <div class="container-site grid gap-10 py-16 md:py-24 lg:grid-cols-[5fr_7fr] lg:gap-16">
+        <DisplayHeading
+          id="experiencia"
+          eyebrow="Experiencia"
+          title="Proyectos en los que hemos trabajado."
+          emphasis="trabajado"
+          size="md"
+        />
+        <ul class="flex flex-col border-b border-border">
+          {examples.map((example) => (
+            <li class="flex flex-col gap-1.5 border-t border-border py-6">
+              <span class="text-[20px] leading-7 font-semibold text-ink">
+                {example.title}
+              </span>
+              <span class="inline-flex items-center gap-2 font-data text-sm leading-5 font-medium text-ink-muted">
+                <MapPin size={16} stroke-width={1.75} aria-hidden="true" />
+                {example.location}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )}
 
   <section
-    class:list={[hasExamples ? "bg-surface-sunken" : "bg-surface"]}
     aria-labelledby="otros-servicios"
+    class:list={[hasExamples ? "bg-surface-sunken" : "bg-surface"]}
   >
-    <div class="container-site flex flex-col gap-8 py-16 md:py-24">
-      <SectionHeading
+    <div class="container-site flex flex-col gap-10 py-16 md:gap-14 md:py-24 lg:py-28">
+      <DisplayHeading
         id="otros-servicios"
         eyebrow="Especialidades"
-        title="Otros servicios"
+        title="Un solo equipo para todo."
+        emphasis="equipo"
+        lead="Si tu proyecto necesita más de una especialidad, las coordinamos por ti."
+        size="md"
       >
         <ArrowLink slot="action" href="/servicios">
           Ver todos los servicios
         </ArrowLink>
-      </SectionHeading>
-      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal-stagger>
+      </DisplayHeading>
+      <ul
+        class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3"
+        data-reveal-stagger
+      >
         {others.map((other) => (
           <li>
-            <a
-              href={`/servicios/${other.data.slug}`}
-              class="group flex min-h-14 items-center gap-3 rounded-md border border-border bg-surface-raised px-4 py-3 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink"
-            >
-              <span class="text-brand">
-                <ServiceIcon name={other.data.icon} size={20} />
-              </span>
-              <span class="flex-1">{other.data.title}</span>
-              <ArrowRight
-                size={20}
-                stroke-width={1.75}
-                aria-hidden="true"
-                class="text-ink-muted transition-transform duration-200 group-hover:translate-x-1"
-              />
-            </a>
+            <ServiceCard
+              service={other}
+              variant="compact"
+              photo={photoFor(other)}
+            />
           </li>
         ))}
       </ul>
@@ -179,9 +321,68 @@ const hasExamples = examples.length > 0;
   </section>
 
   <CtaBlock
-    background={hasExamples ? "surface" : "surface-sunken"}
+    background={hasExamples ? "surface-sunken" : "surface"}
     href={ctaHref}
     label={ctaLabel}
     whatsapp={whatsapp}
   />
 </BaseLayout>
+
+<style>
+  /*
+   * The service text (Markdown): the opening paragraph as a lead in ink,
+   * the rest muted; a heading in the redesign's voice; and the list
+   * ("Cuándo nos necesitas") as numbered rows, like the project story.
+   */
+  .service-prose :global(p:first-child) {
+    color: var(--color-ink);
+    font-size: 1.375rem;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+
+  .service-prose :global(h2) {
+    margin-top: 1.5rem;
+    color: var(--color-ink);
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .service-prose :global(ul) {
+    counter-reset: need;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .service-prose :global(li) {
+    counter-increment: need;
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 0 1rem;
+    border-top: 1px solid var(--color-border);
+    padding-block: 1.25rem;
+    color: var(--color-ink);
+    font-size: 1.125rem;
+    line-height: 1.55;
+  }
+
+  .service-prose :global(li)::before {
+    content: counter(need, decimal-leading-zero);
+    color: var(--color-brand);
+    font-family: var(--font-data);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.75rem;
+  }
+
+  @media (min-width: 48rem) {
+    .service-prose :global(p:first-child) {
+      font-size: 1.625rem;
+    }
+
+    .service-prose :global(h2) {
+      font-size: 2rem;
+    }
+  }
+</style>
