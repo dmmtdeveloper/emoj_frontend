@@ -138,3 +138,11 @@ export function teamFaces(
   const faces = everyone.filter((m) => m.photo).slice(0, limit);
   return { faces, others: everyone.length - faces.length };
 }
+
+/** How many people the team has, across departments. */
+export function teamSize(team: readonly Department[]): number {
+  return team.reduce(
+    (total, department) => total + department.members.length,
+    0,
+  );
+}
