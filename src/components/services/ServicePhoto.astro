@@ -1,0 +1,58 @@
+---
+/**
+ * A service photo that may come from two places: a published project's
+ * cover (served from /media, size known from the API) or the service's own
+ * file in src/assets. Decorative by default (`alt=""`): the service name is
+ * always next to it.
+ */
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { fitWidth } from "../../lib/content/format";
+
+export type ServicePhotoSource =
+  { src: string; width: number; height: number } | { src: ImageMetadata };
+
+interface Props {
+  photo: ServicePhotoSource;
+  sizes: string;
+  /** Largest width to generate. */
+  max?: number;
+  alt?: string;
+  loading?: "lazy" | "eager";
+  class?: string;
+}
+
+const {
+  photo,
+  sizes,
+  max = 1200,
+  alt = "",
+  loading = "lazy",
+  class: className,
+} = Astro.props;
+const widths = [480, 800, 1200, 1600].filter((w) => w <= max);
+/** A remote photo is never scaled up past its own width. */
+const remoteWidths =
+  "width" in photo ? widths.filter((w) => w <= photo.width) : [];
+---
+
+{"width" in photo ? (
+  <Image
+    src={photo.src}
+    alt={alt}
+    {...fitWidth(photo, max)}
+    {...(remoteWidths.length > 0 ? { widths: remoteWidths } : {})}
+    sizes={sizes}
+    loading={loading}
+    class={className}
+  />
+) : (
+  <Image
+    src={photo.src}
+    alt={alt}
+    widths={widths}
+    sizes={sizes}
+    loading={loading}
+    class={className}
+  />
+)}

@@ -1,0 +1,40 @@
+---
+/**
+ * The sage "¿No sabes cuál necesitas?" block: for visitors who know their
+ * problem but not the specialty. Closes the home services bento and the
+ * /servicios list. `class` sizes it inside its parent.
+ */
+import { ArrowRight } from "@lucide/astro";
+import ButtonLink from "../ui/ButtonLink.astro";
+
+interface Props {
+  class?: string;
+  /** A short line under the question (the home bento leaves it out). */
+  text?: string;
+}
+
+const { class: className, text } = Astro.props;
+---
+
+<div
+  class:list={[
+    "flex flex-col justify-between gap-6 rounded-lg bg-accent p-6 text-on-accent sm:flex-row sm:items-center md:p-8",
+    className,
+  ]}
+>
+  <div class="flex flex-col gap-2">
+    <p class="max-w-[16ch] text-[26px] leading-[30px] font-semibold tracking-[-0.025em] md:text-[32px] md:leading-[36px]">
+      ¿No sabes cuál necesitas?
+    </p>
+    {text && <p class="max-w-[44ch] text-base leading-6">{text}</p>}
+  </div>
+  <ButtonLink
+    href="/contacto"
+    variant="on-accent"
+    pill
+    class="min-h-12 shrink-0 self-start px-6 text-base sm:self-auto"
+  >
+    Cuéntanos tu proyecto
+    <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+  </ButtonLink>
+</div>
