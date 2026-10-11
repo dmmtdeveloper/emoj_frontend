@@ -7,9 +7,8 @@
  * 72px) and a faint four-column grid, like a drawing sheet. Each photo has
  * its own crop on phones.
  *
- * At its foot, a data strip in the data typeface (`font-data`, facts from
- * src/lib/hero-facts.ts). The client logos live in the facts band
- * (FactsBand, ClientsStrip `tone="accent"`).
+ * The hero carries no data strip: the figures live in the facts band
+ * (FactsBand), next to the client logos (ClientsStrip `tone="accent"`).
  *
  * The photos play on their own (src/scripts/hero-slideshow.ts): each one
  * zooms in slowly and the next enters with a left-to-right wipe, like a
@@ -26,8 +25,6 @@ import { Picture } from "astro:assets";
 import water from "../../assets/photos/agua-manos.jpg";
 import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
-import { getServices } from "../../lib/get-services";
-import { heroFacts } from "../../lib/hero-facts";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
 
@@ -51,8 +48,6 @@ const photos = [
     widths: [640, 960, 1280, 1600, 2000],
   },
 ];
-
-const facts = heroFacts((await getServices()).length);
 ---
 
 <section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
@@ -88,7 +83,7 @@ const facts = heroFacts((await getServices()).length);
     {/*
       Veils kept light so the photos lead. Phones: a fade from the foot,
       where the text sits. Wider screens: a faint wash, a fade behind the
-      text on the left and one under the data strip.
+      text on the left and one at the foot, under the photo counter.
     */}
     <div
       class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/90 via-plum-950/45 via-55% to-plum-950/25 md:bg-plum-950/20 md:bg-none"
@@ -157,9 +152,10 @@ const facts = heroFacts((await getServices()).length);
       <div class="container-site">
         {/*
           Photo counter and one quiet pause control (WCAG 2.2.2), both
-          shown only while the slideshow runs.
+          shown only while the slideshow runs. Left-aligned on phones so the
+          WhatsApp button (bottom right) never covers the pause control.
         */}
-        <div class="hero__counter items-center justify-end gap-3 pb-4 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
+        <div class="hero__counter items-center justify-start gap-3 pb-6 md:justify-end md:pb-8 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
           <span
             class="hero__count items-center gap-4 font-data"
             aria-hidden="true"
@@ -196,21 +192,6 @@ const facts = heroFacts((await getServices()).length);
             <span class="sr-only">Pausar el cambio de fotos</span>
           </label>
         </div>
-
-        {/* Phones skip the strip (the same facts close the page's facts band),
-            so the photo keeps half the screen. */}
-        <dl class="hero-in hero-in--4 hidden border-t border-sand-50/20 md:grid md:grid-cols-4">
-          {facts.map((fact) => (
-            <div class="flex flex-col gap-1.5 border-sand-50/20 py-4 pr-4 even:border-l even:pl-4 md:border-l md:px-6 md:py-5 md:first:border-l-0 md:first:pl-0">
-              <dt class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-sand-300 uppercase">
-                {fact.label}
-              </dt>
-              <dd class="font-data text-[17px] leading-6 font-medium text-sand-50 md:text-xl md:leading-7">
-                {fact.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </div>
     </div>
   </div>
