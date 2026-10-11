@@ -1,0 +1,34 @@
+---
+/**
+ * The reference clients as a still row of monochrome logos (no marquee),
+ * for a page that names them in its text. Same artwork and classes as the
+ * home strip (ClientsStrip, `.client-logo--<file>` in global.css); a client
+ * without a logo file shows its name as a wordmark.
+ */
+import { CLIENT_LOGOS } from "../../lib/clients";
+import { CLIENTS } from "../../lib/site";
+---
+
+<ul
+  class="flex flex-wrap items-center gap-x-10 gap-y-6 md:gap-x-12"
+  aria-label="Clientes que han confiado en nosotros"
+>
+  {CLIENTS.map((client) => {
+    const logo = CLIENT_LOGOS[client];
+    return (
+      <li class="flex items-center text-ink-muted transition-colors duration-200 hover:text-ink">
+        {logo ? (
+          <span
+            role="img"
+            aria-label={client}
+            class={`client-logo client-logo--${logo}`}
+          />
+        ) : (
+          <span class="text-[20px] leading-7 font-semibold tracking-[0.01em] whitespace-nowrap md:text-[22px]">
+            {client}
+          </span>
+        )}
+      </li>
+    );
+  })}
+</ul>

@@ -7,9 +7,10 @@
  * hover. Heights are balanced by eye per logo (wide wordmarks shorter).
  * A client without a logo file falls back to its name as a wordmark.
  *
- * Per-logo values (file, aspect ratio, height) live in the <style> block as
- * classes, never in a `style` attribute: production sends the CSP
- * `style-src 'self'`, which blocks inline style attributes.
+ * Per-logo values (file, aspect ratio, height) live in src/styles/global.css
+ * as `.client-logo--<file>` classes (src/lib/clients.ts names the files),
+ * never in a `style` attribute: production sends the CSP `style-src
+ * 'self'`, which blocks inline style attributes.
  *
  * The second copy of the list is hidden from assistive tech. It pauses on
  * hover (with a mouse), on focus and with the pause toggle (a checkbox, so it works without
@@ -21,6 +22,7 @@
  * rule like the facts (same tones in both themes).
  */
 import { Pause, Play } from "@lucide/astro";
+import { CLIENT_LOGOS } from "../../lib/clients";
 import { CLIENTS } from "../../lib/site";
 
 interface Props {
@@ -52,18 +54,6 @@ const TONES = {
   },
 } as const;
 const t = TONES[tone];
-
-/**
- * Logo file per client (public/logos/clientes/<file>.svg). Its aspect ratio
- * and display height are set by the matching `.client-logo--<file>` class.
- */
-const LOGOS: Partial<Record<(typeof CLIENTS)[number], string>> = {
-  ESVAL: "esval",
-  "Aguas del Valle": "aguas-del-valle",
-  SAAM: "saam",
-  "AES Andes": "aes-andes",
-  CODELCO: "codelco",
-};
 
 const item = `flex items-center transition-colors duration-200 ${t.item}`;
 const wordmark =
@@ -109,7 +99,7 @@ const wordmark =
       <div class="marquee__track">
         <ul class="flex shrink-0 items-center gap-12 pr-12 md:gap-20 md:pr-20">
           {CLIENTS.map((client) => {
-            const logo = LOGOS[client];
+            const logo = CLIENT_LOGOS[client];
             return (
               <li class={item}>
                 {logo ? (
@@ -130,7 +120,7 @@ const wordmark =
           aria-hidden="true"
         >
           {CLIENTS.map((client) => {
-            const logo = LOGOS[client];
+            const logo = CLIENT_LOGOS[client];
             return (
               <li class={item}>
                 {logo ? (
@@ -150,50 +140,3 @@ const wordmark =
     </div>
   </div>
 </section>
-
-<style>
-  .client-logo {
-    display: block;
-    height: calc(var(--h) * 0.8);
-    aspect-ratio: var(--ratio);
-    background-color: currentColor;
-    mask: var(--logo) center / contain no-repeat;
-  }
-
-  @media (min-width: 48rem) {
-    .client-logo {
-      height: var(--h);
-    }
-  }
-
-  /* Aspect ratio (width / height) and display height, balanced by eye. */
-  .client-logo--esval {
-    --logo: url("/logos/clientes/esval.svg");
-    --ratio: 2.732;
-    --h: 40px;
-  }
-
-  .client-logo--aguas-del-valle {
-    --logo: url("/logos/clientes/aguas-del-valle.svg");
-    --ratio: 3.876;
-    --h: 44px;
-  }
-
-  .client-logo--saam {
-    --logo: url("/logos/clientes/saam.svg");
-    --ratio: 6.152;
-    --h: 26px;
-  }
-
-  .client-logo--aes-andes {
-    --logo: url("/logos/clientes/aes-andes.svg");
-    --ratio: 5.196;
-    --h: 28px;
-  }
-
-  .client-logo--codelco {
-    --logo: url("/logos/clientes/codelco.svg");
-    --ratio: 4.565;
-    --h: 32px;
-  }
-</style>

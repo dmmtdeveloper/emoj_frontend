@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { TEAM, teamFaces, type Department } from "../src/lib/team";
+import { TEAM, teamFaces, teamSize, type Department } from "../src/lib/team";
 
 const members = TEAM.flatMap((d) => d.members);
 
@@ -83,5 +83,12 @@ describe("teamFaces", () => {
     expect(faces).toHaveLength(4);
     expect(faces.every((m) => m.photo)).toBe(true);
     expect(others).toBe(members.length - 4);
+  });
+});
+
+describe("teamSize", () => {
+  it("counts every person across departments", () => {
+    expect(teamSize(TEAM)).toBe(13);
+    expect(teamSize([])).toBe(0);
   });
 });
