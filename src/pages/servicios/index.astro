@@ -1,43 +1,352 @@
 ---
-import ServiceCard from "../../components/services/ServiceCard.astro";
+/**
+ * Services, in the home's voice:
+ * - A photo-led header under the transparent header, like the project page.
+ * - The main specialty (the first service) as a large tile with a real
+ *   project photo.
+ * - The other specialties as a numbered index: one row per service with its
+ *   icon, summary and how many published projects it has. On desktop a
+ *   sticky frame beside the list shows a real project of the row under the
+ *   pointer or keyboard focus (src/scripts/service-preview.ts); phones get
+ *   short rows only.
+ * - "¿No sabes cuál necesitas?" and the closing call to action.
+ *
+ * Rendered on demand like the home: the counts and photos follow the
+ * published projects (refreshed on publish, src/lib/content/revalidation.ts).
+ */
+import { ArrowRight, ArrowUpRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import headerPhoto from "../../assets/photos/puente-llollito-excavacion.jpg";
+import ServiceHelpBlock from "../../components/services/ServiceHelpBlock.astro";
+import ServiceIcon from "../../components/services/ServiceIcon.astro";
+import ServicePhoto, {
+  type ServicePhotoSource,
+} from "../../components/services/ServicePhoto.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
-import PageHeader from "../../components/ui/PageHeader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getServices } from "../../lib/get-services";
+import { contentSource } from "../../lib/content";
+import { mediaPath } from "../../lib/content/media";
+import { coversByService } from "../../lib/content/service-covers";
+import {
+  projectCountByService,
+  projectCountLabel,
+} from "../../lib/content/service-stats";
+import { getServices, type Service } from "../../lib/get-services";
+
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
+export const prerender = false;
 
 const services = await getServices();
+const projects = await contentSource().getProjects();
+const counts = projectCountByService(projects);
+const covers = coversByService(
+  services.map((s) => s.data.slug),
+  projects,
+);
+const titleOf = new Map(projects.map((p) => [p.slug, p.title]));
+
+interface Entry {
+  service: Service;
+  number: string;
+  count: string;
+  photo: ServicePhotoSource | undefined;
+  /** The project the photo comes from; empty for the service's own photo. */
+  caption: string;
+}
+
+const entries: Entry[] = services.map((service, i) => {
+  const { slug, image } = service.data;
+  const cover = covers.get(slug);
+  const photo: ServicePhotoSource | undefined = cover
+    ? {
+        src: mediaPath("proyectos", cover.slug, cover.cover),
+        width: cover.cover.width,
+        height: cover.cover.height,
+      }
+    : image
+      ? { src: image }
+      : undefined;
+  return {
+    service,
+    number: String(i + 1).padStart(2, "0"),
+    count: projectCountLabel(counts.get(slug) ?? 0),
+    photo,
+    caption: cover ? (titleOf.get(cover.slug) ?? "") : "",
+  };
+});
+const [main, ...rest] = entries;
+const previews = rest.filter((entry) => entry.photo !== undefined);
+const total = String(services.length).padStart(2, "0");
 ---
 
 <BaseLayout
   title="Servicios de ingeniería civil"
   description="Obras sanitarias, viales, cálculo estructural, geotecnia, estudios de tránsito, arquitectura y aguas lluvias en las regiones de Valparaíso y Coquimbo."
+  headerOverlay
 >
-  <PageHeader
-    eyebrow="Servicios"
-    title="Ingeniería civil multidisciplinaria para tu proyecto"
-    lead="Siete especialidades coordinadas por un mismo equipo: así tu proyecto avanza con menos interfaces y menos sorpresas en obra."
+  <section
+    aria-labelledby="servicios-titulo"
+    class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Servicios", href: "/servicios" },
-      ]}
-    />
-  </PageHeader>
+    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+      <Image
+        src={headerPhoto}
+        alt="Excavación entibada con trabajadores y maquinaria durante la construcción de las fundaciones de un puente."
+        widths={[640, 960, 1280, 1600, 1800]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="photo-zoom h-full w-full object-cover object-[60%_center]"
+      />
+    </div>
+    {/* Light veils, as on the home hero: the photo leads. */}
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/55 via-55% to-plum-950/30 md:bg-plum-950/25 md:bg-none"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/85 via-plum-950/45 via-45% to-transparent to-75% md:block"
+      aria-hidden="true"
+    ></div>
 
-  <section class="bg-surface-sunken" aria-label="Lista de servicios">
-    <div class="container-site py-16 md:py-24">
-      <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-        {services.map((service) => (
-          <li>
-            <ServiceCard service={service} headingLevel="h2" />
-          </li>
-        ))}
-      </ul>
+    <div class="hero__content container-site flex min-h-[max(560px,78svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+40px)] pb-12 md:gap-7 md:pb-16">
+      <div class="hidden md:block">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Servicios", href: "/servicios" },
+          ]}
+        />
+      </div>
+      <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+        Servicios · {total}
+      </p>
+      <h1
+        id="servicios-titulo"
+        class="max-w-[16ch] text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
+      >
+        Siete especialidades. Un solo{" "}
+        <em class="font-medium text-sage-300">equipo</em>.
+      </h1>
+      <p class="text-lead max-w-[52ch] text-sand-100">
+        Coordinamos todas las especialidades de tu proyecto con un mismo equipo:
+        así avanza con menos interfaces y menos sorpresas en obra.
+      </p>
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-7">
+        <ButtonLink
+          href="/contacto"
+          variant="on-photo-solid"
+          class="min-h-12 px-6 text-base"
+        >
+          Cotizar proyecto
+        </ButtonLink>
+        <a
+          href="/proyectos"
+          class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+        >
+          Ver proyectos
+          <ArrowRight
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+          />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Lista de servicios" class="bg-surface">
+    <div class="container-site flex flex-col gap-12 py-16 md:gap-20 md:py-24 lg:py-28">
+      {main && (
+        <article
+          data-reveal
+          class="group radius-signature relative isolate grid overflow-hidden bg-surface-sunken has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]"
+        >
+          {main.photo && (
+            <div class="relative aspect-[4/3] overflow-hidden lg:aspect-auto lg:min-h-[480px]">
+              <ServicePhoto
+                photo={main.photo}
+                sizes="(min-width: 1024px) 680px, 100vw"
+                max={1600}
+                class="absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+              />
+            </div>
+          )}
+          <div class="flex flex-col justify-center gap-5 p-6 md:p-10 lg:p-12">
+            <div class="flex items-center justify-between gap-4">
+              <span class="inline-flex min-h-8 items-center rounded-full border border-border-strong px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.08em] text-ink uppercase">
+                Especialidad principal
+              </span>
+              <span
+                class="font-data text-sm leading-5 font-medium text-brand"
+                aria-hidden="true"
+              >
+                {main.number}
+              </span>
+            </div>
+            <span class="icon-draw inline-flex size-12 items-center justify-center rounded-full bg-surface-raised text-brand">
+              <ServiceIcon name={main.service.data.icon} />
+            </span>
+            <h2 class="text-[clamp(2rem,1.5rem+2vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.04em] text-ink">
+              <a
+                href={`/servicios/${main.service.data.slug}`}
+                class="text-ink no-underline after:absolute after:inset-0 after:z-10 hover:text-ink focus-visible:outline-none"
+              >
+                {main.service.data.title}
+              </a>
+            </h2>
+            <p class="max-w-[44ch] text-ink-muted">
+              {main.service.data.summary}
+            </p>
+            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
+              {main.count && (
+                <span class="font-data text-[15px] leading-5 font-medium text-ink">
+                  {main.count}
+                </span>
+              )}
+              <span
+                class="ml-auto inline-flex items-center gap-2 text-base leading-5 font-semibold text-brand"
+                aria-hidden="true"
+              >
+                Ver servicio
+                <ArrowRight
+                  size={20}
+                  stroke-width={1.75}
+                  class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
+                />
+              </span>
+            </div>
+          </div>
+        </article>
+      )}
+
+      <div
+        class="grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-16"
+        data-svc-index
+      >
+        <ol class="flex flex-col border-b border-border" data-reveal-stagger>
+          {rest.map((entry) => (
+            <li
+              class="group relative border-t border-border"
+              data-svc-row={entry.service.data.slug}
+            >
+              <div class="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-x-3 py-6 md:grid-cols-[3rem_3rem_minmax(0,1fr)_auto] md:gap-x-5 md:py-8">
+                <span
+                  class="font-data text-sm leading-7 font-medium text-brand md:leading-[3rem]"
+                  aria-hidden="true"
+                >
+                  {entry.number}
+                </span>
+                <span class="icon-draw hidden size-12 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand group-has-[a:focus-visible]:bg-brand group-has-[a:focus-visible]:text-on-brand md:inline-flex">
+                  <ServiceIcon name={entry.service.data.icon} />
+                </span>
+                <div class="flex min-w-0 flex-col gap-2 md:pt-2">
+                  <h2 class="text-[20px] leading-7 font-semibold tracking-[-0.015em] text-ink hyphens-auto md:text-[26px] md:leading-8">
+                    <a
+                      href={`/servicios/${entry.service.data.slug}`}
+                      class="text-ink no-underline transition-colors duration-300 after:absolute after:inset-0 after:z-10 group-hover:text-brand hover:text-brand focus-visible:outline-none"
+                    >
+                      {entry.service.data.title}
+                    </a>
+                  </h2>
+                  <p class="line-clamp-2 max-w-[52ch] text-ink-muted md:line-clamp-none">
+                    {entry.service.data.summary}
+                  </p>
+                  {entry.count && (
+                    <span class="font-data text-[13px] leading-5 font-medium tracking-[0.02em] text-ink">
+                      {entry.count}
+                    </span>
+                  )}
+                </div>
+                <span
+                  class="mt-0.5 inline-flex size-9 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,background-color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand md:mt-1.5 md:size-11"
+                  aria-hidden="true"
+                >
+                  <ArrowUpRight size={18} stroke-width={2} />
+                </span>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {/*
+          Desktop only: a real project of the row under the pointer or
+          keyboard focus. Decorative; the rows carry the names and counts.
+        */}
+        {previews.length > 0 && (
+          <div class="hidden lg:block" aria-hidden="true">
+            <div class="sticky top-28 flex flex-col gap-4">
+              <div class="radius-signature relative aspect-[4/5] overflow-hidden bg-surface-sunken">
+                {previews.map((entry, i) => (
+                  <div
+                    class="svc-preview absolute inset-0"
+                    data-svc-frame={entry.service.data.slug}
+                    data-on={i === 0 ? "" : undefined}
+                  >
+                    {entry.photo && (
+                      <ServicePhoto
+                        photo={entry.photo}
+                        sizes="480px"
+                        max={800}
+                        class="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div class="relative min-h-12">
+                {previews.map((entry, i) => (
+                  <p
+                    class="svc-preview absolute inset-x-0 top-0 flex flex-col gap-1"
+                    data-svc-frame={entry.service.data.slug}
+                    data-on={i === 0 ? "" : undefined}
+                  >
+                    <span class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase">
+                      {entry.service.data.title}
+                    </span>
+                    {entry.caption && (
+                      <span class="text-base leading-6 text-ink">
+                        {entry.caption}
+                      </span>
+                    )}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ServiceHelpBlock text="Cuéntanos qué quieres construir o resolver y te decimos qué especialidades necesita tu proyecto." />
     </div>
   </section>
 
   <CtaBlock />
 </BaseLayout>
+
+<script>
+  import "../../scripts/service-preview";
+  import "../../scripts/service-icons";
+</script>
+
+<style>
+  /* The preview frames cross-fade; only the active one shows. */
+  .svc-preview {
+    opacity: 0;
+    transition: opacity 450ms var(--ease-out);
+  }
+
+  .svc-preview[data-on] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .svc-preview {
+      transition: none;
+    }
+  }
+</style>

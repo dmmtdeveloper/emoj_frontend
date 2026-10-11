@@ -46,13 +46,19 @@ describe("pathsToRefresh", () => {
     ]);
   });
 
-  it("refreshes a project, the home (featured and service photos) and the listing", () => {
+  it("refreshes a project, the home (featured and service photos), the listing and the services page (counts and photos)", () => {
     expect(
       pathsToRefresh(
         { kind: "project", slug: "planta", previousSlug: null },
         1,
       ),
-    ).toEqual(["/", "/proyectos", "/proyectos/planta", "/sitemap-content.xml"]);
+    ).toEqual([
+      "/",
+      "/proyectos",
+      "/servicios",
+      "/proyectos/planta",
+      "/sitemap-content.xml",
+    ]);
   });
 });
 

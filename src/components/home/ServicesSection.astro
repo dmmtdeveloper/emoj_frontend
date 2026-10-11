@@ -7,14 +7,13 @@
  * compact block reveals a photo of a real project of that service (the
  * newest published one with a cover), or the service's own photo.
  */
-import { ArrowRight } from "@lucide/astro";
 import { contentSource } from "../../lib/content";
 import { mediaPath } from "../../lib/content/media";
 import { coversByService } from "../../lib/content/service-covers";
 import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
+import ServiceHelpBlock from "../services/ServiceHelpBlock.astro";
 import ArrowLink from "../ui/ArrowLink.astro";
-import ButtonLink from "../ui/ButtonLink.astro";
 import DisplayHeading from "../ui/DisplayHeading.astro";
 
 const services = await getServices();
@@ -69,20 +68,7 @@ const photoFor = (service: (typeof rest)[number]) => {
         </li>
       ))}
       <li class="col-span-2">
-        <div class="flex h-full flex-col justify-between gap-6 rounded-lg bg-accent p-6 text-on-accent sm:flex-row sm:items-center md:p-8">
-          <p class="max-w-[16ch] text-[26px] leading-[30px] font-semibold tracking-[-0.025em] md:text-[32px] md:leading-[36px]">
-            ¿No sabes cuál necesitas?
-          </p>
-          <ButtonLink
-            href="/contacto"
-            variant="on-accent"
-            pill
-            class="min-h-12 shrink-0 self-start px-6 text-base sm:self-auto"
-          >
-            Cuéntanos tu proyecto
-            <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-          </ButtonLink>
-        </div>
+        <ServiceHelpBlock class="h-full" />
       </li>
     </ul>
   </div>

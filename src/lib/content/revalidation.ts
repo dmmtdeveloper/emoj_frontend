@@ -59,6 +59,7 @@ export function pathsToRefresh(
   return [
     "/",
     "/proyectos",
+    "/servicios",
     ...unique.map((s) => `/proyectos/${s}`),
     "/sitemap-content.xml",
   ];
