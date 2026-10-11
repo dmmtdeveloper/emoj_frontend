@@ -19,6 +19,9 @@ export const PROJECT_LIMITS = {
   location: 200,
   region: 100,
   summary: 500,
+  magnitudeLabel: 40,
+  magnitudeValue: 24,
+  magnitudeUnit: 16,
   longText: 10000,
   slug: 80,
   seoTitle: 60,
@@ -58,6 +61,10 @@ export interface ProjectFormValues {
   year: string;
   services: ServiceSlug[];
   summary: string;
+  /** The headline figure ("Caudal 1.200 l/s"): all three empty = none. */
+  magnitudeLabel: string;
+  magnitudeValue: string;
+  magnitudeUnit: string;
   challenge: string;
   solution: string;
   result: string;
@@ -81,6 +88,9 @@ export function emptyProjectForm(): ProjectFormValues {
     year: "",
     services: [],
     summary: "",
+    magnitudeLabel: "",
+    magnitudeValue: "",
+    magnitudeUnit: "",
     challenge: "",
     solution: "",
     result: "",
@@ -103,6 +113,9 @@ export function projectToForm(project: AdminProject): ProjectFormValues {
     year: project.year ? String(project.year) : "",
     services: [...project.services],
     summary: project.summary,
+    magnitudeLabel: project.magnitude.label ?? "",
+    magnitudeValue: project.magnitude.value,
+    magnitudeUnit: project.magnitude.unit ?? "",
     challenge: project.challenge,
     solution: project.solution,
     result: project.result,
@@ -134,6 +147,11 @@ export function formToProjectInput(
     year: year === "" ? 0 : Number(year),
     services: [...values.services],
     summary: values.summary.trim(),
+    magnitude: {
+      label: values.magnitudeLabel.trim(),
+      value: values.magnitudeValue.trim(),
+      unit: values.magnitudeUnit.trim(),
+    },
     challenge: values.challenge.trim(),
     solution: values.solution.trim(),
     result: values.result.trim(),
@@ -164,49 +182,68 @@ function text(max: number) {
 /** Rules every saved project (draft or published) must meet. */
 export function projectFormSchema(now: Date) {
   const maxYear = now.getFullYear() + 1;
-  return z.object({
-    title: text(PROJECT_LIMITS.title).refine(
-      (v) => v.trim() !== "",
-      "Escribe el nombre del proyecto.",
-    ),
-    slug: z
-      .string()
-      .refine(
-        (v) =>
-          v.trim() === "" ||
-          (v.trim().length <= PROJECT_LIMITS.slug &&
-            SLUG_PATTERN.test(v.trim())),
-        "Usa solo minúsculas sin tildes, números y guiones simples (por ejemplo, canal-la-petaca).",
+  return z
+    .object({
+      title: text(PROJECT_LIMITS.title).refine(
+        (v) => v.trim() !== "",
+        "Escribe el nombre del proyecto.",
       ),
-    client: text(PROJECT_LIMITS.client),
-    location: text(PROJECT_LIMITS.location),
-    region: text(PROJECT_LIMITS.region),
-    year: z.string().refine((v) => {
-      const year = v.trim();
-      if (year === "") return true;
-      if (!/^\d{4}$/.test(year)) return false;
-      const n = Number(year);
-      return n >= MIN_PROJECT_YEAR && n <= maxYear;
-    }, `Escribe un año entre ${MIN_PROJECT_YEAR} y ${maxYear}, o déjalo vacío si no lo sabes.`),
-    services: z
-      .array(z.enum(SERVICE_SLUGS))
-      .min(1, "Elige al menos un servicio."),
-    summary: text(PROJECT_LIMITS.summary),
-    challenge: text(PROJECT_LIMITS.longText),
-    solution: text(PROJECT_LIMITS.longText),
-    result: text(PROJECT_LIMITS.longText),
-    coverMediaId: z.string().nullable(),
-    gallery: z
-      .array(z.string())
-      .refine(
-        (ids) => new Set(ids).size === ids.length,
-        "La misma imagen está dos veces en la galería.",
+      slug: z
+        .string()
+        .refine(
+          (v) =>
+            v.trim() === "" ||
+            (v.trim().length <= PROJECT_LIMITS.slug &&
+              SLUG_PATTERN.test(v.trim())),
+          "Usa solo minúsculas sin tildes, números y guiones simples (por ejemplo, canal-la-petaca).",
+        ),
+      client: text(PROJECT_LIMITS.client),
+      location: text(PROJECT_LIMITS.location),
+      region: text(PROJECT_LIMITS.region),
+      year: z.string().refine((v) => {
+        const year = v.trim();
+        if (year === "") return true;
+        if (!/^\d{4}$/.test(year)) return false;
+        const n = Number(year);
+        return n >= MIN_PROJECT_YEAR && n <= maxYear;
+      }, `Escribe un año entre ${MIN_PROJECT_YEAR} y ${maxYear}, o déjalo vacío si no lo sabes.`),
+      services: z
+        .array(z.enum(SERVICE_SLUGS))
+        .min(1, "Elige al menos un servicio."),
+      summary: text(PROJECT_LIMITS.summary),
+      magnitudeLabel: text(PROJECT_LIMITS.magnitudeLabel),
+      magnitudeValue: text(PROJECT_LIMITS.magnitudeValue).refine(
+        (v) => v.trim() === "" || /\d/.test(v),
+        "La cifra debe tener al menos un número (por ejemplo, 1.200).",
       ),
-    featured: z.boolean(),
-    seoTitle: text(PROJECT_LIMITS.seoTitle),
-    seoDescription: text(PROJECT_LIMITS.seoDescription),
-    ogImageMediaId: z.string().nullable(),
-  }) satisfies z.ZodType<ProjectFormValues>;
+      magnitudeUnit: text(PROJECT_LIMITS.magnitudeUnit),
+      challenge: text(PROJECT_LIMITS.longText),
+      solution: text(PROJECT_LIMITS.longText),
+      result: text(PROJECT_LIMITS.longText),
+      coverMediaId: z.string().nullable(),
+      gallery: z
+        .array(z.string())
+        .refine(
+          (ids) => new Set(ids).size === ids.length,
+          "La misma imagen está dos veces en la galería.",
+        ),
+      featured: z.boolean(),
+      seoTitle: text(PROJECT_LIMITS.seoTitle),
+      seoDescription: text(PROJECT_LIMITS.seoDescription),
+      ogImageMediaId: z.string().nullable(),
+    })
+    .superRefine((values, ctx) => {
+      const needsValue =
+        values.magnitudeLabel.trim() !== "" ||
+        values.magnitudeUnit.trim() !== "";
+      if (needsValue && values.magnitudeValue.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["magnitudeValue"],
+          message: "Escribe la cifra, o deja vacíos la etiqueta y la unidad.",
+        });
+      }
+    }) satisfies z.ZodType<ProjectFormValues>;
 }
 
 export interface ChecklistItem<F extends string = ProjectField> {
@@ -281,6 +318,9 @@ const API_FIELDS: Record<string, ProjectField> = {
   year: "year",
   services: "services",
   summary: "summary",
+  "magnitude.label": "magnitudeLabel",
+  "magnitude.value": "magnitudeValue",
+  "magnitude.unit": "magnitudeUnit",
   challenge: "challenge",
   solution: "solution",
   result: "result",
@@ -307,6 +347,8 @@ export function formErrorsFromProblem(
     fallbacks: {
       services: "Elige al menos un servicio.",
       year: "Escribe un año válido o déjalo vacío.",
+      magnitudeValue:
+        "Escribe la cifra con al menos un número (por ejemplo, 1.200).",
     },
   });
 }

@@ -679,6 +679,22 @@ export interface components {
             description: string;
             ogImage?: components["schemas"]["MediaRef"];
         };
+        /**
+         * @description The headline figure of a project, shown as a large data figure (e.g. "Caudal 1.200 l/s"). Every part is free text; a label or unit requires a value, and the value must contain at least one digit. Responses always include all three properties (empty strings when unset).
+         * @example {
+         *       "label": "Caudal",
+         *       "value": "1.200",
+         *       "unit": "l/s"
+         *     }
+         */
+        Magnitude: {
+            /** @description What is measured, e.g. "Caudal". Optional. */
+            label?: string;
+            /** @description The figure as it should be displayed, kept as typed (e.g. "1.200" with a thousands separator). Must contain at least one digit when non-empty, and is required when label or unit is set. */
+            value: string;
+            /** @description Unit of the value, e.g. "l/s". Optional. */
+            unit?: string;
+        };
         ProjectSummary: {
             /** Format: uuid */
             id: string;
@@ -691,6 +707,8 @@ export interface components {
             year?: number;
             services: components["schemas"]["ServiceSlug"][];
             summary: string;
+            /** @description Headline figure; omitted when the project has none. */
+            magnitude?: components["schemas"]["Magnitude"];
             featured: boolean;
             /** Format: date-time */
             publishedAt: string;
@@ -708,6 +726,8 @@ export interface components {
             year?: number;
             services: components["schemas"]["ServiceSlug"][];
             summary: string;
+            /** @description Headline figure; omitted when the project has none. */
+            magnitude?: components["schemas"]["Magnitude"];
             featured: boolean;
             /** Format: date-time */
             publishedAt: string;
@@ -899,6 +919,8 @@ export interface components {
             challenge?: string;
             solution?: string;
             result?: string;
+            /** @description Headline figure. Omitted on create means none; on PATCH, omitted keeps the current one and the given properties are merged into it. Send empty strings for all three to remove it. Errors use the fields magnitude.label, magnitude.value and magnitude.unit. */
+            magnitude?: components["schemas"]["Magnitude"];
             /** Format: uuid */
             coverMediaId?: string | null;
             /** @description Ordered media IDs. */
@@ -921,6 +943,8 @@ export interface components {
             challenge: string;
             solution: string;
             result: string;
+            /** @description Always present; all three properties are empty strings when the project has none. */
+            magnitude: components["schemas"]["Magnitude"];
             /** Format: uuid */
             coverMediaId: string | null;
             gallery: string[];

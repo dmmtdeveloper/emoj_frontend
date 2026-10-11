@@ -66,6 +66,9 @@ const TABS: readonly EditorTab[] = [
       "location",
       "region",
       "services",
+      "magnitudeLabel",
+      "magnitudeValue",
+      "magnitudeUnit",
       "featured",
     ],
   },
@@ -263,6 +266,42 @@ function EditorForm({
                 serviceTitles={serviceTitles}
                 error={errors.services?.message}
               />
+              <fieldset className="flex flex-col gap-3">
+                <legend className="text-sm font-semibold text-ink">
+                  Cifra destacada{" "}
+                  <span className="font-medium text-ink-muted">(opcional)</span>
+                </legend>
+                <p className="text-sm text-ink-muted">
+                  La magnitud del proyecto, que la ficha muestra en grande. Ej.:
+                  Caudal · 1.200 · l/s. Déjala vacía si no aplica.
+                </p>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+                  <Field
+                    label="Qué se mide"
+                    optional
+                    hint="Ej.: Caudal, Longitud."
+                    autoComplete="off"
+                    {...register("magnitudeLabel")}
+                    error={errors.magnitudeLabel?.message}
+                  />
+                  <Field
+                    label="Cifra"
+                    hint="Como quieres que se lea. Ej.: 1.200"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    {...register("magnitudeValue")}
+                    error={errors.magnitudeValue?.message}
+                  />
+                  <Field
+                    label="Unidad"
+                    optional
+                    hint="Ej.: l/s, km, m³."
+                    autoComplete="off"
+                    {...register("magnitudeUnit")}
+                    error={errors.magnitudeUnit?.message}
+                  />
+                </div>
+              </fieldset>
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
