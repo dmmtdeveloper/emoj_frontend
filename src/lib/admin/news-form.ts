@@ -15,6 +15,7 @@ export const NEWS_LIMITS = {
   title: 200,
   excerpt: 300,
   category: 60,
+  location: 80,
   slug: 80,
   seoTitle: 60,
   seoDescription: 160,
@@ -26,8 +27,12 @@ export interface NewsFormValues {
   slug: string;
   excerpt: string;
   category: string;
+  /** Where the story happened ("Los Andes, Región de Valparaíso"). */
+  location: string;
   body: TipTapDocument | null;
   coverMediaId: string | null;
+  /** Ordered media IDs of the photo gallery shown after the text. */
+  gallery: string[];
   seoTitle: string;
   seoDescription: string;
   ogImageMediaId: string | null;
@@ -41,8 +46,10 @@ export function emptyNewsForm(): NewsFormValues {
     slug: "",
     excerpt: "",
     category: "",
+    location: "",
     body: null,
     coverMediaId: null,
+    gallery: [],
     seoTitle: "",
     seoDescription: "",
     ogImageMediaId: null,
@@ -71,8 +78,10 @@ export function newsToForm(news: AdminNews): NewsFormValues {
     slug: news.slug,
     excerpt: news.excerpt,
     category: news.category,
+    location: news.location,
     body: news.body,
     coverMediaId: news.coverMediaId,
+    gallery: [...news.gallery],
     seoTitle: news.seo.title ?? "",
     seoDescription: news.seo.description ?? "",
     ogImageMediaId: news.seo.ogImageMediaId ?? null,
@@ -90,8 +99,10 @@ export function formToNewsInput(
     title: values.title.trim(),
     excerpt: values.excerpt.trim(),
     category: values.category.trim(),
+    location: values.location.trim(),
     body: hasBodyContent(values.body) ? values.body : null,
     coverMediaId: values.coverMediaId,
+    gallery: [...values.gallery],
     seo: {
       title: values.seoTitle.trim(),
       description: values.seoDescription.trim(),
@@ -123,8 +134,15 @@ export function newsFormSchema() {
       ),
     excerpt: text(NEWS_LIMITS.excerpt),
     category: text(NEWS_LIMITS.category),
+    location: text(NEWS_LIMITS.location),
     body: z.custom<TipTapDocument | null>(),
     coverMediaId: z.string().nullable(),
+    gallery: z
+      .array(z.string())
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "La misma imagen está dos veces en la galería.",
+      ),
     seoTitle: text(NEWS_LIMITS.seoTitle),
     seoDescription: text(NEWS_LIMITS.seoDescription),
     ogImageMediaId: z.string().nullable(),
@@ -180,8 +198,10 @@ const API_FIELDS: Record<string, NewsField> = {
   slug: "slug",
   excerpt: "excerpt",
   category: "category",
+  location: "location",
   body: "body",
   coverMediaId: "coverMediaId",
+  gallery: "gallery",
   "seo.title": "seoTitle",
   "seo.description": "seoDescription",
   "seo.ogImageMediaId": "ogImageMediaId",

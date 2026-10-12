@@ -1,0 +1,159 @@
+---
+/**
+ * A photo gallery as a mosaic (src/lib/content/gallery.ts) whose photos
+ * open a full-screen viewer: each photo is a button that opens the native
+ * <dialog> (focus is contained, Escape closes it and focus returns to the
+ * photo); arrows and the left and right keys move through the photos
+ * (src/scripts/lightbox.ts). One gallery per page.
+ *
+ * - `layout="wide"`: a section of its own (the project page).
+ * - `layout="narrow"`: inside an article's text column (news).
+ *
+ * `photos[].src` is the address to load: a published photo's stable /media
+ * path, or a draft's URL in preview.
+ */
+import { ChevronLeft, ChevronRight, X } from "@lucide/astro";
+import { getImage, Image } from "astro:assets";
+import { fitWidth } from "../../lib/content/format";
+import { galleryTile, type GalleryLayout } from "../../lib/content/gallery";
+
+interface Photo {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
+interface Props {
+  photos: Photo[];
+  layout?: GalleryLayout;
+}
+
+const { photos, layout = "wide" } = Astro.props;
+const total = String(photos.length).padStart(2, "0");
+const wide = layout === "wide";
+
+/** Full-size versions for the viewer. */
+const full = await Promise.all(
+  photos.map((photo) => getImage({ src: photo.src, ...fitWidth(photo, 1920) })),
+);
+
+/** The large tile of the mosaic (gets a bigger image). */
+const isLarge = (i: number) => i === 0 || photos.length === 1;
+const sizes = (i: number) =>
+  wide
+    ? isLarge(i)
+      ? "(min-width: 1200px) 1150px, 100vw"
+      : "(min-width: 1200px) 285px, (min-width: 768px) 25vw, 50vw"
+    : isLarge(i) || galleryTile(i, photos.length, layout) !== ""
+      ? "(min-width: 1024px) 760px, 100vw"
+      : "(min-width: 1024px) 380px, 50vw";
+const aspect = (i: number) =>
+  wide && photos.length === 1
+    ? "aspect-[4/3] md:aspect-[21/9]"
+    : !wide && galleryTile(i, photos.length, layout) !== ""
+      ? "aspect-[16/10]"
+      : "aspect-[4/3]";
+---
+
+{photos.length > 0 && (
+  <>
+    <ul
+      class:list={[
+        "grid grid-cols-2",
+        wide ? "gap-3 md:grid-cols-4 md:gap-5" : "gap-3 md:gap-4",
+      ]}
+      data-reveal-stagger
+    >
+      {photos.map((photo, i) => (
+        <li class:list={[galleryTile(i, photos.length, layout)]}>
+          <button
+            type="button"
+            class="group relative block h-full w-full cursor-zoom-in overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
+            data-lightbox-item
+            data-index={i}
+            data-full={full[i]?.src}
+            data-alt={photo.alt}
+          >
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              {...fitWidth(photo, isLarge(i) ? 1600 : 640)}
+              widths={isLarge(i) ? [640, 960, 1200, 1600] : [320, 480, 640]}
+              sizes={sizes(i)}
+              loading="lazy"
+              class:list={[
+                "h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]",
+                aspect(i),
+              ]}
+            />
+            <span class="sr-only">
+              Ver la foto {i + 1} de {photos.length} en grande
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+
+    <dialog
+      class="lightbox m-0 h-dvh max-h-none w-full max-w-none bg-plum-950/95 p-0 text-sand-50 backdrop:bg-plum-950/80"
+      aria-label="Galería de fotos"
+      data-lightbox
+    >
+      <div class="flex h-full flex-col">
+        <div class="container-site flex h-(--header-h) shrink-0 items-center justify-between">
+          <p
+            class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 tabular-nums"
+            aria-live="polite"
+            data-lightbox-count
+          >
+            01 / {total}
+          </p>
+          <button
+            type="button"
+            class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] leading-5 font-medium text-sand-50 hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-sand-50"
+            data-lightbox-close
+          >
+            <X size={20} stroke-width={1.75} aria-hidden="true" />
+            Cerrar
+          </button>
+        </div>
+        <figure class="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-6 md:px-20">
+          <img
+            class="max-h-full max-w-full rounded-lg object-contain"
+            alt=""
+            data-lightbox-image
+          />
+          {photos.length > 1 && (
+            <>
+              <button
+                type="button"
+                class="absolute top-1/2 left-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:left-6"
+                aria-label="Foto anterior"
+                data-lightbox-prev
+              >
+                <ChevronLeft size={24} stroke-width={1.75} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                class="absolute top-1/2 right-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:right-6"
+                aria-label="Foto siguiente"
+                data-lightbox-next
+              >
+                <ChevronRight
+                  size={24}
+                  stroke-width={1.75}
+                  aria-hidden="true"
+                />
+              </button>
+            </>
+          )}
+        </figure>
+      </div>
+    </dialog>
+  </>
+)}
+
+<script>
+  import "../../scripts/lightbox";
+</script>

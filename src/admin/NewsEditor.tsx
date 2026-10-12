@@ -1,6 +1,7 @@
 /**
- * News editor (new and existing): title, excerpt, category, cover, the
- * article text (TipTap) and the Google fields. Saving, publishing and the
+ * News editor (new and existing): title, excerpt, category, location,
+ * cover, the article text (TipTap), its photo gallery and the Google
+ * fields. Saving, publishing and the
  * shared page pieces come from editor-kit.tsx, like the project editor.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,9 +20,11 @@ import {
   newsToForm,
   type NewsFormValues,
 } from "../lib/admin/news-form";
+import { withAddedIds } from "../lib/admin/media";
 import { charCount } from "../lib/admin/project-form";
 import { adminApi } from "./api";
 import { EditorSkeleton } from "./skeletons";
+import { GalleryField } from "./GalleryField";
 import { ErrorNotice, unwrap } from "./common";
 import {
   BannerSlot,
@@ -48,9 +51,9 @@ const TABS: readonly EditorTab[] = [
   {
     id: "noticia",
     label: "Noticia",
-    fields: ["title", "excerpt", "category", "coverMediaId"],
+    fields: ["title", "excerpt", "category", "location", "coverMediaId"],
   },
-  { id: "texto", label: "Texto", fields: ["body"] },
+  { id: "texto", label: "Texto y fotos", fields: ["body", "gallery"] },
   {
     id: "google",
     label: "Google",
@@ -58,7 +61,7 @@ const TABS: readonly EditorTab[] = [
   },
 ];
 
-type Picker = null | "cover" | "og";
+type Picker = null | "cover" | "gallery" | "og";
 
 const ADAPTER: EditorAdapter<AdminNews, NewsFormValues, NewsInput> = {
   itemKey: "news-item",
@@ -232,6 +235,21 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
                   <option key={c} value={c} />
                 ))}
               </datalist>
+              <Field
+                label="Ubicación"
+                optional
+                hint="Dónde ocurrió, por ejemplo «Los Andes, Región de Valparaíso». Se muestra junto a la fecha."
+                autoComplete="off"
+                {...register("location")}
+                error={errors.location?.message}
+                aside={
+                  <Counter
+                    count={charCount(values.location)}
+                    max={NEWS_LIMITS.location}
+                  />
+                }
+                className="md:max-w-md"
+              />
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-semibold text-ink">
                   Foto de portada{" "}
@@ -276,6 +294,21 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
                     error={errors.body?.message as string | undefined}
                   />
                 )}
+              />
+            </Card>
+            <Card className="flex flex-col gap-5">
+              <SectionTitle
+                title="Fotos"
+                text="Se muestran después del texto, en este orden, y se abren en grande al hacer clic. Opcional."
+              />
+              <GalleryField
+                ids={values.gallery}
+                media={media}
+                error={errors.gallery?.message}
+                onAdd={() => setPicker("gallery")}
+                onChange={(ids) =>
+                  setValue("gallery", ids, { shouldDirty: true })
+                }
               />
             </Card>
           </StepPanel>
@@ -338,21 +371,37 @@ function EditorForm({ news: initial }: { news: AdminNews | null }) {
 
       {picker && (
         <MediaPicker
-          title={picker === "cover" ? "Foto de portada" : "Imagen al compartir"}
+          title={
+            picker === "cover"
+              ? "Foto de portada"
+              : picker === "gallery"
+                ? "Agregar fotos a la galería"
+                : "Imagen al compartir"
+          }
           purpose={picker}
-          multiple={false}
-          selected={[
-            (picker === "cover"
-              ? values.coverMediaId
-              : values.ogImageMediaId) ?? "",
-          ].filter(Boolean)}
+          multiple={picker === "gallery"}
+          selected={
+            picker === "gallery"
+              ? []
+              : [
+                  (picker === "cover"
+                    ? values.coverMediaId
+                    : values.ogImageMediaId) ?? "",
+                ].filter(Boolean)
+          }
           onClose={() => setPicker(null)}
           onConfirm={(ids) => {
-            setValue(
-              picker === "cover" ? "coverMediaId" : "ogImageMediaId",
-              ids[0] ?? null,
-              { shouldDirty: true },
-            );
+            if (picker === "gallery") {
+              setValue("gallery", withAddedIds(values.gallery, ids), {
+                shouldDirty: true,
+              });
+            } else {
+              setValue(
+                picker === "cover" ? "coverMediaId" : "ogImageMediaId",
+                ids[0] ?? null,
+                { shouldDirty: true },
+              );
+            }
             setPicker(null);
           }}
         />

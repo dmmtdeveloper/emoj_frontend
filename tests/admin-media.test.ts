@@ -5,6 +5,7 @@ import {
   formatBytes,
   orderedIds,
   smallForCover,
+  withAddedIds,
   uploadError,
 } from "../src/lib/admin/media";
 
@@ -57,5 +58,17 @@ describe("orderedIds", () => {
     expect(orderedIds(["a", "b", "c"], "a", "up")).toEqual(["a", "b", "c"]);
     expect(orderedIds(["a", "b", "c"], "a", "down")).toEqual(["b", "a", "c"]);
     expect(orderedIds(["a", "b", "c"], "b", "remove")).toEqual(["a", "c"]);
+  });
+});
+
+describe("withAddedIds", () => {
+  it("appends the picked photos in order and skips the ones already there", () => {
+    expect(withAddedIds(["a", "b"], ["c", "a", "d"])).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(withAddedIds([], [])).toEqual([]);
   });
 });
