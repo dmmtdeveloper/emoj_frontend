@@ -1,18 +1,29 @@
 ---
 /**
- * Compact team member card: photo (or an initials avatar in brand colors
- * when there is no real photo), name, role and education.
+ * Team member card: portrait, name, role and education.
+ *
+ * - `size="lg"`: the larger tile for the head of the company.
+ * - Portraits share one crop (4:5, from the top) and, with a mouse, a
+ *   softened color that comes back on hover, so photos taken on different
+ *   backgrounds read as one set. Touch screens keep full color.
+ * - Without a real photo: a quiet tile with the brand's fine-stroke isotype
+ *   and the initials, so a missing portrait never outshines the real ones.
  */
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
 import { initials } from "../../lib/content/format";
 import type { TeamMember } from "../../lib/team";
+import IsotipoMark from "../IsotipoMark.astro";
 
 interface Props {
   member: TeamMember;
+  size?: "md" | "lg";
+  headingLevel?: "h3" | "h4";
 }
 
-const { member } = Astro.props;
+const { member, size = "md", headingLevel = "h4" } = Astro.props;
+const Heading = headingLevel;
+const large = size === "lg";
 
 const photos = import.meta.glob<{ default: ImageMetadata }>(
   "../../assets/team/*.jpg",
@@ -26,33 +37,93 @@ if (member.photo && !photo) {
     `Team photo "${member.photo}.jpg" not found in src/assets/team.`,
   );
 }
+const frame = large
+  ? "radius-signature aspect-[4/5] w-full overflow-hidden bg-surface-raised"
+  : "aspect-[4/5] w-full overflow-hidden rounded-lg bg-surface-raised";
 ---
 
-<div class="flex flex-col gap-3">
+<div class="group flex flex-col gap-3">
   {photo ? (
-    <Image
-      src={photo}
-      alt={`Retrato de ${member.name}.`}
-      widths={[240, 360, 480]}
-      sizes="(min-width: 1200px) 216px, (min-width: 1024px) 18vw, (min-width: 640px) 30vw, 46vw"
-      loading="lazy"
-      class="aspect-[4/5] w-full rounded-lg bg-surface-sunken object-cover object-top"
-    />
+    <div class={frame}>
+      <Image
+        src={photo}
+        alt={`Retrato de ${member.name}.`}
+        widths={large ? [360, 540, 720] : [240, 360, 480]}
+        sizes={
+          large
+            ? "(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
+            : "(min-width: 1200px) 276px, (min-width: 1024px) 23vw, 46vw"
+        }
+        loading="lazy"
+        class="team-photo h-full w-full object-cover object-top"
+      />
+    </div>
   ) : (
     <div
-      class="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent text-on-accent"
+      class:list={[
+        frame,
+        "relative flex items-center justify-center text-ink-muted",
+      ]}
       aria-hidden="true"
     >
-      <span class="text-[40px] leading-none font-semibold tracking-[0.02em]">
+      <IsotipoMark weight="fine" tone="mono" class="w-1/2 opacity-30" />
+      <span class="absolute bottom-4 left-4 font-data text-sm leading-5 font-medium tracking-[0.08em]">
         {initials(member.name)}
       </span>
     </div>
   )}
   <div class="flex flex-col gap-0.5">
-    <h4 class="text-base leading-6 font-semibold text-ink">{member.name}</h4>
-    <p class="text-sm leading-5 font-medium text-ink-muted">{member.role}</p>
+    <Heading
+      class:list={[
+        "font-semibold text-ink",
+        large
+          ? "text-[22px] leading-7 tracking-[-0.01em]"
+          : "text-base leading-6",
+      ]}
+    >
+      {member.name}
+    </Heading>
+    <p
+      class:list={[
+        "font-medium",
+        large
+          ? "text-base leading-6 text-brand"
+          : "text-sm leading-5 text-ink-muted",
+      ]}
+    >
+      {member.role}
+    </p>
     {member.education && (
       <p class="text-[13px] leading-5 text-ink-muted">{member.education}</p>
     )}
   </div>
 </div>
+
+<style>
+  /*
+   * One set of portraits: with a mouse, a softened color that comes back
+   * on hover; touch screens (no hover) keep full color.
+   */
+  .team-photo {
+    transition:
+      filter 400ms var(--ease-out),
+      scale 600ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .team-photo {
+      filter: saturate(0.5) contrast(1.02);
+    }
+
+    .group:hover .team-photo {
+      filter: none;
+      scale: 1.03;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .group:hover .team-photo {
+      scale: 1;
+    }
+  }
+</style>

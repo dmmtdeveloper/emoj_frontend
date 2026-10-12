@@ -298,3 +298,54 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Client logos (ClientsStrip, ClientLogos): each brand's own artwork as a
+ * mask over currentColor, so every logo reads in one tone. Files are named
+ * in src/lib/clients.ts. Aspect ratio (width / height) and display height
+ * are balanced by eye per logo; classes, not style attributes (CSP).
+ */
+.client-logo {
+  display: block;
+  height: calc(var(--h) * 0.8);
+  aspect-ratio: var(--ratio);
+  background-color: currentColor;
+  mask: var(--logo) center / contain no-repeat;
+}
+
+@media (min-width: 48rem) {
+  .client-logo {
+    height: var(--h);
+  }
+}
+
+/* Aspect ratio (width / height) and display height, balanced by eye. */
+.client-logo--esval {
+  --logo: url("/logos/clientes/esval.svg");
+  --ratio: 2.732;
+  --h: 40px;
+}
+
+.client-logo--aguas-del-valle {
+  --logo: url("/logos/clientes/aguas-del-valle.svg");
+  --ratio: 3.876;
+  --h: 44px;
+}
+
+.client-logo--saam {
+  --logo: url("/logos/clientes/saam.svg");
+  --ratio: 6.152;
+  --h: 26px;
+}
+
+.client-logo--aes-andes {
+  --logo: url("/logos/clientes/aes-andes.svg");
+  --ratio: 5.196;
+  --h: 28px;
+}
+
+.client-logo--codelco {
+  --logo: url("/logos/clientes/codelco.svg");
+  --ratio: 4.565;
+  --h: 32px;
+}
