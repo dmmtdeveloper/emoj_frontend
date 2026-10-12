@@ -13,3 +13,15 @@ export function newsListing(
   const [featured, ...rest] = articles;
   return { featured, rest };
 }
+
+/**
+ * Other articles to read at the foot of an article page: the newest ones,
+ * without the article being read.
+ */
+export function moreNews<T extends { slug: string }>(
+  articles: readonly T[],
+  slug: string,
+  limit: number,
+): T[] {
+  return articles.filter((a) => a.slug !== slug).slice(0, limit);
+}

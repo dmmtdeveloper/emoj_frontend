@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { NewsSummary } from "../src/lib/api/client";
-import { newsListing } from "../src/lib/content/news-listing";
+import { moreNews, newsListing } from "../src/lib/content/news-listing";
 
 function article(slug: string): NewsSummary {
   return {
@@ -36,5 +36,21 @@ describe("newsListing", () => {
     const none = newsListing([], 1);
     expect(none.featured).toBeUndefined();
     expect(none.rest).toEqual([]);
+  });
+});
+
+describe("moreNews", () => {
+  const items = ["a", "b", "c", "d", "e"].map(article);
+
+  it("lists the newest other articles, without the current one", () => {
+    expect(moreNews(items, "a", 3).map((a) => a.slug)).toEqual(["b", "c", "d"]);
+    expect(moreNews(items, "c", 3).map((a) => a.slug)).toEqual(["a", "b", "d"]);
+  });
+
+  it("returns fewer when there are not enough, and none for one article", () => {
+    expect(moreNews(items.slice(0, 2), "a", 3).map((a) => a.slug)).toEqual([
+      "b",
+    ]);
+    expect(moreNews([article("a")], "a", 3)).toEqual([]);
   });
 });

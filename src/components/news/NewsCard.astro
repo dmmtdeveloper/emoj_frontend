@@ -2,12 +2,15 @@
 /**
  * News card: cover, date, category, title (the card's single link) and
  * excerpt. Compact row on phones (no excerpt), stacked card from `sm` up.
- * The photo zooms in slowly on hover, as on the project and service tiles.
+ * The photo zooms in slowly on hover, as on the project and service tiles,
+ * and morphs into the article's cover when opened (as project cards do,
+ * src/scripts/project-transition.ts).
  */
 import { Image } from "astro:assets";
 import type { NewsSummary } from "../../lib/api/client";
 import { fitWidth, formatDate } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
+import { newsTransitionName } from "../../lib/content/transition";
 
 interface Props {
   article: NewsSummary;
@@ -29,7 +32,8 @@ const Heading = headingLevel;
         widths={[208, 400, 640, 800]}
         sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
         loading={eager ? "eager" : "lazy"}
-        class="h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+        data-vt={newsTransitionName(article.slug)}
+        class="vt-project h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
       />
     </div>
   ) : (

@@ -15,6 +15,7 @@ import type { NewsSummary } from "../../lib/api/client";
 import { fitWidth, formatDate } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { newsListing } from "../../lib/content/news-listing";
+import { newsTransitionName } from "../../lib/content/transition";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumb from "../ui/Breadcrumb.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
@@ -133,7 +134,8 @@ const pageLink =
                     widths={[640, 960, 1280, 1600]}
                     sizes="(min-width: 1200px) 680px, (min-width: 1024px) 56vw, 100vw"
                     loading="eager"
-                    class="absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+                    data-vt={newsTransitionName(featured.slug)}
+                    class="vt-project absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
                   />
                 </div>
               )}

@@ -1455,3 +1455,35 @@
     animation: fade-out 160ms ease both;
   }
 }
+
+/*
+ * Reading progress on article pages (src/pages/noticias/[slug].astro): a
+ * thin line along the top that fills as the page scrolls. Scroll-driven,
+ * so it moves only with the reader; browsers without scroll timelines
+ * show nothing.
+ */
+.read-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .read-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    display: block;
+    height: 3px;
+    background: var(--brand);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+    animation: read-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes read-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
