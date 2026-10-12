@@ -1,6 +1,18 @@
 ---
-import { ArrowLeft, Link as LinkIcon } from "@lucide/astro";
+/**
+ * An article, in the home's voice:
+ * - The cover full-bleed under the transparent header, with the category,
+ *   title, date and reading time over it (plum header without a cover).
+ *   The card photo morphs into it on navigation (.vt-project).
+ * - A reading progress line along the top (motion.css `.read-progress`).
+ * - The excerpt as the lead, then the body. On desktop the share links
+ *   stay beside the text; on phones they follow it.
+ * - "Más noticias": the newest other articles, and the closing CTA.
+ */
+import { Link as LinkIcon } from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
+import NewsCard from "../../components/news/NewsCard.astro";
+import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import SocialIcon from "../../components/ui/SocialIcon.astro";
@@ -9,8 +21,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
 import { fitWidth, formatDate, shareLinks } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
+import { moreNews } from "../../lib/content/news-listing";
 import { setPreviewHeaders } from "../../lib/content/preview";
+import {
+  readingMinutes,
+  readingTimeLabel,
+} from "../../lib/content/reading-time";
 import { renderTipTap } from "../../lib/content/tiptap";
+import { newsTransitionName } from "../../lib/content/transition";
 import { articleJsonLd } from "../../lib/structured-data";
 
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
@@ -19,9 +37,10 @@ export const prerender = false;
 // /preview rewrites here with the draft in locals (src/pages/preview.astro).
 const draft = Astro.locals.preview;
 const isPreview = draft?.kind === "news";
+const source = contentSource();
 const article = isPreview
   ? draft.news
-  : await contentSource().findArticle(Astro.params.slug ?? "");
+  : await source.findArticle(Astro.params.slug ?? "");
 if (!article) return Astro.rewrite("/no-encontrada");
 const whatsapp = { kind: "article", title: article.title } as const;
 if (isPreview) setPreviewHeaders(Astro.response.headers);
@@ -29,6 +48,8 @@ const site = Astro.site ?? new URL("https://emoj.cl");
 const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
 const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
 const share = shareLinks(pageUrl, article.title);
+const reading = readingTimeLabel(readingMinutes(article.body, article.excerpt));
+const others = moreNews(await source.getNews(), article.slug, 3);
 
 const ogSource = article.seo.ogImage ?? article.cover;
 const ogImage =
@@ -43,12 +64,13 @@ const ogImage =
     : undefined;
 
 const shareLink =
-  "inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:border-border-strong hover:text-ink";
+  "inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:border-brand hover:text-brand";
 ---
 
 <BaseLayout
   whatsapp={whatsapp}
   preview={isPreview}
+  headerOverlay={Boolean(article.cover)}
   title={article.seo.title}
   description={article.seo.description}
   {...(ogImage
@@ -68,111 +90,201 @@ const shareLink =
     ),
   ]}
 >
+  <div class="read-progress" aria-hidden="true"></div>
+
   <article>
-    <header class="border-b border-border bg-surface">
-      <div class="container-site flex flex-col gap-6 pt-12 pb-10 md:pt-16">
-        <Breadcrumb
-          items={[
-            { label: "Inicio", href: "/" },
-            { label: "Noticias", href: "/noticias" },
-            { label: article.title, href: `/noticias/${article.slug}` },
-          ]}
-        />
-        <p class="flex flex-wrap items-center gap-x-2 text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase">
+    <header
+      class:list={[
+        "relative isolate overflow-hidden bg-plum-950 text-sand-50",
+        article.cover && "-mt-(--header-h)",
+      ]}
+    >
+      {article.cover && (
+        <>
+          {/* The cover, drifting slower than the page on desktop (motion.css). */}
+          <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+            <Image
+              src={
+                isPreview
+                  ? article.cover.url
+                  : mediaPath("noticias", article.slug, article.cover)
+              }
+              alt={article.cover.alt}
+              {...fitWidth(article.cover, 2000)}
+              widths={[640, 960, 1280, 1600, 2000]}
+              sizes="100vw"
+              loading="eager"
+              fetchpriority="high"
+              data-vt={newsTransitionName(article.slug)}
+              class="vt-project vt-cover photo-zoom h-full w-full object-cover"
+            />
+          </div>
+          {/* Veils as on the project page: the photo leads. */}
+          <div class="ficha-veils pointer-events-none absolute inset-0 -z-10">
+            <div
+              class="absolute inset-0 bg-linear-to-t from-plum-950/95 via-plum-950/55 via-55% to-plum-950/25 md:bg-plum-950/20 md:bg-none"
+              aria-hidden="true"
+            ></div>
+            <div
+              class="absolute inset-0 hidden bg-linear-to-r from-plum-950/85 via-plum-950/45 via-45% to-transparent to-75% md:block"
+              aria-hidden="true"
+            ></div>
+            <div
+              class="absolute inset-0 hidden bg-linear-to-t from-plum-950/85 to-transparent to-45% md:block"
+              aria-hidden="true"
+            ></div>
+          </div>
+        </>
+      )}
+
+      <div
+        class:list={[
+          "ficha-content hero__content container-site flex flex-col justify-end gap-6 pb-10 md:gap-7 md:pb-14",
+          article.cover
+            ? "min-h-[max(560px,82svh)] pt-[calc(var(--header-h)+40px)]"
+            : "pt-12 md:pt-16",
+        ]}
+      >
+        <div class="hidden md:block">
+          <Breadcrumb
+            inverse
+            items={[
+              { label: "Inicio", href: "/" },
+              { label: "Noticias", href: "/noticias" },
+              { label: article.title, href: `/noticias/${article.slug}` },
+            ]}
+          />
+        </div>
+        <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+          Noticias{article.category && <> · {article.category}</>}
+        </p>
+        <h1 class="max-w-[22ch] text-[clamp(2rem,1.4rem+2.4vw,3.5rem)] leading-[1.04] font-semibold tracking-[-0.04em] text-balance">
+          {article.title}
+        </h1>
+        <p class="flex flex-wrap items-center gap-x-3 gap-y-1 font-data text-sm leading-5 font-medium text-sand-100">
           <time datetime={article.publishedAt}>
             {formatDate(article.publishedAt)}
           </time>
-          {article.category && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span>{article.category}</span>
-            </>
-          )}
+          <span aria-hidden="true" class="text-sage-300">
+            ·
+          </span>
+          <span>{reading}</span>
         </p>
-        <h1 class="max-w-[30ch] text-[30px] leading-9 font-semibold tracking-[-0.015em] text-ink md:text-[44px] md:leading-[50px]">
-          {article.title}
-        </h1>
       </div>
     </header>
 
     <div class="bg-surface">
-      <div class="container-site flex flex-col gap-10 py-10 md:py-16">
-        {article.cover && (
-          <Image
-            src={
-              isPreview
-                ? article.cover.url
-                : mediaPath("noticias", article.slug, article.cover)
-            }
-            alt={article.cover.alt}
-            {...fitWidth(article.cover, 1600)}
-            widths={[480, 800, 1200, 1600]}
-            sizes="(min-width: 1200px) 960px, calc(100vw - 32px)"
-            loading="eager"
-            fetchpriority="high"
-            class="aspect-[16/10] max-h-[600px] w-full max-w-[960px] rounded-lg object-cover"
-          />
-        )}
-
-        <div class="article-body" set:html={bodyHtml} />
+      <div class="container-site grid gap-12 py-12 md:py-20 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] lg:gap-16 lg:py-24">
+        <div class="flex min-w-0 flex-col gap-8 lg:col-start-2">
+          {article.excerpt && (
+            <p
+              data-reveal
+              class="max-w-[38ch] border-l-2 border-brand pl-5 text-[clamp(1.25rem,1.1rem+0.6vw,1.625rem)] leading-[1.4] font-medium tracking-[-0.01em] text-ink md:pl-6"
+            >
+              {article.excerpt}
+            </p>
+          )}
+          <div class="article-body" set:html={bodyHtml} />
+        </div>
 
         <aside
           aria-labelledby="compartir"
-          class="flex max-w-[65ch] flex-col gap-3 border-t border-border pt-8"
+          class="lg:col-start-1 lg:row-start-1 lg:self-start lg:pt-1 lg:sticky lg:top-28"
         >
-          <h2 id="compartir" class="text-lg leading-6 font-semibold">
-            Comparte esta noticia
-          </h2>
-          <div class="flex flex-wrap items-center gap-2">
-            <a
-              href={share.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              class={shareLink}
+          <div class="flex max-w-[65ch] flex-col gap-4 border-t border-border pt-8 lg:border-t-0 lg:pt-0">
+            <h2
+              id="compartir"
+              class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase"
             >
-              <SocialIcon name="LinkedIn" />
-              LinkedIn
-              <span class="sr-only">(se abre en una pestaña nueva)</span>
-            </a>
-            <a
-              href={share.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              class={shareLink}
-            >
-              <WhatsAppIcon size={20} />
-              WhatsApp
-              <span class="sr-only">(se abre en una pestaña nueva)</span>
-            </a>
-            <button
-              type="button"
-              data-copy-link={pageUrl}
-              class:list={[shareLink, "cursor-pointer"]}
-              hidden
-            >
-              <LinkIcon size={20} stroke-width={1.75} aria-hidden="true" />
-              Copiar enlace
-            </button>
-            <span
-              data-copy-status
-              role="status"
-              class="text-sm leading-5 font-medium text-ink-muted"
-            ></span>
+              Comparte esta noticia
+            </h2>
+            <div class="flex flex-wrap items-center gap-2 lg:flex-col lg:items-start">
+              <a
+                href={share.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={shareLink}
+              >
+                <SocialIcon name="LinkedIn" />
+                LinkedIn
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+              <a
+                href={share.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={shareLink}
+              >
+                <WhatsAppIcon size={20} />
+                WhatsApp
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+              <button
+                type="button"
+                data-copy-link={pageUrl}
+                class:list={[shareLink, "cursor-pointer"]}
+                hidden
+              >
+                <LinkIcon size={20} stroke-width={1.75} aria-hidden="true" />
+                Copiar enlace
+              </button>
+              <span
+                data-copy-status
+                role="status"
+                class="text-sm leading-5 font-medium text-ink-muted"
+              ></span>
+            </div>
           </div>
         </aside>
-
-        <a
-          href="/noticias"
-          class="inline-flex min-h-11 items-center gap-2 self-start font-medium underline-offset-4 hover:underline"
-        >
-          <ArrowLeft size={20} stroke-width={1.75} aria-hidden="true" />
-          Ver todas las noticias
-        </a>
       </div>
     </div>
   </article>
 
-  <CtaBlock background="surface-sunken" whatsapp={whatsapp} />
+  {others.length > 0 ? (
+    <section aria-labelledby="mas-noticias" class="bg-surface-sunken">
+      <div class="container-site flex flex-col gap-10 py-16 md:gap-12 md:py-24">
+        <div
+          data-reveal
+          class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-12"
+        >
+          <div class="flex flex-col gap-4">
+            <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
+              Más noticias
+            </p>
+            <h2 id="mas-noticias" class="text-h2 text-ink">
+              Sigue <em class="font-medium text-brand">leyendo</em>.
+            </h2>
+          </div>
+          <ArrowLink href="/noticias" class="self-start text-ink md:self-auto">
+            Ver todas las noticias
+          </ArrowLink>
+        </div>
+        <ul
+          class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8"
+          data-reveal-stagger
+        >
+          {others.map((other) => (
+            <li>
+              <NewsCard article={other} headingLevel="h3" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ) : (
+    <div class="bg-surface">
+      <div class="container-site pb-12">
+        <ArrowLink href="/noticias" class="text-ink">
+          Ver todas las noticias
+        </ArrowLink>
+      </div>
+    </div>
+  )}
+
+  <CtaBlock
+    background={others.length > 0 ? "surface" : "surface-sunken"}
+    whatsapp={whatsapp}
+  />
 </BaseLayout>
 
 <script>

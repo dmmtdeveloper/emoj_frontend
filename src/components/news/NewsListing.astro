@@ -1,31 +1,45 @@
 ---
 /**
- * One page of the news index (12 per page): header, cards, pagination and
- * the empty state. Page 1 is /noticias, page n is /noticias/pagina/n.
+ * One page of the news index (12 per page), in the home's voice:
+ * - A photo-led header under the transparent header, like Servicios.
+ * - On the first page, the newest article as a large tile (photo, date,
+ *   category, title, excerpt); the rest follow in the card grid under
+ *   "Más noticias". Later pages are the grid only.
+ * - Pagination and the empty state.
+ * Page 1 is /noticias, page n is /noticias/pagina/n.
  */
 import { ArrowLeft, ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import headerPhoto from "../../assets/photos/mecanica-suelos-saam-placilla.jpg";
 import type { NewsSummary } from "../../lib/api/client";
+import { fitWidth, formatDate } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
+import { newsListing } from "../../lib/content/news-listing";
+import { newsTransitionName } from "../../lib/content/transition";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumb from "../ui/Breadcrumb.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
 import CtaBlock from "../ui/CtaBlock.astro";
 import EmptyState from "../ui/EmptyState.astro";
-import PageHeader from "../ui/PageHeader.astro";
 import NewsCard from "./NewsCard.astro";
 
 interface Props {
   articles: NewsSummary[];
   page: number;
   pages: number;
+  /** Published articles across all pages, for the header count. */
+  total: number;
 }
 
-const { articles, page, pages } = Astro.props;
+const { articles, page, pages, total } = Astro.props;
+const { featured, rest } = newsListing(articles, page);
 
 function pageHref(n: number): string {
   return n === 1 ? "/noticias" : `/noticias/pagina/${n}`;
 }
 
 const title = page === 1 ? "Noticias" : `Noticias, página ${page}`;
+const count = String(total).padStart(2, "0");
 const pageLink =
   "inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md px-3 font-medium no-underline";
 ---
@@ -33,26 +47,64 @@ const pageLink =
 <BaseLayout
   title={title}
   description="Noticias de EMOJ Consultora: proyectos, visitas a terreno y la vida de nuestro equipo de ingeniería civil en la Región de Valparaíso."
+  headerOverlay
 >
-  <PageHeader
-    eyebrow="Noticias"
-    title="Noticias de EMOJ"
-    lead="Proyectos, visitas a terreno y lo que pasa en nuestro equipo."
+  <section
+    aria-labelledby="noticias-titulo"
+    class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Noticias", href: "/noticias" },
-        ...(page > 1
-          ? [{ label: `Página ${page}`, href: pageHref(page) }]
-          : []),
-      ]}
-    />
-  </PageHeader>
+    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+      <Image
+        src={headerPhoto}
+        alt=""
+        widths={[640, 960, 1280, 1600, 1800]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="photo-zoom h-full w-full object-cover object-[55%_center]"
+      />
+    </div>
+    {/* Veils as on Servicios: the photo leads, the text stays legible. */}
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/60 via-55% to-plum-950/35 md:bg-plum-950/30 md:bg-none"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/90 via-plum-950/55 via-45% to-transparent to-80% md:block"
+      aria-hidden="true"
+    ></div>
 
-  <section class="bg-surface-sunken" aria-label="Lista de noticias">
-    <div class="container-site flex flex-col gap-10 py-12 md:py-24">
+    <div class="hero__content container-site flex min-h-[max(440px,58svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+40px)] pb-12 md:gap-7 md:pb-16">
+      <div class="hidden md:block">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Noticias", href: "/noticias" },
+            ...(page > 1
+              ? [{ label: `Página ${page}`, href: pageHref(page) }]
+              : []),
+          ]}
+        />
+      </div>
+      <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+        Noticias · {count}
+        {page > 1 && <> · Página {page}</>}
+      </p>
+      <h1
+        id="noticias-titulo"
+        class="max-w-[16ch] text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
+      >
+        Noticias desde <em class="font-medium text-sage-300">terreno</em>.
+      </h1>
+      <p class="text-lead max-w-[52ch] text-sand-100">
+        Proyectos, visitas a terreno y lo que pasa en nuestro equipo.
+      </p>
+    </div>
+  </section>
+
+  <section aria-label="Lista de noticias" class="bg-surface">
+    <div class="container-site flex flex-col gap-12 py-16 md:gap-16 md:py-24 lg:py-28">
       {articles.length === 0 ? (
         <EmptyState message="Pronto publicaremos noticias sobre nuestros proyectos y nuestro equipo. Mientras tanto, conoce nuestros servicios.">
           <ButtonLink href="/servicios">
@@ -64,13 +116,112 @@ const pageLink =
           </ButtonLink>
         </EmptyState>
       ) : (
-        <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-          {articles.map((article, index) => (
-            <li>
-              <NewsCard article={article} eager={index < 2} />
-            </li>
-          ))}
-        </ul>
+        <>
+          {featured && (
+            <article
+              data-reveal
+              class:list={[
+                "group radius-signature relative isolate grid overflow-hidden bg-surface-sunken has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring",
+                featured.cover && "lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]",
+              ]}
+            >
+              {featured.cover && (
+                <div class="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-[460px]">
+                  <Image
+                    src={mediaPath("noticias", featured.slug, featured.cover)}
+                    alt={featured.cover.alt}
+                    {...fitWidth(featured.cover, 1600)}
+                    widths={[640, 960, 1280, 1600]}
+                    sizes="(min-width: 1200px) 680px, (min-width: 1024px) 56vw, 100vw"
+                    loading="eager"
+                    data-vt={newsTransitionName(featured.slug)}
+                    class="vt-project absolute inset-0 h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+                  />
+                </div>
+              )}
+              <div class="flex flex-col justify-center gap-5 p-6 md:p-10 lg:p-12">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
+                  <span class="inline-flex min-h-8 items-center rounded-full border border-border-strong px-3.5 font-data text-[12px] leading-4 font-medium tracking-[0.08em] text-ink uppercase">
+                    Lo más reciente
+                  </span>
+                  <p class="flex flex-wrap items-center gap-x-2 font-data text-[13px] leading-4 font-medium tracking-[0.06em] text-ink-muted uppercase">
+                    <time datetime={featured.publishedAt}>
+                      {formatDate(featured.publishedAt)}
+                    </time>
+                    {featured.category && (
+                      <>
+                        <span aria-hidden="true">·</span>
+                        <span>{featured.category}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <h2 class="text-[clamp(1.75rem,1.35rem+1.6vw,2.75rem)] leading-[1.06] font-semibold tracking-[-0.035em] text-balance text-ink">
+                  <a
+                    href={`/noticias/${featured.slug}`}
+                    class="text-ink no-underline after:absolute after:inset-0 after:z-10 hover:text-ink focus-visible:outline-none"
+                  >
+                    {featured.title}
+                  </a>
+                </h2>
+                {featured.excerpt && (
+                  <p class="line-clamp-4 max-w-[52ch] text-ink-muted">
+                    {featured.excerpt}
+                  </p>
+                )}
+                <div class="flex border-t border-border pt-5">
+                  <span
+                    class="inline-flex items-center gap-2 text-base leading-5 font-semibold text-brand"
+                    aria-hidden="true"
+                  >
+                    Leer noticia
+                    <ArrowRight
+                      size={20}
+                      stroke-width={1.75}
+                      class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1.5"
+                    />
+                  </span>
+                </div>
+              </div>
+            </article>
+          )}
+
+          {rest.length > 0 && (
+            <div class="flex flex-col gap-8 md:gap-10">
+              {featured && (
+                <div
+                  data-reveal
+                  class="flex items-baseline justify-between gap-6 border-b border-border pb-5"
+                >
+                  <h2 id="mas-noticias" class="text-h3 text-ink">
+                    Más noticias
+                  </h2>
+                  <span
+                    class="font-data text-sm leading-5 font-medium text-ink-muted"
+                    aria-hidden="true"
+                  >
+                    {String(rest.length).padStart(2, "0")}
+                  </span>
+                </div>
+              )}
+              <ul
+                class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8"
+                data-reveal-stagger
+                aria-labelledby={featured ? "mas-noticias" : undefined}
+              >
+                {rest.map((article, index) => (
+                  <li>
+                    <NewsCard
+                      article={article}
+                      headingLevel={featured ? "h3" : "h2"}
+                      eager={!featured && index < 2}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
 
       {pages > 1 && (

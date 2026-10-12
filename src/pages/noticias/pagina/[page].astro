@@ -9,11 +9,15 @@ export const prerender = false;
 const page = /^[2-9]$|^[1-9][0-9]+$/.test(Astro.params.page ?? "")
   ? Number(Astro.params.page)
   : NaN;
-const pages = Number.isNaN(page)
-  ? []
-  : paginate(await contentSource().getNews(), NEWS_PER_PAGE);
+const news = Number.isNaN(page) ? [] : await contentSource().getNews();
+const pages = news.length > 0 ? paginate(news, NEWS_PER_PAGE) : [];
 const articles = pages[page - 1];
 if (!articles) return Astro.rewrite("/no-encontrada");
 ---
 
-<NewsListing articles={articles} page={page} pages={pages.length} />
+<NewsListing
+  articles={articles}
+  page={page}
+  pages={pages.length}
+  total={news.length}
+/>

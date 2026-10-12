@@ -5,7 +5,13 @@ import { NEWS_PER_PAGE, paginate } from "../../lib/content/format";
 
 export const prerender = false;
 
-const pages = paginate(await contentSource().getNews(), NEWS_PER_PAGE);
+const news = await contentSource().getNews();
+const pages = paginate(news, NEWS_PER_PAGE);
 ---
 
-<NewsListing articles={pages[0] ?? []} page={1} pages={pages.length} />
+<NewsListing
+  articles={pages[0] ?? []}
+  page={1}
+  pages={pages.length}
+  total={news.length}
+/>

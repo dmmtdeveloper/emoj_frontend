@@ -2,11 +2,15 @@
 /**
  * News card: cover, date, category, title (the card's single link) and
  * excerpt. Compact row on phones (no excerpt), stacked card from `sm` up.
+ * The photo zooms in slowly on hover, as on the project and service tiles,
+ * and morphs into the article's cover when opened (as project cards do,
+ * src/scripts/project-transition.ts).
  */
 import { Image } from "astro:assets";
 import type { NewsSummary } from "../../lib/api/client";
 import { fitWidth, formatDate } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
+import { newsTransitionName } from "../../lib/content/transition";
 
 interface Props {
   article: NewsSummary;
@@ -20,15 +24,18 @@ const Heading = headingLevel;
 
 <article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
   {article.cover ? (
-    <Image
-      src={mediaPath("noticias", article.slug, article.cover)}
-      alt={article.cover.alt}
-      {...fitWidth(article.cover, 800)}
-      widths={[208, 400, 640, 800]}
-      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
-      loading={eager ? "eager" : "lazy"}
-      class="aspect-square h-full w-full rounded-md object-cover sm:aspect-[16/10] sm:h-auto sm:rounded-none"
-    />
+    <div class="aspect-square h-full w-full overflow-hidden rounded-md sm:aspect-[16/10] sm:h-auto sm:rounded-none">
+      <Image
+        src={mediaPath("noticias", article.slug, article.cover)}
+        alt={article.cover.alt}
+        {...fitWidth(article.cover, 800)}
+        widths={[208, 400, 640, 800]}
+        sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
+        loading={eager ? "eager" : "lazy"}
+        data-vt={newsTransitionName(article.slug)}
+        class="vt-project h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+      />
+    </div>
   ) : (
     <div
       class="aspect-square h-full w-full rounded-md bg-surface-sunken sm:aspect-[16/10] sm:h-auto sm:rounded-none"
