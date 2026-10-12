@@ -6,12 +6,11 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ImagePlus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { type AdminProject, type ProjectInput } from "../lib/admin/api";
 import type { EditorTab } from "../lib/admin/editor-tabs";
-import { orderedIds } from "../lib/admin/media";
+import { withAddedIds } from "../lib/admin/media";
 import {
   charCount,
   CHILE_REGIONS,
@@ -27,6 +26,7 @@ import {
 import { SERVICE_SLUGS } from "../lib/services";
 import { adminApi } from "./api";
 import { EditorSkeleton } from "./skeletons";
+import { GalleryField } from "./GalleryField";
 import { ErrorNotice, unwrap } from "./common";
 import {
   BannerSlot,
@@ -36,22 +36,15 @@ import {
   EditorDialogs,
   EditorHeader,
   EditorTabs,
-  EmptyImage,
-  IconButton,
   SectionTitle,
   SeoCard,
   StepPanel,
   useContentEditor,
   type EditorAdapter,
 } from "./editor-kit";
-import {
-  mediaById,
-  MediaPicker,
-  MediaThumb,
-  useMediaLibrary,
-} from "./MediaPicker";
+import { mediaById, MediaPicker, useMediaLibrary } from "./MediaPicker";
 import { editProjectHref } from "./projects";
-import { Button, Card, Counter, cx, Field, Notice, TextArea } from "./ui";
+import { Card, Counter, cx, Field, Notice, TextArea } from "./ui";
 
 const LIST_PATH = "/admin/proyectos";
 
@@ -349,91 +342,15 @@ function EditorForm({
                 />
               </div>
 
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-ink">
-                    Galería{" "}
-                    <span className="font-medium text-ink-muted">
-                      ({values.gallery.length}{" "}
-                      {values.gallery.length === 1 ? "foto" : "fotos"})
-                    </span>
-                  </h4>
-                  {values.gallery.length > 0 && (
-                    <Button
-                      variant="secondary"
-                      onClick={() => setPicker("gallery")}
-                    >
-                      <ImagePlus
-                        size={18}
-                        strokeWidth={1.75}
-                        aria-hidden="true"
-                      />
-                      Agregar fotos
-                    </Button>
-                  )}
-                </div>
-                {errors.gallery?.message && (
-                  <p className="text-sm font-semibold text-brand">
-                    {errors.gallery.message}
-                  </p>
-                )}
-                {values.gallery.length === 0 ? (
-                  <EmptyImage
-                    label="Agregar fotos a la galería"
-                    onClick={() => setPicker("gallery")}
-                  />
-                ) : (
-                  <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {values.gallery.map((mediaId, index) => {
-                      const move = (action: "up" | "down" | "remove") =>
-                        setValue(
-                          "gallery",
-                          orderedIds(values.gallery, mediaId, action),
-                          { shouldDirty: true },
-                        );
-                      const name = `foto ${index + 1}`;
-                      return (
-                        <li
-                          key={mediaId}
-                          className="flex flex-col overflow-hidden rounded-md border border-border"
-                        >
-                          <MediaThumb
-                            media={media.get(mediaId)}
-                            className="aspect-[4/3] w-full"
-                          />
-                          <div className="flex items-center justify-between gap-1 p-1">
-                            <span className="px-2 text-sm text-ink-muted tabular-nums">
-                              {index + 1}
-                            </span>
-                            <div className="flex">
-                              <IconButton
-                                label={`Mover ${name} antes`}
-                                disabled={index === 0}
-                                onClick={() => move("up")}
-                              >
-                                <ArrowUp size={16} strokeWidth={1.75} />
-                              </IconButton>
-                              <IconButton
-                                label={`Mover ${name} después`}
-                                disabled={index === values.gallery.length - 1}
-                                onClick={() => move("down")}
-                              >
-                                <ArrowDown size={16} strokeWidth={1.75} />
-                              </IconButton>
-                              <IconButton
-                                label={`Quitar ${name} de la galería`}
-                                onClick={() => move("remove")}
-                              >
-                                <X size={16} strokeWidth={1.75} />
-                              </IconButton>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                )}
-              </div>
+              <GalleryField
+                ids={values.gallery}
+                media={media}
+                error={errors.gallery?.message}
+                onAdd={() => setPicker("gallery")}
+                onChange={(ids) =>
+                  setValue("gallery", ids, { shouldDirty: true })
+                }
+              />
             </Card>
           </StepPanel>
 
@@ -562,11 +479,9 @@ function EditorForm({
           onClose={() => setPicker(null)}
           onConfirm={(ids) => {
             if (picker === "gallery") {
-              const merged = [
-                ...values.gallery,
-                ...ids.filter((x) => !values.gallery.includes(x)),
-              ];
-              setValue("gallery", merged, { shouldDirty: true });
+              setValue("gallery", withAddedIds(values.gallery, ids), {
+                shouldDirty: true,
+              });
             } else {
               setValue(
                 picker === "cover" ? "coverMediaId" : "ogImageMediaId",

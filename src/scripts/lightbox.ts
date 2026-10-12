@@ -1,8 +1,9 @@
 /**
- * Full-screen viewer for a project gallery ([slug].astro): each photo is a
- * button that opens the native <dialog> (focus is contained, Escape closes
- * it and focus returns to the photo). Arrows and the keyboard's left and
- * right keys move through the photos (src/lib/motion/lightbox.ts).
+ * Full-screen viewer for a photo gallery (PhotoGallery.astro, on project
+ * and news pages): each photo is a button that opens the native <dialog>
+ * (focus is contained, Escape closes it and focus returns to the photo).
+ * Arrows and the keyboard's left and right keys move through the photos
+ * (src/lib/motion/lightbox.ts).
  */
 import { stepIndex } from "../lib/motion/lightbox";
 

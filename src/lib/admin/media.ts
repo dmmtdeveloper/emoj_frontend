@@ -73,3 +73,11 @@ export function orderedIds(
   [list[index], list[target]] = [list[target] as string, list[index] as string];
   return list;
 }
+
+/** A gallery after adding `picked`: in order, skipping photos already in it. */
+export function withAddedIds(
+  ids: readonly string[],
+  picked: readonly string[],
+): string[] {
+  return [...ids, ...picked.filter((id) => !ids.includes(id))];
+}

@@ -28,6 +28,8 @@ function article(overrides: Partial<AdminNews> = {}): AdminNews {
     body: doc(paragraph("Hola")),
     coverMediaId: "m1",
     category: "Proyectos",
+    location: "",
+    gallery: [],
     status: "draft",
     publishedAt: null,
     seo: { title: "", description: "Visita al canal" },
@@ -149,5 +151,58 @@ describe("newsFormErrorsFromProblem", () => {
       newsFormErrorsFromProblem(409, [{ field: "slug", message: "in use" }])
         .fields.slug,
     ).toMatch(/otra noticia/);
+  });
+});
+
+describe("location and gallery", () => {
+  it("round-trips the location and the ordered gallery", () => {
+    const values = newsToForm(
+      article({
+        location: "Los Andes, Región de Valparaíso",
+        gallery: ["m2", "m3"],
+      }),
+    );
+    expect(values.location).toBe("Los Andes, Región de Valparaíso");
+    expect(values.gallery).toEqual(["m2", "m3"]);
+    const input = formToNewsInput(
+      { ...values, location: "  Los Andes  " },
+      { isNew: false },
+    );
+    expect(input.location).toBe("Los Andes");
+    expect(input.gallery).toEqual(["m2", "m3"]);
+  });
+
+  it("starts empty and always sends both, so clearing them saves", () => {
+    expect(emptyNewsForm().location).toBe("");
+    expect(emptyNewsForm().gallery).toEqual([]);
+    const input = formToNewsInput(form({ title: "x" }), { isNew: true });
+    expect(input.location).toBe("");
+    expect(input.gallery).toEqual([]);
+  });
+
+  it("limits the location to 80 characters, like the API", () => {
+    const schema = newsFormSchema();
+    expect(
+      schema.safeParse(form({ title: "x", location: "a".repeat(80) })).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse(form({ title: "x", location: "a".repeat(81) })).success,
+    ).toBe(false);
+  });
+
+  it("rejects the same photo twice in the gallery", () => {
+    expect(
+      newsFormSchema().safeParse(form({ title: "x", gallery: ["m1", "m1"] }))
+        .success,
+    ).toBe(false);
+  });
+
+  it("maps API errors on location and gallery to their fields", () => {
+    const errors = newsFormErrorsFromProblem(422, [
+      { field: "location", message: "must be at most 80 characters" },
+      { field: "gallery", message: "must not contain the same image twice" },
+    ]);
+    expect(Object.keys(errors.fields).sort()).toEqual(["gallery", "location"]);
+    expect(errors.other).toEqual([]);
   });
 });

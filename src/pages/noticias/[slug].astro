@@ -5,13 +5,16 @@
  *   title, date and reading time over it (plum header without a cover).
  *   The card photo morphs into it on navigation (.vt-project).
  * - A reading progress line along the top (motion.css `.read-progress`).
- * - The excerpt as the lead, then the body. On desktop the share links
+ * - The excerpt as the lead, then the body and the photo gallery (a
+ *   mosaic that opens a full-screen viewer). On desktop the share links
  *   stay beside the text; on phones they follow it.
+ * - The location, when the article has one, beside the date.
  * - "Más noticias": the newest other articles, and the closing CTA.
  */
-import { Link as LinkIcon } from "@lucide/astro";
+import { Link as LinkIcon, MapPin } from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
 import NewsCard from "../../components/news/NewsCard.astro";
+import PhotoGallery from "../../components/ui/PhotoGallery.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
@@ -50,6 +53,13 @@ const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
 const share = shareLinks(pageUrl, article.title);
 const reading = readingTimeLabel(readingMinutes(article.body, article.excerpt));
 const others = moreNews(await source.getNews(), article.slug, 3);
+/** Gallery photos with the address to load (draft URLs in preview). */
+const gallery = (article.gallery ?? []).map((image) => ({
+  src: isPreview ? image.url : mediaPath("noticias", article.slug, image),
+  alt: image.alt,
+  width: image.width,
+  height: image.height,
+}));
 
 const ogSource = article.seo.ogImage ?? article.cover;
 const ogImage =
@@ -165,6 +175,23 @@ const shareLink =
           <time datetime={article.publishedAt}>
             {formatDate(article.publishedAt)}
           </time>
+          {article.location && (
+            <>
+              <span aria-hidden="true" class="text-sage-300">
+                ·
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <MapPin
+                  size={16}
+                  stroke-width={1.75}
+                  aria-hidden="true"
+                  class="text-sage-300"
+                />
+                <span class="sr-only">Lugar:</span>
+                {article.location}
+              </span>
+            </>
+          )}
           <span aria-hidden="true" class="text-sage-300">
             ·
           </span>
@@ -185,6 +212,20 @@ const shareLink =
             </p>
           )}
           <div class="article-body" set:html={bodyHtml} />
+          {gallery.length > 0 && (
+            <section
+              aria-labelledby="fotos"
+              class="flex flex-col gap-5 border-t border-border pt-8"
+            >
+              <h2
+                id="fotos"
+                class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase"
+              >
+                Fotos · {String(gallery.length).padStart(2, "0")}
+              </h2>
+              <PhotoGallery photos={gallery} layout="narrow" />
+            </section>
+          )}
         </div>
 
         <aside

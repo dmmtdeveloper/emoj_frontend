@@ -13,19 +13,14 @@
  *   with the previous and next project, so the page never ends empty.
  * - The closing call to action, with the project in the WhatsApp message.
  */
-import {
-  ArrowLeft,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "@lucide/astro";
+import { ArrowLeft, ArrowRight } from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
 import FeaturedProjects from "../../components/home/FeaturedProjects.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import DisplayHeading from "../../components/ui/DisplayHeading.astro";
+import PhotoGallery from "../../components/ui/PhotoGallery.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import type { MediaRef } from "../../lib/api/client";
 import { contentSource } from "../../lib/content";
@@ -110,22 +105,13 @@ const eyebrow = [services[0]?.data.title, project.location]
   .filter(Boolean)
   .join(" · ");
 
-/**
- * Mosaic tiles: one photo fills the row; two share it; from three on, the
- * first is a large 2×2 tile.
- */
-function galleryTile(index: number, count: number): string {
-  if (count === 1) return "col-span-2 md:col-span-4";
-  if (count === 2) return "md:col-span-2";
-  return index === 0 ? "col-span-2 row-span-2" : "";
-}
-
-/** Full-size versions for the gallery viewer. */
-const galleryFull = await Promise.all(
-  project.gallery.map((image) =>
-    getImage({ src: photo(image), ...fitWidth(image, 1920) }),
-  ),
-);
+/** Gallery photos with the address to load (draft URLs in preview). */
+const galleryPhotos = project.gallery.map((image) => ({
+  src: photo(image),
+  alt: image.alt,
+  width: image.width,
+  height: image.height,
+}));
 
 const portfolio = await contentSource().getProjects();
 const more = relatedProjects(portfolio, project, 8);
@@ -387,107 +373,8 @@ const ctaHref = firstService
           title="Así se ve en terreno."
           emphasis="terreno"
         />
-        <ul
-          class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5"
-          data-reveal-stagger
-        >
-          {project.gallery.map((image, i) => (
-            <li class:list={[galleryTile(i, project.gallery.length)]}>
-              <button
-                type="button"
-                class="group relative block h-full w-full cursor-zoom-in overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus-ring"
-                data-lightbox-item
-                data-index={i}
-                data-full={galleryFull[i]?.src}
-                data-alt={image.alt}
-              >
-                <Image
-                  src={photo(image)}
-                  alt={image.alt}
-                  {...fitWidth(image, i === 0 ? 1600 : 640)}
-                  widths={i === 0 ? [640, 960, 1200, 1600] : [320, 480, 640]}
-                  sizes={
-                    i === 0
-                      ? "(min-width: 1200px) 1150px, 100vw"
-                      : "(min-width: 1200px) 285px, (min-width: 768px) 25vw, 50vw"
-                  }
-                  loading="lazy"
-                  class:list={[
-                    "h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-[1.04]",
-                    project.gallery.length === 1
-                      ? "aspect-[4/3] md:aspect-[21/9]"
-                      : "aspect-[4/3]",
-                  ]}
-                />
-                <span class="sr-only">
-                  Ver la foto {i + 1} de {project.gallery.length} en grande
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <PhotoGallery photos={galleryPhotos} />
       </div>
-
-      <dialog
-        class="lightbox m-0 h-dvh max-h-none w-full max-w-none bg-plum-950/95 p-0 text-sand-50 backdrop:bg-plum-950/80"
-        aria-label="Galería de fotos"
-        data-lightbox
-      >
-        <div class="flex h-full flex-col">
-          <div class="container-site flex h-(--header-h) shrink-0 items-center justify-between">
-            <p
-              class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sand-300 tabular-nums"
-              aria-live="polite"
-              data-lightbox-count
-            >
-              01 / {String(project.gallery.length).padStart(2, "0")}
-            </p>
-            <button
-              type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] leading-5 font-medium text-sand-50 hover:bg-sand-50/10 focus-visible:outline-2 focus-visible:outline-sand-50"
-              data-lightbox-close
-            >
-              <X size={20} stroke-width={1.75} aria-hidden="true" />
-              Cerrar
-            </button>
-          </div>
-          <figure class="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-6 md:px-20">
-            <img
-              class="max-h-full max-w-full rounded-lg object-contain"
-              alt=""
-              data-lightbox-image
-            />
-            {project.gallery.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  class="absolute top-1/2 left-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:left-6"
-                  aria-label="Foto anterior"
-                  data-lightbox-prev
-                >
-                  <ChevronLeft
-                    size={24}
-                    stroke-width={1.75}
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  type="button"
-                  class="absolute top-1/2 right-2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-plum-950/60 text-sand-50 hover:bg-plum-900 focus-visible:outline-2 focus-visible:outline-sand-50 md:right-6"
-                  aria-label="Foto siguiente"
-                  data-lightbox-next
-                >
-                  <ChevronRight
-                    size={24}
-                    stroke-width={1.75}
-                    aria-hidden="true"
-                  />
-                </button>
-              </>
-            )}
-          </figure>
-        </div>
-      </dialog>
     </section>
   )}
 
@@ -557,7 +444,3 @@ const ctaHref = firstService
     whatsapp={whatsapp}
   />
 </BaseLayout>
-
-<script>
-  import "../../scripts/lightbox";
-</script>

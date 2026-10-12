@@ -754,6 +754,8 @@ export interface components {
             excerpt: string;
             /** @description Free short label; empty when uncategorized. */
             category: string;
+            /** @description Where the story happened, e.g. "Los Andes, Región de Valparaíso". Omitted when the article has none. */
+            location?: string;
             /** Format: date-time */
             publishedAt: string;
             cover?: components["schemas"]["MediaRef"];
@@ -765,10 +767,14 @@ export interface components {
             title: string;
             excerpt: string;
             category: string;
+            /** @description Where the story happened, e.g. "Los Andes, Región de Valparaíso". Omitted when the article has none. */
+            location?: string;
             /** Format: date-time */
             publishedAt: string;
             cover?: components["schemas"]["MediaRef"];
             body: components["schemas"]["TipTapDocument"];
+            /** @description Ordered photo gallery, shown after the body. Only images that can be served are included; empty when the article has none. */
+            gallery: components["schemas"]["MediaRef"][];
             seo: components["schemas"]["Seo"];
         };
         NewsPage: {
@@ -978,6 +984,10 @@ export interface components {
             /** Format: uuid */
             coverMediaId?: string | null;
             category?: string;
+            /** @description Where the story happened, e.g. "Los Andes, Región de Valparaíso"; trimmed, empty means none. Omitted on create means none; on PATCH, omitted keeps the current value. Errors use the field location. */
+            location?: string;
+            /** @description Ordered media IDs of the photo gallery, each at most once. Omitted on create means none; on PATCH, omitted keeps the current gallery and an array replaces it (send [] to remove every photo). Errors use the field gallery (repeated or unknown media). */
+            gallery?: string[];
             seo?: components["schemas"]["AdminSeo"];
         };
         AdminNews: {
@@ -990,6 +1000,10 @@ export interface components {
             /** Format: uuid */
             coverMediaId: string | null;
             category: string;
+            /** @description Always present; an empty string when the article has none. */
+            location: string;
+            /** @description Ordered media IDs of the photo gallery; empty when the article has none. */
+            gallery: string[];
             status: components["schemas"]["Status"];
             /** Format: date-time */
             publishedAt: string | null;
