@@ -885,6 +885,11 @@
   view-transition-name: none;
 }
 
+/* Clicks reach the filter while the grid glides (a new click restarts it). */
+:root.vt-filtering::view-transition {
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* Filtering is in place: plain crossfade, no page slide. */
   :root.vt-filtering::view-transition-old(root) {

@@ -1,6 +1,6 @@
 ---
 /**
- * Progressive filter for /proyectos. The chips take their space from the
+ * Progressive filter for /proyectos, as rounded chips with their counts. The chips take their space from the
  * first paint (invisible, so revealing them causes no layout shift); without
  * JavaScript /noscript.css removes them, every project stays visible and no
  * dead controls are shown. The script
@@ -21,9 +21,10 @@ const { services, regions, serviceTitles, total } = Astro.props;
 const showServices = services.length > 1;
 const showRegions = regions.length > 1;
 const chip =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-md border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink transition-colors duration-200 hover:border-border-strong aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-surface";
+  "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink transition-[color,background-color,border-color,scale] duration-200 hover:border-border-strong active:scale-[0.97] aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-surface";
+const count = "font-data text-[12px] leading-4 font-medium opacity-70";
 const legend =
-  "mb-2 text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
+  "mb-3 font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase";
 ---
 
 {(showServices || showRegions) && (
@@ -32,7 +33,7 @@ const legend =
     data-services={JSON.stringify(services.map((s) => s.value))}
     data-regions={JSON.stringify(regions.map((r) => r.value))}
     data-total={total}
-    class="invisible flex flex-col gap-5"
+    class="invisible flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-12"
   >
     {showServices && (
       <fieldset>
@@ -56,7 +57,7 @@ const legend =
               aria-pressed="false"
             >
               {serviceTitles[s.value] ?? s.value}
-              <span class="font-medium opacity-80">({s.count})</span>
+              <span class={count}>{s.count}</span>
             </button>
           ))}
         </div>
@@ -84,7 +85,7 @@ const legend =
               aria-pressed="false"
             >
               {r.value}
-              <span class="font-medium opacity-80">({r.count})</span>
+              <span class={count}>{r.count}</span>
             </button>
           ))}
         </div>
@@ -93,7 +94,7 @@ const legend =
     <p
       data-filter-status
       role="status"
-      class="text-sm leading-5 font-medium text-ink-muted"
+      class="font-data text-sm leading-5 font-medium text-ink-muted lg:ml-auto lg:pb-3"
     >
       {total === 1 ? "1 proyecto." : `${total} proyectos.`}
     </p>

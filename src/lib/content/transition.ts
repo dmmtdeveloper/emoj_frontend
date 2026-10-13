@@ -15,6 +15,14 @@ export function projectTransitionName(slug: string): string {
   return `project-${ident(slug)}`;
 }
 
+/**
+ * The whole project card while the filter on /proyectos reflows the grid
+ * (motion.css `.vt-filtering [data-project]`), apart from its photo.
+ */
+export function projectItemName(slug: string): string {
+  return `project-item-${ident(slug)}`;
+}
+
 export function newsTransitionName(slug: string): string {
   return `news-${ident(slug)}`;
 }
