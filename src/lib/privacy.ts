@@ -78,8 +78,8 @@ const dpa =
   "Acuerdo de tratamiento de datos del proveedor, con cláusulas contractuales tipo de protección.";
 
 export const PRIVACY: PrivacyPolicy = {
-  version: "1.0",
-  updated: "2026-10-06",
+  version: "1.1",
+  updated: "2026-10-12",
   controller: {
     name: LEGAL_NAME,
     rut: RUT,
@@ -150,15 +150,8 @@ export const PRIVACY: PrivacyPolicy = {
   ],
   processors: [
     {
-      name: "Vercel",
-      role: "Aloja el sitio web.",
-      country: "Estados Unidos y su red de servidores en el mundo",
-      safeguard: dpa,
-      agreement: true,
-    },
-    {
       name: "Railway",
-      role: "Aloja la API, la base de datos y las imágenes.",
+      role: "Aloja el sitio web, la API, la base de datos y las imágenes.",
       country: "Estados Unidos",
       safeguard: dpa,
       agreement: false,
