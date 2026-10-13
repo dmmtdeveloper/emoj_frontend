@@ -18,7 +18,7 @@ interface Props {
 const { services } = Astro.props;
 
 const inputClass =
-  "block min-h-12 w-full rounded-sm border border-border-strong bg-surface-raised px-4 py-3 text-base leading-6 text-ink shadow-(--shadow-sm) placeholder:text-ink-muted aria-invalid:border-brand aria-invalid:border-2";
+  "block min-h-12 w-full rounded-md border border-border-strong bg-surface px-4 py-3 text-base leading-6 text-ink transition-colors duration-200 placeholder:text-ink-muted hover:border-ink-muted focus:border-ink aria-invalid:border-2 aria-invalid:border-brand";
 const labelClass = "text-base leading-5 font-medium text-ink";
 const optionalClass = "font-medium text-ink-muted";
 
@@ -58,7 +58,7 @@ const textFields = [
 ] as const;
 ---
 
-<div class="rounded-lg border border-border bg-surface-raised p-6 shadow-(--shadow-sm) md:p-10">
+<div class="radius-signature border border-border bg-surface-raised p-6 shadow-(--shadow-sm) sm:pl-10 md:p-10 md:pl-14 lg:p-12 lg:pl-16">
   <noscript>
     <p class="mb-6 rounded-sm border border-border-strong p-4">
       Para enviar el formulario necesitas activar JavaScript. También puedes
@@ -74,15 +74,12 @@ const textFields = [
     data-contact-success
     hidden
     tabindex="-1"
-    class="flex flex-col gap-4 focus:outline-none"
+    class="flex flex-col items-start gap-4 py-6 focus:outline-none"
   >
-    <CircleCheck
-      size={24}
-      stroke-width={1.75}
-      aria-hidden="true"
-      class="text-brand"
-    />
-    <h2 class="text-[22px] leading-7 font-semibold">Recibimos tu consulta</h2>
+    <span class="inline-flex size-14 items-center justify-center rounded-full bg-surface-sunken text-brand">
+      <CircleCheck size={28} stroke-width={1.75} aria-hidden="true" />
+    </span>
+    <h2 class="text-h3 text-ink">Recibimos tu consulta</h2>
     <p>Gracias por escribirnos. Te responderemos a la brevedad.</p>
     <p class="text-ink-muted">
       Si es urgente, escríbenos por
@@ -102,7 +99,10 @@ const textFields = [
     aria-labelledby="titulo-formulario"
   >
     <div class="flex flex-col gap-2">
-      <h2 id="titulo-formulario" class="text-[22px] leading-7 font-semibold">
+      <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
+        Formulario
+      </p>
+      <h2 id="titulo-formulario" class="text-h3 text-ink">
         Cuéntanos tu proyecto
       </h2>
       <p class="text-sm leading-5 font-medium text-ink-muted">
@@ -269,9 +269,14 @@ const textFields = [
     <div>
       <button
         type="submit"
-        class="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-brand px-5 py-2.5 text-[15px] leading-5 font-medium text-on-brand transition-colors duration-200 hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        class="group inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-brand px-7 py-3 text-base leading-5 font-medium text-on-brand transition-[background-color,scale] duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        <Send size={20} stroke-width={1.75} aria-hidden="true" />
+        <Send
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
         <span data-submit-label>Enviar consulta</span>
       </button>
     </div>
