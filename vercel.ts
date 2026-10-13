@@ -105,6 +105,13 @@ const config: VercelConfig = {
         value: "camera=(), microphone=(), geolocation=()",
       },
       { key: "X-Frame-Options", value: "DENY" },
+      // Prerender pages on hover or press (public/speculationrules.json), so
+      // the card-to-cover transition has its photo on the first visit.
+      { key: "Speculation-Rules", value: '"/speculationrules.json"' },
+    ]),
+    // Browsers only read speculation rules sent with their own type.
+    routes.header("/speculationrules.json", [
+      { key: "Content-Type", value: "application/speculationrules+json" },
     ]),
     // The admin panel is private: never indexed, never cached by proxies.
     routes.header("/admin(.*)", [

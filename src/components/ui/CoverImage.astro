@@ -1,0 +1,51 @@
+---
+/**
+ * The full-bleed cover of a project or article page, named for the
+ * card-to-cover transition (motion.css `.vt-project.vt-cover`).
+ *
+ * Under the large photo sits the same image the card requested
+ * (CARD_IMAGE), usually already in the browser cache: the transition and
+ * the first paint show a photo right away, and the large one covers it as
+ * soon as it loads. Previews (drafts) use the plain presigned URL only.
+ */
+import { Image } from "astro:assets";
+import type { MediaRef } from "../../lib/api/client";
+import { CARD_IMAGE } from "../../lib/content/card-image";
+import { fitWidth } from "../../lib/content/format";
+
+interface Props {
+  image: MediaRef;
+  /** The image's stable /media address (or its URL in a preview). */
+  src: string;
+  /** View-transition name shared with the card. */
+  name: string;
+  preview?: boolean;
+}
+
+const { image, src, name, preview = false } = Astro.props;
+---
+
+<div class="vt-project vt-cover absolute inset-0" data-vt={name}>
+  {!preview && (
+    <Image
+      src={src}
+      alt=""
+      aria-hidden="true"
+      {...fitWidth(image, CARD_IMAGE.max)}
+      widths={[...CARD_IMAGE.widths]}
+      sizes={CARD_IMAGE.sizes}
+      loading="eager"
+      class="absolute inset-0 h-full w-full object-cover"
+    />
+  )}
+  <Image
+    src={src}
+    alt={image.alt}
+    {...fitWidth(image, 2000)}
+    widths={[640, 960, 1280, 1600, 2000]}
+    sizes="100vw"
+    loading="eager"
+    fetchpriority="high"
+    class="photo-zoom absolute inset-0 h-full w-full object-cover"
+  />
+</div>

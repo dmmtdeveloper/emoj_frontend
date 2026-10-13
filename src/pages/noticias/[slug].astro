@@ -12,7 +12,7 @@
  * - "Más noticias": the newest other articles, and the closing CTA.
  */
 import { Link as LinkIcon, MapPin } from "@lucide/astro";
-import { getImage, Image } from "astro:assets";
+import { getImage } from "astro:assets";
 import NewsCard from "../../components/news/NewsCard.astro";
 import PhotoGallery from "../../components/ui/PhotoGallery.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
@@ -20,9 +20,10 @@ import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import SocialIcon from "../../components/ui/SocialIcon.astro";
 import WhatsAppIcon from "../../components/ui/WhatsAppIcon.astro";
+import CoverImage from "../../components/ui/CoverImage.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
-import { fitWidth, formatDate, shareLinks } from "../../lib/content/format";
+import { formatDate, shareLinks } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { moreNews } from "../../lib/content/news-listing";
 import { setPreviewHeaders } from "../../lib/content/preview";
@@ -113,20 +114,15 @@ const shareLink =
         <>
           {/* The cover, drifting slower than the page on desktop (motion.css). */}
           <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
-            <Image
+            <CoverImage
+              image={article.cover}
               src={
                 isPreview
                   ? article.cover.url
                   : mediaPath("noticias", article.slug, article.cover)
               }
-              alt={article.cover.alt}
-              {...fitWidth(article.cover, 2000)}
-              widths={[640, 960, 1280, 1600, 2000]}
-              sizes="100vw"
-              loading="eager"
-              fetchpriority="high"
-              data-vt={newsTransitionName(article.slug)}
-              class="vt-project vt-cover photo-zoom h-full w-full object-cover"
+              name={newsTransitionName(article.slug)}
+              preview={isPreview}
             />
           </div>
           {/* Veils as on the project page: the photo leads. */}
