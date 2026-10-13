@@ -91,7 +91,6 @@ describe("PRIVACY", () => {
 
   it("names every provider with its country and safeguard (art. 14 ter h)", () => {
     expect(PRIVACY.processors.map((p) => p.name)).toEqual([
-      "Vercel",
       "Railway",
       "Resend",
       "Cloudflare",
@@ -101,6 +100,11 @@ describe("PRIVACY", () => {
       expect(p.country.trim()).not.toBe("");
       expect(p.safeguard.trim()).not.toBe("");
     }
+  });
+
+  it("names Railway as the host of the site itself, not only the API", () => {
+    const railway = PRIVACY.processors.find((p) => p.name === "Railway");
+    expect(railway?.role).toMatch(/sitio web/);
   });
 
   it("says whether there are automated decisions or profiling (art. 14 ter l)", () => {
