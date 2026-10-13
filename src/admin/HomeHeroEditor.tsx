@@ -2,12 +2,17 @@
  * Portada: the home page hero (title, highlighted word, paragraph, both
  * buttons and the photo carousel), saved with PUT /v1/admin/home/hero.
  *
- * - Texts and buttons are checked with the API's rules as you type
- *   (src/lib/admin/home-hero-form.ts) and again on save.
+ * - In three steps (Textos, Botones, Fotos), like the project editor, with
+ *   the preview beside them. Texts and buttons are checked with the API's
+ *   rules as you type (src/lib/admin/home-hero-form.ts) and again on save.
+ * - Button links are picked from the site's pages, services and contact
+ *   channels, or typed by hand ("Otro enlace…").
  * - Photos come from the media library, in order, up to 8. On each one a
  *   click (or the arrow keys) sets the focal point: the site crops around
- *   it on every screen, and the preview shows a computer and a phone.
- * - Without photos the site keeps its three built-in photos.
+ *   it on every screen, and the preview shows a computer and a phone, with
+ *   the site's menu on top.
+ * - Without photos the site keeps its three built-in photos; one button
+ *   adds them to the media library (once) and to the hero.
  * - The action bar stays in view (under the navbar on desktop, fixed at the
  *   bottom on phones), and leaving with unsaved changes asks first.
  */
@@ -19,6 +24,8 @@ import {
   Crosshair,
   ExternalLink,
   ImagePlus,
+  Menu,
+  Moon,
   X,
 } from "lucide-react";
 import {
@@ -29,32 +36,46 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
-import builtInPhoto from "../assets/photos/agua-manos.jpg";
+import water from "../assets/photos/agua-manos.jpg";
+import pumping from "../assets/photos/estacion-bombeo-tuberias.jpg";
+import aerial from "../assets/photos/vista-aerea-industrial.jpg";
 import type { AdminHomeHero } from "../lib/admin/api";
+import { firstErrorField, tabForField } from "../lib/admin/editor-tabs";
 import { problemMessage } from "../lib/admin/errors";
 import {
   addPhotos,
+  CUSTOM_LINK,
   errorsFromProblem,
   focusFromPoint,
   formFromHero,
   HERO_LIMITS,
+  HERO_TABS,
+  heroChecklist,
   heroInput,
+  linkChoice,
+  linkOptions,
   moveFocus,
   sameForm,
   validateHero,
   type HeroErrors,
   type HeroForm,
   type HeroPhotoValue,
+  type LinkOption,
 } from "../lib/admin/home-hero-form";
 import { orderedIds } from "../lib/admin/media";
 import { charCount } from "../lib/admin/project-form";
 import { refreshSite, type SiteState } from "../lib/admin/site-refresh";
-import { focusClasses, titleParts } from "../lib/content/home-hero";
-import { TAGLINE } from "../lib/site";
+import {
+  BUILT_IN_PHOTOS,
+  builtInInLibrary,
+  focusClasses,
+  titleParts,
+} from "../lib/content/home-hero";
+import { NAV, TAGLINE } from "../lib/site";
 import { adminApi } from "./api";
 import { useApp } from "./app-context";
 import { ErrorNotice, formatDateTime, unwrap } from "./common";
-import { EmptyImage, IconButton, SectionTitle } from "./editor-kit";
+import { EditorTabs, IconButton, SectionTitle, StepPanel } from "./editor-kit";
 import { mediaById, MediaPicker, useMediaLibrary } from "./MediaPicker";
 import { EditorSkeleton } from "./skeletons";
 import {
@@ -65,11 +86,20 @@ import {
   Dialog,
   FadeImage,
   Field,
+  Isotype,
   Notice,
   TextArea,
 } from "./ui";
 
 const HERO_KEY = ["home-hero"] as const;
+const MEDIA_KEY = ["media-all"] as const;
+
+/** Built-in photo files (src/assets/photos), by name. */
+const BUILT_IN_SRC: Record<string, string> = {
+  "agua-manos.jpg": water.src,
+  "estacion-bombeo-tuberias.jpg": pumping.src,
+  "vista-aerea-industrial.jpg": aerial.src,
+};
 
 interface Thumb {
   url: string;
@@ -78,7 +108,11 @@ interface Thumb {
   height: number;
 }
 
-export function HomeHeroEditor() {
+export function HomeHeroEditor({
+  serviceTitles,
+}: {
+  serviceTitles: Record<string, string>;
+}) {
   const query = useQuery({
     queryKey: HERO_KEY,
     queryFn: async () => unwrap(await adminApi.getHomeHero()),
@@ -91,7 +125,7 @@ export function HomeHeroEditor() {
       </div>
     );
   }
-  return <Editor hero={query.data} />;
+  return <Editor hero={query.data} serviceTitles={serviceTitles} />;
 }
 
 function successText(state: SiteState | "pending" | null) {
@@ -107,7 +141,13 @@ function successText(state: SiteState | "pending" | null) {
   };
 }
 
-function Editor({ hero }: { hero: AdminHomeHero }) {
+function Editor({
+  hero,
+  serviceTitles,
+}: {
+  hero: AdminHomeHero;
+  serviceTitles: Record<string, string>;
+}) {
   const app = useApp();
   const queryClient = useQueryClient();
   const library = useMediaLibrary();
@@ -123,6 +163,8 @@ function Editor({ hero }: { hero: AdminHomeHero }) {
   const [picking, setPicking] = useState(false);
   const [leave, setLeave] = useState<(() => void) | null>(null);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [tab, setTab] = useState(HERO_TABS[0]?.id ?? "textos");
+  const [importing, setImporting] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const dirty = !sameForm(form, saved);
 
@@ -159,16 +201,79 @@ function Editor({ hero }: { hero: AdminHomeHero }) {
     };
   }, [dirty, busy, app]);
 
-  /** Updates a field and rechecks it once it has shown an error. */
-  function set<K extends keyof HeroForm>(key: K, value: HeroForm[K]) {
-    const next = { ...form, [key]: value };
+  /** Updates fields and rechecks the form once it has shown errors. */
+  function patch(changes: Partial<HeroForm>) {
+    const next = { ...form, ...changes };
     setForm(next);
     if (Object.keys(errors).length > 0) setErrors(validateHero(next));
+  }
+
+  function set<K extends keyof HeroForm>(key: K, value: HeroForm[K]) {
+    patch({ [key]: value });
   }
 
   function setPhotos(photos: HeroPhotoValue[]) {
     set("photos", photos);
     setPreviewIndex((i) => Math.min(i, Math.max(0, photos.length - 1)));
+  }
+
+  /** Opens the step of the first field with an error. */
+  function showErrors(found: HeroErrors) {
+    setErrors(found);
+    const field = firstErrorField(HERO_TABS, Object.keys(found));
+    if (field) setTab(tabForField(HERO_TABS, field));
+    showBanner("error", "Revisa los campos marcados antes de guardar.");
+  }
+
+  /**
+   * Adds the three built-in photos to the hero, uploading them to the
+   * media library first unless an earlier upload is there already.
+   */
+  async function addBuiltInPhotos() {
+    setImporting(true);
+    setBanner(null);
+    const inLibrary = builtInInLibrary(library.data ?? []);
+    const added: HeroPhotoValue[] = [];
+    for (const photo of BUILT_IN_PHOTOS) {
+      let mediaId = inLibrary.get(photo.file);
+      if (!mediaId) {
+        let file: File;
+        try {
+          const response = await fetch(BUILT_IN_SRC[photo.file] ?? "");
+          if (!response.ok) throw new Error(String(response.status));
+          const blob = await response.blob();
+          file = new File([blob], photo.file, {
+            type: blob.type || "image/jpeg",
+          });
+        } catch {
+          setImporting(false);
+          showBanner(
+            "error",
+            "No pudimos preparar las fotos de siempre. Recarga la página e inténtalo de nuevo.",
+          );
+          return;
+        }
+        const result = await adminApi.uploadMedia(file, photo.alt);
+        if (!result.ok) {
+          setImporting(false);
+          showBanner("error", problemMessage(result));
+          return;
+        }
+        mediaId = result.data.id;
+        known.set(mediaId, result.data);
+      }
+      added.push({ mediaId, focusX: photo.focusX, focusY: photo.focusY });
+    }
+    void queryClient.invalidateQueries({ queryKey: MEDIA_KEY });
+    setImporting(false);
+    setForm((current) => {
+      const photos = [...current.photos];
+      for (const p of added) {
+        const repeated = photos.some((x) => x.mediaId === p.mediaId);
+        if (!repeated && photos.length < HERO_LIMITS.photos) photos.push(p);
+      }
+      return { ...current, photos };
+    });
   }
 
   function showBanner(tone: "error" | "info", text: string) {
@@ -178,19 +283,18 @@ function Editor({ hero }: { hero: AdminHomeHero }) {
 
   async function save() {
     const found = validateHero(form);
-    setErrors(found);
     if (Object.keys(found).length > 0) {
-      showBanner("error", "Revisa los campos marcados antes de guardar.");
+      showErrors(found);
       return;
     }
+    setErrors({});
     setBusy(true);
     setBanner(null);
     const result = await adminApi.updateHomeHero(heroInput(form));
     setBusy(false);
     if (!result.ok) {
       if (result.kind === "problem" && result.status === 422) {
-        setErrors(errorsFromProblem(result.problem.errors ?? []));
-        showBanner("error", "Revisa los campos marcados antes de guardar.");
+        showErrors(errorsFromProblem(result.problem.errors ?? []));
       } else {
         showBanner("error", problemMessage(result));
       }
@@ -211,6 +315,12 @@ function Editor({ hero }: { hero: AdminHomeHero }) {
   }
 
   const photo = form.photos[previewIndex];
+  const step = { tabs: HERO_TABS, current: tab, onChange: setTab };
+  const inLibrary = builtInInLibrary(library.data ?? []);
+  const builtInMissing = BUILT_IN_PHOTOS.some((p) => {
+    const id = inLibrary.get(p.file);
+    return !id || !form.photos.some((x) => x.mediaId === id);
+  });
 
   return (
     <form
@@ -290,18 +400,43 @@ function Editor({ hero }: { hero: AdminHomeHero }) {
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <TextsCard form={form} errors={errors} set={set} />
-          <ButtonsCard form={form} errors={errors} set={set} />
-          <PhotosCard
-            photos={form.photos}
-            error={errors.photos}
-            thumbOf={thumbOf}
-            previewIndex={previewIndex}
-            onPreview={setPreviewIndex}
-            onAdd={() => setPicking(true)}
-            onChange={setPhotos}
+        <div
+          id="editor-steps"
+          className="flex min-w-0 scroll-mt-24 flex-col gap-6"
+        >
+          <EditorTabs
+            tabs={HERO_TABS}
+            current={tab}
+            onChange={setTab}
+            checklist={heroChecklist(form)}
+            errorFields={Object.keys(errors)}
           />
+          <StepPanel id="textos" {...step}>
+            <TextsCard form={form} errors={errors} set={set} />
+          </StepPanel>
+          <StepPanel id="botones" {...step}>
+            <ButtonsCard
+              form={form}
+              errors={errors}
+              set={set}
+              patch={patch}
+              options={linkOptions(serviceTitles)}
+            />
+          </StepPanel>
+          <StepPanel id="fotos" {...step}>
+            <PhotosCard
+              photos={form.photos}
+              error={errors.photos}
+              thumbOf={thumbOf}
+              previewIndex={previewIndex}
+              onPreview={setPreviewIndex}
+              onAdd={() => setPicking(true)}
+              onChange={setPhotos}
+              builtInMissing={builtInMissing}
+              importing={importing}
+              onUseBuiltIn={() => void addBuiltInPhotos()}
+            />
+          </StepPanel>
         </div>
         <div className="flex flex-col gap-3 lg:sticky lg:top-36">
           <HeroPreview
@@ -452,23 +587,53 @@ function TextsCard({
   );
 }
 
-const HREF_HINT =
-  "Una página del sitio (/contacto, /proyectos), un enlace https://, mailto: o tel:.";
+type Patcher = (changes: Partial<HeroForm>) => void;
 
 function ButtonsCard({
   form,
   errors,
   set,
+  patch,
+  options,
 }: {
   form: HeroForm;
   errors: HeroErrors;
   set: Setter;
+  patch: Patcher;
+  options: readonly LinkOption[];
 }) {
+  const toggleId = useId();
+  const hasSecondary =
+    form.secondaryLabel.trim() !== "" || form.secondaryHref.trim() !== "";
+  const [secondaryOn, setSecondaryOn] = useState(hasSecondary);
+  const shown = secondaryOn || hasSecondary;
+  // What the secondary link had, to bring it back when shown again.
+  const last = useRef({
+    label: form.secondaryLabel || "Ver proyectos",
+    href: form.secondaryHref || "/proyectos",
+  });
+
+  function toggleSecondary(on: boolean) {
+    setSecondaryOn(on);
+    if (on) {
+      patch({
+        secondaryLabel: last.current.label,
+        secondaryHref: last.current.href,
+      });
+    } else {
+      last.current = {
+        label: form.secondaryLabel || last.current.label,
+        href: form.secondaryHref || last.current.href,
+      };
+      patch({ secondaryLabel: "", secondaryHref: "" });
+    }
+  }
+
   return (
     <Card className="flex flex-col gap-5">
       <SectionTitle
         title="Botones"
-        text="El botón principal va relleno; el secundario es un enlace con flecha a su lado."
+        text="El botón principal va relleno; el secundario es un enlace con flecha a su lado. Elige a qué página llevan."
       />
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-3 text-base font-semibold text-ink">
@@ -487,28 +652,32 @@ function ButtonsCard({
             }
             onChange={(e) => set("primaryLabel", e.target.value)}
           />
-          <Field
-            label="Enlace"
+          <LinkField
+            label="Lleva a"
             value={form.primaryHref}
             error={errors.primaryHref}
-            hint={HREF_HINT}
-            inputMode="url"
-            autoCapitalize="off"
-            spellCheck={false}
-            onChange={(e) => set("primaryHref", e.target.value)}
+            options={options}
+            onChange={(href) => set("primaryHref", href)}
           />
         </div>
       </fieldset>
-      <div className="border-t border-border pt-5">
-        <fieldset className="flex flex-col gap-4">
-          <legend className="mb-3 text-base font-semibold text-ink">
-            Enlace secundario{" "}
-            <span className="font-medium text-ink-muted">(opcional)</span>
-          </legend>
-          <p className="-mt-4 text-sm text-ink-muted">
-            Deja el texto y el enlace vacíos para ocultarlo.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-4 border-t border-border pt-5">
+        <label
+          htmlFor={toggleId}
+          className="flex min-h-11 cursor-pointer items-center gap-3 self-start text-base font-semibold text-ink"
+        >
+          <input
+            id={toggleId}
+            type="checkbox"
+            checked={shown}
+            onChange={(e) => toggleSecondary(e.target.checked)}
+            className="size-5 accent-(--color-brand)"
+          />
+          Mostrar un enlace secundario
+        </label>
+        {shown && (
+          <fieldset className="grid gap-4 sm:grid-cols-2">
+            <legend className="sr-only">Enlace secundario</legend>
             <Field
               label="Texto"
               value={form.secondaryLabel}
@@ -521,20 +690,112 @@ function ButtonsCard({
               }
               onChange={(e) => set("secondaryLabel", e.target.value)}
             />
-            <Field
-              label="Enlace"
+            <LinkField
+              label="Lleva a"
               value={form.secondaryHref}
               error={errors.secondaryHref}
-              hint={HREF_HINT}
-              inputMode="url"
-              autoCapitalize="off"
-              spellCheck={false}
-              onChange={(e) => set("secondaryHref", e.target.value)}
+              options={options}
+              onChange={(href) => set("secondaryHref", href)}
             />
-          </div>
-        </fieldset>
+          </fieldset>
+        )}
       </div>
     </Card>
+  );
+}
+
+const LINK_GROUPS = ["Páginas", "Servicios", "Contacto"] as const;
+
+/**
+ * Where a button leads: a page, service or contact channel from the list,
+ * or "Otro enlace…" to type it (a path starting with /, https, mailto: or
+ * tel:).
+ */
+function LinkField({
+  label,
+  value,
+  error,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  error: string | undefined;
+  options: readonly LinkOption[];
+  onChange: (href: string) => void;
+}) {
+  const id = useId();
+  const choice = linkChoice(value, options);
+  const [typing, setTyping] = useState(false);
+  const custom = typing || choice === CUSTOM_LINK;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor={id}
+          className="text-sm leading-5 font-semibold text-ink"
+        >
+          {label}
+        </label>
+        <select
+          id={id}
+          value={custom ? CUSTOM_LINK : choice}
+          aria-invalid={error && !custom ? true : undefined}
+          aria-describedby={error && !custom ? `${id}-error` : undefined}
+          onChange={(e) => {
+            const next = e.target.value;
+            if (next === CUSTOM_LINK) {
+              setTyping(true);
+              return;
+            }
+            setTyping(false);
+            onChange(next);
+          }}
+          className={cx(
+            "min-h-11 rounded-md border bg-surface-raised px-3 py-2.5 text-base text-ink",
+            error && !custom ? "border-brand" : "border-border-strong",
+          )}
+        >
+          {choice === "" && !custom && (
+            <option value="" disabled>
+              Elige una página
+            </option>
+          )}
+          {LINK_GROUPS.map((group) => (
+            <optgroup key={group} label={group}>
+              {options
+                .filter((o) => o.group === group)
+                .map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+          <option value={CUSTOM_LINK}>Otro enlace…</option>
+        </select>
+        {error && !custom && (
+          <p
+            id={`${id}-error`}
+            className="text-sm leading-5 font-semibold text-brand"
+          >
+            {error}
+          </p>
+        )}
+      </div>
+      {custom && (
+        <Field
+          label="Dirección del enlace"
+          value={value}
+          error={error}
+          hint="Una página del sitio que empiece con / (por ejemplo /contacto), un enlace https://, mailto: o tel:."
+          inputMode="url"
+          autoCapitalize="off"
+          spellCheck={false}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </div>
   );
 }
 
@@ -546,6 +807,9 @@ function PhotosCard({
   onPreview,
   onAdd,
   onChange,
+  builtInMissing,
+  importing,
+  onUseBuiltIn,
 }: {
   photos: HeroPhotoValue[];
   error: string | undefined;
@@ -554,6 +818,10 @@ function PhotosCard({
   onPreview: (index: number) => void;
   onAdd: () => void;
   onChange: (photos: HeroPhotoValue[]) => void;
+  /** Some built-in photo is not in the hero yet. */
+  builtInMissing: boolean;
+  importing: boolean;
+  onUseBuiltIn: () => void;
 }) {
   const full = photos.length >= HERO_LIMITS.photos;
   return (
@@ -564,20 +832,55 @@ function PhotosCard({
           text="Cambian solas cada 6 segundos, en este orden. En cada foto, toca lo más importante: el recorte lo mantiene a la vista en computadores y celulares."
         />
         {photos.length > 0 && (
-          <Button variant="secondary" onClick={onAdd} disabled={full}>
-            <ImagePlus size={18} strokeWidth={1.75} aria-hidden="true" />
-            Agregar fotos
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {builtInMissing && (
+              <Button
+                variant="ghost"
+                onClick={onUseBuiltIn}
+                disabled={full || importing}
+              >
+                {importing ? "Agregando…" : "Agregar las fotos de siempre"}
+              </Button>
+            )}
+            <Button variant="secondary" onClick={onAdd} disabled={full}>
+              <ImagePlus size={18} strokeWidth={1.75} aria-hidden="true" />
+              Agregar fotos
+            </Button>
+          </div>
         )}
       </div>
       {error && <p className="text-sm font-semibold text-brand">{error}</p>}
       {photos.length === 0 ? (
-        <div className="flex flex-col gap-3">
-          <Notice tone="info">
-            Sin fotos elegidas, el inicio muestra las tres fotos de siempre
-            (agua, estación de bombeo y vista aérea).
-          </Notice>
-          <EmptyImage label="Elegir fotos para la portada" onClick={onAdd} />
+        <div className="flex flex-col gap-4">
+          <p className="text-ink">
+            Hoy el inicio muestra estas tres fotos. Úsalas aquí para ordenarlas,
+            ajustar su enfoque o sumarles otras: se agregan a{" "}
+            <a href="/admin/medios">Medios</a> la primera vez.
+          </p>
+          <ul className="grid grid-cols-3 gap-3">
+            {BUILT_IN_PHOTOS.map((p) => (
+              <li
+                key={p.file}
+                className="overflow-hidden rounded-md border border-border"
+              >
+                <img
+                  src={BUILT_IN_SRC[p.file]}
+                  alt={p.alt}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover"
+                />
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={onUseBuiltIn} disabled={importing}>
+              {importing ? "Agregando las fotos…" : "Usar estas fotos"}
+            </Button>
+            <Button variant="secondary" onClick={onAdd} disabled={importing}>
+              <ImagePlus size={18} strokeWidth={1.75} aria-hidden="true" />
+              Elegir otras de Medios
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -585,7 +888,7 @@ function PhotosCard({
             {photos.length} de {HERO_LIMITS.photos} fotos
             {full && " (máximo alcanzado)"}
           </p>
-          <ol className="grid gap-4 sm:grid-cols-2">
+          <ol className="grid items-start gap-4 sm:grid-cols-2">
             {photos.map((photo, index) => {
               const ids = photos.map((p) => p.mediaId);
               const move = (action: "up" | "down" | "remove") => {
@@ -762,7 +1065,7 @@ function HeroPreview({
   index: number;
 }) {
   const parts = titleParts(form.title, form.highlight.trim());
-  const src = photo ? thumb?.url : builtInPhoto.src;
+  const src = photo ? thumb?.url : water.src;
   const focus = photo ? focusClasses(photo.focusX, photo.focusY) : "";
   const secondary = form.secondaryLabel.trim();
   const title = (
@@ -807,11 +1110,29 @@ function HeroPreview({
       >
         {image}
         <div className="absolute inset-0 bg-plum-950/20" aria-hidden="true" />
+        {/* The site's menu, over the photo. */}
+        <div
+          className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-[2cqw] px-[7cqw] pt-[2.4cqw]"
+          aria-hidden="true"
+        >
+          <Isotype className="h-[2.6cqw] w-auto" />
+          <span className="flex gap-[1.9cqw] text-[1.2cqw] font-medium">
+            {NAV.map((n) => (
+              <span key={n.href}>{n.label}</span>
+            ))}
+          </span>
+          <span className="flex items-center gap-[1.6cqw]">
+            <Moon className="size-[1.6cqw]" />
+            <span className="rounded-full border border-sand-50/60 px-[1.5cqw] py-[0.7cqw] text-[1.2cqw] leading-none">
+              Cotizar proyecto
+            </span>
+          </span>
+        </div>
         <div
           className="absolute inset-0 bg-linear-to-r from-plum-950/80 via-plum-950/40 via-40% to-transparent to-70%"
           aria-hidden="true"
         />
-        <div className="relative flex h-full flex-col justify-center gap-[2.2cqw] px-[7cqw]">
+        <div className="relative flex h-full flex-col justify-center gap-[2.2cqw] px-[7cqw] pt-[7cqw]">
           <p className="font-data text-[1.6cqw] leading-none font-medium tracking-[0.1em] text-sand-300 uppercase">
             {TAGLINE}
           </p>
@@ -847,6 +1168,17 @@ function HeroPreview({
           className="absolute inset-0 bg-linear-to-t from-plum-950/90 via-plum-950/45 via-55% to-plum-950/25"
           aria-hidden="true"
         />
+        {/* The site's menu on phones: mark, theme and menu buttons. */}
+        <div
+          className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-[6cqw] pt-[6cqw]"
+          aria-hidden="true"
+        >
+          <Isotype className="h-[6cqw] w-auto" />
+          <span className="flex items-center gap-[5cqw]">
+            <Moon className="size-[5cqw]" />
+            <Menu className="size-[6cqw]" />
+          </span>
+        </div>
         <div className="relative flex h-full flex-col justify-end gap-[3.5cqw] p-[6cqw] pb-[9cqw]">
           <p className="font-data text-[3.2cqw] leading-none font-medium tracking-[0.1em] text-sand-300 uppercase">
             {TAGLINE}

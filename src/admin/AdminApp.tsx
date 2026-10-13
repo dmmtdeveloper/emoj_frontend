@@ -116,7 +116,7 @@ function Content({
     case "dashboard":
       return <DashboardPage />;
     case "home":
-      return <HomeHeroEditor />;
+      return <HomeHeroEditor serviceTitles={serviceTitles} />;
     case "messages":
       return <MessagesPage serviceTitles={serviceTitles} />;
     case "account":

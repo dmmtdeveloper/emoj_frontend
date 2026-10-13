@@ -31,6 +31,7 @@ import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
 import type { CallToAction, HomeHero } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
 import {
+  BUILT_IN_PHOTOS,
   focusClasses,
   heroCopy,
   isExternalHref,
@@ -72,7 +73,7 @@ const builtIn: Slide[] = [
   {
     kind: "local",
     src: water,
-    alt: "Manos recibiendo un chorro de agua limpia.",
+    alt: BUILT_IN_PHOTOS[0].alt,
     position: "object-[60%_center] md:object-[58%_center]",
     media: "hero__media--1",
     widths: [640, 960, 1280, 1600, 2130],
@@ -80,7 +81,7 @@ const builtIn: Slide[] = [
   {
     kind: "local",
     src: pumping,
-    alt: "Estación de bombeo con tuberías blancas y bombas azules sobre una losa de hormigón.",
+    alt: BUILT_IN_PHOTOS[1].alt,
     position: "object-[48%_center] md:object-center",
     media: "hero__media--2",
     widths: [640, 960, 1280, 1600, 2000],
@@ -88,7 +89,7 @@ const builtIn: Slide[] = [
   {
     kind: "local",
     src: aerial,
-    alt: "Vista aérea de un complejo industrial costero con una chimenea alta.",
+    alt: BUILT_IN_PHOTOS[2].alt,
     position: "object-[38%_center] md:object-center",
     media: "hero__media--3",
     widths: [640, 960, 1280, 1600, 2000],
