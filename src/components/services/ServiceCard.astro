@@ -23,6 +23,7 @@ import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import type { Service } from "../../lib/get-services";
 import { fitWidth } from "../../lib/content/format";
+import { onPhotoClasses } from "../../lib/service-card-hover";
 import ServiceIcon from "./ServiceIcon.astro";
 
 interface Props {
@@ -51,12 +52,8 @@ const number = index === undefined ? "" : String(index).padStart(2, "0");
 const featured = variant === "featured" && image !== undefined;
 const link =
   "no-underline after:absolute after:inset-0 after:z-10 after:rounded-[inherit] focus-visible:outline-none";
-// Light text while the photo shows (written out in full for Tailwind).
-const onPhoto = {
-  title: "group-hover:text-sand-50 group-has-[a:focus-visible]:text-sand-50",
-  muted: "group-hover:text-sand-100 group-has-[a:focus-visible]:text-sand-100",
-  link: "group-hover:text-sand-50 group-has-[a:focus-visible]:text-sand-50",
-};
+// Light text while the photo shows; none without a photo (light surface).
+const onPhoto = onPhotoClasses(photo !== undefined);
 const photoImage =
   "h-full w-full scale-105 object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-100 group-has-[a:focus-visible]:scale-100";
 const photoLayer =
@@ -145,8 +142,9 @@ const shell =
       </span>
       <span
         class:list={[
-          "inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-sand-50/60",
+          "inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5",
           onPhoto.title,
+          onPhoto.ring,
         ]}
         aria-hidden="true"
       >
