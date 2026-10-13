@@ -1,8 +1,18 @@
 ---
+/**
+ * Contact, in the home's voice:
+ * - A photo-led header under the transparent header with the team photo,
+ *   the promise and the two fastest ways to reach us (WhatsApp and phone).
+ * - The form (ContactForm) beside the other channels as large tappable
+ *   rows, the office with its map link, and how we follow up.
+ * The form logic (validation, Turnstile, ?servicio=) is unchanged.
+ */
 import { ArrowUpRight, Mail, MapPin, Phone } from "@lucide/astro";
+import { Image } from "astro:assets";
+import teamPhoto from "../assets/photos/equipo-emoj.jpg";
 import ContactForm from "../components/contact/ContactForm.astro";
 import Breadcrumb from "../components/ui/Breadcrumb.astro";
-import PageHeader from "../components/ui/PageHeader.astro";
+import ButtonLink from "../components/ui/ButtonLink.astro";
 import WhatsAppIcon from "../components/ui/WhatsAppIcon.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getServices } from "../lib/get-services";
@@ -10,116 +20,244 @@ import { CONTACT } from "../lib/site";
 import { organizationJsonLd } from "../lib/structured-data";
 
 const services = await getServices();
-const itemClass = "flex gap-4";
-const iconClass =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand";
-const titleClass =
-  "text-[13px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase";
+const [mainPhone] = CONTACT.phones;
+const steps = [
+  {
+    title: "Revisamos tu consulta",
+    text: "Un ingeniero del equipo lee lo que nos cuentas y ve qué especialidades necesita tu proyecto.",
+  },
+  {
+    title: "Conversamos el alcance",
+    text: "Te contactamos para aclarar lo que falte: ubicación, antecedentes y plazos.",
+  },
+  {
+    title: "Te enviamos la propuesta",
+    text: "Con el alcance, los plazos y los entregables, para que decidas con toda la información.",
+  },
+];
+const row =
+  "group relative flex items-center gap-4 border-t border-border py-5 first:border-t-0 first:pt-0";
+const icon =
+  "inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-on-brand";
+const iconStatic =
+  "inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand";
+const label =
+  "font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-ink-muted uppercase";
+const arrow =
+  "ml-auto inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,background-color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand";
 ---
 
 <BaseLayout
   title="Contacto y cotizaciones"
   description="Cotiza tu proyecto de ingeniería civil con EMOJ Consultora. Escríbenos a coordinacion@emoj.cl, por WhatsApp o visítanos en Quilpué, Región de Valparaíso."
   jsonLd={[organizationJsonLd(Astro.site)]}
+  headerOverlay
 >
-  <PageHeader
-    eyebrow="Contacto"
-    title="Cotiza tu proyecto"
-    lead="Cuéntanos qué necesitas. Revisamos cada consulta con un ingeniero y te respondemos con los próximos pasos."
+  <section
+    aria-labelledby="contacto-titulo"
+    class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Contacto", href: "/contacto" },
-      ]}
-    />
-  </PageHeader>
+    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+      <Image
+        src={teamPhoto}
+        alt=""
+        widths={[640, 960, 1280, 1600, 1800]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="photo-zoom h-full w-full object-cover object-[60%_30%]"
+      />
+    </div>
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/65 via-55% to-plum-950/40 md:bg-plum-950/35 md:bg-none"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/90 via-plum-950/60 via-45% to-plum-950/10 to-85% md:block"
+      aria-hidden="true"
+    ></div>
 
-  <section class="bg-surface-sunken">
-    <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16">
-      <ContactForm services={services} />
-
-      <aside aria-labelledby="otros-canales" class="flex flex-col gap-8">
-        <h2
-          id="otros-canales"
-          class="text-[22px] leading-7 font-semibold text-ink"
+    <div class="hero__content container-site flex min-h-[max(460px,58svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+40px)] pb-12 md:gap-7 md:pb-16">
+      <div class="hidden md:block">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Contacto", href: "/contacto" },
+          ]}
+        />
+      </div>
+      <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+        Contacto
+      </p>
+      <h1
+        id="contacto-titulo"
+        class="max-w-[16ch] text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
+      >
+        Cuéntanos qué quieres{" "}
+        <em class="font-medium text-sage-300">construir</em>.
+      </h1>
+      <p class="text-lead max-w-[50ch] text-sand-100">
+        Revisamos cada consulta con un ingeniero y te respondemos con los
+        próximos pasos.
+      </p>
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-3">
+        <ButtonLink
+          href={CONTACT.whatsapp.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="on-photo-solid"
+          class="min-h-12 gap-2 px-6 text-base"
         >
-          Otras formas de contactarnos
-        </h2>
-        <ul class="flex flex-col gap-6">
-          <li class={itemClass}>
-            <span class={iconClass}>
-              <Mail size={20} stroke-width={1.75} aria-hidden="true" />
-            </span>
-            <div class="flex flex-col gap-1">
-              <span class={titleClass}>Correo</span>
-              <a class="font-medium break-all" href={`mailto:${CONTACT.email}`}>
-                {CONTACT.email}
-              </a>
-            </div>
-          </li>
-          <li class={itemClass}>
-            <span class={iconClass}>
-              <WhatsAppIcon size={20} />
-            </span>
-            <div class="flex flex-col gap-1">
-              <span class={titleClass}>WhatsApp</span>
-              <a
-                class="font-medium"
-                href={CONTACT.whatsapp.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {CONTACT.whatsapp.display}
-              </a>
-            </div>
-          </li>
-          <li class={itemClass}>
-            <span class={iconClass}>
-              <Phone size={20} stroke-width={1.75} aria-hidden="true" />
-            </span>
-            <div class="flex flex-col gap-1">
-              <span class={titleClass}>Teléfonos</span>
-              {CONTACT.phones.map((phone) => (
-                <a class="font-medium" href={phone.href}>
-                  {phone.display}
+          <WhatsAppIcon size={20} />
+          Escríbenos por WhatsApp
+          <span class="sr-only">(se abre en una pestaña nueva)</span>
+        </ButtonLink>
+        {mainPhone && (
+          <ButtonLink
+            href={mainPhone.href}
+            variant="on-photo"
+            class="min-h-12 gap-2 px-6 text-base"
+          >
+            <Phone size={20} stroke-width={1.75} aria-hidden="true" />
+            Llámanos {mainPhone.display}
+          </ButtonLink>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-surface">
+    <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16 lg:py-28">
+      <div data-reveal>
+        <ContactForm services={services} />
+      </div>
+
+      <div class="flex flex-col gap-12 lg:sticky lg:top-28 lg:self-start">
+        <aside aria-labelledby="otros-canales" class="flex flex-col gap-6">
+          <div class="flex flex-col gap-3">
+            <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
+              Otros canales
+            </p>
+            <h2 id="otros-canales" class="text-h3 text-ink">
+              Prefieres hablar directo
+            </h2>
+          </div>
+          <ul class="flex flex-col">
+            <li class={row}>
+              <span class={icon}>
+                <WhatsAppIcon size={22} />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class={label}>WhatsApp</span>
+                <a
+                  class="font-medium text-ink no-underline after:absolute after:inset-0 hover:text-ink"
+                  href={CONTACT.whatsapp.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {CONTACT.whatsapp.display}
+                  <span class="sr-only">(se abre en una pestaña nueva)</span>
                 </a>
-              ))}
-            </div>
-          </li>
-          <li class={itemClass}>
-            <span class={iconClass}>
-              <MapPin size={20} stroke-width={1.75} aria-hidden="true" />
-            </span>
-            <div class="flex flex-col gap-1">
-              <span class={titleClass}>Oficina</span>
-              <address class="not-italic">
-                {CONTACT.address.street}
-                <br />
-                {CONTACT.address.locality}, {CONTACT.address.region}
-              </address>
-              <a
-                class="inline-flex min-h-11 items-center gap-1 font-medium"
-                href={CONTACT.mapsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ver en Google Maps
-                <ArrowUpRight
-                  size={20}
-                  stroke-width={1.75}
+              </div>
+              <span class={arrow} aria-hidden="true">
+                <ArrowUpRight size={16} stroke-width={2} />
+              </span>
+            </li>
+            <li class={row}>
+              <span class={icon}>
+                <Mail size={22} stroke-width={1.75} aria-hidden="true" />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class={label}>Correo</span>
+                <a
+                  class="font-medium break-all text-ink no-underline after:absolute after:inset-0 hover:text-ink"
+                  href={`mailto:${CONTACT.email}`}
+                >
+                  {CONTACT.email}
+                </a>
+              </div>
+              <span class={arrow} aria-hidden="true">
+                <ArrowUpRight size={16} stroke-width={2} />
+              </span>
+            </li>
+            <li class="flex items-center gap-4 border-t border-border py-5">
+              <span class={iconStatic}>
+                <Phone size={22} stroke-width={1.75} aria-hidden="true" />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class={label}>Teléfonos</span>
+                <span class="flex flex-wrap gap-x-4 gap-y-1">
+                  {CONTACT.phones.map((phone) => (
+                    <a class="font-medium text-ink" href={phone.href}>
+                      {phone.display}
+                    </a>
+                  ))}
+                </span>
+              </div>
+            </li>
+            <li class={row}>
+              <span class={icon}>
+                <MapPin size={22} stroke-width={1.75} aria-hidden="true" />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class={label}>Oficina</span>
+                <address class="not-italic text-ink">
+                  <a
+                    class="font-medium text-ink no-underline after:absolute after:inset-0 hover:text-ink"
+                    href={CONTACT.mapsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {CONTACT.address.street}
+                    <span class="sr-only">
+                      (ver en Google Maps, se abre en una pestaña nueva)
+                    </span>
+                  </a>
+                  <span class="block text-sm text-ink-muted">
+                    {CONTACT.address.locality}, {CONTACT.address.region}
+                  </span>
+                </address>
+              </div>
+              <span class={arrow} aria-hidden="true">
+                <ArrowUpRight size={16} stroke-width={2} />
+              </span>
+            </li>
+          </ul>
+        </aside>
+
+        <section aria-labelledby="como-seguimos" class="flex flex-col gap-6">
+          <div class="flex flex-col gap-3">
+            <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
+              Después de escribirnos
+            </p>
+            <h2 id="como-seguimos" class="text-h3 text-ink">
+              Cómo seguimos
+            </h2>
+          </div>
+          <ol class="flex flex-col gap-5" data-reveal-stagger>
+            {steps.map((step, i) => (
+              <li class="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-3">
+                <span
+                  class="font-data text-sm leading-6 font-medium text-brand"
                   aria-hidden="true"
-                />
-                <span class="sr-only">(se abre en una pestaña nueva)</span>
-              </a>
-            </div>
-          </li>
-        </ul>
-        <p class="radius-signature bg-accent p-6 pl-8 text-on-accent">
-          Trabajamos principalmente en las regiones de Valparaíso y Coquimbo.
-        </p>
-      </aside>
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-base leading-6 font-semibold text-ink">
+                    {step.title}
+                  </h3>
+                  <p class="text-sm leading-6 text-ink-muted">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p class="radius-signature bg-accent p-5 pl-7 text-sm leading-6 font-medium text-on-accent">
+            Trabajamos principalmente en las regiones de Valparaíso y Coquimbo.
+          </p>
+        </section>
+      </div>
     </div>
   </section>
 </BaseLayout>
