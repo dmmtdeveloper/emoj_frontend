@@ -5,6 +5,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { problemMessage } from "../lib/admin/errors";
+import { isInvitation, resetMessage } from "../lib/admin/users";
 import { LOGIN_PATH, safeNext } from "../lib/admin/redirect";
 import { adminApi } from "./api";
 import { Button, Field, Isotype, Notice } from "./ui";
@@ -212,6 +213,7 @@ export function ForgotScreen() {
 
 export function ResetScreen() {
   const token = new URLSearchParams(window.location.search).get("token") ?? "";
+  const invitation = isInvitation(window.location.search);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -229,7 +231,7 @@ export function ResetScreen() {
     const result = await adminApi.resetPassword(token, password);
     setBusy(false);
     if (result.ok) setDone(true);
-    else setError(problemMessage(result, "reset"));
+    else setError(resetMessage(result, invitation));
   }
 
   if (!token) {
@@ -250,11 +252,14 @@ export function ResetScreen() {
 
   if (done) {
     return (
-      <AuthCard title="Contraseña actualizada">
+      <AuthCard
+        title={invitation ? "Contraseña creada" : "Contraseña actualizada"}
+      >
         <div className="flex flex-col gap-5">
           <Notice tone="success">
-            Listo. Por seguridad cerramos tus sesiones abiertas: entra con tu
-            contraseña nueva.
+            {invitation
+              ? "Listo. Ya puedes entrar al panel con tu correo y la contraseña que acabas de crear."
+              : "Listo. Por seguridad cerramos tus sesiones abiertas: entra con tu contraseña nueva."}
           </Notice>
           <a href={LOGIN_PATH} className="font-semibold">
             Iniciar sesión
@@ -265,14 +270,26 @@ export function ResetScreen() {
   }
 
   return (
-    <AuthCard title="Crea una contraseña nueva">
+    <AuthCard
+      title={
+        invitation
+          ? "Te damos la bienvenida al panel"
+          : "Crea una contraseña nueva"
+      }
+    >
       <form
         onSubmit={(event) => void submit(event)}
         className="flex flex-col gap-5"
       >
+        {invitation && (
+          <p className="text-ink-muted">
+            Crea tu contraseña para entrar al panel de EMOJ. Tu usuario es el
+            correo en el que recibiste la invitación.
+          </p>
+        )}
         {error && <Notice tone="error">{error}</Notice>}
         <PasswordField
-          label="Contraseña nueva"
+          label={invitation ? "Contraseña" : "Contraseña nueva"}
           value={password}
           onChange={setPassword}
           autoComplete="new-password"
@@ -285,7 +302,11 @@ export function ResetScreen() {
           autoComplete="new-password"
         />
         <Button type="submit" disabled={busy} className="w-full">
-          {busy ? "Guardando…" : "Guardar contraseña"}
+          {busy
+            ? "Guardando…"
+            : invitation
+              ? "Crear contraseña"
+              : "Guardar contraseña"}
         </Button>
       </form>
     </AuthCard>

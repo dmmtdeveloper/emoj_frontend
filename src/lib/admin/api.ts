@@ -42,6 +42,12 @@ export type PreviewKind = Schemas["PreviewKind"];
 export type AdminHomeHero = Schemas["AdminHomeHero"];
 export type AdminHeroPhoto = Schemas["AdminHeroPhoto"];
 export type HomeHeroInput = Schemas["HomeHeroInput"];
+export type Role = Schemas["Role"];
+export type UserStatus = Schemas["UserStatus"];
+export type ManagedUser = Schemas["AdminUser"];
+export type ManagedUserList = Schemas["AdminUserList"];
+export type InviteUserInput = Schemas["InviteUserInput"];
+export type UpdateUserInput = Schemas["UpdateUserInput"];
 
 export type AdminListQuery = NonNullable<
   operations["adminListProjects"]["parameters"]["query"]
@@ -124,6 +130,23 @@ export interface AdminClient {
   getHomeHero(): Promise<ApiResult<AdminHomeHero>>;
   /** Replaces the whole home page hero. */
   updateHomeHero(body: HomeHeroInput): Promise<ApiResult<AdminHomeHero>>;
+  /** Everyone with access to the panel (admins only). */
+  listUsers(): Promise<ApiResult<ManagedUserList>>;
+  /** Creates a user without a password and emails them an invitation. */
+  inviteUser(body: InviteUserInput): Promise<ApiResult<ManagedUser>>;
+  /** Changes another user's name or role. */
+  updateUser(
+    id: string,
+    body: UpdateUserInput,
+  ): Promise<ApiResult<ManagedUser>>;
+  /** Removes a user's access and ends their sessions. */
+  disableUser(id: string): Promise<ApiResult<ManagedUser>>;
+  /** Restores a disabled user's access. */
+  enableUser(id: string): Promise<ApiResult<ManagedUser>>;
+  /** Emails a new invitation link to a user who has not signed in yet. */
+  resendInvitation(id: string): Promise<ApiResult<ManagedUser>>;
+  /** Changes the signed-in user's own name; answers like `me()`. */
+  renameMe(name: string): Promise<ApiResult<AdminSession>>;
   /** Current CSRF token, or null when signed out. */
   csrfToken(): string | null;
   setCsrfToken(token: string | null): void;
@@ -342,6 +365,18 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
     getHomeHero: () => request<AdminHomeHero>("GET", "/v1/admin/home/hero"),
     updateHomeHero: (body) =>
       request<AdminHomeHero>("PUT", "/v1/admin/home/hero", body),
+    listUsers: () => request<ManagedUserList>("GET", "/v1/admin/users"),
+    inviteUser: (body) => request<ManagedUser>("POST", "/v1/admin/users", body),
+    updateUser: (id, body) =>
+      request<ManagedUser>("PATCH", `/v1/admin/users/${seg(id)}`, body),
+    disableUser: (id) =>
+      request<ManagedUser>("POST", `/v1/admin/users/${seg(id)}/disable`),
+    enableUser: (id) =>
+      request<ManagedUser>("POST", `/v1/admin/users/${seg(id)}/enable`),
+    resendInvitation: (id) =>
+      request<ManagedUser>("POST", `/v1/admin/users/${seg(id)}/invitation`),
+    renameMe: (name) =>
+      session(request<AdminSession>("PATCH", "/v1/auth/me", { name })),
     csrfToken: () => csrf,
     setCsrfToken: (token) => {
       csrf = token;

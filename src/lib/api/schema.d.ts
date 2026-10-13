@@ -239,7 +239,11 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Change your own name
+         * @description The signed-in user (admin or editor) changes their display name. Answers like `GET`.
+         */
+        patch: operations["renameMe"];
         trace?: never;
     };
     "/v1/auth/password/forgot": {
@@ -542,6 +546,7 @@ export interface paths {
          * @description Read-only inbox, newest first. Each message carries `deleteAfter`, the
          *     date it is erased automatically: 24 months after it was received
          *     (the retention period stated in the site's privacy policy).
+         *     Administrators only: the messages are personal data.
          */
         get: operations["adminListContactMessages"];
         put?: never;
@@ -561,7 +566,7 @@ export interface paths {
         };
         /**
          * List data subject requests
-         * @description Audit trail of exports and erasures, newest first.
+         * @description Audit trail of exports and erasures, newest first. Administrators only.
          */
         get: operations["adminListDataRequests"];
         put?: never;
@@ -632,6 +637,128 @@ export interface paths {
          */
         put: operations["adminUpdateHomeHero"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List panel users
+         * @description Every user, sorted by email, with role and status.
+         */
+        get: operations["adminListUsers"];
+        put?: never;
+        /**
+         * Invite a user
+         * @description Creates the user without a password (status `invited`) and emails
+         *     them a single-use link, valid for 7 days, to choose one. The link
+         *     opens the password reset page with `invitacion=1`.
+         */
+        post: operations["adminInviteUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a user's name or role
+         * @description Fields absent from the body keep their value. Nobody changes their
+         *     own role, and the last active administrator keeps the role (409).
+         */
+        patch: operations["adminUpdateUser"];
+        trace?: never;
+    };
+    "/v1/admin/users/{id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove a user's access
+         * @description The user can no longer sign in and every session ends at once. The
+         *     record is kept. Nobody disables themselves, and the last active
+         *     administrator cannot be disabled (409). Idempotent.
+         */
+        post: operations["adminDisableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore a user's access
+         * @description The user can sign in again with their password. Idempotent.
+         */
+        post: operations["adminEnableUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{id}/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the invitation again
+         * @description Emails a new invitation link to a user who has not chosen a password
+         *     yet; earlier links stop working. 409 when the user is not invited.
+         */
+        post: operations["adminResendInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -953,11 +1080,55 @@ export interface components {
         };
         /** @enum {string} */
         Status: "draft" | "published";
+        /**
+         * @description `admin` manages users and sees personal data (contact messages and
+         *     data subject requests); `editor` edits projects, news and photos.
+         * @enum {string}
+         */
+        Role: "admin" | "editor";
+        /**
+         * @description `invited`: the user has not chosen a password yet. `disabled`: an
+         *     administrator removed the user's access.
+         * @enum {string}
+         */
+        UserStatus: "active" | "invited" | "disabled";
         User: {
             /** Format: uuid */
             id: string;
             /** Format: email */
             email: string;
+            name: string;
+            role: components["schemas"]["Role"];
+        };
+        AdminUser: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            name: string;
+            role: components["schemas"]["Role"];
+            status: components["schemas"]["UserStatus"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastLoginAt: string | null;
+            /** Format: date-time */
+            disabledAt: string | null;
+        };
+        AdminUserList: {
+            items: components["schemas"]["AdminUser"][];
+        };
+        InviteUserInput: {
+            /** Format: email */
+            email: string;
+            name: string;
+            role: components["schemas"]["Role"];
+        };
+        UpdateUserInput: {
+            name?: string;
+            role?: components["schemas"]["Role"];
+        };
+        RenameSelfInput: {
             name: string;
         };
         Session: {
@@ -1312,7 +1483,11 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description CSRF check failed (Origin not allowed, or missing/wrong `X-CSRF-Token`). No details are given. */
+        /**
+         * @description CSRF check failed (Origin not allowed, or missing/wrong
+         *     `X-CSRF-Token`; no details are given), or the route is for
+         *     administrators and the signed-in user is an editor.
+         */
         Forbidden: {
             headers: {
                 "X-Request-ID": components["headers"]["X-Request-ID"];
@@ -1353,6 +1528,65 @@ export interface components {
                  *     }
                  */
                 "application/problem+json": components["schemas"]["ValidationProblem"];
+            };
+        };
+        /** @description The user after the change. */
+        AdminUser: {
+            headers: {
+                "Cache-Control": components["headers"]["NoStore"];
+                "X-Request-ID": components["headers"]["X-Request-ID"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["AdminUser"];
+            };
+        };
+        /** @description Another user already has the email. */
+        EmailTaken: {
+            headers: {
+                "X-Request-ID": components["headers"]["X-Request-ID"];
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "about:blank",
+                 *       "title": "Conflict",
+                 *       "status": 409,
+                 *       "detail": "Another user already has this email.",
+                 *       "instance": "/v1/admin/users",
+                 *       "errors": [
+                 *         {
+                 *           "field": "email",
+                 *           "message": "is already in use"
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["ValidationProblem"];
+            };
+        };
+        /**
+         * @description The change is not allowed: it would leave no active administrator,
+         *     it targets your own role or access, or (resend) the user is not
+         *     invited.
+         */
+        UserConflict: {
+            headers: {
+                "X-Request-ID": components["headers"]["X-Request-ID"];
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "about:blank",
+                 *       "title": "Conflict",
+                 *       "status": 409,
+                 *       "detail": "The last active administrator cannot lose access.",
+                 *       "instance": "/v1/admin/users/0192f0a0-0000-7000-8000-0000000000e2/disable"
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["Problem"];
             };
         };
         /** @description The request is not multipart/form-data. */
@@ -1865,6 +2099,40 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            default: components["responses"]["Error"];
+        };
+    };
+    renameMe: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameSelfInput"];
+            };
+        };
+        responses: {
+            /** @description The session with the new name. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
             default: components["responses"]["Error"];
         };
     };
@@ -2485,6 +2753,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             default: components["responses"]["Error"];
         };
     };
@@ -2515,6 +2784,7 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             default: components["responses"]["Error"];
         };
     };
@@ -2641,6 +2911,154 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminListUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All users. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminInviteUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteUserInput"];
+            };
+        };
+        responses: {
+            201: components["responses"]["AdminUser"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["EmailTaken"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminUpdateUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["AdminUser"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["UserConflict"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminDisableUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AdminUser"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["UserConflict"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminEnableUser: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AdminUser"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["UserConflict"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminResendInvitation: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path: {
+                /** @description Resource ID. A malformed ID answers 404. */
+                id: components["parameters"]["ID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["AdminUser"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["UserConflict"];
             default: components["responses"]["Error"];
         };
     };

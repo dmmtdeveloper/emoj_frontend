@@ -11,6 +11,7 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/portada")).toBe("home");
     expect(pageForPath("/admin/mensajes")).toBe("messages");
     expect(pageForPath("/admin/cuenta")).toBe("account");
+    expect(pageForPath("/admin/usuarios")).toBe("users");
   });
 
   it("maps the project editor routes", () => {

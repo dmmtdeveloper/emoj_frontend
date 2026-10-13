@@ -16,6 +16,7 @@ export type ShellPage =
   | "news-edit"
   | "media"
   | "messages"
+  | "users"
   | "account";
 
 const PAGES: Record<string, ShellPage> = {
@@ -29,6 +30,7 @@ const PAGES: Record<string, ShellPage> = {
   "/admin/noticias/editar": "news-edit",
   "/admin/medios": "media",
   "/admin/mensajes": "messages",
+  "/admin/usuarios": "users",
   "/admin/cuenta": "account",
 };
 
