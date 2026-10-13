@@ -2,6 +2,24 @@
 @import "./tokens.css";
 @import "./motion.css";
 
+/*
+ * `dark:` follows the theme the page shows: the visitor's choice
+ * (<html data-theme>, src/lib/theme.ts) or, without one, the device.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(
+      :root:not([data-theme="light"]),
+      :root:not([data-theme="light"]) *
+    ) {
+      @slot;
+    }
+  }
+}
+
 /* Urbanist, self-hosted. Only the weights the design system allows. */
 @import "@fontsource/urbanist/400.css";
 @import "@fontsource/urbanist/500.css";

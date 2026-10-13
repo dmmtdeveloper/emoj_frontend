@@ -58,6 +58,8 @@ const isDefaultImage = image === DEFAULT_IMAGE;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* The visitor's theme, before paint (src/lib/theme.ts). */}
+    <script is:inline src="/theme.js"></script>
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

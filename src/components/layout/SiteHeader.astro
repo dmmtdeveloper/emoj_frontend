@@ -16,8 +16,11 @@
  *   it stays solid.
  * - Below `lg` the navigation moves into a full-screen modal <dialog>
  *   (native focus containment, Escape to close, focus returns to the toggle).
+ * - A sun/moon button switches between the light and dark themes
+ *   (src/scripts/theme-toggle.ts); it shows the moon in light and the sun
+ *   in dark.
  */
-import { Menu, X } from "@lucide/astro";
+import { Menu, Moon, Sun, X } from "@lucide/astro";
 import { CONTACT, NAV, isCurrent } from "../../lib/site";
 import IsotipoMark from "../IsotipoMark.astro";
 import Wordmark from "../Wordmark.astro";
@@ -96,6 +99,26 @@ const drawMark = pathname === "/";
     </nav>
 
     <div class="flex items-center gap-1">
+      <button
+        type="button"
+        class="theme-toggle inline-flex size-10 items-center justify-center rounded-full text-current transition-colors hover:bg-current/10"
+        aria-label="Modo oscuro"
+        aria-pressed="false"
+        data-theme-toggle
+      >
+        <Moon
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="theme-toggle__moon"
+        />
+        <Sun
+          size={20}
+          stroke-width={1.75}
+          aria-hidden="true"
+          class="theme-toggle__sun"
+        />
+      </button>
       <div class="hidden sm:block">
         <a
           href="/contacto"
@@ -190,6 +213,7 @@ const drawMark = pathname === "/";
 
 <script>
   import "../../scripts/nav-spy";
+  import "../../scripts/theme-toggle";
 
   const dialog = document.querySelector<HTMLDialogElement>("[data-menu]");
   const openButton =
