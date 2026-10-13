@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AdminHomeHero } from "../src/lib/admin/api";
 import {
   addPhotos,
+  CUSTOM_LINK,
+  heroChecklist,
+  HERO_TABS,
+  linkChoice,
+  linkOptions,
   errorsFromProblem,
   focusFromPoint,
   formFromHero,
@@ -231,5 +236,55 @@ describe("focal point", () => {
       y: 0,
     });
     expect(moveFocus(at, "Home", false)).toBeNull();
+  });
+});
+
+describe("link options", () => {
+  const options = linkOptions({
+    "obras-sanitarias": "Obras sanitarias",
+    geotecnia: "Geotecnia",
+  });
+
+  it("offers the site pages, the services and the contact channels", () => {
+    const values = options.map((o) => o.value);
+    expect(values).toContain("/contacto");
+    expect(values).toContain("/proyectos");
+    expect(values).toContain("/servicios/geotecnia");
+    expect(values.some((v) => v.startsWith("https://wa.me/"))).toBe(true);
+    expect(values.some((v) => v.startsWith("tel:"))).toBe(true);
+    expect(values).toContain("mailto:coordinacion@emoj.cl");
+    expect(new Set(values).size).toBe(values.length);
+    expect(options.find((o) => o.value === "/servicios/geotecnia")?.label).toBe(
+      "Geotecnia",
+    );
+    for (const o of options) expect(hrefError(o.value)).toBeNull();
+  });
+
+  it("finds the option of a link, or marks it as another link", () => {
+    expect(linkChoice("/contacto", options)).toBe("/contacto");
+    expect(linkChoice(" /contacto ", options)).toBe("/contacto");
+    expect(linkChoice("/otra-pagina", options)).toBe(CUSTOM_LINK);
+    expect(linkChoice("", options)).toBe("");
+  });
+});
+
+describe("heroChecklist", () => {
+  it("marks each step done when its required fields are filled", () => {
+    const done = (form: HeroForm) =>
+      Object.fromEntries(heroChecklist(form).map((i) => [i.field, i.done]));
+    expect(done(valid())).toMatchObject({
+      title: true,
+      lead: true,
+      primaryLabel: true,
+      primaryHref: true,
+      photos: true,
+    });
+    expect(done({ ...valid(), lead: " ", photos: [] })).toMatchObject({
+      lead: false,
+      photos: false,
+    });
+    for (const item of heroChecklist(valid())) {
+      expect(HERO_TABS.some((t) => t.fields.includes(item.field))).toBe(true);
+    }
   });
 });

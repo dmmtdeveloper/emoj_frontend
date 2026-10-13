@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { HomeHero } from "../src/lib/api/client";
 import {
+  BUILT_IN_PHOTOS,
+  builtInInLibrary,
   DEFAULT_HERO_COPY,
   focusClasses,
   heroCopy,
@@ -114,5 +116,37 @@ describe("heroCopy", () => {
       label: "Ver proyectos",
       href: "/proyectos",
     });
+  });
+});
+
+describe("BUILT_IN_PHOTOS", () => {
+  it("describes the three photos the site shipped with", () => {
+    expect(BUILT_IN_PHOTOS.map((p) => p.file)).toEqual([
+      "agua-manos.jpg",
+      "estacion-bombeo-tuberias.jpg",
+      "vista-aerea-industrial.jpg",
+    ]);
+    for (const p of BUILT_IN_PHOTOS) {
+      expect(p.alt.length).toBeGreaterThan(10);
+      expect(p.focusX % 5).toBe(0);
+    }
+  });
+
+  it("finds the ones already in the media library by their alt text", () => {
+    const [water, pumping] = BUILT_IN_PHOTOS;
+    if (!water || !pumping) throw new Error("fixture");
+    expect(
+      builtInInLibrary([
+        { id: "x", alt: "Otra foto" },
+        { id: "p", alt: pumping.alt },
+        { id: "w", alt: water.alt },
+        { id: "w2", alt: water.alt },
+      ]),
+    ).toEqual(
+      new Map([
+        ["agua-manos.jpg", "w"],
+        ["estacion-bombeo-tuberias.jpg", "p"],
+      ]),
+    );
   });
 });

@@ -4,10 +4,13 @@
  * API's field errors on the form, and the focal point picked on each photo.
  */
 import type { FieldError } from "../api/client";
+import { SERVICE_SLUGS } from "../services";
+import { CONTACT, NAV } from "../site";
 import { FOCUS_STEP } from "../content/home-hero";
 import type { AdminHomeHero, HomeHeroInput } from "./api";
 import { fieldErrors, tooLong } from "./form-errors";
-import { charCount } from "./project-form";
+import type { EditorTab } from "./editor-tabs";
+import { charCount, type ChecklistItem } from "./project-form";
 
 /** Mirrors the API (internal/domain/home.go). */
 export const HERO_LIMITS = {
@@ -240,4 +243,109 @@ export function moveFocus(
   const move = moves[key];
   if (!move) return null;
   return { x: snap(at.x + move[0]), y: snap(at.y + move[1]) };
+}
+
+/** The editor's steps, with the form fields each one shows. */
+export const HERO_TABS: readonly EditorTab[] = [
+  { id: "textos", label: "Textos", fields: ["title", "highlight", "lead"] },
+  {
+    id: "botones",
+    label: "Botones",
+    fields: ["primaryLabel", "primaryHref", "secondaryLabel", "secondaryHref"],
+  },
+  { id: "fotos", label: "Fotos", fields: ["photos"] },
+];
+
+/** What each step needs to show as complete in the step tabs. */
+export function heroChecklist(form: HeroForm): ChecklistItem<string>[] {
+  const filled = (v: string) => v.trim() !== "";
+  return [
+    {
+      field: "title",
+      label: "Título",
+      done: filled(form.title),
+      required: true,
+    },
+    {
+      field: "lead",
+      label: "Párrafo",
+      done: filled(form.lead),
+      required: true,
+    },
+    {
+      field: "primaryLabel",
+      label: "Texto del botón",
+      done: filled(form.primaryLabel),
+      required: true,
+    },
+    {
+      field: "primaryHref",
+      label: "Enlace del botón",
+      done: filled(form.primaryHref),
+      required: true,
+    },
+    {
+      field: "photos",
+      label: "Fotos",
+      done: form.photos.length > 0,
+      required: false,
+    },
+  ];
+}
+
+export interface LinkOption {
+  value: string;
+  label: string;
+  group: "Páginas" | "Servicios" | "Contacto";
+}
+
+/** "Otro enlace…" in the link selects: the link is typed by hand. */
+export const CUSTOM_LINK = "__custom__";
+
+/** Where a button can lead, for the link selects. */
+export function linkOptions(
+  serviceTitles: Readonly<Record<string, string>>,
+): LinkOption[] {
+  const [phone] = CONTACT.phones;
+  return [
+    ...NAV.map((n) => ({
+      value: n.href,
+      label: n.label,
+      group: "Páginas" as const,
+    })),
+    ...SERVICE_SLUGS.map((slug) => ({
+      value: `/servicios/${slug}`,
+      label: serviceTitles[slug] ?? slug,
+      group: "Servicios" as const,
+    })),
+    {
+      value: CONTACT.whatsapp.href,
+      label: `WhatsApp (${CONTACT.whatsapp.display})`,
+      group: "Contacto",
+    },
+    ...(phone
+      ? [
+          {
+            value: phone.href,
+            label: `Llamar al ${phone.display}`,
+            group: "Contacto" as const,
+          },
+        ]
+      : []),
+    {
+      value: `mailto:${CONTACT.email}`,
+      label: `Correo (${CONTACT.email})`,
+      group: "Contacto",
+    },
+  ];
+}
+
+/** The option a link matches: its value, CUSTOM_LINK, or "" when empty. */
+export function linkChoice(
+  href: string,
+  options: readonly LinkOption[],
+): string {
+  const value = href.trim();
+  if (!value) return "";
+  return options.some((o) => o.value === value) ? value : CUSTOM_LINK;
 }

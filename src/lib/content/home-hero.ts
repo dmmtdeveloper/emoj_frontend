@@ -34,6 +34,47 @@ export function heroCopy(hero: HomeHero | null): HeroCopy {
   };
 }
 
+/**
+ * The three photos the site shipped with (src/assets/photos), shown while
+ * no photo is chosen in the panel. The panel can add them to the media
+ * library; `focusX`/`focusY` are their crops on phones.
+ */
+export const BUILT_IN_PHOTOS = [
+  {
+    file: "agua-manos.jpg",
+    alt: "Manos recibiendo un chorro de agua limpia.",
+    focusX: 60,
+    focusY: 50,
+  },
+  {
+    file: "estacion-bombeo-tuberias.jpg",
+    alt: "Estación de bombeo con tuberías blancas y bombas azules sobre una losa de hormigón.",
+    focusX: 50,
+    focusY: 50,
+  },
+  {
+    file: "vista-aerea-industrial.jpg",
+    alt: "Vista aérea de un complejo industrial costero con una chimenea alta.",
+    focusX: 40,
+    focusY: 50,
+  },
+] as const;
+
+/**
+ * Built-in photos already in the media library (matched by alt text), by
+ * file name, so adding them twice reuses the first upload.
+ */
+export function builtInInLibrary(
+  library: readonly { id: string; alt: string }[],
+): Map<string, string> {
+  const found = new Map<string, string>();
+  for (const photo of BUILT_IN_PHOTOS) {
+    const media = library.find((m) => m.alt === photo.alt);
+    if (media) found.set(photo.file, media.id);
+  }
+  return found;
+}
+
 export interface TitleParts {
   before: string;
   highlight: string;
