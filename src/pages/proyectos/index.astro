@@ -2,14 +2,13 @@
 /**
  * Projects, in the home's voice:
  * - A photo-led header under the transparent header, like Servicios and
- *   Noticias, with the project count. The photo is the cover of the first
- *   featured project (or the first project), so it follows the portfolio.
+ *   Noticias, with the project count. The photos are the project covers,
+ *   featured first, playing like the home hero (HeaderSlideshow).
  * - The filter as rounded chips; the grid glides to its new layout when it
  *   changes (src/scripts/project-filter.ts).
  * - Cards with the specialties, place, headline figure and year.
  */
 import { ArrowRight } from "@lucide/astro";
-import { Image } from "astro:assets";
 import fallbackPhoto from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import ProjectCard from "../../components/projects/ProjectCard.astro";
 import ProjectFilters from "../../components/projects/ProjectFilters.astro";
@@ -17,9 +16,13 @@ import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import EmptyState from "../../components/ui/EmptyState.astro";
+import HeaderSlideshow, {
+  type HeaderPhoto,
+} from "../../components/ui/HeaderSlideshow.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
-import { fitWidth, projectFacets } from "../../lib/content/format";
+import { projectFacets } from "../../lib/content/format";
+import { headerPhotos } from "../../lib/content/header-photos";
 import { mediaPath } from "../../lib/content/media";
 import { projectItemName } from "../../lib/content/transition";
 import { getServiceTitles } from "../../lib/get-services";
@@ -30,8 +33,13 @@ export const prerender = false;
 const projects = await contentSource().getProjects();
 const serviceTitles = await getServiceTitles();
 const facets = projectFacets(projects);
-const lead =
-  projects.find((p) => p.featured && p.cover) ?? projects.find((p) => p.cover);
+const covers: HeaderPhoto[] = headerPhotos(projects, 8).map((p) => ({
+  src: mediaPath("proyectos", p.slug, p.cover),
+  width: p.cover.width,
+  height: p.cover.height,
+}));
+const photos: HeaderPhoto[] =
+  covers.length > 0 ? covers : [{ src: fallbackPhoto }];
 const count = String(projects.length).padStart(2, "0");
 ---
 
@@ -44,30 +52,7 @@ const count = String(projects.length).padStart(2, "0");
     aria-labelledby="proyectos-titulo"
     class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
-      {lead?.cover ? (
-        <Image
-          src={mediaPath("proyectos", lead.slug, lead.cover)}
-          alt=""
-          {...fitWidth(lead.cover, 1800)}
-          widths={[640, 960, 1280, 1600, 1800]}
-          sizes="100vw"
-          loading="eager"
-          fetchpriority="high"
-          class="photo-zoom h-full w-full object-cover"
-        />
-      ) : (
-        <Image
-          src={fallbackPhoto}
-          alt=""
-          widths={[640, 960, 1280, 1600, 1800]}
-          sizes="100vw"
-          loading="eager"
-          fetchpriority="high"
-          class="photo-zoom h-full w-full object-cover"
-        />
-      )}
-    </div>
+    <HeaderSlideshow photos={photos} />
     {/* Veils as on Servicios: the photo leads, the text stays legible. */}
     <div
       class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/60 via-55% to-plum-950/35 md:bg-plum-950/30 md:bg-none"

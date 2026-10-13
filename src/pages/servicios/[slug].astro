@@ -1,9 +1,9 @@
 ---
 /**
  * Service page, in the home's voice:
- * - A photo-led header under the transparent header: the newest published
- *   project of the service (or the service's own photo), the title, the
- *   summary and the quote action. Without any photo it is a plain plum band.
+ * - A photo-led header under the transparent header: the service's project
+ *   photos playing like the home hero, the newest first (or the service's
+ *   own photo), the title, the summary and the quote action. Without any photo it is a plain plum band.
  * - "El servicio": the text from src/content/servicios, with "Cuándo nos
  *   necesitas" as numbered rows.
  * - "Qué te entregamos": the usual deliverables as numbered blocks.
@@ -20,9 +20,9 @@ import { render } from "astro:content";
 import ServiceCard from "../../components/services/ServiceCard.astro";
 import ServiceProjects from "../../components/services/ServiceProjects.astro";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
-import ServicePhoto, {
-  type ServicePhotoSource,
-} from "../../components/services/ServicePhoto.astro";
+import HeaderSlideshow, {
+  type HeaderPhoto,
+} from "../../components/ui/HeaderSlideshow.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
@@ -31,6 +31,7 @@ import DisplayHeading from "../../components/ui/DisplayHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
 import { mediaPath } from "../../lib/content/media";
+import { headerPhotos } from "../../lib/content/header-photos";
 import { coversByService } from "../../lib/content/service-covers";
 import { projectsOfService } from "../../lib/content/service-stats";
 import { lastItemSpan } from "../../lib/layout/grid-span";
@@ -65,21 +66,26 @@ const number = String(position + 1).padStart(2, "0");
 const portfolio = await contentSource().getProjects();
 const projects = projectsOfService(portfolio, slug);
 
-/** Header photo: the newest project of this service, else its own photo. */
+/**
+ * Header photos: the newest project of this service first, then its other
+ * projects (HeaderSlideshow plays them); else the service's own photo.
+ */
 const ownCover = coversByService([slug], portfolio).get(slug);
-const headerPhoto: { photo: ServicePhotoSource; alt: string } | undefined =
-  ownCover
-    ? {
-        photo: {
-          src: mediaPath("proyectos", ownCover.slug, ownCover.cover),
-          width: ownCover.cover.width,
-          height: ownCover.cover.height,
-        },
-        alt: ownCover.cover.alt,
-      }
+const serviceCovers = [
+  ...(ownCover ? [ownCover] : []),
+  ...headerPhotos(projects, 6).filter((p) => p.slug !== ownCover?.slug),
+].slice(0, 6);
+const headerSlides: HeaderPhoto[] =
+  serviceCovers.length > 0
+    ? serviceCovers.map((p) => ({
+        src: mediaPath("proyectos", p.slug, p.cover),
+        width: p.cover.width,
+        height: p.cover.height,
+      }))
     : image
-      ? { photo: { src: image }, alt: imageAlt ?? "" }
-      : undefined;
+      ? [{ src: image }]
+      : [];
+const hasHeaderPhoto = headerSlides.length > 0;
 
 /** The other specialties, each with a real project photo on hover. */
 const others = services.filter((s) => s.data.slug !== slug);
@@ -107,28 +113,19 @@ const hasExamples = !hasProjects && examples.length > 0;
   whatsapp={whatsapp}
   title={seo.title}
   description={seo.description}
-  headerOverlay={headerPhoto !== undefined}
+  headerOverlay={hasHeaderPhoto}
   {...(image ? { image: image.src, imageAlt: imageAlt ?? title } : {})}
 >
   <section
     aria-labelledby="servicio-titulo"
     class:list={[
       "relative isolate overflow-hidden bg-plum-950 text-sand-50",
-      headerPhoto && "-mt-(--header-h)",
+      hasHeaderPhoto && "-mt-(--header-h)",
     ]}
   >
-    {headerPhoto && (
+    {hasHeaderPhoto && (
       <>
-        <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
-          <ServicePhoto
-            photo={headerPhoto.photo}
-            alt={headerPhoto.alt}
-            sizes="100vw"
-            max={1600}
-            loading="eager"
-            class="photo-zoom h-full w-full object-cover"
-          />
-        </div>
+        <HeaderSlideshow photos={headerSlides} />
         {/* Light veils, as on the home hero: the photo leads. */}
         <div
           class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/55 via-55% to-plum-950/30 md:bg-plum-950/25 md:bg-none"
@@ -144,7 +141,7 @@ const hasExamples = !hasProjects && examples.length > 0;
     <div
       class:list={[
         "hero__content container-site flex flex-col justify-end gap-6 pb-12 md:gap-7 md:pb-16",
-        headerPhoto
+        hasHeaderPhoto
           ? "min-h-[max(560px,78svh)] pt-[calc(var(--header-h)+40px)]"
           : "pt-12 md:pt-16",
       ]}

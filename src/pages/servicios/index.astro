@@ -1,7 +1,8 @@
 ---
 /**
  * Services, in the home's voice:
- * - A photo-led header under the transparent header, like the project page.
+ * - A photo-led header under the transparent header, like the project page:
+ *   the project covers play like the home hero (HeaderSlideshow).
  * - The main specialty (the first service) as a large tile with a real
  *   project photo.
  * - The other specialties as a numbered index: one row per service with its
@@ -15,7 +16,6 @@
  * published projects (refreshed on publish, src/lib/content/revalidation.ts).
  */
 import { ArrowRight, ArrowUpRight } from "@lucide/astro";
-import { Image } from "astro:assets";
 import headerPhoto from "../../assets/photos/puente-llollito-excavacion.jpg";
 import ServiceHelpBlock from "../../components/services/ServiceHelpBlock.astro";
 import ServiceIcon from "../../components/services/ServiceIcon.astro";
@@ -25,8 +25,12 @@ import ServicePhoto, {
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
+import HeaderSlideshow, {
+  type HeaderPhoto,
+} from "../../components/ui/HeaderSlideshow.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
+import { headerPhotos } from "../../lib/content/header-photos";
 import { mediaPath } from "../../lib/content/media";
 import { coversByService } from "../../lib/content/service-covers";
 import {
@@ -46,6 +50,13 @@ const covers = coversByService(
   projects,
 );
 const titleOf = new Map(projects.map((p) => [p.slug, p.title]));
+const slideCovers: HeaderPhoto[] = headerPhotos(projects, 8).map((p) => ({
+  src: mediaPath("proyectos", p.slug, p.cover),
+  width: p.cover.width,
+  height: p.cover.height,
+}));
+const photos: HeaderPhoto[] =
+  slideCovers.length > 0 ? slideCovers : [{ src: headerPhoto }];
 
 interface Entry {
   service: Service;
@@ -90,17 +101,7 @@ const total = String(services.length).padStart(2, "0");
     aria-labelledby="servicios-titulo"
     class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
-      <Image
-        src={headerPhoto}
-        alt="Excavación entibada con trabajadores y maquinaria durante la construcción de las fundaciones de un puente."
-        widths={[640, 960, 1280, 1600, 1800]}
-        sizes="100vw"
-        loading="eager"
-        fetchpriority="high"
-        class="photo-zoom h-full w-full object-cover object-[60%_center]"
-      />
-    </div>
+    <HeaderSlideshow photos={photos} />
     {/* Light veils, as on the home hero: the photo leads. */}
     <div
       class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/55 via-55% to-plum-950/30 md:bg-plum-950/25 md:bg-none"

@@ -1,0 +1,197 @@
+---
+/**
+ * Background photos for a page header (Proyectos, Servicios, a service):
+ * the photos play on their own like the home hero, each one zooming in
+ * slowly while the next wipes in from the left. A counter with a progress
+ * line and a pause control (WCAG 2.2.2) sit at the foot, on the right.
+ * The slideshow holds while the header is off screen or the tab is hidden
+ * (src/scripts/header-slideshow.ts).
+ *
+ * Without JavaScript, with reduced motion or with a single photo it shows
+ * the first photo with the slow push-in of the other headers.
+ *
+ * Place it first inside a `relative isolate overflow-hidden` header; the
+ * veils go after it. Photos are decorative (`alt=""`): the header text
+ * says what the page is about.
+ */
+import { Pause, Play } from "@lucide/astro";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { fitWidth } from "../../lib/content/format";
+
+export type HeaderPhoto =
+  { src: string; width: number; height: number } | { src: ImageMetadata };
+
+interface Props {
+  photos: HeaderPhoto[];
+}
+
+const { photos } = Astro.props;
+const playing = photos.length > 1;
+const widths = [640, 960, 1280, 1600, 1800];
+const total = String(photos.length).padStart(2, "0");
+/** Where each photo's zoom heads, so consecutive photos move differently. */
+const origins = ["55% 50%", "30% 40%", "60% 65%", "40% 55%"];
+---
+
+{photos.length > 0 && (
+  <div class="hs contents" data-hs>
+    <div
+      class="hero__parallax absolute inset-0 -z-10 overflow-hidden"
+      data-hs-frame
+    >
+      {photos.map((photo, i) => (
+        <div
+          class:list={[
+            "hs__media absolute inset-0 overflow-hidden",
+            i > 0 && "hs__media--rest",
+          ]}
+          data-hs-slide
+          data-state={i === 0 ? "active" : undefined}
+          data-origin={origins[i % origins.length]}
+        >
+          {"width" in photo ? (
+            <Image
+              src={photo.src}
+              alt=""
+              {...fitWidth(photo, 1800)}
+              widths={widths.filter((w) => w <= photo.width)}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class:list={[
+                "hs__img h-full w-full object-cover",
+                !playing && "photo-zoom",
+              ]}
+            />
+          ) : (
+            <Image
+              src={photo.src}
+              alt=""
+              widths={widths}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class:list={[
+                "hs__img h-full w-full object-cover",
+                !playing && "photo-zoom",
+              ]}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+
+    {playing && (
+      <div class="hs__controls pointer-events-none absolute inset-x-0 bottom-0 z-10">
+        <div class="container-site flex justify-end pb-3 md:pb-6">
+          <div class="pointer-events-auto flex items-center gap-3 text-[13px] leading-4 font-medium tracking-[0.14em] text-sand-100 tabular-nums">
+            <span class="flex items-center gap-4 font-data" aria-hidden="true">
+              <span class="w-[2ch]" data-hs-count>
+                01
+              </span>
+              <span class="relative block h-0.5 w-12 overflow-hidden rounded-full bg-sand-50/25 md:w-20">
+                <span
+                  class="hs__progress absolute inset-0 origin-left rounded-full bg-sand-50"
+                  data-hs-progress
+                ></span>
+              </span>
+              <span>{total}</span>
+            </span>
+            <label class="-mr-2 inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-sand-200 transition-colors hover:text-sand-50 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-sand-50">
+              <input type="checkbox" class="peer sr-only" data-hs-toggle />
+              <Pause
+                size={16}
+                stroke-width={2}
+                aria-hidden="true"
+                class="peer-checked:hidden"
+              />
+              <Play
+                size={16}
+                stroke-width={2}
+                aria-hidden="true"
+                class="hidden peer-checked:block"
+              />
+              <span class="sr-only">Pausar el cambio de fotos</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+<script>
+  import "../../scripts/header-slideshow";
+</script>
+
+<style>
+  /* Static fallback: only the first photo, no controls. */
+  .hs__media--rest,
+  .hs__controls {
+    display: none;
+  }
+
+  /*
+   * Slideshow, armed by src/scripts/header-slideshow.ts (never with
+   * reduced motion): "active" is on top and wipes in, "prev" stays
+   * underneath until the wipe covers it; the rest are hidden.
+   */
+  [data-hs-frame][data-playing] .hs__media {
+    display: block;
+    visibility: hidden;
+  }
+
+  [data-hs-frame][data-playing] .hs__media[data-state] {
+    visibility: visible;
+  }
+
+  [data-hs-frame][data-playing] .hs__media[data-state="prev"] {
+    z-index: -1;
+  }
+
+  .hs[data-playing] .hs__controls {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-hs-frame][data-playing] .hs__media[data-state="active"] {
+      animation: wipe-right 1300ms var(--ease-in-out) both;
+    }
+
+    [data-hs-frame][data-playing] .hs__media[data-state] :global(.hs__img) {
+      transform-origin: var(--hs-origin, center);
+      animation: hs-zoom 9000ms linear both;
+    }
+
+    .hs[data-playing] .hs__progress[data-run] {
+      animation: hs-fill 6500ms linear both;
+    }
+
+    .hs:is([data-paused], [data-held]) .hs__progress[data-run],
+    .hs:is([data-paused], [data-held]) .hs__media[data-state],
+    .hs:is([data-paused], [data-held])
+      .hs__media[data-state]
+      :global(.hs__img) {
+      animation-play-state: paused;
+    }
+  }
+
+  @keyframes hs-zoom {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.18);
+    }
+  }
+
+  @keyframes hs-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+</style>
