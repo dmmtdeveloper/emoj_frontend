@@ -4,7 +4,9 @@ Floral White background with the official vertical lockup in color
 (design/brand/oficial/vertical-bold.svg, never redrawn; the heavy stroke
 holds up in small previews) and the tagline set in Urbanist, all centered.
 Everything sits inside the central 630x630 square, so chat apps that crop
-the preview to a square thumbnail (WhatsApp) still show the whole mark.
+the preview to a square thumbnail (WhatsApp) still show the whole mark, and
+the mark fills most of that square so it stays sharp when the thumbnail is
+shrunk to under 100 px.
 Run it after the brand files change; the output is committed.
 
 Usage (needs Pillow, and `pnpm install` for sharp and the Urbanist font):
@@ -27,7 +29,7 @@ SAND_50 = (255, 248, 240)  # Floral White
 PLUM_950 = (42, 12, 78)  # Russian Violet
 WIDTH, HEIGHT = 1200, 630
 SAFE = 630  # the central square every crop keeps
-LOCKUP_WIDTH = 500
+LOCKUP_WIDTH = 760  # before trimming the artboard margin (~590 px of mark)
 
 # Rasterize the official SVG with sharp (a dependency of the site).
 with tempfile.TemporaryDirectory() as tmp:
@@ -50,15 +52,20 @@ with tempfile.TemporaryDirectory() as tmp:
     # Trim the transparent margin of the artboard so the mark is centered.
     lockup = lockup.crop(lockup.getbbox())
 
-font = ImageFont.truetype(str(FONTS / "urbanist-latin-500-normal.woff"), 38)
+font = ImageFont.truetype(str(FONTS / "urbanist-latin-600-normal.woff"), 46)
 tagline = "Humanizamos la ingeniería"
 draw_probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
 left, top, right, bottom = draw_probe.textbbox((0, 0), tagline, font=font)
 text_w, text_h = right - left, bottom - top
 
-gap = 44
+gap = 36
 block_h = lockup.height + gap + text_h
-assert lockup.width <= SAFE - 80 and block_h <= SAFE - 120, "keep it in the square"
+assert max(lockup.width, text_w) <= SAFE - 30 and block_h <= SAFE - 100, (
+    "keep it in the square",
+    lockup.size,
+    text_w,
+    block_h,
+)
 
 canvas = Image.new("RGB", (WIDTH, HEIGHT), SAND_50)
 y = (HEIGHT - block_h) // 2
