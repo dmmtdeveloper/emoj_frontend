@@ -3,6 +3,7 @@ import SiteFooter from "../components/layout/SiteFooter.astro";
 import SiteHeader from "../components/layout/SiteHeader.astro";
 import WhatsAppButton from "../components/layout/WhatsAppButton.astro";
 import { serializeJsonLd } from "../lib/json-ld";
+import { shareImageUrl } from "../lib/share-image";
 import { SITE_NAME } from "../lib/site";
 import { whatsappHref, type WhatsAppContext } from "../lib/whatsapp";
 import "../styles/global.css";
@@ -49,7 +50,12 @@ const {
 const site = Astro.site ?? new URL("https://emoj.cl");
 const canonical = new URL(Astro.url.pathname, site).href;
 const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
-const imageUrl = new URL(image, site).href;
+// Fetchable from the host serving the page, even before launch (share-image.ts).
+const imageUrl = shareImageUrl(image, {
+  site,
+  origin: Astro.url.origin,
+  prerendered: Astro.isPrerendered,
+});
 const isDefaultImage = image === DEFAULT_IMAGE;
 ---
 

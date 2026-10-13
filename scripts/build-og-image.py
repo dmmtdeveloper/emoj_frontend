@@ -1,25 +1,24 @@
 """Build the default Open Graph image (public/og-default.jpg, 1200x630).
 
-Plum background, cream logo and the tagline set in Urbanist. Run it once
-after the brand assets change; the output is committed.
+Plum background, the official vertical lockup for dark grounds
+(design/brand/oficial/vertical-recorte-negativo.svg, never redrawn), and the
+tagline set in Urbanist. Run it after the brand files change; the output is
+committed.
 
-Usage (needs Pillow, and the design-system repo checked out next to this one):
+Usage (needs Pillow, and `pnpm install` for sharp and the Urbanist font):
 
-    python scripts/build-og-image.py [path/to/emoj-logo-crema.png]
+    python scripts/build-og-image.py
 """
 
-import sys
+import subprocess
+import tempfile
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO = Path(
-    sys.argv[1]
-    if len(sys.argv) > 1
-    else ROOT.parent / "design-system/logo/png/emoj-logo-crema.png"
-)
-FONT = ROOT / "node_modules/@fontsource/urbanist/files/urbanist-latin-500-normal.woff"
+LOCKUP = ROOT / "design/brand/oficial/vertical-recorte-negativo.svg"
+FONTS = ROOT / "node_modules/@fontsource/urbanist/files"
 OUT = ROOT / "public/og-default.jpg"
 
 PLUM_950 = (42, 12, 78)
@@ -27,27 +26,44 @@ SAND_50 = (255, 248, 240)
 SAGE_300 = (157, 203, 198)
 WIDTH, HEIGHT = 1200, 630
 MARGIN = 96
+LOCKUP_WIDTH = 560
+
+# Rasterize the official SVG with sharp (a dependency of the site).
+with tempfile.TemporaryDirectory() as tmp:
+    png = Path(tmp) / "lockup.png"
+    subprocess.run(
+        [
+            "node",
+            "-e",
+            "require('sharp')(process.argv[1], { density: 300 })"
+            ".resize({ width: Number(process.argv[3]) })"
+            ".png().toFile(process.argv[2])",
+            str(LOCKUP),
+            str(png),
+            str(LOCKUP_WIDTH),
+        ],
+        check=True,
+        cwd=ROOT,
+    )
+    lockup = Image.open(png).convert("RGBA")
 
 canvas = Image.new("RGB", (WIDTH, HEIGHT), PLUM_950)
-
-logo = Image.open(LOGO).convert("RGBA")
-logo_width = 520
-logo = logo.resize(
-    (logo_width, round(logo.height * logo_width / logo.width)), Image.LANCZOS
-)
-canvas.paste(logo, (MARGIN - 12, 120), logo)
+# The lockup's own margin sits left of the text column.
+canvas.paste(lockup, (MARGIN - 32, MARGIN), lockup)
 
 draw = ImageDraw.Draw(canvas)
-font = ImageFont.truetype(str(FONT), 44)
-tagline_y = 120 + logo.height + 40
-draw.rectangle((MARGIN, tagline_y - 20, MARGIN + 64, tagline_y - 16), fill=SAGE_300)
-draw.text((MARGIN, tagline_y), "Humanizamos la ingeniería", font=font, fill=SAND_50)
-
-small = ImageFont.truetype(str(FONT), 26)
+tagline_y = MARGIN + lockup.height + 50
+draw.rectangle((MARGIN, tagline_y - 26, MARGIN + 64, tagline_y - 22), fill=SAGE_300)
 draw.text(
-    (MARGIN, HEIGHT - MARGIN + 20),
-    "Ingeniería civil · Región de Valparaíso",
-    font=small,
+    (MARGIN, tagline_y),
+    "Humanizamos la ingeniería",
+    font=ImageFont.truetype(str(FONTS / "urbanist-latin-500-normal.woff"), 46),
+    fill=SAND_50,
+)
+draw.text(
+    (MARGIN, HEIGHT - 72 - 26),
+    "Ingeniería civil · Valparaíso y Coquimbo",
+    font=ImageFont.truetype(str(FONTS / "urbanist-latin-500-normal.woff"), 26),
     fill=SAGE_300,
 )
 
