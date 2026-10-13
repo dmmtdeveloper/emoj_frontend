@@ -1487,3 +1487,40 @@
     transform: scaleX(1);
   }
 }
+
+/*
+ * The header's theme button (src/components/layout/SiteHeader.astro): the
+ * moon in the light theme, the sun in the dark one, whichever way the
+ * theme was chosen (device or button, tokens.css).
+ */
+.theme-toggle__sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle__sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle__moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle__sun {
+    display: block;
+  }
+
+  :root:not([data-theme="light"]) .theme-toggle__moon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle svg {
+    transition: rotate 300ms var(--ease-out);
+  }
+
+  .theme-toggle:hover svg {
+    rotate: -20deg;
+  }
+}
