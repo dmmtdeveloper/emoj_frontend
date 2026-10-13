@@ -31,6 +31,7 @@
 
 	@admin path /admin*
 	@assets path /_astro/*
+	@speculation path /speculationrules.json
 
 	header {
 		Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data: https://*.t3.storageapi.dev; font-src 'self'; connect-src 'self' {$API_ORIGIN} https://api-staging-25e9.up.railway.app; frame-src https://challenges.cloudflare.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
@@ -39,7 +40,15 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		X-Frame-Options "DENY"
+		# Prerender pages on hover or press (public/speculationrules.json), so
+		# the card-to-cover transition has its photo on the first visit.
+		Speculation-Rules "\"/speculationrules.json\""
 		-Server
+	}
+
+	# Browsers only read speculation rules sent with their own type.
+	header @speculation {
+		Content-Type "application/speculationrules+json"
 	}
 
 	# The admin panel is private: never indexed, never cached by proxies.

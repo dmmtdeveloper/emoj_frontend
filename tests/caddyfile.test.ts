@@ -27,7 +27,7 @@ function stripComments(text: string): string[] {
 }
 
 function unquote(value: string): string {
-  return value.replace(/^"(.*)"$/, "$1");
+  return value.replace(/^"(.*)"$/, "$1").replaceAll('\\"', '"');
 }
 
 /** `header` blocks of the Caddyfile, resolved to their path matchers. */
@@ -139,6 +139,16 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
         [...m].map(([path, headers]) => [path, Object.fromEntries(headers)]),
       );
     expect(toObject(caddyHeaders())).toEqual(toObject(vercelHeaders()));
+  });
+
+  it("points browsers at the speculation rules, served with their type", () => {
+    const headers = vercelHeaders();
+    expect(headers.get("*")?.get("speculation-rules")).toBe(
+      '"/speculationrules.json"',
+    );
+    expect(headers.get("/speculationrules.json")?.get("content-type")).toBe(
+      "application/speculationrules+json",
+    );
   });
 
   it("allows the API origin in connect-src", () => {

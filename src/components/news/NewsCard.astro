@@ -8,6 +8,7 @@
  */
 import { Image } from "astro:assets";
 import type { NewsSummary } from "../../lib/api/client";
+import { CARD_IMAGE } from "../../lib/content/card-image";
 import { fitWidth, formatDate } from "../../lib/content/format";
 import { mediaPath } from "../../lib/content/media";
 import { newsTransitionName } from "../../lib/content/transition";
@@ -28,9 +29,9 @@ const Heading = headingLevel;
       <Image
         src={mediaPath("noticias", article.slug, article.cover)}
         alt={article.cover.alt}
-        {...fitWidth(article.cover, 800)}
-        widths={[208, 400, 640, 800]}
-        sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
+        {...fitWidth(article.cover, CARD_IMAGE.max)}
+        widths={[...CARD_IMAGE.widths]}
+        sizes={CARD_IMAGE.sizes}
         loading={eager ? "eager" : "lazy"}
         data-vt={newsTransitionName(article.slug)}
         class="vt-project h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
