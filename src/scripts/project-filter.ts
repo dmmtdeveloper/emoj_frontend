@@ -74,16 +74,49 @@ export function initProjectFilters(): void {
     }
   }
 
+  /**
+   * Apply a new filter, letting the cards glide to their new places and the
+   * new ones rise in (motion.css `.vt-filtering`, `[data-entering]`). Without
+   * View Transitions or with reduced motion the grid just updates.
+   */
+  let latest: ViewTransition | null = null;
+
+  function change(next: FilterState): void {
+    state = next;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (!document.startViewTransition || reduced) {
+      apply(true);
+      return;
+    }
+    const shown = new Set(items.filter((item) => !item.hidden));
+    const page = document.documentElement;
+    page.classList.add("vt-filtering");
+    const transition = document.startViewTransition(() => {
+      apply(true);
+      for (const item of items) {
+        if (!item.hidden && !shown.has(item)) item.dataset["entering"] = "";
+      }
+    });
+    latest = transition;
+    // A click during the glide starts a new one; only the last cleans up.
+    void transition.finished.finally(() => {
+      if (latest !== transition) return;
+      latest = null;
+      page.classList.remove("vt-filtering");
+      for (const item of items) delete item.dataset["entering"];
+    });
+  }
+
   for (const button of buttons) {
     button.addEventListener("click", () => {
       const key = button.dataset["filter"] === "region" ? "region" : "service";
-      state = { ...state, [key]: button.dataset["value"] ?? "" };
-      apply(true);
+      change({ ...state, [key]: button.dataset["value"] ?? "" });
     });
   }
   reset?.addEventListener("click", () => {
-    state = { service: "", region: "" };
-    apply(true);
+    change({ service: "", region: "" });
   });
 
   root.classList.remove("invisible");

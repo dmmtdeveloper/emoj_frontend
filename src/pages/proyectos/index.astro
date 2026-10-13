@@ -1,44 +1,132 @@
 ---
+/**
+ * Projects, in the home's voice:
+ * - A photo-led header under the transparent header, like Servicios and
+ *   Noticias, with the project count. The photo is the cover of the first
+ *   featured project (or the first project), so it follows the portfolio.
+ * - The filter as rounded chips; the grid glides to its new layout when it
+ *   changes (src/scripts/project-filter.ts).
+ * - Cards with the specialties, place, headline figure and year.
+ */
 import { ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import fallbackPhoto from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import ProjectCard from "../../components/projects/ProjectCard.astro";
 import ProjectFilters from "../../components/projects/ProjectFilters.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import EmptyState from "../../components/ui/EmptyState.astro";
-import PageHeader from "../../components/ui/PageHeader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { contentSource } from "../../lib/content";
-import { projectFacets } from "../../lib/content/format";
+import { fitWidth, projectFacets } from "../../lib/content/format";
+import { mediaPath } from "../../lib/content/media";
+import { projectItemName } from "../../lib/content/transition";
 import { getServiceTitles } from "../../lib/get-services";
 
+// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
 const projects = await contentSource().getProjects();
 const serviceTitles = await getServiceTitles();
 const facets = projectFacets(projects);
+const lead =
+  projects.find((p) => p.featured && p.cover) ?? projects.find((p) => p.cover);
+const count = String(projects.length).padStart(2, "0");
 ---
 
 <BaseLayout
   title="Proyectos"
   description="Proyectos de ingeniería civil de EMOJ Consultora en las regiones de Valparaíso y Coquimbo: obras sanitarias, viales, estructurales y geotécnicas."
+  headerOverlay
 >
-  <PageHeader
-    eyebrow="Proyectos"
-    title="Proyectos de ingeniería en Valparaíso y Coquimbo"
-    lead="Plantas de tratamiento, puentes, estanques y estudios de suelo diseñados por nuestro equipo."
+  <section
+    aria-labelledby="proyectos-titulo"
+    class="relative isolate -mt-(--header-h) overflow-hidden bg-plum-950 text-sand-50"
   >
-    <Breadcrumb
-      slot="breadcrumb"
-      items={[
-        { label: "Inicio", href: "/" },
-        { label: "Proyectos", href: "/proyectos" },
-      ]}
-    />
-  </PageHeader>
+    <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
+      {lead?.cover ? (
+        <Image
+          src={mediaPath("proyectos", lead.slug, lead.cover)}
+          alt=""
+          {...fitWidth(lead.cover, 1800)}
+          widths={[640, 960, 1280, 1600, 1800]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="photo-zoom h-full w-full object-cover"
+        />
+      ) : (
+        <Image
+          src={fallbackPhoto}
+          alt=""
+          widths={[640, 960, 1280, 1600, 1800]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="photo-zoom h-full w-full object-cover"
+        />
+      )}
+    </div>
+    {/* Veils as on Servicios: the photo leads, the text stays legible. */}
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-t from-plum-950/95 via-plum-950/60 via-55% to-plum-950/35 md:bg-plum-950/30 md:bg-none"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-0 -z-10 hidden bg-linear-to-r from-plum-950/90 via-plum-950/55 via-45% to-transparent to-80% md:block"
+      aria-hidden="true"
+    ></div>
 
-  <section class="bg-surface-sunken" aria-label="Lista de proyectos">
-    <div class="container-site flex flex-col gap-8 py-12 md:gap-10 md:py-24">
+    <div class="hero__content container-site flex min-h-[max(480px,64svh)] flex-col justify-end gap-6 pt-[calc(var(--header-h)+40px)] pb-12 md:gap-7 md:pb-16">
+      <div class="hidden md:block">
+        <Breadcrumb
+          inverse
+          items={[
+            { label: "Inicio", href: "/" },
+            { label: "Proyectos", href: "/proyectos" },
+          ]}
+        />
+      </div>
+      <p class="font-data text-[13px] leading-4 font-medium tracking-[0.1em] text-sage-300 uppercase">
+        Proyectos · {count}
+      </p>
+      <h1
+        id="proyectos-titulo"
+        class="max-w-[16ch] text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance"
+      >
+        Proyectos que ya son <em class="font-medium text-sage-300">obra</em>.
+      </h1>
+      <p class="text-lead max-w-[52ch] text-sand-100">
+        Plantas de tratamiento, puentes, estanques y estudios de suelo diseñados
+        por nuestro equipo en Valparaíso y Coquimbo.
+      </p>
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-7">
+        <ButtonLink
+          href="/contacto"
+          variant="on-photo-solid"
+          class="min-h-12 px-6 text-base"
+        >
+          Cotizar proyecto
+        </ButtonLink>
+        <a
+          href="/servicios"
+          class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+        >
+          Ver servicios
+          <ArrowRight
+            size={20}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+          />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-surface" aria-label="Lista de proyectos">
+    <div class="container-site flex flex-col gap-10 py-16 md:gap-12 md:py-24 lg:py-28">
       {projects.length === 0 ? (
         <EmptyState message="Pronto publicaremos nuestros proyectos destacados. Mientras tanto, conoce nuestros servicios.">
           <ButtonLink href="/servicios">
@@ -57,12 +145,16 @@ const facets = projectFacets(projects);
             serviceTitles={serviceTitles}
             total={projects.length}
           />
-          <ul class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+          <ul
+            class="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8"
+            data-reveal-stagger
+          >
             {projects.map((project, index) => (
               <li
                 data-project
                 data-services={project.services.join(" ")}
                 data-region={project.region.trim()}
+                data-vt-item={projectItemName(project.slug)}
               >
                 <ProjectCard
                   project={project}
@@ -76,13 +168,15 @@ const facets = projectFacets(projects);
           <div
             data-filter-empty
             hidden
-            class="flex flex-col items-start gap-4 rounded-lg bg-surface-raised p-6"
+            class="radius-signature flex flex-col items-start gap-4 bg-surface-sunken p-6 md:p-10"
           >
-            <p>No hay proyectos con esta combinación de filtros.</p>
+            <p class="text-lead text-ink">
+              No hay proyectos con esta combinación de filtros.
+            </p>
             <button
               type="button"
               data-filter-reset
-              class="inline-flex min-h-11 items-center rounded-md border border-ink px-6 py-3 font-medium text-ink transition-colors duration-200 hover:bg-ink hover:text-surface"
+              class="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-ink px-6 py-3 font-medium text-ink transition-colors duration-200 hover:bg-ink hover:text-surface"
             >
               Ver todos los proyectos
             </button>
@@ -93,6 +187,7 @@ const facets = projectFacets(projects);
   </section>
 
   <CtaBlock
+    background="surface-sunken"
     title="¿Tienes un proyecto parecido?"
     text="Cuéntanos qué necesitas y te ayudamos a definir el alcance, los plazos y los entregables."
   />

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   newsTransitionName,
   projectSlugFromUrl,
+  projectItemName,
   projectTransitionName,
   transitionNameFromUrl,
 } from "../src/lib/content/transition";
@@ -80,5 +81,12 @@ describe("transitionNameFromUrl", () => {
     ).toBeNull();
     expect(transitionNameFromUrl("https://emoj.cl/servicios/agua")).toBeNull();
     expect(transitionNameFromUrl("not a url")).toBeNull();
+  });
+});
+
+describe("projectItemName", () => {
+  it("names a whole card apart from its photo", () => {
+    expect(projectItemName("a-b")).toBe("project-item-a-b");
+    expect(projectItemName("a-b")).not.toBe(projectTransitionName("a-b"));
   });
 });

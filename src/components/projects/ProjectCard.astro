@@ -1,13 +1,17 @@
 ---
 /**
- * Project card: photo, title (the card's single link), location and service
- * labels. Compact row on phones, stacked card from `sm` up.
+ * Project card for /proyectos, in the home's voice: photo (zooms slowly on
+ * hover and morphs into the project cover when opened), the specialties as
+ * a data label, the title (the card's single link) and the place; at the
+ * foot the headline figure and the year, with a round arrow.
+ * Compact row on phones, stacked card from `sm` up.
  * The photo comes from its stable address and is resized on demand.
  */
-import { MapPin } from "@lucide/astro";
+import { ArrowUpRight, MapPin } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../lib/api/client";
 import { fitWidth } from "../../lib/content/format";
+import { projectMagnitude } from "../../lib/content/magnitude";
 import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 
@@ -27,28 +31,40 @@ const {
 } = Astro.props;
 const Heading = headingLevel;
 const place = [project.location, project.region].filter(Boolean).join(", ");
+const services = project.services.map((s) => serviceTitles[s] ?? s).join(" · ");
+const magnitude = projectMagnitude(project.magnitude);
+const figure = magnitude
+  ? [magnitude.value, magnitude.unit].filter(Boolean).join(" ")
+  : "";
 ---
 
-<article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-200 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
-  {project.cover ? (
-    <Image
-      src={mediaPath("proyectos", project.slug, project.cover)}
-      alt={project.cover.alt}
-      {...fitWidth(project.cover, 800)}
-      widths={[208, 400, 640, 800]}
-      sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
-      loading={eager ? "eager" : "lazy"}
-      data-vt={projectTransitionName(project.slug)}
-      class="vt-project aspect-square h-full w-full rounded-md object-cover sm:aspect-[4/3] sm:h-auto sm:rounded-none"
-    />
-  ) : (
-    <div
-      class="aspect-square h-full w-full rounded-md bg-surface-sunken sm:aspect-[4/3] sm:h-auto sm:rounded-none"
-      aria-hidden="true"
-    />
-  )}
+<article class="group relative grid h-full grid-cols-[104px_minmax(0,1fr)] gap-4 overflow-hidden rounded-lg border border-border bg-surface-raised p-3 shadow-(--shadow-sm) transition-shadow duration-300 hover:shadow-(--shadow-md) has-[a:focus-visible]:shadow-(--shadow-md) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-focus-ring sm:flex sm:flex-col sm:gap-0 sm:p-0">
+  <div class="relative aspect-square h-full w-full overflow-hidden rounded-md bg-surface-sunken sm:aspect-[4/3] sm:h-auto sm:rounded-none">
+    {project.cover && (
+      <Image
+        src={mediaPath("proyectos", project.slug, project.cover)}
+        alt={project.cover.alt}
+        {...fitWidth(project.cover, 800)}
+        widths={[208, 400, 640, 800]}
+        sizes="(min-width: 1200px) 380px, (min-width: 1024px) 31vw, (min-width: 640px) 46vw, 104px"
+        loading={eager ? "eager" : "lazy"}
+        data-vt={projectTransitionName(project.slug)}
+        class="vt-project h-full w-full object-cover transition-[scale] duration-700 ease-(--ease-out) group-hover:scale-105"
+      />
+    )}
+    {project.year && (
+      <span class="absolute top-3 left-3 hidden rounded-full bg-plum-950/70 px-2.5 py-1 font-data text-[12px] leading-4 font-medium text-sand-50 backdrop-blur-sm sm:inline-flex">
+        {project.year}
+      </span>
+    )}
+  </div>
   <div class="flex min-w-0 flex-col gap-2 sm:flex-1 sm:gap-3 sm:p-6">
-    <Heading class="text-lg leading-6 font-semibold text-ink sm:text-[22px] sm:leading-7">
+    {services && (
+      <p class="font-data text-[12px] leading-4 font-medium tracking-[0.08em] text-brand uppercase">
+        {services}
+      </p>
+    )}
+    <Heading class="text-lg leading-6 font-semibold tracking-[-0.01em] text-ink sm:text-[22px] sm:leading-7">
       <a
         href={`/proyectos/${project.slug}`}
         class="text-ink no-underline after:absolute after:inset-0 after:rounded-[inherit] hover:text-ink focus-visible:outline-none"
@@ -59,7 +75,7 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
     {place && (
       <p class="inline-flex items-start gap-1.5 text-sm leading-5 font-medium text-ink-muted">
         <MapPin
-          size={20}
+          size={18}
           stroke-width={1.75}
           aria-hidden="true"
           class="mt-px hidden shrink-0 sm:block"
@@ -67,12 +83,27 @@ const place = [project.location, project.region].filter(Boolean).join(", ");
         <span>{place}</span>
       </p>
     )}
-    <ul class="mt-auto flex flex-wrap gap-1.5 pt-1" aria-label="Servicios">
-      {project.services.map((service) => (
-        <li class="rounded-sm bg-accent px-2 py-0.5 text-[13px] leading-5 font-medium text-on-accent">
-          {serviceTitles[service] ?? service}
-        </li>
-      ))}
-    </ul>
+    <div class="mt-auto hidden items-end justify-between gap-4 border-t border-border pt-4 sm:flex">
+      {magnitude ? (
+        <p class="flex min-w-0 flex-col gap-0.5">
+          {magnitude.label && (
+            <span class="font-data text-[12px] leading-4 font-medium tracking-[0.08em] text-ink-muted uppercase">
+              {magnitude.label}
+            </span>
+          )}
+          <span class="font-data text-xl leading-6 font-medium text-ink">
+            {figure}
+          </span>
+        </p>
+      ) : (
+        <span></span>
+      )}
+      <span
+        class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border-strong text-ink transition-[color,background-color,border-color,translate] duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
+        aria-hidden="true"
+      >
+        <ArrowUpRight size={18} stroke-width={2} />
+      </span>
+    </div>
   </div>
 </article>
