@@ -1,21 +1,24 @@
 /**
  * Panel pages inside the shell: Resumen (dashboard), Mensajes (contact
- * inbox, read-only), Cuenta, and the sections still under construction.
+ * inbox, read-only, admins only), Cuenta, and the sections still under
+ * construction.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   Clock,
   FileText,
   FolderKanban,
   Mail,
+  Pencil,
   Phone,
   Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type SyntheticEvent } from "react";
 import type { ContactMessage } from "../lib/admin/api";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
+import { ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
 import { adminApi } from "./api";
 import { PersonDataRequests } from "./privacy";
 import {
@@ -29,15 +32,16 @@ import {
 } from "./common";
 import { useUser } from "./session";
 import { DashboardSkeleton, MessagesSkeleton } from "./skeletons";
-import { Button, ButtonLink, Card, Notice } from "./ui";
+import { Button, ButtonLink, Card, Field, Notice } from "./ui";
 
 /* ------------------------------------------------------------------ */
 /* Resumen                                                             */
 /* ------------------------------------------------------------------ */
 
-function useCounts() {
+/** Editors do not see contact messages, so theirs skips that request. */
+function useCounts(withMessages: boolean) {
   return useQuery({
-    queryKey: ["dashboard-counts"],
+    queryKey: ["dashboard-counts", withMessages],
     queryFn: async () => {
       const [
         projectsDraft,
@@ -50,7 +54,7 @@ function useCounts() {
         adminApi.listProjects({ status: "published", pageSize: 1 }),
         adminApi.listNews({ status: "draft", pageSize: 1 }),
         adminApi.listNews({ status: "published", pageSize: 1 }),
-        adminApi.listMessages({ pageSize: 5 }),
+        withMessages ? adminApi.listMessages({ pageSize: 5 }) : null,
       ]);
       return {
         projects: {
@@ -61,7 +65,7 @@ function useCounts() {
           draft: unwrap(newsDraft).total,
           published: unwrap(newsPublished).total,
         },
-        messages: unwrap(messages),
+        messages: messages ? unwrap(messages) : null,
       };
     },
   });
@@ -125,7 +129,7 @@ function StatCard({
 
 export function DashboardPage() {
   const user = useUser();
-  const counts = useCounts();
+  const counts = useCounts(user.role === "admin");
   const firstName = (user.name || "").split(/\s+/)[0];
 
   return (
@@ -164,49 +168,51 @@ export function DashboardPage() {
             />
           </div>
 
-          <Card>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg leading-6 font-semibold text-ink">
-                Últimos mensajes
-                <span className="ml-2 text-base font-medium text-ink-muted">
-                  ({counts.data.messages.total} en total)
-                </span>
-              </h2>
-              <ButtonLink
-                href="/admin/mensajes"
-                variant="ghost"
-                className="-mx-5 sm:mx-0"
-              >
-                Ver todos
-                <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
-              </ButtonLink>
-            </div>
-            {counts.data.messages.items.length === 0 ? (
-              <p className="mt-4 text-ink-muted">
-                Todavía no llegan consultas por el formulario.
-              </p>
-            ) : (
-              <ul className="mt-4 divide-y divide-border">
-                {counts.data.messages.items.map((m) => (
-                  <li
-                    key={m.id}
-                    className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4"
-                  >
-                    <span className="font-semibold text-ink">{m.name}</span>
-                    <span className="min-w-0 flex-1 truncate text-ink-muted">
-                      {m.message}
-                    </span>
-                    <time
-                      dateTime={m.createdAt}
-                      className="shrink-0 text-sm text-ink-muted"
+          {counts.data.messages && (
+            <Card>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg leading-6 font-semibold text-ink">
+                  Últimos mensajes
+                  <span className="ml-2 text-base font-medium text-ink-muted">
+                    ({counts.data.messages.total} en total)
+                  </span>
+                </h2>
+                <ButtonLink
+                  href="/admin/mensajes"
+                  variant="ghost"
+                  className="-mx-5 sm:mx-0"
+                >
+                  Ver todos
+                  <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
+                </ButtonLink>
+              </div>
+              {counts.data.messages.items.length === 0 ? (
+                <p className="mt-4 text-ink-muted">
+                  Todavía no llegan consultas por el formulario.
+                </p>
+              ) : (
+                <ul className="mt-4 divide-y divide-border">
+                  {counts.data.messages.items.map((m) => (
+                    <li
+                      key={m.id}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4"
                     >
-                      {formatDate(m.createdAt)}
-                    </time>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+                      <span className="font-semibold text-ink">{m.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-ink-muted">
+                        {m.message}
+                      </span>
+                      <time
+                        dateTime={m.createdAt}
+                        className="shrink-0 text-sm text-ink-muted"
+                      >
+                        {formatDate(m.createdAt)}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
         </>
       ) : null}
     </div>
@@ -354,8 +360,59 @@ export function MessagesPage({
 /* Cuenta                                                              */
 /* ------------------------------------------------------------------ */
 
+function NameForm({ name, onDone }: { name: string; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const [value, setValue] = useState(name);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed = value.trim();
+    if (trimmed === "") {
+      setError("Escribe tu nombre.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const result = await adminApi.renameMe(trimmed);
+    setBusy(false);
+    if (!result.ok) {
+      setError(problemMessage(result));
+      return;
+    }
+    queryClient.setQueryData(["session"], result);
+    onDone();
+  }
+
+  return (
+    <form
+      onSubmit={(event) => void save(event)}
+      className="mt-4 flex flex-col gap-4"
+    >
+      <Field
+        label="Nombre"
+        value={value}
+        maxLength={120}
+        autoComplete="name"
+        error={error ?? undefined}
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={busy}>
+          {busy ? "Guardando…" : "Guardar nombre"}
+        </Button>
+        <Button variant="ghost" disabled={busy} onClick={onDone}>
+          Cancelar
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function AccountPage() {
   const user = useUser();
+  const [editingName, setEditingName] = useState(false);
   const [state, setState] = useState<
     | { kind: "idle" }
     | { kind: "busy" }
@@ -383,15 +440,39 @@ export function AccountPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Card>
-        <h2 className="text-lg leading-6 font-semibold text-ink">Tus datos</h2>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm text-ink-muted">Nombre</dt>
-            <dd className="text-ink">{user.name || "Sin nombre"}</dd>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg leading-6 font-semibold text-ink">
+            Tus datos
+          </h2>
+          {!editingName && (
+            <Button variant="ghost" onClick={() => setEditingName(true)}>
+              <Pencil size={18} strokeWidth={1.75} aria-hidden="true" />
+              Cambiar nombre
+            </Button>
+          )}
+        </div>
+        {editingName ? (
+          <NameForm name={user.name} onDone={() => setEditingName(false)} />
+        ) : null}
+        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+          {!editingName && (
+            <div>
+              <dt className="text-sm text-ink-muted">Nombre</dt>
+              <dd className="text-ink">{user.name || "Sin nombre"}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-sm text-ink-muted">Correo</dt>
             <dd className="break-all text-ink">{user.email}</dd>
+          </div>
+          <div>
+            <dt className="text-sm text-ink-muted">Rol</dt>
+            <dd className="text-ink">
+              {ROLE_LABEL[user.role]}
+              <span className="block text-sm text-ink-muted">
+                {ROLE_HINT[user.role]}
+              </span>
+            </dd>
           </div>
         </dl>
       </Card>

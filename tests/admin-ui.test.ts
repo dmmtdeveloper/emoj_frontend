@@ -53,7 +53,7 @@ describe("activeNavItem", () => {
     expect(activeNavItem("/admin/portada")?.label).toBe("Portada");
   });
 
-  it("lists the seven sections in order", () => {
+  it("lists the eight sections in order", () => {
     expect(ADMIN_NAV.map((item) => item.label)).toEqual([
       "Resumen",
       "Portada",
@@ -61,6 +61,7 @@ describe("activeNavItem", () => {
       "Noticias",
       "Medios",
       "Mensajes",
+      "Usuarios",
       "Cuenta",
     ]);
   });

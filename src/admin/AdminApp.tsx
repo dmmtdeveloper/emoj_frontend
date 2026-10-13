@@ -18,6 +18,7 @@ import {
   type ReactNode,
 } from "react";
 import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
+import { canOpen } from "../lib/admin/users";
 import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
 import {
@@ -30,10 +31,11 @@ import { HomeHeroEditor } from "./HomeHeroEditor";
 import { NewsListPage } from "./news";
 import { ProjectEditor } from "./ProjectEditor";
 import { ProjectsPage } from "./projects";
-import { RequireSession } from "./session";
+import { RequireSession, useUser } from "./session";
 import { EditorSkeleton } from "./skeletons";
 import { Button, Notice } from "./ui";
 import { Shell } from "./Shell";
+import { NoAccessPage, UsersPage } from "./users";
 
 // The news editor brings TipTap (the largest part of the panel): it loads
 // only when a news item is opened.
@@ -92,6 +94,7 @@ export const ADMIN_PAGES = [
   "news-edit",
   "media",
   "messages",
+  "users",
   "account",
 ] as const;
 
@@ -112,6 +115,8 @@ function Content({
   search: string;
   serviceTitles?: Record<string, string>;
 }) {
+  const user = useUser();
+  if (page && !canOpen(page, user.role)) return <NoAccessPage />;
   switch (page) {
     case "dashboard":
       return <DashboardPage />;
@@ -119,6 +124,8 @@ function Content({
       return <HomeHeroEditor />;
     case "messages":
       return <MessagesPage serviceTitles={serviceTitles} />;
+    case "users":
+      return <UsersPage />;
     case "account":
       return <AccountPage />;
     case "projects":

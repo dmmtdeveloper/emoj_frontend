@@ -14,9 +14,12 @@ export interface AdminNavItem {
     | "news"
     | "media"
     | "messages"
+    | "users"
     | "account";
   /** Short line shown under the page title in the navbar. */
   description: string;
+  /** Hidden from editors: personal data and user management. */
+  adminOnly?: boolean;
 }
 
 export const ADMIN_NAV: readonly AdminNavItem[] = [
@@ -55,6 +58,14 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: "/admin/mensajes",
     icon: "messages",
     description: "Consultas del formulario de contacto",
+    adminOnly: true,
+  },
+  {
+    label: "Usuarios",
+    href: "/admin/usuarios",
+    icon: "users",
+    description: "Personas con acceso al panel y sus roles",
+    adminOnly: true,
   },
   {
     label: "Cuenta",

@@ -2,7 +2,7 @@
  * Panel frame: sidebar + navbar + content.
  *
  * - Sidebar (desktop, from 1024px): fixed column on `surface-inverse`, the
- *   seven sections with the current one marked (`aria-current="page"`).
+ *   sections the user's role may open, with the current one marked (`aria-current="page"`).
  *   It folds to icons only (labels stay as tooltips and accessible names);
  *   the choice is remembered in this browser.
  * - Sidebar (mobile): the same navigation in a native <dialog> drawer, which
@@ -25,11 +25,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   UserRound,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { activeNavItem, ADMIN_NAV, type AdminNavItem } from "../lib/admin/nav";
+import { activeNavItem, type AdminNavItem } from "../lib/admin/nav";
+import { navFor } from "../lib/admin/users";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
 import { useApp } from "./app-context";
@@ -43,6 +45,7 @@ const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   news: FileText,
   media: Image,
   messages: Mail,
+  users: Users,
   account: UserRound,
 };
 
@@ -81,9 +84,10 @@ function NavList({
   current: AdminNavItem | undefined;
   collapsed: boolean;
 }) {
+  const user = useUser();
   return (
     <ul className="flex flex-col gap-1">
-      {ADMIN_NAV.map((item) => {
+      {navFor(user.role).map((item) => {
         const Icon = ICONS[item.icon];
         const active = item.href === current?.href;
         return (

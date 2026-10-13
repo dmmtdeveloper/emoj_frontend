@@ -345,6 +345,65 @@ describe("createAdminClient", () => {
   });
 });
 
+describe("createAdminClient() user management", () => {
+  it("lists, invites, updates, disables, enables and re-invites users", async () => {
+    const fetch = vi.fn(async () => jsonResponse(200, {}));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+    await client.listUsers();
+    await client.inviteUser({
+      email: "ana@emoj.cl",
+      name: "Ana",
+      role: "editor",
+    });
+    await client.updateUser("u/1", { role: "admin" });
+    await client.disableUser("u1");
+    await client.enableUser("u1");
+    await client.resendInvitation("u1");
+    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
+    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
+      "GET /api/v1/admin/users",
+      "POST /api/v1/admin/users",
+      "PATCH /api/v1/admin/users/u%2F1",
+      "POST /api/v1/admin/users/u1/disable",
+      "POST /api/v1/admin/users/u1/enable",
+      "POST /api/v1/admin/users/u1/invitation",
+    ]);
+    expect(JSON.parse(String(calls[1]?.[1].body))).toEqual({
+      email: "ana@emoj.cl",
+      name: "Ana",
+      role: "editor",
+    });
+    expect(JSON.parse(String(calls[2]?.[1].body))).toEqual({ role: "admin" });
+    expect(
+      calls
+        .slice(1)
+        .every(([, i]) => new Headers(i.headers).get("X-CSRF-Token") === "tok"),
+    ).toBe(true);
+  });
+
+  it("renames the signed-in user and keeps the returned CSRF token", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          user: { id: "u", email: "a@b.cl", name: "Ana", role: "admin" },
+          csrfToken: "fresh",
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+    const result = await client.renameMe("Ana");
+    expect(result.ok).toBe(true);
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(`${init.method} ${url}`).toBe("PATCH /api/v1/auth/me");
+    expect(JSON.parse(String(init.body))).toEqual({ name: "Ana" });
+    expect(new Headers(init.headers).get("X-CSRF-Token")).toBe("tok");
+    expect(client.csrfToken()).toBe("fresh");
+  });
+});
+
 describe("createAdminClient().createPreviewToken", () => {
   it("POSTs the item's type and id with the CSRF token", async () => {
     const fetch = vi.fn(async () =>
