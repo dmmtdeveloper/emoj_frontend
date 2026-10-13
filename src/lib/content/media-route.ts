@@ -1,10 +1,13 @@
 /**
  * The `/media/{kind}/{slug}/{key}` route (src/pages/media/...): streams one
- * image of a published project or article from the bucket, found by its
- * stable key (see media.ts). Only images of published content are served,
- * so unpublishing an item also takes its images off the site.
+ * image of a published project or article, or of the home hero
+ * (`/media/portada/inicio/{key}`), from the bucket, found by its stable key
+ * (see media.ts). Only images of published content are served, so
+ * unpublishing an item (or removing a hero photo) also takes its images off
+ * the site.
  */
-import { contentImages, findImage, isMediaKey } from "./media";
+import type { MediaRef } from "../api/client";
+import { contentImages, findImage, HERO_MEDIA_SLUG, isMediaKey } from "./media";
 import { ContentFetchError, type ContentSource } from "./source";
 
 /** The key changes with the image, so a response never goes stale. */
@@ -22,6 +25,20 @@ function plain(status: number, text: string): Response {
   });
 }
 
+/** Every image the item shows; none when it is not published. */
+async function imagesOf(
+  kind: "proyectos" | "noticias" | "portada",
+  slug: string,
+  source: ContentSource,
+): Promise<MediaRef[]> {
+  if (kind === "portada") return (await source.findHomeHero())?.photos ?? [];
+  const item =
+    kind === "proyectos"
+      ? await source.findProject(slug)
+      : await source.findArticle(slug);
+  return item ? contentImages(item) : [];
+}
+
 export async function serveMedia(
   params: {
     kind?: string | undefined;
@@ -32,25 +49,22 @@ export async function serveMedia(
   fetchImage: (url: string) => Promise<Response> = (url) => fetch(url),
 ): Promise<Response> {
   const { kind, slug = "", key = "" } = params;
-  if (
-    (kind !== "proyectos" && kind !== "noticias") ||
-    !SLUG.test(slug) ||
-    !isMediaKey(key)
-  ) {
+  const known =
+    kind === "proyectos" ||
+    kind === "noticias" ||
+    (kind === "portada" && slug === HERO_MEDIA_SLUG);
+  if (!known || !SLUG.test(slug) || !isMediaKey(key)) {
     return plain(404, "Not found");
   }
 
-  let item;
+  let images: MediaRef[];
   try {
-    item =
-      kind === "proyectos"
-        ? await source.findProject(slug)
-        : await source.findArticle(slug);
+    images = await imagesOf(kind, slug, source);
   } catch (error) {
     if (error instanceof ContentFetchError) return plain(503, "Unavailable");
     throw error;
   }
-  const image = item ? findImage(contentImages(item), key) : undefined;
+  const image = findImage(images, key);
   if (!image) return plain(404, "Not found");
 
   let upstream: Response;

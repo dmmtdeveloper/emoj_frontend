@@ -8,6 +8,7 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/proyectos")).toBe("projects");
     expect(pageForPath("/admin/noticias/")).toBe("news");
     expect(pageForPath("/admin/medios")).toBe("media");
+    expect(pageForPath("/admin/portada")).toBe("home");
     expect(pageForPath("/admin/mensajes")).toBe("messages");
     expect(pageForPath("/admin/cuenta")).toBe("account");
   });

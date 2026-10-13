@@ -1,12 +1,14 @@
 ---
 /**
- * Home hero: 30 years of consulting, water supply and sanitation, and the
- * experience, technology and quality behind each project. Three real photos
- * from the original emoj.cl hero (water, a pumping station and an aerial industrial view)
- * under light plum veils (the photos lead, with a calmer headline up to
- * 72px) and a faint four-column grid, like a drawing sheet. Each photo has
- * its own crop on phones.
+ * Home hero: the copy and photos come from the panel (Portada, GET
+ * /v1/home/hero). Without a hero in the API, or with no photos chosen, it
+ * shows the copy and the three photos the site shipped with (water, a
+ * pumping station and an aerial industrial view), each with its own crop on
+ * phones. Panel photos are cropped around the focal point picked in the
+ * panel, on every screen size, and zoom in towards it.
  *
+ * The photos sit under light plum veils (the photos lead, with a calmer
+ * headline up to 72px) and a faint four-column grid, like a drawing sheet.
  * The hero carries no data strip: the figures live in the facts band
  * (FactsBand), next to the client logos (ClientsStrip `tone="accent"`).
  *
@@ -21,35 +23,97 @@
  * header (BaseLayout `headerOverlay`).
  */
 import { ArrowRight, Pause, Play } from "@lucide/astro";
-import { Picture } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { Image, Picture } from "astro:assets";
 import water from "../../assets/photos/agua-manos.jpg";
 import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
+import type { CallToAction, HomeHero } from "../../lib/api/client";
+import { fitWidth } from "../../lib/content/format";
+import {
+  focusClasses,
+  heroCopy,
+  isExternalHref,
+  keepNumbersTogether,
+  titleParts,
+} from "../../lib/content/home-hero";
+import { HERO_MEDIA_SLUG, mediaPath } from "../../lib/content/media";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
 
-const photos = [
+interface Props {
+  /** From the API; null shows the built-in copy and photos. */
+  hero: HomeHero | null;
+}
+
+const { hero } = Astro.props;
+
+type Slide =
+  | {
+      kind: "local";
+      src: ImageMetadata;
+      alt: string;
+      /** Crop per screen size, and the zoom origin (hero__media--N). */
+      position: string;
+      media: string;
+      widths: number[];
+    }
+  | {
+      kind: "remote";
+      src: string;
+      alt: string;
+      width: number;
+      height: number;
+      /** focus-x-* / focus-y-* (crop and zoom origin). */
+      focus: string;
+    };
+
+const builtIn: Slide[] = [
   {
+    kind: "local",
     src: water,
     alt: "Manos recibiendo un chorro de agua limpia.",
     position: "object-[60%_center] md:object-[58%_center]",
+    media: "hero__media--1",
     widths: [640, 960, 1280, 1600, 2130],
   },
   {
+    kind: "local",
     src: pumping,
     alt: "Estación de bombeo con tuberías blancas y bombas azules sobre una losa de hormigón.",
     position: "object-[48%_center] md:object-center",
+    media: "hero__media--2",
     widths: [640, 960, 1280, 1600, 2000],
   },
   {
+    kind: "local",
     src: aerial,
     alt: "Vista aérea de un complejo industrial costero con una chimenea alta.",
     position: "object-[38%_center] md:object-center",
+    media: "hero__media--3",
     widths: [640, 960, 1280, 1600, 2000],
   },
 ];
+
+const remote: Slide[] = (hero?.photos ?? []).map((photo) => ({
+  kind: "remote",
+  src: mediaPath("portada", HERO_MEDIA_SLUG, photo),
+  alt: photo.alt,
+  ...fitWidth(photo, 2000),
+  focus: focusClasses(photo.focusX, photo.focusY),
+}));
+
+const photos = remote.length > 0 ? remote : builtIn;
+const copy = heroCopy(hero);
+const title = titleParts(copy.title, copy.highlight);
+/** Links that leave the site open in a new tab. */
+const withTarget = (cta: CallToAction | null) =>
+  cta && { ...cta, external: isExternalHref(cta.href) };
+const primary = withTarget(copy.primaryCta);
+const secondary = withTarget(copy.secondaryCta);
 ---
 
+---
 <section class="hero relative -mt-(--header-h) bg-plum-950 text-sand-50">
   <div class="hero__frame relative isolate overflow-hidden" data-hero>
     {/* Photos, drifting slower than the page on desktop (motion.css). */}
@@ -58,25 +122,41 @@ const photos = [
         <div
           class:list={[
             "hero__media absolute inset-0 -z-10 overflow-hidden",
-            `hero__media--${i + 1}`,
+            photo.kind === "local"
+              ? photo.media
+              : ["hero__media--focus", photo.focus],
           ]}
           data-hero-slide
           data-state={i === 0 ? "active" : undefined}
         >
-          <Picture
-            src={photo.src}
-            alt={photo.alt}
-            formats={["avif", "webp"]}
-            widths={photo.widths}
-            sizes="100vw"
-            loading={i === 0 ? "eager" : "lazy"}
-            fetchpriority={i === 0 ? "high" : "low"}
-            class:list={[
-              "hero__img h-full w-full object-cover",
-              photo.position,
-            ]}
-            pictureAttributes={{ class: "contents" }}
-          />
+          {photo.kind === "local" ? (
+            <Picture
+              src={photo.src}
+              alt={photo.alt}
+              formats={["avif", "webp"]}
+              widths={photo.widths}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class:list={[
+                "hero__img h-full w-full object-cover",
+                photo.position,
+              ]}
+              pictureAttributes={{ class: "contents" }}
+            />
+          ) : (
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              width={photo.width}
+              height={photo.height}
+              widths={[640, 960, 1280, 1600, 2000]}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class="hero__img object-focus h-full w-full object-cover"
+            />
+          )}
         </div>
       ))}
     </div>
@@ -118,34 +198,49 @@ const photos = [
           {TAGLINE}
         </p>
         <h1 class="hero-in hero-in--2 max-w-[15ch] text-[clamp(2.5rem,1.5rem+3.2vw,4.5rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance">
-          Más de 30&nbsp;años{" "}
-          <em class="font-medium text-sage-300">innovando</em> en consultoría
+          {keepNumbersTogether(title.before)}
+          {title.highlight && (
+            <em class="font-medium text-sage-300">{title.highlight}</em>
+          )}
+          {keepNumbersTogether(title.after)}
         </h1>
         <p class="hero-in hero-in--3 text-lead max-w-[46ch] text-sand-100">
-          Diseñamos soluciones eficientes para el abastecimiento y saneamiento
-          de agua, con la experiencia, la tecnología y la calidad que exige cada
-          proyecto de ingeniería civil.
+          {keepNumbersTogether(copy.lead)}
         </p>
         <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:gap-7">
-          <ButtonLink
-            href="/contacto"
-            variant="on-photo-solid"
-            class="min-h-12 px-6 text-base"
-          >
-            Cotizar proyecto
-          </ButtonLink>
-          <a
-            href="/proyectos"
-            class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
-          >
-            Ver proyectos
-            <ArrowRight
-              size={20}
-              stroke-width={1.75}
-              aria-hidden="true"
-              class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
-            />
-          </a>
+          {primary && (
+            <ButtonLink
+              href={primary.href}
+              target={primary.external ? "_blank" : undefined}
+              rel={primary.external ? "noopener noreferrer" : undefined}
+              variant="on-photo-solid"
+              class="min-h-12 px-6 text-base"
+            >
+              {primary.label}
+              {primary.external && (
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              )}
+            </ButtonLink>
+          )}
+          {secondary && (
+            <a
+              href={secondary.href}
+              target={secondary.external ? "_blank" : undefined}
+              rel={secondary.external ? "noopener noreferrer" : undefined}
+              class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+            >
+              {secondary.label}
+              {secondary.external && (
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              )}
+              <ArrowRight
+                size={20}
+                stroke-width={1.75}
+                aria-hidden="true"
+                class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
+              />
+            </a>
+          )}
         </div>
       </div>
 
@@ -196,15 +291,12 @@ const photos = [
     </div>
   </div>
 </section>
-
 <script>
   import "../../scripts/hero-slideshow";
 </script>
-
 <style>
   /* Static fallback: only the first photo; no counter, no pause. */
-  .hero__media--2,
-  .hero__media--3,
+  .hero__media:not(:first-child),
   .hero__counter {
     display: none;
   }
@@ -243,6 +335,11 @@ const photos = [
 
   .hero__media--3 {
     --zoom-origin: 55% 65%;
+  }
+
+  /* Panel photos zoom in towards their focal point. */
+  .hero__media--focus {
+    --zoom-origin: var(--focus-x, 50%) var(--focus-y, 50%);
   }
 
   @media (prefers-reduced-motion: no-preference) {

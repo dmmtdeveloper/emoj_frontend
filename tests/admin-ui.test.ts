@@ -50,11 +50,13 @@ describe("activeNavItem", () => {
     expect(activeNavItem("/admin")?.href).toBe("/admin");
     expect(activeNavItem("/admin/")?.href).toBe("/admin");
     expect(activeNavItem("/admin/desconocido")).toBeUndefined();
+    expect(activeNavItem("/admin/portada")?.label).toBe("Portada");
   });
 
-  it("lists the six sections in order", () => {
+  it("lists the seven sections in order", () => {
     expect(ADMIN_NAV.map((item) => item.label)).toEqual([
       "Resumen",
+      "Portada",
       "Proyectos",
       "Noticias",
       "Medios",

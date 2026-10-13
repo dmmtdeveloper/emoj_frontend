@@ -361,3 +361,39 @@ describe("createAdminClient().createPreviewToken", () => {
     expect(new Headers(init.headers).get("X-CSRF-Token")).toBe("csrf");
   });
 });
+
+describe("createAdminClient() home hero", () => {
+  it("reads the home hero and replaces it with PUT and the CSRF token", async () => {
+    const hero = {
+      title: "Ingeniería que cuida el agua",
+      highlight: "agua",
+      lead: "Proyectos sanitarios.",
+      primaryCta: { label: "Escríbenos", href: "/contacto" },
+      secondaryCta: { label: "", href: "" },
+      photos: [{ mediaId: "m1", focusX: 30, focusY: 70 }],
+    };
+    const fetch = vi.fn(async () =>
+      jsonResponse(200, { ...hero, updatedAt: "2026-10-12T18:00:00Z" }),
+    );
+    const client = createAdminClient({ baseUrl: "/api", fetch });
+    client.setCsrfToken("tok");
+
+    expect((await client.getHomeHero()).ok).toBe(true);
+    const [getUrl, getInit] = fetch.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(getUrl).toBe("/api/v1/admin/home/hero");
+    expect(getInit.method).toBe("GET");
+
+    expect((await client.updateHomeHero(hero)).ok).toBe(true);
+    const [putUrl, putInit] = fetch.mock.calls[1] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(putUrl).toBe("/api/v1/admin/home/hero");
+    expect(putInit.method).toBe("PUT");
+    expect(new Headers(putInit.headers).get("X-CSRF-Token")).toBe("tok");
+    expect(JSON.parse(String(putInit.body))).toEqual(hero);
+  });
+});
