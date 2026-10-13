@@ -26,6 +26,9 @@ export type NewsDetail = Schemas["NewsDetail"];
 export type NewsPage = Schemas["NewsPage"];
 export type TipTapDocument = Schemas["TipTapDocument"];
 export type Preview = Schemas["Preview"];
+export type HomeHero = Schemas["HomeHero"];
+export type HeroPhoto = Schemas["HeroPhoto"];
+export type CallToAction = Schemas["CallToAction"];
 
 export type ProjectQuery = NonNullable<
   operations["listProjects"]["parameters"]["query"]
@@ -74,6 +77,8 @@ export interface ApiClient {
   getNews(slug: string): Promise<ApiResult<NewsDetail>>;
   /** A project or article, drafts included, from a preview token. */
   getPreview(token: string): Promise<ApiResult<Preview>>;
+  /** The home page hero edited in the panel. */
+  getHomeHero(): Promise<ApiResult<HomeHero>>;
 }
 
 /** Serialize defined query parameters, in the given order. */
@@ -171,5 +176,6 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       request<NewsDetail>("GET", `/v1/news/${encodeURIComponent(slug)}`),
     getPreview: (token) =>
       request<Preview>("GET", `/v1/preview/${encodeURIComponent(token)}`),
+    getHomeHero: () => request<HomeHero>("GET", "/v1/home/hero"),
   };
 }

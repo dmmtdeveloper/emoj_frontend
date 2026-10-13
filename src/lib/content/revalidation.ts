@@ -11,7 +11,8 @@ import { SERVICE_SLUGS } from "../services";
  * the site in seconds instead of after a full rebuild.
  */
 export interface ContentChange {
-  kind: "news" | "project";
+  /** "home" is the home page hero; it has no slug (""). */
+  kind: "news" | "project" | "home";
   slug: string;
   /** The slug before this change, when it changed or the item was deleted. */
   previousSlug: string | null;
@@ -22,6 +23,7 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export function parseChange(body: unknown): ContentChange | null {
   if (typeof body !== "object" || body === null) return null;
   const { kind, slug, previousSlug } = body as Record<string, unknown>;
+  if (kind === "home") return { kind, slug: "", previousSlug: null };
   if (kind !== "news" && kind !== "project") return null;
   if (typeof slug !== "string" || !SLUG.test(slug)) return null;
   if (
@@ -42,6 +44,7 @@ export function pathsToRefresh(
   change: ContentChange,
   newsPages: number,
 ): string[] {
+  if (change.kind === "home") return ["/"];
   const slugs = [change.slug, change.previousSlug].filter(
     (s): s is string => s !== null && s !== "",
   );

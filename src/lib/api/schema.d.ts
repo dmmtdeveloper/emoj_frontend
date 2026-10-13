@@ -101,6 +101,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/home/hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the home page hero
+         * @description Title, highlighted word, lead paragraph, calls to action and photo
+         *     carousel of the home page. An empty `photos` array means the site
+         *     shows its own default photos.
+         */
+        get: operations["getHomeHero"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/contact": {
         parameters: {
             query?: never;
@@ -594,6 +616,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/home/hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the home page hero for editing */
+        get: operations["adminGetHomeHero"];
+        /**
+         * Replace the home page hero
+         * @description Replaces the whole hero. Text fields are trimmed. The site shows the
+         *     change on its next request (after the public cache, one minute).
+         */
+        put: operations["adminUpdateHomeHero"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/preview-tokens": {
         parameters: {
             query?: never;
@@ -782,6 +826,43 @@ export interface components {
             page: number;
             pageSize: number;
             total: number;
+        };
+        /** @description A button label and where it leads. */
+        CallToAction: {
+            label: string;
+            /**
+             * @description A site path (`/contacto`), an https URL, or a `mailto:` or `tel:` link.
+             * @example /contacto
+             */
+            href: string;
+        };
+        /** @description A carousel photo and its focal point. */
+        HeroPhoto: components["schemas"]["MediaRef"] & {
+            focusX: components["schemas"]["FocusPercent"];
+            focusY: components["schemas"]["FocusPercent"];
+        };
+        /**
+         * @description Focal point coordinate in percent of the image (0 = left/top, 100 =
+         *     right/bottom). Crops keep it in view.
+         */
+        FocusPercent: number;
+        /** @description The home page hero. */
+        HomeHero: {
+            /** @example Más de 30 años innovando en consultoría */
+            title: string;
+            /**
+             * @description A word or phrase of the title shown in the accent color; empty for none.
+             * @example innovando
+             */
+            highlight: string;
+            lead: string;
+            primaryCta: components["schemas"]["CallToAction"];
+            /** @description Omitted when hidden. */
+            secondaryCta?: components["schemas"]["CallToAction"];
+            /** @description In order. Empty means the site's default photos. */
+            photos: components["schemas"]["HeroPhoto"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         /**
          * @description A TipTap (ProseMirror) JSON document. Only an allowlist is accepted
@@ -1052,6 +1133,38 @@ export interface components {
             page: number;
             pageSize: number;
             total: number;
+        };
+        AdminHeroPhoto: {
+            /** Format: uuid */
+            mediaId: string;
+            focusX: components["schemas"]["FocusPercent"];
+            focusY: components["schemas"]["FocusPercent"];
+            /** @description The image, for thumbnails (responses only; omitted when it cannot be resolved). */
+            media?: components["schemas"]["MediaRef"];
+        };
+        /**
+         * @description The whole hero. An empty secondary call to action (label and href
+         *     both empty) hides it; half filled ones are rejected. Photos must be
+         *     library images, at most 8, without repeats.
+         */
+        HomeHeroInput: {
+            title: string;
+            /** @description Must be part of the title; empty for none. */
+            highlight: string;
+            lead: string;
+            primaryCta: components["schemas"]["CallToAction"];
+            secondaryCta: components["schemas"]["CallToAction"];
+            photos: components["schemas"]["AdminHeroPhoto"][];
+        };
+        AdminHomeHero: {
+            title: string;
+            highlight: string;
+            lead: string;
+            primaryCta: components["schemas"]["CallToAction"];
+            secondaryCta: components["schemas"]["CallToAction"];
+            photos: components["schemas"]["AdminHeroPhoto"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         ContactMessage: {
             /** Format: uuid */
@@ -1583,6 +1696,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NewsDetail"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            405: components["responses"]["MethodNotAllowed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    getHomeHero: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The hero. */
+            200: {
+                headers: {
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    "Cache-Control": components["headers"]["PublicCacheControl"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeHero"];
                 };
             };
             404: components["responses"]["NotFound"];
@@ -2444,6 +2582,64 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationFailed"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminGetHomeHero: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The hero, with the photos' media IDs and focal points. */
+            200: {
+                headers: {
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminHomeHero"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            default: components["responses"]["Error"];
+        };
+    };
+    adminUpdateHomeHero: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
+                "X-CSRF-Token": components["parameters"]["CSRFToken"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeHeroInput"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            200: {
+                headers: {
+                    "X-Request-ID": components["headers"]["X-Request-ID"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminHomeHero"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationFailed"];
             default: components["responses"]["Error"];
         };

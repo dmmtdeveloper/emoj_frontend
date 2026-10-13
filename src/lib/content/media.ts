@@ -12,7 +12,11 @@
 import { createHash } from "node:crypto";
 import type { MediaRef } from "../api/client";
 
-export type MediaKind = "proyectos" | "noticias";
+/** `portada` holds the home hero photos, under the slug `inicio`. */
+export type MediaKind = "proyectos" | "noticias" | "portada";
+
+/** Slug of the home hero photos (`/media/portada/inicio/{key}`). */
+export const HERO_MEDIA_SLUG = "inicio";
 
 const KEY_LENGTH = 16;
 

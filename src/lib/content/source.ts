@@ -1,12 +1,14 @@
 /**
- * Content from the EMOJ API (projects and news), for pages rendered on
+ * Content from the EMOJ API (projects, news and the home hero), for pages rendered on
  * demand (and cached) and for the few still built ahead of time.
  *
  * Policy: an API error or an unreachable API throws a `ContentFetchError`,
  * so a broken API never shows a silently empty site: a build fails, and a
  * page rendered on demand answers 503 without being cached. A valid empty
  * list is fine: pages render their empty states. A slug the API does not
- * know is `null` from the `find*` methods (the page answers 404).
+ * know is `null` from the `find*` methods (the page answers 404). The home
+ * hero is `null` when the API has none (or predates it): the home page
+ * then shows its built-in copy and photos.
  *
  * A source memoizes its requests: create one per page render, never share
  * one across requests (it would serve stale content).
@@ -14,6 +16,7 @@
 import type {
   ApiClient,
   ApiResult,
+  HomeHero,
   NewsDetail,
   NewsSummary,
   ProjectDetail,
@@ -43,6 +46,8 @@ export interface ContentSource {
   getArticle(slug: string): Promise<NewsDetail>;
   /** The article, or null when the API has none with this slug. */
   findArticle(slug: string): Promise<NewsDetail | null>;
+  /** The home hero, or null when the API has none. */
+  findHomeHero(): Promise<HomeHero | null>;
 }
 
 interface Page<T> {
@@ -132,12 +137,18 @@ export function createContentSource(
       baseUrl,
     ),
   );
+  const findHomeHero = once(async () => {
+    const result = await client.getHomeHero();
+    if (isNotFound(result)) return null;
+    return unwrap(result, "the home hero", baseUrl);
+  });
   const projects = new Map<string, Promise<ProjectDetail>>();
   const articles = new Map<string, Promise<NewsDetail>>();
 
   return {
     getProjects,
     getNews,
+    findHomeHero,
     async getFeaturedProjects(limit = 3) {
       const data = unwrap(
         await client.listProjects({ featured: true, page: 1, pageSize: limit }),

@@ -175,7 +175,8 @@ export function MediaPicker({
   onConfirm,
 }: {
   title: string;
-  purpose: "cover" | "gallery" | "og";
+  /** "cover" and "hero" warn about images too small for a large photo. */
+  purpose: "cover" | "gallery" | "og" | "hero";
   multiple: boolean;
   /** Ids already chosen (kept selected in the grid). */
   selected: readonly string[];
@@ -372,6 +373,8 @@ export function MediaPicker({
             JPG, PNG, WebP o AVIF de hasta 15 MB.
             {purpose === "cover" &&
               " Para la portada, idealmente de 1.600 px de ancho o más."}
+            {purpose === "hero" &&
+              " Para el inicio, idealmente horizontales y de 1.600 px de ancho o más."}
           </p>
           <input
             id={inputId}
@@ -430,7 +433,9 @@ export function MediaPicker({
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {items.map((media) => {
                 const isChosen = chosen.includes(media.id);
-                const small = purpose === "cover" && smallForCover(media);
+                const small =
+                  (purpose === "cover" || purpose === "hero") &&
+                  smallForCover(media);
                 return (
                   <li key={media.id}>
                     <button

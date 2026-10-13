@@ -8,7 +8,8 @@
 export type SiteState = "live" | "later";
 
 export interface ContentChange {
-  kind: "news" | "project";
+  /** "home" is the home page hero (slug ""). */
+  kind: "news" | "project" | "home";
   slug: string;
   previousSlug: string | null;
 }

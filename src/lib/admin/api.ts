@@ -39,6 +39,9 @@ export type PersonDataExport = Schemas["PersonDataExport"];
 export type PersonDataErasure = Schemas["PersonDataErasure"];
 export type PreviewToken = Schemas["PreviewToken"];
 export type PreviewKind = Schemas["PreviewKind"];
+export type AdminHomeHero = Schemas["AdminHomeHero"];
+export type AdminHeroPhoto = Schemas["AdminHeroPhoto"];
+export type HomeHeroInput = Schemas["HomeHeroInput"];
 
 export type AdminListQuery = NonNullable<
   operations["adminListProjects"]["parameters"]["query"]
@@ -117,12 +120,16 @@ export interface AdminClient {
     type: PreviewKind,
     id: string,
   ): Promise<ApiResult<PreviewToken>>;
+  /** The home page hero, for the Portada section. */
+  getHomeHero(): Promise<ApiResult<AdminHomeHero>>;
+  /** Replaces the whole home page hero. */
+  updateHomeHero(body: HomeHeroInput): Promise<ApiResult<AdminHomeHero>>;
   /** Current CSRF token, or null when signed out. */
   csrfToken(): string | null;
   setCsrfToken(token: string | null): void;
 }
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /** Query string from defined, non-empty values, in the given order. */
 function queryString(
@@ -332,6 +339,9 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
         "GET",
         `/v1/admin/data-requests${queryString(query)}`,
       ),
+    getHomeHero: () => request<AdminHomeHero>("GET", "/v1/admin/home/hero"),
+    updateHomeHero: (body) =>
+      request<AdminHomeHero>("PUT", "/v1/admin/home/hero", body),
     csrfToken: () => csrf,
     setCsrfToken: (token) => {
       csrf = token;

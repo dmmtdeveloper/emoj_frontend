@@ -7,7 +7,14 @@
 export interface AdminNavItem {
   label: string;
   href: string;
-  icon: "dashboard" | "projects" | "news" | "media" | "messages" | "account";
+  icon:
+    | "dashboard"
+    | "home"
+    | "projects"
+    | "news"
+    | "media"
+    | "messages"
+    | "account";
   /** Short line shown under the page title in the navbar. */
   description: string;
 }
@@ -18,6 +25,12 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: "/admin",
     icon: "dashboard",
     description: "Lo pendiente y lo último publicado",
+  },
+  {
+    label: "Portada",
+    href: "/admin/portada",
+    icon: "home",
+    description: "Título, textos y fotos del inicio del sitio",
   },
   {
     label: "Proyectos",

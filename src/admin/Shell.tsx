@@ -2,7 +2,7 @@
  * Panel frame: sidebar + navbar + content.
  *
  * - Sidebar (desktop, from 1024px): fixed column on `surface-inverse`, the
- *   six sections with the current one marked (`aria-current="page"`).
+ *   seven sections with the current one marked (`aria-current="page"`).
  *   It folds to icons only (labels stay as tooltips and accessible names);
  *   the choice is remembered in this browser.
  * - Sidebar (mobile): the same navigation in a native <dialog> drawer, which
@@ -16,6 +16,7 @@ import {
   LoaderCircle,
   FileText,
   FolderKanban,
+  House,
   Image,
   LayoutDashboard,
   LogOut,
@@ -37,6 +38,7 @@ import { Button, ButtonLink, cx, Dialog, Isotype, Notice } from "./ui";
 
 const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   dashboard: LayoutDashboard,
+  home: House,
   projects: FolderKanban,
   news: FileText,
   media: Image,

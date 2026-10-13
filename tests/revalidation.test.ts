@@ -18,6 +18,14 @@ describe("parseChange", () => {
     ).toEqual({ kind: "project", slug: "nuevo", previousSlug: "viejo" });
   });
 
+  it("accepts a home hero change, which has no slug", () => {
+    expect(parseChange({ kind: "home" })).toEqual({
+      kind: "home",
+      slug: "",
+      previousSlug: null,
+    });
+  });
+
   it.each([
     null,
     "news",
@@ -30,6 +38,12 @@ describe("parseChange", () => {
 });
 
 describe("pathsToRefresh", () => {
+  it("refreshes only the home page for the hero", () => {
+    expect(
+      pathsToRefresh({ kind: "home", slug: "", previousSlug: null }, 0),
+    ).toEqual(["/"]);
+  });
+
   it("refreshes an article, the news listing pages and the sitemap", () => {
     expect(
       pathsToRefresh(

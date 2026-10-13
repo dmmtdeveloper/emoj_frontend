@@ -16,8 +16,13 @@ import { getServiceTitles } from "../lib/get-services";
 // Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
 export const prerender = false;
 
+const source = contentSource();
+const [projects, hero] = await Promise.all([
+  source.getProjects(),
+  source.findHomeHero(),
+]);
 /** The home rail shows every published project, the featured ones first. */
-const featured = railProjects(await contentSource().getProjects(), 12);
+const featured = railProjects(projects, 12);
 const serviceTitles = await getServiceTitles();
 const hasFeatured = featured.length > 0;
 ---
@@ -28,7 +33,7 @@ const hasFeatured = featured.length > 0;
   jsonLd={[organizationJsonLd(Astro.site)]}
   headerOverlay
 >
-  <Hero />
+  <Hero hero={hero} />
   {/* `data-nav-section`: the header highlights that link while the
       section is on screen (src/scripts/nav-spy.ts). */}
   <div data-nav-section="/servicios">

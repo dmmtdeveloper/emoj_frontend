@@ -26,6 +26,7 @@ import {
   DashboardPage,
   MessagesPage,
 } from "./pages";
+import { HomeHeroEditor } from "./HomeHeroEditor";
 import { NewsListPage } from "./news";
 import { ProjectEditor } from "./ProjectEditor";
 import { ProjectsPage } from "./projects";
@@ -82,6 +83,7 @@ export const ADMIN_PAGES = [
   "forgot",
   "reset",
   "dashboard",
+  "home",
   "projects",
   "project-new",
   "project-edit",
@@ -113,6 +115,8 @@ function Content({
   switch (page) {
     case "dashboard":
       return <DashboardPage />;
+    case "home":
+      return <HomeHeroEditor />;
     case "messages":
       return <MessagesPage serviceTitles={serviceTitles} />;
     case "account":
