@@ -6,9 +6,12 @@ import type {
   ImgHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  Ref,
+  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
 import { useEffect, useId, useRef } from "react";
+import { ChevronDown } from "lucide-react";
 
 export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -163,6 +166,66 @@ export function Field({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}
         {...input}
+      />
+    </FieldFrame>
+  );
+}
+
+/**
+ * The panel's dropdown: the same native <select> and `.select` styles as
+ * the site (src/components/ui/Select.astro, src/styles/global.css), in the
+ * compact size. Pass options as children. `invalid` marks the error state.
+ */
+export function Select({
+  invalid,
+  className,
+  children,
+  ref,
+  ...select
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  invalid?: boolean;
+  ref?: Ref<HTMLSelectElement>;
+}) {
+  return (
+    <span className="select-field">
+      <select
+        ref={ref}
+        className={cx("select select--compact", className)}
+        aria-invalid={invalid ? true : undefined}
+        {...select}
+      >
+        {children}
+      </select>
+      <ChevronDown
+        className="select-field__icon"
+        size={18}
+        strokeWidth={1.75}
+        aria-hidden="true"
+      />
+    </span>
+  );
+}
+
+/** A labelled `Select` with hint and error, like `Field` for inputs. */
+export function SelectField({
+  label,
+  hint,
+  error,
+  aside,
+  optional,
+  id: idProp,
+  ...select
+}: SelectHTMLAttributes<HTMLSelectElement> &
+  FieldChrome & { ref?: Ref<HTMLSelectElement> }) {
+  const generated = useId();
+  const id = idProp ?? generated;
+  return (
+    <FieldFrame {...{ id, label, hint, error, aside, optional }}>
+      <Select
+        id={id}
+        invalid={Boolean(error)}
+        aria-describedby={describedBy(id, hint, error)}
+        {...select}
       />
     </FieldFrame>
   );

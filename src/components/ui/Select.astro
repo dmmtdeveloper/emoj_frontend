@@ -1,0 +1,34 @@
+---
+/**
+ * The site's dropdown: a native <select> in the EMOJ look, with a Lucide
+ * chevron. Options go in the default slot as plain <option> / <optgroup>.
+ * Styles live in src/styles/global.css (`.select`), shared with the panel's
+ * React `Select` (src/admin/ui.tsx), so both look the same.
+ *
+ * Every other attribute (id, name, required, aria-*…) goes to the <select>.
+ */
+import { ChevronDown } from "@lucide/astro";
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"select"> {
+  /** The panel's denser size on a raised ground. */
+  compact?: boolean;
+}
+
+const { compact = false, class: className, ...rest } = Astro.props;
+---
+
+<span class="select-field">
+  <select
+    class:list={["select", compact && "select--compact", className]}
+    {...rest}
+  >
+    <slot />
+  </select>
+  <ChevronDown
+    class="select-field__icon"
+    size={compact ? 18 : 20}
+    stroke-width={1.75}
+    aria-hidden="true"
+  />
+</span>
