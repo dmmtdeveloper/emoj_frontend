@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activeNavItem, type AdminNavItem } from "../lib/admin/nav";
+import { TAGLINE as SITE_TAGLINE } from "../lib/site";
 import {
   effectiveTheme,
   storedTheme,
@@ -128,8 +129,8 @@ function NavList({
   );
 }
 
-/** Tagline under the lockup (the one in the official tagline files). */
-const TAGLINE = "acercamos la ingeniería";
+/** Tagline under the lockup, lowercase as in the official tagline files. */
+const TAGLINE = SITE_TAGLINE.toLowerCase();
 
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (

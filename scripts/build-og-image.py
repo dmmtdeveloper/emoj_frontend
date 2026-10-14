@@ -54,7 +54,7 @@ with tempfile.TemporaryDirectory() as tmp:
     lockup = lockup.crop(lockup.getbbox())
 
 font = ImageFont.truetype(str(FONTS / "urbanist-latin-600-normal.woff"), 58)
-tagline = "Humanizamos la ingeniería"
+tagline = "Acercamos la ingeniería"
 draw_probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
 left, top, right, bottom = draw_probe.textbbox((0, 0), tagline, font=font)
 text_w, text_h = right - left, bottom - top
