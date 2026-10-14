@@ -54,7 +54,7 @@ export function ShellSkeleton() {
           <Skeleton className="h-6 w-40" />
           <Skeleton className="size-9 rounded-full" />
         </div>
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+        <div className="flex w-full flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
           <Skeleton className="h-6 w-72" />
           <div className="grid gap-6 md:grid-cols-2">
             <Skeleton className="h-52 rounded-lg" />

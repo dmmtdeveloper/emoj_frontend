@@ -37,6 +37,18 @@ const { title } = Astro.props;
 </html>
 
 <style is:global>
+  /*
+   * Sidebar lockup (src/admin/ui.tsx BrandLockup): stroke and "Emoj" in
+   * coral on the plum sidebar (Auburn on plum is a forbidden pair), Auburn
+   * on the cream sidebar of the dark theme.
+   */
+  .admin-brand {
+    --admin-mark: var(--brick-400);
+  }
+  :root[data-theme="dark"] .admin-brand {
+    --admin-mark: var(--brick-700);
+  }
+
   /* User menu (native popover): under the navbar, aligned to the right. */
   .admin-popover {
     position: fixed;

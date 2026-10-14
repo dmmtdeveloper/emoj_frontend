@@ -193,7 +193,7 @@ type RecentItem =
 
 function RecentActivity({ recent }: { recent: RecentItem[] }) {
   return (
-    <Card className="flex flex-col p-0! md:p-0!">
+    <Card className="flex flex-col overflow-hidden p-0! md:p-0!">
       <SectionHead
         title="Actividad reciente"
         href="/admin/proyectos"
@@ -259,7 +259,7 @@ function LatestMessages({
 }) {
   if (!messages) return null;
   return (
-    <Card className="flex flex-col p-0! md:p-0!">
+    <Card className="flex flex-col overflow-hidden p-0! md:p-0!">
       <SectionHead
         title="Últimos mensajes"
         href="/admin/mensajes"
@@ -324,7 +324,7 @@ export function DashboardPage() {
   const drafts = data ? data.projects.draft + data.news.draft : 0;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-ink-muted first-letter:uppercase">
