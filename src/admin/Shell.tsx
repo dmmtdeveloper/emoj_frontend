@@ -7,8 +7,9 @@
  *   the choice is remembered in this browser.
  * - Sidebar (mobile): the same navigation in a native <dialog> drawer, which
  *   traps focus and closes with Esc, on backdrop click or on navigation.
- * - Navbar: menu button (mobile), page title and description, "Ver sitio"
- *   and the user menu (native popover: light dismiss and Esc for free).
+ * - Navbar: menu button (mobile), page title and description, "Ver sitio",
+ *   the light/dark switch (same choice as the site's, src/lib/theme.ts) and
+ *   the user menu (native popover: light dismiss and Esc for free).
  */
 import {
   CircleCheck,
@@ -22,8 +23,10 @@ import {
   LogOut,
   Mail,
   Menu,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
   UserRound,
   Users,
   X,
@@ -31,6 +34,13 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { activeNavItem, type AdminNavItem } from "../lib/admin/nav";
+import {
+  effectiveTheme,
+  storedTheme,
+  THEME_KEY,
+  toggledTheme,
+  type Theme,
+} from "../lib/theme";
 import { navFor } from "../lib/admin/users";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
@@ -404,6 +414,7 @@ export function Shell({
             Ver sitio
             <span className="sr-only">(se abre en una pestaña nueva)</span>
           </a>
+          <ThemeToggle />
           <UserMenu />
         </header>
         <main
@@ -417,5 +428,56 @@ export function Shell({
         <SuccessNoticeDialog />
       </div>
     </div>
+  );
+}
+
+/**
+ * Sun/moon switch for the panel, sharing the site's choice (localStorage,
+ * `<html data-theme>` set before paint by public/theme.js). It is a toggle
+ * for dark mode, like the site header's button.
+ */
+function ThemeToggle() {
+  const root = document.documentElement;
+  const [theme, setTheme] = useState<Theme>(() =>
+    effectiveTheme(storedTheme(root.dataset["theme"] ?? null)),
+  );
+  const dark = theme === "dark";
+
+  const toggle = () => {
+    const next = toggledTheme(theme);
+    const apply = () => {
+      root.dataset["theme"] = next;
+      try {
+        localStorage.setItem(THEME_KEY, next);
+      } catch {
+        // Storage blocked: the choice lasts for this page only.
+      }
+      setTheme(next);
+    };
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (document.startViewTransition && !reduced) {
+      document.startViewTransition(apply);
+    } else {
+      apply();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={dark}
+      title={dark ? "Usar modo claro" : "Usar modo oscuro"}
+      className="grid size-11 shrink-0 place-items-center rounded-md text-ink hover:bg-surface-sunken"
+    >
+      {dark ? (
+        <Sun size={20} strokeWidth={1.75} aria-hidden="true" />
+      ) : (
+        <Moon size={20} strokeWidth={1.75} aria-hidden="true" />
+      )}
+      <span className="sr-only">Modo oscuro</span>
+    </button>
   );
 }

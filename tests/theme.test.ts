@@ -16,14 +16,13 @@ describe("storedTheme", () => {
 });
 
 describe("effectiveTheme", () => {
-  it("follows the device until the visitor chooses", () => {
-    expect(effectiveTheme(null, true)).toBe("dark");
-    expect(effectiveTheme(null, false)).toBe("light");
+  it("is light until the visitor chooses, whatever the device says", () => {
+    expect(effectiveTheme(null)).toBe("light");
   });
 
-  it("keeps the visitor's choice over the device", () => {
-    expect(effectiveTheme("light", true)).toBe("light");
-    expect(effectiveTheme("dark", false)).toBe("dark");
+  it("keeps the visitor's choice", () => {
+    expect(effectiveTheme("light")).toBe("light");
+    expect(effectiveTheme("dark")).toBe("dark");
   });
 });
 
@@ -39,5 +38,11 @@ describe("THEME_KEY", () => {
     const { readFile } = await import("node:fs/promises");
     const script = await readFile("public/theme.js", "utf8");
     expect(script).toContain(`"${THEME_KEY}"`);
+  });
+
+  it("makes light the default before paint (public/theme.js)", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const script = await readFile("public/theme.js", "utf8");
+    expect(script).toMatch(/:\s*"light"/);
   });
 });
