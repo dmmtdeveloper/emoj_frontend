@@ -44,7 +44,7 @@ import {
 } from "./editor-kit";
 import { mediaById, MediaPicker, useMediaLibrary } from "./MediaPicker";
 import { editProjectHref } from "./projects";
-import { Card, Counter, cx, Field, Notice, TextArea } from "./ui";
+import { Card, Counter, Field, Notice, SelectField, TextArea } from "./ui";
 
 const LIST_PATH = "/admin/proyectos";
 
@@ -519,32 +519,17 @@ function RegionSelect({
     ReturnType<typeof useForm<ProjectFormValues>>["register"]
   >;
 }) {
-  const id = useId();
   const known = (CHILE_REGIONS as readonly string[]).includes(value);
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm leading-5 font-semibold text-ink">
-        Región <span className="font-medium text-ink-muted">(opcional)</span>
-      </label>
-      <select
-        id={id}
-        {...registration}
-        aria-invalid={error ? true : undefined}
-        className={cx(
-          "min-h-11 rounded-md border bg-surface-raised px-3 py-2.5 text-base text-ink",
-          error ? "border-brand" : "border-border-strong",
-        )}
-      >
-        <option value="">Sin región</option>
-        {!known && value && <option value={value}>{value}</option>}
-        {CHILE_REGIONS.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
-      {error && <p className="text-sm font-semibold text-brand">{error}</p>}
-    </div>
+    <SelectField label="Región" optional error={error} {...registration}>
+      <option value="">Sin región</option>
+      {!known && value && <option value={value}>{value}</option>}
+      {CHILE_REGIONS.map((r) => (
+        <option key={r} value={r}>
+          {r}
+        </option>
+      ))}
+    </SelectField>
   );
 }
 

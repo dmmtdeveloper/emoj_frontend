@@ -88,6 +88,7 @@ import {
   Field,
   Isotype,
   Notice,
+  Select,
   TextArea,
 } from "./ui";
 
@@ -737,10 +738,10 @@ function LinkField({
         >
           {label}
         </label>
-        <select
+        <Select
           id={id}
           value={custom ? CUSTOM_LINK : choice}
-          aria-invalid={error && !custom ? true : undefined}
+          invalid={Boolean(error) && !custom}
           aria-describedby={error && !custom ? `${id}-error` : undefined}
           onChange={(e) => {
             const next = e.target.value;
@@ -751,10 +752,6 @@ function LinkField({
             setTyping(false);
             onChange(next);
           }}
-          className={cx(
-            "min-h-11 rounded-md border bg-surface-raised px-3 py-2.5 text-base text-ink",
-            error && !custom ? "border-brand" : "border-border-strong",
-          )}
         >
           {choice === "" && !custom && (
             <option value="" disabled>
@@ -773,7 +770,7 @@ function LinkField({
             </optgroup>
           ))}
           <option value={CUSTOM_LINK}>Otro enlace…</option>
-        </select>
+        </Select>
         {error && !custom && (
           <p
             id={`${id}-error`}

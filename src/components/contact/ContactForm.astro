@@ -10,6 +10,7 @@ import { MESSAGE_MAX } from "../../lib/contact/form";
 import { API_URL, TURNSTILE_SITE_KEY } from "../../lib/env";
 import { CONTACT } from "../../lib/site";
 import type { Service } from "../../lib/get-services";
+import Select from "../ui/Select.astro";
 
 interface Props {
   services: Service[];
@@ -147,13 +148,13 @@ const textFields = [
         <label for="contacto-service" class={labelClass}>
           Servicio <span class={optionalClass}>(opcional)</span>
         </label>
-        <select id="contacto-service" name="service" class={inputClass}>
+        <Select id="contacto-service" name="service">
           <option value="">Elige un servicio</option>
           {services.map((service) => (
             <option value={service.data.slug}>{service.data.title}</option>
           ))}
           <option value="">Otro / no estoy seguro</option>
-        </select>
+        </Select>
         <p
           id="contacto-service-error"
           data-error-for="service"
