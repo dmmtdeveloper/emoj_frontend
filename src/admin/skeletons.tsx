@@ -66,29 +66,52 @@ export function ShellSkeleton() {
   );
 }
 
-export function DashboardSkeleton() {
+export function DashboardSkeleton({
+  withMessages = true,
+}: {
+  withMessages?: boolean;
+}) {
+  const rows = (n: number) =>
+    Array.from({ length: n }, (_, i) => (
+      <div key={i} className="flex items-center gap-4 px-5 py-3 md:px-6">
+        <Skeleton className="aspect-[4/3] w-14 shrink-0 rounded-sm" />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-3/5" />
+          <Skeleton className="h-3 w-2/5" />
+        </div>
+      </div>
+    ));
   return (
     <Loading label="Cargando el resumen…" className="flex flex-col gap-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        {[0, 1].map((i) => (
-          <div key={i} className={cx(card, "flex flex-col gap-5")}>
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-10" />
-              <Skeleton className="h-6 w-32" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Skeleton className="h-14" />
-              <Skeleton className="h-14" />
-            </div>
-            <Skeleton className="h-11 w-44" />
+      <div
+        className={cx(
+          card,
+          "grid grid-cols-2 gap-6",
+          withMessages ? "lg:grid-cols-4" : "lg:grid-cols-3",
+        )}
+      >
+        {Array.from({ length: withMessages ? 4 : 3 }, (_, i) => (
+          <div key={i} className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-16" />
+            <Skeleton className="h-4 w-32" />
           </div>
         ))}
       </div>
-      <div className={cx(card, "flex flex-col gap-4")}>
-        <Skeleton className="h-6 w-48" />
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-5" />
-        ))}
+      <div className={cx("grid gap-6", withMessages && "lg:grid-cols-5")}>
+        <div
+          className={cx(
+            "rounded-lg border border-border bg-surface-raised py-5 shadow-(--shadow-sm)",
+            withMessages && "lg:col-span-3",
+          )}
+        >
+          {rows(4)}
+        </div>
+        {withMessages && (
+          <div className="rounded-lg border border-border bg-surface-raised py-5 shadow-(--shadow-sm) lg:col-span-2">
+            {rows(3)}
+          </div>
+        )}
       </div>
     </Loading>
   );
