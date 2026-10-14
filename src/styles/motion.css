@@ -626,7 +626,12 @@
 
 .site-header {
   --header-solid: 1;
-  /* Text and mark blend from cream (over the photo) to ink (solid). */
+  /*
+   * Text blends from cream (over the photo) to ink (solid). The mark's
+   * stroke goes from coral over the photo (`brick-400`: Auburn on plum is a
+   * forbidden pair) to `brand` once the bar is solid: Auburn in light,
+   * coral again in dark.
+   */
   --header-fg: color-mix(
     in oklab,
     var(--ink) calc(var(--header-solid) * 100%),
@@ -635,7 +640,7 @@
   --mark-stroke: color-mix(
     in oklab,
     var(--brand) calc(var(--header-solid) * 100%),
-    var(--sand-50)
+    var(--brick-400)
   );
   --mark-dot: var(--header-fg);
   color: var(--header-fg);
