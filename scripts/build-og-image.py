@@ -1,12 +1,13 @@
-"""Build the default Open Graph image (public/og-default.jpg, 1200x630).
+"""Build the default Open Graph image (public/og-default.jpg, 1200x1200).
 
 Floral White background with the official vertical lockup in color
 (design/brand/oficial/vertical-bold.svg, never redrawn; the heavy stroke
 holds up in small previews) and the tagline set in Urbanist, all centered.
-Everything sits inside the central 630x630 square, so chat apps that crop
-the preview to a square thumbnail (WhatsApp) still show the whole mark, and
-the mark fills most of that square so it stays sharp when the thumbnail is
-shrunk to under 100 px.
+
+Square, because WhatsApp shows a wide (1200x630) image only as a small
+thumbnail and a square one as the large card. Everything sits inside the
+central 1200x560 band, so Facebook, LinkedIn and X, which crop to their
+wide formats (1.91:1, 2:1), still show the whole mark.
 Run it after the brand files change; the output is committed.
 
 Usage (needs Pillow, and `pnpm install` for sharp and the Urbanist font):
@@ -27,9 +28,9 @@ OUT = ROOT / "public/og-default.jpg"
 
 SAND_50 = (255, 248, 240)  # Floral White
 PLUM_950 = (42, 12, 78)  # Russian Violet
-WIDTH, HEIGHT = 1200, 630
-SAFE = 630  # the central square every crop keeps
-LOCKUP_WIDTH = 760  # before trimming the artboard margin (~590 px of mark)
+WIDTH, HEIGHT = 1200, 1200
+SAFE_H = 560  # the central band every wide crop keeps (2:1 is 600 high)
+LOCKUP_WIDTH = 1000  # before trimming the artboard margin
 
 # Rasterize the official SVG with sharp (a dependency of the site).
 with tempfile.TemporaryDirectory() as tmp:
@@ -52,16 +53,16 @@ with tempfile.TemporaryDirectory() as tmp:
     # Trim the transparent margin of the artboard so the mark is centered.
     lockup = lockup.crop(lockup.getbbox())
 
-font = ImageFont.truetype(str(FONTS / "urbanist-latin-600-normal.woff"), 46)
+font = ImageFont.truetype(str(FONTS / "urbanist-latin-600-normal.woff"), 58)
 tagline = "Humanizamos la ingeniería"
 draw_probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
 left, top, right, bottom = draw_probe.textbbox((0, 0), tagline, font=font)
 text_w, text_h = right - left, bottom - top
 
-gap = 36
+gap = 44
 block_h = lockup.height + gap + text_h
-assert max(lockup.width, text_w) <= SAFE - 30 and block_h <= SAFE - 100, (
-    "keep it in the square",
+assert max(lockup.width, text_w) <= WIDTH - 160 and block_h <= SAFE_H, (
+    "keep it in the central band",
     lockup.size,
     text_w,
     block_h,
