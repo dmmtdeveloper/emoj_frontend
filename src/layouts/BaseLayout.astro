@@ -3,7 +3,7 @@ import SiteFooter from "../components/layout/SiteFooter.astro";
 import SiteHeader from "../components/layout/SiteHeader.astro";
 import WhatsAppButton from "../components/layout/WhatsAppButton.astro";
 import { serializeJsonLd } from "../lib/json-ld";
-import { shareImageUrl } from "../lib/share-image";
+import { shareImageUrl, sharePageUrl } from "../lib/share-image";
 import { SITE_NAME } from "../lib/site";
 import { whatsappHref, type WhatsAppContext } from "../lib/whatsapp";
 import "../styles/global.css";
@@ -57,6 +57,12 @@ const imageUrl = shareImageUrl(image, {
   prerendered: Astro.isPrerendered,
 });
 const isDefaultImage = image === DEFAULT_IMAGE;
+// og:url from the same host, so link previews match the shared address.
+const shareUrl = sharePageUrl(Astro.url.pathname, {
+  site,
+  origin: Astro.url.origin,
+  prerendered: Astro.isPrerendered,
+});
 ---
 
 <!doctype html>
@@ -76,7 +82,7 @@ const isDefaultImage = image === DEFAULT_IMAGE;
     <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    <meta property="og:url" content={shareUrl} />
     <meta property="og:image" content={imageUrl} />
     <meta property="og:image:alt" content={imageAlt} />
     {isDefaultImage && (
