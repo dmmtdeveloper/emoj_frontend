@@ -45,6 +45,52 @@
     scroll-padding-top: calc(var(--header-h) + 16px);
   }
 
+  /*
+   * Scrollbars in the brand: a thin rounded thumb from the theme's strong
+   * border on a clear track. `scrollbar-color` inherits,
+   * so it is set once on html; `scrollbar-width` does not, so it goes on
+   * every element (and on the select's list, a pseudo-element). Where the
+   * standard properties are missing (older Safari), the WebKit
+   * pseudo-elements draw the same thing. Spots that hide their scrollbar on
+   * purpose (the project rail) keep doing it: component styles win.
+   */
+  html {
+    --scrollbar-thumb: var(--border-strong);
+    --scrollbar-thumb-hover: var(--ink-muted);
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  *,
+  ::before,
+  ::after {
+    scrollbar-width: thin;
+  }
+
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: 3px solid transparent;
+      border-radius: 999px;
+      background: var(--scrollbar-thumb) padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--scrollbar-thumb-hover);
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+  }
+
   /* Lock page scroll while a modal dialog (mobile menu) is open. */
   html:has(dialog[open]) {
     overflow: hidden;
@@ -274,10 +320,14 @@
       padding: 6px;
       max-height: min(20rem, 60vh);
       border: 1px solid var(--border);
-      border-radius: var(--radius-md);
+      /* Rounded on the left only (the brand's signature shape), so a long
+         list's scrollbar on the right is not clipped by the corners. */
+      border-radius: var(--radius-md) 0 0 var(--radius-md);
       background-color: var(--surface-raised);
       color: var(--ink);
       box-shadow: var(--shadow-md);
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
       opacity: 0;
       translate: 0 -4px;
       transition:
