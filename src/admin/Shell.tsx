@@ -46,7 +46,7 @@ import { LOGIN_PATH } from "../lib/admin/redirect";
 import { adminApi } from "./api";
 import { useApp } from "./app-context";
 import { useUser } from "./session";
-import { Button, ButtonLink, cx, Dialog, Isotype, Notice } from "./ui";
+import { BrandLockup, Button, ButtonLink, cx, Dialog, Notice } from "./ui";
 
 const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -128,25 +128,33 @@ function NavList({
   );
 }
 
+/** Tagline under the lockup (the one in the official tagline files). */
+const TAGLINE = "acercamos la ingeniería";
+
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <a
       href="/admin"
       className={cx(
-        "flex min-h-11 items-center gap-3 rounded-md px-3 text-ink-inverse no-underline hover:text-ink-inverse",
-        collapsed && "justify-center px-0",
+        "admin-brand flex min-w-0 flex-col gap-1 rounded-md text-ink-inverse no-underline hover:text-ink-inverse",
+        collapsed ? "items-center px-0 py-1" : "px-3 py-1",
       )}
     >
-      <Isotype
-        className={cx("h-auto shrink-0", collapsed ? "w-10" : "w-[68px]")}
+      <BrandLockup
+        part="mark"
+        className={cx("h-auto shrink-0", collapsed ? "w-10" : "w-20")}
       />
+      {!collapsed && (
+        <BrandLockup part="words" className="mt-1 h-auto w-full max-w-40" />
+      )}
       <span
         className={cx(
-          "text-lg leading-6 font-semibold",
+          "text-xs leading-4 font-medium tracking-[0.02em] text-ink-inverse/75",
           collapsed && "sr-only",
         )}
       >
-        Panel <span className="sr-only">de administración de </span>EMOJ
+        <span className="sr-only">Panel de administración · </span>
+        {TAGLINE}
       </span>
     </a>
   );
@@ -272,7 +280,7 @@ function FlashNotice() {
   const { flash } = useApp();
   if (!flash) return null;
   return (
-    <div className="mx-auto mb-6 max-w-6xl">
+    <div className="mb-6">
       <Notice tone="success">{flash}</Notice>
     </div>
   );
@@ -334,30 +342,35 @@ export function Shell({
           collapsed ? "w-[72px]" : "w-64",
         )}
       >
-        <div className="pt-2">
+        {/* Brand, with the collapse switch at the top: beside the lockup
+            when open, under the mark when folded. */}
+        <div
+          className={cx(
+            "flex gap-1 pt-2",
+            collapsed ? "flex-col items-center" : "items-start justify-between",
+          )}
+        >
           <Brand collapsed={collapsed} />
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Mostrar menú" : "Contraer menú"}
+            className="grid size-10 shrink-0 place-items-center rounded-md text-ink-inverse/80 hover:bg-ink-inverse/10 hover:text-ink-inverse"
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden="true" />
+            )}
+            <span className="sr-only">
+              {collapsed ? "Mostrar menú" : "Contraer menú"}
+            </span>
+          </button>
         </div>
         <nav aria-label="Secciones del panel" className="flex-1">
           <NavList current={current} collapsed={collapsed} />
         </nav>
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          aria-expanded={!collapsed}
-          className={cx(
-            "flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium text-ink-inverse/80 hover:bg-ink-inverse/10 hover:text-ink-inverse",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          {collapsed ? (
-            <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden="true" />
-          ) : (
-            <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden="true" />
-          )}
-          <span className={cx(collapsed && "sr-only")}>
-            {collapsed ? "Mostrar menú" : "Contraer menú"}
-          </span>
-        </button>
       </aside>
 
       {/* Mobile drawer */}
