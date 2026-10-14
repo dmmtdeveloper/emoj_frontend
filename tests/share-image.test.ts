@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shareImageUrl } from "../src/lib/share-image";
+import { sharePageUrl, shareImageUrl } from "../src/lib/share-image";
 
 const site = new URL("https://emoj.cl");
 
@@ -52,5 +52,27 @@ describe("shareImageUrl", () => {
         prerendered: false,
       }),
     ).toBe("https://emoj.cl/og-default.jpg");
+  });
+});
+
+describe("sharePageUrl", () => {
+  it("names the host that served the page, so og:url matches the shared link", () => {
+    expect(
+      sharePageUrl("/proyectos", {
+        site,
+        origin: "https://web-production-d68b2.up.railway.app",
+        prerendered: false,
+      }),
+    ).toBe("https://web-production-d68b2.up.railway.app/proyectos");
+  });
+
+  it("keeps the site for pages built ahead of time", () => {
+    expect(
+      sharePageUrl("/nosotros", {
+        site,
+        origin: "https://web-production-d68b2.up.railway.app",
+        prerendered: true,
+      }),
+    ).toBe("https://emoj.cl/nosotros");
   });
 });

@@ -20,3 +20,16 @@ export function shareImageUrl(
     !prerendered && /^https?:\/\//.test(origin) ? origin : site.origin;
   return new URL(image, base).href;
 }
+
+/**
+ * The page address for og:url, from the same host as the share image.
+ * WhatsApp falls back to its small preview when og:url names another site
+ * than the shared link (before launch: emoj.cl, still the old WordPress).
+ * The canonical link keeps the site; after launch both are the same.
+ */
+export function sharePageUrl(
+  pathname: string,
+  options: { site: URL; origin: string; prerendered: boolean },
+): string {
+  return shareImageUrl(pathname, options);
+}
