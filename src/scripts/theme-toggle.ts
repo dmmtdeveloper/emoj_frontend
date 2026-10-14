@@ -13,7 +13,6 @@ import {
 } from "../lib/theme";
 
 const root = document.documentElement;
-const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 const THEME_COLORS: Record<Theme, string> = {
   light: "#FFF8F0",
   dark: "#170828",
@@ -28,10 +27,7 @@ function readStored(): Theme | null {
 }
 
 function current(): Theme {
-  return effectiveTheme(
-    storedTheme(root.dataset.theme ?? null),
-    darkQuery.matches,
-  );
+  return effectiveTheme(storedTheme(root.dataset.theme ?? null));
 }
 
 function sync(): void {
@@ -39,11 +35,9 @@ function sync(): void {
   for (const button of document.querySelectorAll("[data-theme-toggle]")) {
     button.setAttribute("aria-pressed", String(dark));
   }
-  // The browser bar follows an explicit choice too.
-  if (root.dataset.theme) {
-    for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
-      meta.setAttribute("content", THEME_COLORS[current()]);
-    }
+  // The browser bar follows the theme, not the device.
+  for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+    meta.setAttribute("content", THEME_COLORS[current()]);
   }
 }
 
@@ -60,7 +54,6 @@ function apply(theme: Theme): void {
 const stored = readStored();
 if (stored && root.dataset.theme !== stored) root.dataset.theme = stored;
 sync();
-darkQuery.addEventListener("change", sync);
 
 for (const button of document.querySelectorAll("[data-theme-toggle]")) {
   button.addEventListener("click", () => {

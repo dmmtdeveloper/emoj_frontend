@@ -1,11 +1,11 @@
-// Applies the visitor's chosen theme before the page paints, so a dark
-// choice never flashes light (src/lib/theme.ts). Loaded as a blocking
-// external script: the CSP forbids inline scripts.
+// Applies the theme before the page paints (src/lib/theme.ts): the visitor's
+// choice if they made one, otherwise light, whatever the device prefers.
+// Loaded as a blocking external script: the CSP forbids inline scripts.
+let theme = "light";
 try {
-  const theme = localStorage.getItem("emoj-theme");
-  if (theme === "light" || theme === "dark") {
-    document.documentElement.dataset.theme = theme;
-  }
+  const stored = localStorage.getItem("emoj-theme");
+  theme = stored === "dark" ? "dark" : "light";
 } catch {
-  // Storage blocked: the site follows the device.
+  // Storage blocked: light.
 }
+document.documentElement.dataset.theme = theme;

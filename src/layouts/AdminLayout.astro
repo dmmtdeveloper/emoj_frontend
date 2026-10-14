@@ -22,6 +22,8 @@ const { title } = Astro.props;
     <meta name="referrer" content="same-origin" />
     <title>{title} | Panel EMOJ</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {/* The chosen theme (light by default), before paint (src/lib/theme.ts). */}
+    <script is:inline src="/theme.js"></script>
   </head>
   <body class="min-h-dvh bg-surface-sunken text-ink">
     <slot />
