@@ -16,8 +16,8 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Data font: Space Grotesk 400/500/600 (`font-data`), only for figures and data labels (hero facts, project sheets, numbers); never for headings, body copy or buttons.
 - Signature shape: `rounded-l-signature` (50px on the left corners only).
 - Icons: `@lucide/astro` in the site; `lucide-react` only inside the admin island.
-- Tagline: "Humanizamos la ingeniería".
-- Logos: the official files are in `design/brand/oficial/` (see its README). Build marks from their geometry, never redraw them; fine stroke (`recorte`) for large sizes, `bold` for small ones. The `vertical-tagline-*` files carry an outdated tagline: do not use them. Brand pattern tile: `public/brand/patron.svg` (`.brand-pattern`).
+- Tagline: "Acercamos la ingeniería" (the one in the official `vertical-tagline-*` files).
+- Logos: the official files are in `design/brand/oficial/` (see its README). Build marks from their geometry, never redraw them; fine stroke (`recorte`) for large sizes, `bold` for small ones. The `vertical-tagline-*` files carry the tagline and may be used. Brand pattern tile: `public/brand/patron.svg` (`.brand-pattern`).
 
 ## Code rules
 

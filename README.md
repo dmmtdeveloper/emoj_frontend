@@ -1,6 +1,6 @@
 # emoj_frontend
 
-Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean civil engineering firm. Tagline: _Humanizamos la ingeniería_.
+Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean civil engineering firm. Tagline: _Acercamos la ingeniería_.
 
 The site is built with Astro and deployed on Vercel: most pages are static, and the pages that show projects and news are rendered on demand and cached, so a change made in the admin panel is on the site in seconds. Content comes from a separate Go API, [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
 
