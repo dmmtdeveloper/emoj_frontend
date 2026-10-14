@@ -3,8 +3,8 @@
  * safe). Everything here is optional: the HTML ships final states and CSS
  * handles motion where scroll-driven animations exist.
  *
- * - Header: IntersectionObserver fallback for the transparent-over-hero
- *   header when `animation-timeline: scroll()` is unsupported.
+ * - Header: over the home hero, `--header-solid` follows the scroll
+ *   (transparent at the top, solid after 140px).
  * - Reveal: IntersectionObserver fallback for `[data-reveal]`.
  * - Count-up: `[data-count]` numbers count from 0 when they scroll in.
  * - Draw on view: `[data-draw-on-view]` (footer logo) draws once when it
@@ -19,7 +19,7 @@ import {
   type CountSpec,
 } from "../lib/motion/count-up";
 import { drawOnViewMode, initDrawOnView } from "../lib/motion/draw-on-view";
-import { headerMode, isHeaderSolid } from "../lib/motion/header-state";
+import { headerMode, headerSolidAt } from "../lib/motion/header-state";
 import { initRevealFallback, revealMode } from "../lib/motion/reveal";
 import { signatureFramePath } from "../lib/motion/signature-frame";
 
@@ -34,19 +34,35 @@ const supports = (rule: string): boolean =>
 
 function initHeader(): void {
   const header = document.querySelector<HTMLElement>("[data-site-header]");
-  const sentinel = document.querySelector<HTMLElement>(
-    "[data-header-sentinel]",
+  if (!header) return;
+  const mode = headerMode({ hasOverlay: header.hasAttribute("data-overlay") });
+  if (mode !== "scroll") return;
+  // A page can raise where the bar starts to turn solid (taller hero).
+  const start =
+    parseFloat(
+      getComputedStyle(header).getPropertyValue("--header-solid-start"),
+    ) || 0;
+  let queued = false;
+  const update = () => {
+    queued = false;
+    header.style.setProperty(
+      "--header-solid",
+      headerSolidAt(window.scrollY, start).toFixed(3),
+    );
+  };
+  header.setAttribute("data-header-js", "");
+  update();
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(update);
+    },
+    { passive: true },
   );
-  if (!header || !sentinel) return;
-  const mode = headerMode({
-    hasOverlay: header.hasAttribute("data-overlay"),
-    supportsScrollTimeline: supports("animation-timeline: scroll()"),
-    hasIntersectionObserver,
-  });
-  if (mode !== "observer") return;
-  new IntersectionObserver(([entry]) => {
-    if (entry) header.dataset["solid"] = String(isHeaderSolid(entry));
-  }).observe(sentinel);
+  // Restored scroll positions (back/forward cache, reload) land after load.
+  window.addEventListener("pageshow", update);
 }
 
 function initReveal(): void {
