@@ -14,8 +14,9 @@ import {
   Phone,
   Plus,
 } from "lucide-react";
-import { useState, type SyntheticEvent } from "react";
-import type { ContactMessage } from "../lib/admin/api";
+import { useState, type ReactNode, type SyntheticEvent } from "react";
+import type { AdminNews, AdminProject, ContactMessage } from "../lib/admin/api";
+import { mergeRecent, relativeTime } from "../lib/admin/dashboard";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
@@ -32,29 +33,48 @@ import {
 } from "./common";
 import { useUser } from "./session";
 import { DashboardSkeleton, MessagesSkeleton } from "./skeletons";
-import { Button, ButtonLink, Card, Field, Notice } from "./ui";
+import { editNewsHref } from "./news";
+import { editProjectHref } from "./projects";
+import {
+  Button,
+  ButtonLink,
+  Card,
+  cx,
+  FadeImage,
+  Field,
+  Notice,
+  StatusBadge,
+} from "./ui";
 
 /* ------------------------------------------------------------------ */
 /* Resumen                                                             */
 /* ------------------------------------------------------------------ */
 
-/** Editors do not see contact messages, so theirs skips that request. */
-function useCounts(withMessages: boolean) {
+/**
+ * Counts per status, the most recently edited projects and news, and (for
+ * admins) the latest contact messages. Editors do not see messages, so
+ * theirs skips that request.
+ */
+function useDashboard(withMessages: boolean) {
   return useQuery({
-    queryKey: ["dashboard-counts", withMessages],
+    queryKey: ["dashboard", withMessages],
     queryFn: async () => {
       const [
         projectsDraft,
         projectsPublished,
         newsDraft,
         newsPublished,
+        recentProjects,
+        recentNews,
         messages,
       ] = await Promise.all([
         adminApi.listProjects({ status: "draft", pageSize: 1 }),
         adminApi.listProjects({ status: "published", pageSize: 1 }),
         adminApi.listNews({ status: "draft", pageSize: 1 }),
         adminApi.listNews({ status: "published", pageSize: 1 }),
-        withMessages ? adminApi.listMessages({ pageSize: 5 }) : null,
+        adminApi.listProjects({ pageSize: RECENT_LIMIT }),
+        adminApi.listNews({ pageSize: RECENT_LIMIT }),
+        withMessages ? adminApi.listMessages({ pageSize: 4 }) : null,
       ]);
       return {
         projects: {
@@ -65,154 +85,348 @@ function useCounts(withMessages: boolean) {
           draft: unwrap(newsDraft).total,
           published: unwrap(newsPublished).total,
         },
+        recent: mergeRecent(
+          unwrap(recentProjects).items,
+          unwrap(recentNews).items,
+          RECENT_LIMIT,
+        ),
         messages: messages ? unwrap(messages) : null,
       };
     },
   });
 }
 
-function StatCard({
+const RECENT_LIMIT = 6;
+
+const todayFormat = new Intl.DateTimeFormat("es-CL", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "America/Santiago",
+});
+
+const iconProps = { size: 18, strokeWidth: 1.75, "aria-hidden": true } as const;
+
+/** One figure of the summary strip; the whole tile links to its section. */
+function Stat({
+  label,
+  value,
+  href,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  value: number;
+  href: string;
+  icon: typeof FolderKanban;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="group flex flex-col gap-3 p-5 text-ink no-underline transition-colors hover:bg-surface-sunken hover:text-ink md:p-6"
+    >
+      <span className="flex items-center gap-2 text-sm font-semibold text-ink-muted">
+        <Icon {...iconProps} />
+        {label}
+        <ArrowRight
+          {...iconProps}
+          size={16}
+          className="ml-auto opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        />
+      </span>
+      <span className="font-data text-[40px] leading-10 font-semibold tracking-[-0.03em] tabular-nums">
+        {value}
+      </span>
+      <span className="text-sm leading-5 text-ink-muted">{children}</span>
+    </a>
+  );
+}
+
+/** Small state chip: calm sage when all is done, brand outline when not. */
+function Chip({
+  tone,
+  children,
+}: {
+  tone: "ok" | "todo";
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs leading-5 font-semibold",
+        tone === "ok"
+          ? "bg-accent text-on-accent"
+          : "border border-brand text-brand",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SectionHead({
   title,
   href,
-  newHref,
-  newLabel,
-  icon: Icon,
-  published,
-  draft,
+  linkLabel,
 }: {
   title: string;
   href: string;
-  /** "Nuevo …" quick action, once that editor exists. */
-  newHref?: string;
-  newLabel?: string;
-  icon: typeof FolderKanban;
-  published: number;
-  draft: number;
+  linkLabel: string;
 }) {
   return (
-    <Card className="flex flex-col gap-5">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-md bg-surface-sunken text-ink">
-          <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
-        </span>
-        <h2 className="text-lg leading-6 font-semibold text-ink">{title}</h2>
-      </div>
-      <dl className="grid grid-cols-2 gap-4">
-        <div>
-          <dt className="text-sm text-ink-muted">Publicados</dt>
-          <dd className="text-[32px] leading-10 font-semibold text-ink tabular-nums">
-            {published}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-sm text-ink-muted">Borradores</dt>
-          <dd className="text-[32px] leading-10 font-semibold text-ink tabular-nums">
-            {draft}
-          </dd>
-        </div>
-      </dl>
-      <div className="mt-auto flex flex-wrap gap-2">
-        {newHref && (
-          <ButtonLink href={newHref}>
-            <Plus size={18} strokeWidth={1.75} aria-hidden="true" />
-            {newLabel}
-          </ButtonLink>
-        )}
-        <ButtonLink href={href} variant="secondary">
-          Ver {title.toLowerCase()}
-          <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
-        </ButtonLink>
-      </div>
+    <div className="flex items-center justify-between gap-3 px-5 pt-5 md:px-6 md:pt-6">
+      <h2 className="text-lg leading-6 font-semibold text-ink">{title}</h2>
+      <a
+        href={href}
+        className="inline-flex items-center gap-1 text-sm font-semibold text-ink no-underline hover:text-brand"
+      >
+        {linkLabel}
+        <ArrowRight {...iconProps} size={16} />
+      </a>
+    </div>
+  );
+}
+
+type RecentItem =
+  { kind: "project"; item: AdminProject } | { kind: "news"; item: AdminNews };
+
+function RecentActivity({ recent }: { recent: RecentItem[] }) {
+  return (
+    <Card className="flex flex-col p-0! md:p-0!">
+      <SectionHead
+        title="Actividad reciente"
+        href="/admin/proyectos"
+        linkLabel="Ver proyectos"
+      />
+      {recent.length === 0 ? (
+        <p className="px-5 pt-3 pb-6 text-ink-muted md:px-6">
+          Todavía no hay proyectos ni noticias. Crea el primero con los botones
+          de arriba.
+        </p>
+      ) : (
+        <ul className="mt-2 flex flex-col pb-2">
+          {recent.map(({ kind, item }) => (
+            <li key={`${kind}-${item.id}`}>
+              <a
+                href={
+                  kind === "project"
+                    ? editProjectHref(item.id)
+                    : editNewsHref(item.id)
+                }
+                className="flex items-center gap-4 px-5 py-3 text-ink no-underline transition-colors hover:bg-surface-sunken hover:text-ink md:px-6"
+              >
+                {item.cover?.url ? (
+                  <FadeImage
+                    src={item.cover.url}
+                    alt=""
+                    width={item.cover.width}
+                    height={item.cover.height}
+                    className="hidden aspect-[4/3] w-14 shrink-0 rounded-sm object-cover sm:block"
+                  />
+                ) : (
+                  <span className="hidden aspect-[4/3] w-14 shrink-0 place-items-center rounded-sm bg-surface-sunken text-ink-muted sm:grid">
+                    {kind === "project" ? (
+                      <FolderKanban {...iconProps} />
+                    ) : (
+                      <FileText {...iconProps} />
+                    )}
+                  </span>
+                )}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="line-clamp-2 font-semibold sm:truncate">
+                    {item.title || "Sin título"}
+                  </span>
+                  <span className="text-sm text-ink-muted">
+                    {kind === "project" ? "Proyecto" : "Noticia"} · editado{" "}
+                    {relativeTime(item.updatedAt)}
+                  </span>
+                </span>
+                <StatusBadge status={item.status} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function LatestMessages({
+  messages,
+}: {
+  messages: NonNullable<ReturnType<typeof useDashboard>["data"]>["messages"];
+}) {
+  if (!messages) return null;
+  return (
+    <Card className="flex flex-col p-0! md:p-0!">
+      <SectionHead
+        title="Últimos mensajes"
+        href="/admin/mensajes"
+        linkLabel="Ver todos"
+      />
+      {messages.items.length === 0 ? (
+        <p className="px-5 pt-3 pb-6 text-ink-muted md:px-6">
+          Todavía no llegan consultas por el formulario.
+        </p>
+      ) : (
+        <ul className="mt-2 flex flex-col pb-2">
+          {messages.items.map((m) => (
+            <li key={m.id}>
+              <a
+                href="/admin/mensajes"
+                className="flex gap-3 px-5 py-3 text-ink no-underline transition-colors hover:bg-surface-sunken hover:text-ink md:px-6"
+              >
+                <span
+                  aria-hidden="true"
+                  className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-sm font-semibold text-ink"
+                >
+                  {(m.name.trim()[0] ?? "?").toUpperCase()}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="truncate font-semibold">
+                      {m.name}
+                      {m.company && (
+                        <span className="font-medium text-ink-muted">
+                          {" "}
+                          · {m.company}
+                        </span>
+                      )}
+                    </span>
+                    <time
+                      dateTime={m.createdAt}
+                      title={formatDate(m.createdAt)}
+                      className="shrink-0 text-xs text-ink-muted"
+                    >
+                      {relativeTime(m.createdAt)}
+                    </time>
+                  </span>
+                  <span className="line-clamp-2 text-sm leading-5 text-ink-muted">
+                    {m.message}
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
   );
 }
 
 export function DashboardPage() {
   const user = useUser();
-  const counts = useCounts(user.role === "admin");
+  const isAdmin = user.role === "admin";
+  const dashboard = useDashboard(isAdmin);
   const firstName = (user.name || "").split(/\s+/)[0];
+  const data = dashboard.data;
+  const drafts = data ? data.projects.draft + data.news.draft : 0;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <p className="text-lg leading-7 text-ink">
-        Hola{firstName ? `, ${firstName}` : ""}. Esto es lo que hay en el sitio
-        hoy.
-      </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-ink-muted first-letter:uppercase">
+            {todayFormat.format(new Date())}
+          </p>
+          <h2 className="text-[28px] leading-9 font-semibold tracking-[-0.01em] text-ink">
+            Hola{firstName ? `, ${firstName}` : ""}
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink href="/admin/proyectos/nuevo">
+            <Plus {...iconProps} />
+            Nuevo proyecto
+          </ButtonLink>
+          <ButtonLink href="/admin/noticias/nueva" variant="secondary">
+            <Plus {...iconProps} />
+            Nueva noticia
+          </ButtonLink>
+        </div>
+      </header>
 
-      {counts.error && (
-        <ErrorNotice error={counts.error} retry={() => void counts.refetch()} />
+      {dashboard.error && (
+        <ErrorNotice
+          error={dashboard.error}
+          retry={() => void dashboard.refetch()}
+        />
       )}
 
-      {counts.isPending ? (
-        <DashboardSkeleton />
-      ) : counts.data ? (
+      {dashboard.isPending ? (
+        <DashboardSkeleton withMessages={isAdmin} />
+      ) : data ? (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
-            <StatCard
-              title="Proyectos"
-              href="/admin/proyectos"
-              newHref="/admin/proyectos/nuevo"
-              newLabel="Nuevo proyecto"
-              icon={FolderKanban}
-              published={counts.data.projects.published}
-              draft={counts.data.projects.draft}
-            />
-            <StatCard
-              title="Noticias"
-              href="/admin/noticias"
-              newHref="/admin/noticias/nueva"
-              newLabel="Nueva noticia"
-              icon={FileText}
-              published={counts.data.news.published}
-              draft={counts.data.news.draft}
-            />
-          </div>
-
-          {counts.data.messages && (
-            <Card>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg leading-6 font-semibold text-ink">
-                  Últimos mensajes
-                  <span className="ml-2 text-base font-medium text-ink-muted">
-                    ({counts.data.messages.total} en total)
-                  </span>
-                </h2>
-                <ButtonLink
-                  href="/admin/mensajes"
-                  variant="ghost"
-                  className="-mx-5 sm:mx-0"
-                >
-                  Ver todos
-                  <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
-                </ButtonLink>
-              </div>
-              {counts.data.messages.items.length === 0 ? (
-                <p className="mt-4 text-ink-muted">
-                  Todavía no llegan consultas por el formulario.
-                </p>
-              ) : (
-                <ul className="mt-4 divide-y divide-border">
-                  {counts.data.messages.items.map((m) => (
-                    <li
-                      key={m.id}
-                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-4"
-                    >
-                      <span className="font-semibold text-ink">{m.name}</span>
-                      <span className="min-w-0 flex-1 truncate text-ink-muted">
-                        {m.message}
-                      </span>
-                      <time
-                        dateTime={m.createdAt}
-                        className="shrink-0 text-sm text-ink-muted"
-                      >
-                        {formatDate(m.createdAt)}
-                      </time>
-                    </li>
-                  ))}
-                </ul>
+          <Card className="overflow-hidden p-0! md:p-0!">
+            <h2 className="sr-only">El sitio en cifras</h2>
+            <div
+              className={cx(
+                "grid grid-cols-2 divide-border lg:divide-x max-lg:[&>*:nth-child(-n+2)]:border-b max-lg:[&>*:nth-child(odd)]:border-r",
+                isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3",
               )}
-            </Card>
-          )}
+            >
+              <Stat
+                label="Proyectos"
+                value={data.projects.published}
+                href="/admin/proyectos"
+                icon={FolderKanban}
+              >
+                publicados en el sitio
+              </Stat>
+              <Stat
+                label="Noticias"
+                value={data.news.published}
+                href="/admin/noticias"
+                icon={FileText}
+              >
+                publicadas en el sitio
+              </Stat>
+              <Stat
+                label="Borradores"
+                value={drafts}
+                href={
+                  data.projects.draft > 0 || data.news.draft === 0
+                    ? "/admin/proyectos"
+                    : "/admin/noticias"
+                }
+                icon={Pencil}
+              >
+                {drafts === 0 ? (
+                  <Chip tone="ok">Todo publicado</Chip>
+                ) : (
+                  <Chip tone="todo">Por terminar</Chip>
+                )}
+              </Stat>
+              {data.messages && (
+                <Stat
+                  label="Mensajes"
+                  value={data.messages.total}
+                  href="/admin/mensajes"
+                  icon={Mail}
+                >
+                  {data.messages.items[0]
+                    ? `el último ${relativeTime(data.messages.items[0].createdAt)}`
+                    : "sin consultas aún"}
+                </Stat>
+              )}
+            </div>
+          </Card>
+
+          <div
+            className={cx(
+              "grid items-start gap-6",
+              data.messages && "lg:grid-cols-5",
+            )}
+          >
+            <div className={cx("min-w-0", data.messages && "lg:col-span-3")}>
+              <RecentActivity recent={data.recent} />
+            </div>
+            {data.messages && (
+              <div className="min-w-0 lg:col-span-2">
+                <LatestMessages messages={data.messages} />
+              </div>
+            )}
+          </div>
         </>
       ) : null}
     </div>
