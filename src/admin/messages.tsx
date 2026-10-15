@@ -48,22 +48,36 @@ function idFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get("id");
 }
 
+/**
+ * Initials in a circle. The open message's avatar turns plum; its colors
+ * replace the default pair instead of joining it, because two utilities
+ * for the same property on one element resolve by stylesheet order, not
+ * by class order (that left cream initials on a cream circle).
+ */
+const AVATAR_TONE = {
+  plain: "bg-surface-sunken text-ink",
+  selected: "bg-surface-inverse text-ink-inverse",
+  // lg: utilities live in a later media query, so they win from 1024 px.
+  selectedOnDesktop:
+    "bg-surface-sunken text-ink lg:bg-surface-inverse lg:text-ink-inverse",
+} as const;
+
 function Avatar({
   name,
   size = "md",
-  className,
+  tone = "plain",
 }: {
   name: string;
   size?: "md" | "lg";
-  className?: string | undefined;
+  tone?: keyof typeof AVATAR_TONE;
 }) {
   return (
     <span
       aria-hidden="true"
       className={cx(
-        "grid shrink-0 place-items-center rounded-full bg-surface-sunken font-semibold text-ink transition-colors",
+        "grid shrink-0 place-items-center rounded-full font-semibold transition-colors",
+        AVATAR_TONE[tone],
         size === "md" ? "size-10 text-sm" : "size-12 text-base",
-        className,
       )}
     >
       {initials(name)}
@@ -77,8 +91,6 @@ const SELECTED_ROW =
 /** The same highlight, only where the reading pane is beside the list. */
 const SELECTED_ROW_DESKTOP =
   "lg:bg-surface-sunken lg:before:absolute lg:before:inset-y-3 lg:before:left-0 lg:before:w-1 lg:before:rounded-r-full lg:before:bg-brand";
-const SELECTED_AVATAR = "bg-surface-inverse text-ink-inverse";
-const SELECTED_AVATAR_DESKTOP = "lg:bg-surface-inverse lg:text-ink-inverse";
 
 function ListItem({
   message,
@@ -113,12 +125,12 @@ function ListItem({
       >
         <Avatar
           name={message.name}
-          className={
+          tone={
             selected === "open"
-              ? SELECTED_AVATAR
+              ? "selected"
               : selected === "default"
-                ? SELECTED_AVATAR_DESKTOP
-                : undefined
+                ? "selectedOnDesktop"
+                : "plain"
           }
         />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
