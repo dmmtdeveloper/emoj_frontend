@@ -21,13 +21,9 @@ import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
 import { canOpen } from "../lib/admin/users";
 import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
-import {
-  AccountPage,
-  ComingSoonPage,
-  DashboardPage,
-  MessagesPage,
-} from "./pages";
+import { AccountPage, DashboardPage, MessagesPage } from "./pages";
 import { HomeHeroEditor } from "./HomeHeroEditor";
+import { MediaLibraryPage } from "./media-library";
 import { NewsListPage } from "./news";
 import { ProjectEditor } from "./ProjectEditor";
 import { ProjectsPage } from "./projects";
@@ -150,7 +146,7 @@ function Content({
     case "news-edit":
       return <NewsEditor id={new URLSearchParams(search).get("id") ?? ""} />;
     case "media":
-      return <ComingSoonPage what="las fotos e imágenes" />;
+      return <MediaLibraryPage />;
     default:
       return null;
   }

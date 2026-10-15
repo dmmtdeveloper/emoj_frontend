@@ -185,10 +185,12 @@ describe("createAdminClient", () => {
     const client = createAdminClient({ baseUrl: "/api", fetch });
     await client.listMedia({ page: 2, pageSize: 24 });
     await client.updateMedia("m1", "Planta elevadora");
+    await client.deleteMedia("m1");
     const calls = fetch.mock.calls as unknown as [string, RequestInit][];
     expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
       "GET /api/v1/admin/media?page=2&pageSize=24",
       "PATCH /api/v1/admin/media/m1",
+      "DELETE /api/v1/admin/media/m1",
     ]);
     expect(JSON.parse(String(calls[1]?.[1].body))).toEqual({
       alt: "Planta elevadora",

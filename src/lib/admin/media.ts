@@ -81,3 +81,78 @@ export function withAddedIds(
 ): string[] {
   return [...ids, ...picked.filter((id) => !ids.includes(id))];
 }
+
+/** One place where an image appears, for the Medios page. */
+export interface MediaUse {
+  /** Title of the project or news item ("Sin título" when empty). */
+  label: string;
+  kind: "Proyecto" | "Noticia" | "Inicio";
+  /** What the image is there, in order: "portada", "galería"… */
+  roles: string[];
+  /** Editor where it can be changed. */
+  href: string;
+}
+
+interface UsesMedia {
+  id: string;
+  title: string;
+  coverMediaId: string | null;
+  gallery: readonly string[];
+  seo: { ogImageMediaId?: string | null };
+}
+
+/**
+ * Where each image is used: covers, galleries and share images of projects
+ * and news, and the photos of the home hero. Images used nowhere are not
+ * in the map. Deleting a used image clears those places (API rule), so the
+ * page warns before.
+ */
+export function mediaUsage({
+  projects,
+  news,
+  hero,
+}: {
+  projects: readonly UsesMedia[];
+  news: readonly UsesMedia[];
+  hero: { photos: readonly { mediaId: string }[] } | null;
+}): Map<string, MediaUse[]> {
+  const usage = new Map<string, MediaUse[]>();
+  const add = (id: string, use: Omit<MediaUse, "roles">, role: string) => {
+    const list = usage.get(id) ?? [];
+    const existing = list.find((u) => u.href === use.href);
+    if (existing) {
+      if (!existing.roles.includes(role)) existing.roles.push(role);
+    } else {
+      list.push({ ...use, roles: [role] });
+    }
+    usage.set(id, list);
+  };
+  const scan = (
+    items: readonly UsesMedia[],
+    kind: "Proyecto" | "Noticia",
+    path: string,
+  ) => {
+    for (const item of items) {
+      const use = {
+        label: item.title.trim() || "Sin título",
+        kind,
+        href: `/admin/${path}/editar?id=${encodeURIComponent(item.id)}`,
+      };
+      if (item.coverMediaId) add(item.coverMediaId, use, "portada");
+      for (const id of item.gallery) add(id, use, "galería");
+      if (item.seo.ogImageMediaId) {
+        add(item.seo.ogImageMediaId, use, "imagen para compartir");
+      }
+    }
+  };
+  scan(projects, "Proyecto", "proyectos");
+  scan(news, "Noticia", "noticias");
+  for (const photo of hero?.photos ?? []) {
+    add(
+      photo.mediaId,
+      { label: "Portada del sitio", kind: "Inicio", href: "/admin/portada" },
+      "foto",
+    );
+  }
+  return usage;
+}

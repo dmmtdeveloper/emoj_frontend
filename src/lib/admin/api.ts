@@ -112,6 +112,8 @@ export interface AdminClient {
     onProgress?: (fraction: number) => void,
   ): Promise<ApiResult<AdminMedia>>;
   updateMedia(id: string, alt: string): Promise<ApiResult<AdminMedia>>;
+  /** Deletes an image; covers using it are cleared and galleries drop it. */
+  deleteMedia(id: string): Promise<ApiResult<null>>;
   listMessages(query?: MessagesQuery): Promise<ApiResult<ContactMessagePage>>;
   /** Everything stored about one email address (right of access). */
   exportPersonData(email: string): Promise<ApiResult<PersonDataExport>>;
@@ -331,6 +333,7 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
     },
     updateMedia: (id, alt) =>
       request<AdminMedia>("PATCH", `/v1/admin/media/${seg(id)}`, { alt }),
+    deleteMedia: (id) => request<null>("DELETE", `/v1/admin/media/${seg(id)}`),
     listNews: (query) =>
       request<AdminNewsPage>("GET", `/v1/admin/news${queryString(query)}`),
     getNews: (id) => request<AdminNews>("GET", `/v1/admin/news/${seg(id)}`),

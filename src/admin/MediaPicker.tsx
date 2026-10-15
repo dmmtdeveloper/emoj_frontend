@@ -166,26 +166,25 @@ function UploadItem({
 
 let pendingSeq = 0;
 
-export function MediaPicker({
-  title,
-  purpose,
+/**
+ * Upload area: drag and drop or file chooser, then one card per file with
+ * its alternative text and progress. Uploaded images go into the library
+ * cache and are handed to `onUploaded`.
+ */
+export function MediaUploader({
   multiple,
-  selected,
-  onClose,
-  onConfirm,
+  hint,
+  onUploaded,
+  onBusyChange,
 }: {
-  title: string;
-  /** "cover" and "hero" warn about images too small for a large photo. */
-  purpose: "cover" | "gallery" | "og" | "hero";
   multiple: boolean;
-  /** Ids already chosen (kept selected in the grid). */
-  selected: readonly string[];
-  onClose: () => void;
-  onConfirm: (ids: string[]) => void;
+  /** Extra sentence after the accepted formats. */
+  hint?: string | undefined;
+  onUploaded: (media: AdminMedia) => void;
+  /** True while a file is uploading. */
+  onBusyChange?: ((busy: boolean) => void) | undefined;
 }) {
-  const library = useMediaLibrary();
   const queryClient = useQueryClient();
-  const [chosen, setChosen] = useState<string[]>(() => [...selected]);
   const [pending, setPending] = useState<Pending[]>([]);
   const [dropError, setDropError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -198,14 +197,10 @@ export function MediaPicker({
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
-  function toggle(id: string) {
-    setChosen((current) => {
-      if (!multiple) return current[0] === id ? [] : [id];
-      return current.includes(id)
-        ? current.filter((x) => x !== id)
-        : [...current, id];
-    });
-  }
+  const busy = pending.some((p) => p.progress !== null);
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
 
   function addFiles(files: FileList | File[]) {
     const list = [...files];
@@ -279,9 +274,7 @@ export function MediaPicker({
       ...(items ?? []),
     ]);
     remove(item.key);
-    setChosen((current) =>
-      multiple ? [...current, result.data.id] : [result.data.id],
-    );
+    onUploaded(result.data);
   }
 
   // Drag and drop on the upload area (the file chooser covers keyboards).
@@ -314,11 +307,106 @@ export function MediaPicker({
     };
   }, []);
 
+  return (
+    <div className="flex flex-col gap-4">
+      <div
+        ref={dropZone}
+        className={cx(
+          "flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors",
+          dragging ? "border-brand bg-surface-sunken" : "border-border-strong",
+        )}
+      >
+        <ImagePlus
+          size={28}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="text-ink-muted"
+        />
+        <p className="text-ink">
+          Arrastra {multiple ? "imágenes" : "una imagen"} aquí o{" "}
+          <label
+            htmlFor={inputId}
+            className="cursor-pointer font-semibold text-brand underline underline-offset-4"
+          >
+            elígela{multiple ? "s" : ""} en tu equipo
+          </label>
+        </p>
+        <p className="text-sm text-ink-muted">
+          JPG, PNG, WebP o AVIF de hasta 15 MB.{hint ? ` ${hint}` : ""}
+        </p>
+        <input
+          id={inputId}
+          type="file"
+          accept={ACCEPT_ATTR}
+          multiple={multiple}
+          className="sr-only"
+          onChange={(e) => {
+            if (e.target.files) addFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {dropError && <Notice tone="error">{dropError}</Notice>}
+
+      {pending.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {pending.map((item) => (
+            <UploadItem
+              key={item.key}
+              item={item}
+              onChange={(alt) => update(item.key, { alt, error: null })}
+              onUpload={() => void upload(item)}
+              onRemove={() => remove(item.key)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function MediaPicker({
+  title,
+  purpose,
+  multiple,
+  selected,
+  onClose,
+  onConfirm,
+}: {
+  title: string;
+  /** "cover" and "hero" warn about images too small for a large photo. */
+  purpose: "cover" | "gallery" | "og" | "hero";
+  multiple: boolean;
+  /** Ids already chosen (kept selected in the grid). */
+  selected: readonly string[];
+  onClose: () => void;
+  onConfirm: (ids: string[]) => void;
+}) {
+  const library = useMediaLibrary();
+  const [chosen, setChosen] = useState<string[]>(() => [...selected]);
+  const [uploading, setUploading] = useState(false);
+  const libraryId = useId();
+
+  function toggle(id: string) {
+    setChosen((current) => {
+      if (!multiple) return current[0] === id ? [] : [id];
+      return current.includes(id)
+        ? current.filter((x) => x !== id)
+        : [...current, id];
+    });
+  }
+
   const items = library.data ?? [];
-  const uploading = pending.some((p) => p.progress !== null);
   const confirmLabel = multiple
     ? `Agregar ${chosen.length === 1 ? "1 imagen" : `${chosen.length} imágenes`}`
     : "Usar esta imagen";
+  const hint =
+    purpose === "cover"
+      ? "Para la portada, idealmente de 1.600 px de ancho o más."
+      : purpose === "hero"
+        ? "Para el inicio, idealmente horizontales y de 1.600 px de ancho o más."
+        : undefined;
 
   return (
     <Dialog
@@ -345,69 +433,20 @@ export function MediaPicker({
       }
     >
       <div className="flex flex-col gap-6">
-        <div
-          ref={dropZone}
-          className={cx(
-            "flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors",
-            dragging
-              ? "border-brand bg-surface-sunken"
-              : "border-border-strong",
-          )}
-        >
-          <ImagePlus
-            size={28}
-            strokeWidth={1.5}
-            aria-hidden="true"
-            className="text-ink-muted"
-          />
-          <p className="text-ink">
-            Arrastra {multiple ? "imágenes" : "una imagen"} aquí o{" "}
-            <label
-              htmlFor={inputId}
-              className="cursor-pointer font-semibold text-brand underline underline-offset-4"
-            >
-              elígela{multiple ? "s" : ""} en tu equipo
-            </label>
-          </p>
-          <p className="text-sm text-ink-muted">
-            JPG, PNG, WebP o AVIF de hasta 15 MB.
-            {purpose === "cover" &&
-              " Para la portada, idealmente de 1.600 px de ancho o más."}
-            {purpose === "hero" &&
-              " Para el inicio, idealmente horizontales y de 1.600 px de ancho o más."}
-          </p>
-          <input
-            id={inputId}
-            type="file"
-            accept={ACCEPT_ATTR}
-            multiple={multiple}
-            className="sr-only"
-            onChange={(e) => {
-              if (e.target.files) addFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </div>
+        <MediaUploader
+          multiple={multiple}
+          hint={hint}
+          onBusyChange={setUploading}
+          onUploaded={(media) =>
+            setChosen((current) =>
+              multiple ? [...current, media.id] : [media.id],
+            )
+          }
+        />
 
-        {dropError && <Notice tone="error">{dropError}</Notice>}
-
-        {pending.length > 0 && (
-          <ul className="flex flex-col gap-3">
-            {pending.map((item) => (
-              <UploadItem
-                key={item.key}
-                item={item}
-                onChange={(alt) => update(item.key, { alt, error: null })}
-                onUpload={() => void upload(item)}
-                onRemove={() => remove(item.key)}
-              />
-            ))}
-          </ul>
-        )}
-
-        <section aria-labelledby={`${inputId}-library`}>
+        <section aria-labelledby={`${libraryId}-library`}>
           <h3
-            id={`${inputId}-library`}
+            id={`${libraryId}-library`}
             className="mb-3 text-base font-semibold text-ink"
           >
             Biblioteca
