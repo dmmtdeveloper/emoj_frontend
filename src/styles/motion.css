@@ -659,14 +659,17 @@
 }
 
 /*
- * Over the hero, `--header-solid` follows the scroll: transparent at the
- * top, solid after 140px. A CSS scroll-driven animation paints the first
- * frame; then src/scripts/motion.ts takes over (`data-header-js`), because
- * Chrome can leave that timeline inactive (a restored tab, for example) and
- * an inactive timeline drops the animation, leaving the bar solid over the
+ * Over the hero, the bar has two states: transparent at the top, solid once
+ * the page scrolls past 24px (HEADER_SOLID_AT), with a short fade between
+ * them. It never follows the scroll: a bar stopped half way (Chrome restores
+ * the scroll position on reload) left the quote button washed out. A CSS
+ * scroll-driven animation in one step paints the first frame; then
+ * src/scripts/motion.ts takes over (`data-header-js`), because Chrome can
+ * leave that timeline inactive (a restored tab, for example) and an
+ * inactive timeline drops the animation, leaving the bar solid over the
  * photo. Without either, the bar stays solid (default above).
- * `--header-solid-start` is the scroll offset where it starts to turn solid
- * (0 by default; a page can raise it if its hero is taller).
+ * `--header-solid-start` moves the threshold down (0 by default; a page can
+ * raise it if its hero is taller).
  */
 @keyframes header-solidify {
   from {
@@ -679,10 +682,16 @@
 
 @supports (animation-timeline: scroll()) {
   .site-header[data-overlay]:not([data-header-js]) {
-    animation: header-solidify linear both;
+    animation: header-solidify steps(1, end) both;
     animation-timeline: var(--timeline-page, scroll(root block));
     animation-range: var(--header-solid-start, 0px)
-      calc(var(--header-solid-start, 0px) + 140px);
+      calc(var(--header-solid-start, 0px) + 24px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-header[data-header-js] {
+    transition: --header-solid 220ms var(--ease-out);
   }
 }
 
