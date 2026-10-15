@@ -47,6 +47,8 @@ import {
   type EditorTab,
   type TabState,
 } from "../lib/admin/editor-tabs";
+import { checklistSummary } from "../lib/admin/checklist";
+import { relativeTime } from "../lib/admin/dashboard";
 import { charCount, type ChecklistItem } from "../lib/admin/project-form";
 import {
   searchPreview,
@@ -518,6 +520,19 @@ export function EditorHeader({
   onAskUnpublish: () => void;
 }) {
   const published = status === "published";
+  // The bar repeats the title only once the page heading scrolled away.
+  const headingRef = useRef<HTMLDivElement>(null);
+  const [headingVisible, setHeadingVisible] = useState(true);
+  useEffect(() => {
+    const el = headingRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeadingVisible(entry?.isIntersecting ?? true),
+      { rootMargin: "-128px 0px 0px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const actions = (
     <>
       {published && siteHref && (
@@ -583,7 +598,7 @@ export function EditorHeader({
   );
   return (
     <>
-      <div className="flex min-w-0 flex-col gap-2">
+      <div ref={headingRef} className="flex min-w-0 flex-col gap-2">
         <a
           href={listPath}
           className="inline-flex items-center gap-1.5 self-start text-sm font-semibold"
@@ -602,7 +617,13 @@ export function EditorHeader({
         </div>
         {item && (
           <p className="text-sm text-ink-muted">
-            Última edición: {formatDateTime(item.updatedAt)}
+            Editado{" "}
+            <time
+              dateTime={item.updatedAt}
+              title={formatDateTime(item.updatedAt)}
+            >
+              {relativeTime(item.updatedAt)}
+            </time>
             {item.publishedAt &&
               ` · ${publishedLabel} por primera vez el ${formatDateTime(item.publishedAt)}`}
           </p>
@@ -617,13 +638,26 @@ export function EditorHeader({
         className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-border bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:sticky lg:top-16 lg:bottom-auto lg:z-10 lg:-mx-8 lg:-mt-2 lg:border-t-0 lg:border-b lg:px-8 lg:py-3"
       >
         <p className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
-          <span className="truncate font-semibold text-ink">{title}</span>
+          {!headingVisible && (
+            <span className="admin-enter truncate font-semibold text-ink">
+              {title}
+            </span>
+          )}
           <span
             className={cx(
-              "shrink-0 text-sm",
+              "inline-flex shrink-0 items-center gap-1.5 text-sm",
               isDirty ? "font-medium text-ink" : "text-ink-muted",
             )}
           >
+            {(isDirty || item) && (
+              <span
+                aria-hidden="true"
+                className={cx(
+                  "size-2 rounded-full",
+                  isDirty ? "bg-brand" : "bg-accent",
+                )}
+              />
+            )}
             {isDirty ? "Cambios sin guardar" : item ? "Todo guardado" : ""}
           </span>
         </p>
@@ -647,6 +681,52 @@ export function BannerSlot({
   );
 }
 
+function ChecklistRow({
+  item,
+  onGoTo,
+}: {
+  item: ChecklistItem<string>;
+  onGoTo: ((field: string) => void) | undefined;
+}) {
+  const icon = item.done ? (
+    <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent text-on-accent">
+      <Check size={13} strokeWidth={2.5} aria-hidden="true" />
+    </span>
+  ) : (
+    <Circle
+      size={20}
+      strokeWidth={1.75}
+      aria-hidden="true"
+      className={cx(
+        "mt-0.5 shrink-0",
+        item.required ? "text-brand" : "text-ink-muted",
+      )}
+    />
+  );
+  return (
+    <li className="flex items-start gap-2.5">
+      {icon}
+      {!item.done && onGoTo ? (
+        <button
+          type="button"
+          onClick={() => onGoTo(item.field)}
+          className="text-left text-ink underline decoration-border-strong underline-offset-4 hover:decoration-current"
+        >
+          {item.label}
+          <span className="sr-only">: pendiente, ir al campo</span>
+        </button>
+      ) : (
+        <span className={cx(item.done ? "text-ink" : "text-ink-muted")}>
+          {item.label}
+          <span className="sr-only">
+            {item.done ? ": listo" : ": pendiente"}
+          </span>
+        </span>
+      )}
+    </li>
+  );
+}
+
 export function ChecklistCard({
   checklist,
   published,
@@ -660,61 +740,70 @@ export function ChecklistCard({
   /** Pending items become links to their field (opens its step). */
   onGoTo?: (field: string) => void;
 }) {
-  const missing = checklist.filter((i) => i.required && !i.done);
-  const n = missing.length;
+  const summary = checklistSummary(checklist, published);
+  const total = summary.required.length;
+  const percent = total
+    ? Math.round((summary.requiredDone / total) * 100)
+    : 100;
   return (
-    <aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
-      <Card className="flex flex-col gap-4">
-        <h3 className="text-lg leading-6 font-semibold text-ink">
-          {published ? "Estado" : "Para publicar"}
-        </h3>
-        <ul className="flex flex-col gap-2">
-          {checklist.map((item) => (
-            <li key={item.field} className="flex items-start gap-2.5">
-              {item.done ? (
-                <Check
-                  size={18}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                  className="mt-0.5 shrink-0 text-ink"
-                />
-              ) : (
-                <Circle
-                  size={18}
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                  className="mt-0.5 shrink-0 text-ink-muted"
-                />
+    <aside className="flex flex-col gap-4 lg:sticky lg:top-38 lg:self-start">
+      <Card className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-lg leading-6 font-semibold text-ink">
+              {published ? "Ficha del sitio" : "Para publicar"}
+            </h3>
+            <span className="font-data text-sm text-ink-muted tabular-nums">
+              {summary.requiredDone}/{total}
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Datos obligatorios completos"
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-valuenow={summary.requiredDone}
+            className="h-1.5 overflow-hidden rounded-full bg-surface-sunken"
+          >
+            <div
+              className={cx(
+                "h-full rounded-full transition-[width] duration-300",
+                summary.missing === 0 ? "bg-accent" : "bg-brand",
               )}
-              {!item.done && onGoTo ? (
-                <button
-                  type="button"
-                  onClick={() => onGoTo(item.field)}
-                  className="text-left text-ink-muted underline decoration-border-strong underline-offset-4 hover:text-ink hover:decoration-current"
-                >
-                  {item.label}
-                  <span className="sr-only">: pendiente, ir al campo</span>
-                  {item.required ? "" : " (recomendado)"}
-                </button>
-              ) : (
-                <span className={cx(item.done ? "text-ink" : "text-ink-muted")}>
-                  {item.label}
-                  <span className="sr-only">
-                    {item.done ? ": listo" : ": pendiente"}
-                  </span>
-                  {item.required ? "" : " (recomendado)"}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-        <p className="text-sm text-ink-muted">
-          {n === 0
-            ? published
-              ? "Publicado. Los cambios que guardes se ven en el sitio al momento."
-              : "Listo para publicar."
-            : `Falta${n === 1 ? "" : "n"} ${n} dato${n === 1 ? "" : "s"} obligatorio${n === 1 ? "" : "s"} para publicar.`}
-        </p>
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+          <p
+            className={cx(
+              "text-sm",
+              summary.missing === 0 ? "text-ink-muted" : "text-ink",
+            )}
+          >
+            {summary.message}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h4 className="text-xs font-medium tracking-[0.06em] text-ink-muted uppercase">
+            Obligatorio
+          </h4>
+          <ul className="flex flex-col gap-2">
+            {summary.required.map((item) => (
+              <ChecklistRow key={item.field} item={item} onGoTo={onGoTo} />
+            ))}
+          </ul>
+        </div>
+        {summary.recommended.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <h4 className="text-xs font-medium tracking-[0.06em] text-ink-muted uppercase">
+              Recomendado
+            </h4>
+            <ul className="flex flex-col gap-2">
+              {summary.recommended.map((item) => (
+                <ChecklistRow key={item.field} item={item} onGoTo={onGoTo} />
+              ))}
+            </ul>
+          </div>
+        )}
       </Card>
       {children}
     </aside>
