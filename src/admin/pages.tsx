@@ -1,37 +1,26 @@
 /**
- * Panel pages inside the shell: Resumen (dashboard), Mensajes (contact
- * inbox, read-only, admins only) and Cuenta.
+ * Panel pages inside the shell: Resumen (dashboard) and Cuenta. Mensajes
+ * lives in messages.tsx.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Clock,
   FileText,
   FolderKanban,
   Mail,
   Pencil,
-  Phone,
   Plus,
 } from "lucide-react";
 import { useState, type ReactNode, type SyntheticEvent } from "react";
-import type { AdminNews, AdminProject, ContactMessage } from "../lib/admin/api";
+import type { AdminNews, AdminProject } from "../lib/admin/api";
 import { mergeRecent, relativeTime } from "../lib/admin/dashboard";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
 import { adminApi } from "./api";
-import { PersonDataRequests } from "./privacy";
-import {
-  ErrorNotice,
-  formatDate as formatDay,
-  formatDateTime as formatDate,
-  pageFromUrl,
-  Pagination,
-  replaceParam,
-  unwrap,
-} from "./common";
+import { ErrorNotice, formatDateTime as formatDate, unwrap } from "./common";
 import { useUser } from "./session";
-import { DashboardSkeleton, MessagesSkeleton } from "./skeletons";
+import { DashboardSkeleton } from "./skeletons";
 import { editNewsHref } from "./news";
 import { editProjectHref } from "./projects";
 import {
@@ -273,7 +262,7 @@ function LatestMessages({
           {messages.items.map((m) => (
             <li key={m.id}>
               <a
-                href="/admin/mensajes"
+                href={`/admin/mensajes?id=${encodeURIComponent(m.id)}`}
                 className="flex gap-3 px-5 py-3 text-ink no-underline transition-colors hover:bg-surface-sunken hover:text-ink md:px-6"
               >
                 <span
@@ -428,143 +417,6 @@ export function DashboardPage() {
           </div>
         </>
       ) : null}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Mensajes                                                            */
-/* ------------------------------------------------------------------ */
-
-const PAGE_SIZE = 20;
-
-function MessageItem({
-  message,
-  serviceTitles,
-}: {
-  message: ContactMessage;
-  serviceTitles: Record<string, string>;
-}) {
-  const service = message.service ? serviceTitles[message.service] : undefined;
-  return (
-    <article className="flex flex-col gap-3 py-5">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="text-lg leading-6 font-semibold text-ink">
-          {message.name}
-          {message.company && (
-            <span className="font-medium text-ink-muted">
-              {" "}
-              · {message.company}
-            </span>
-          )}
-        </h3>
-        <time dateTime={message.createdAt} className="text-sm text-ink-muted">
-          {formatDate(message.createdAt)}
-        </time>
-      </header>
-      <p className="max-w-[70ch] text-base leading-7 whitespace-pre-line text-ink">
-        {message.message}
-      </p>
-      <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-        <li>
-          <a
-            href={`mailto:${message.email}`}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Mail size={16} strokeWidth={1.75} aria-hidden="true" />
-            {message.email}
-          </a>
-        </li>
-        {message.phone && (
-          <li>
-            <a
-              href={`tel:${message.phone.replace(/[^\d+]/g, "")}`}
-              className="inline-flex items-center gap-1.5"
-            >
-              <Phone size={16} strokeWidth={1.75} aria-hidden="true" />
-              {message.phone}
-            </a>
-          </li>
-        )}
-        {service && <li className="text-ink-muted">Servicio: {service}</li>}
-        {message.location && (
-          <li className="text-ink-muted">Ubicación: {message.location}</li>
-        )}
-        <li className="inline-flex items-center gap-1.5 text-ink-muted">
-          <Clock size={16} strokeWidth={1.75} aria-hidden="true" />
-          Se borra el{" "}
-          <time dateTime={message.deleteAfter}>
-            {formatDay(message.deleteAfter)}
-          </time>
-        </li>
-      </ul>
-    </article>
-  );
-}
-
-export function MessagesPage({
-  serviceTitles,
-}: {
-  serviceTitles: Record<string, string>;
-}) {
-  const [page, setPage] = useState(pageFromUrl);
-  const query = useQuery({
-    queryKey: ["messages", page],
-    queryFn: async () =>
-      unwrap(await adminApi.listMessages({ page, pageSize: PAGE_SIZE })),
-  });
-
-  function go(next: number) {
-    setPage(next);
-    replaceParam("page", String(next));
-    document.getElementById("contenido")?.focus();
-  }
-
-  const totalPages = query.data
-    ? Math.max(1, Math.ceil(query.data.total / PAGE_SIZE))
-    : 1;
-
-  return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <Notice tone="info">
-        Estos mensajes contienen datos personales. Úsalos solo para responder la
-        consulta y no los compartas fuera de EMOJ. Cada mensaje se borra solo al
-        cumplir 24 meses.
-      </Notice>
-      <PersonDataRequests />
-      {query.error && (
-        <ErrorNotice error={query.error} retry={() => void query.refetch()} />
-      )}
-      <Card>
-        {query.isPending ? (
-          <MessagesSkeleton />
-        ) : query.data && query.data.items.length === 0 ? (
-          <p className="text-ink-muted">
-            Todavía no llegan consultas por el formulario.
-          </p>
-        ) : query.data ? (
-          <>
-            <h2 className="sr-only">Mensajes recibidos</h2>
-            <div className="-my-5 divide-y divide-border">
-              {query.data.items.map((m) => (
-                <MessageItem
-                  key={m.id}
-                  message={m}
-                  serviceTitles={serviceTitles}
-                />
-              ))}
-            </div>
-          </>
-        ) : null}
-      </Card>
-      {query.data && (
-        <Pagination
-          label="Páginas de mensajes"
-          page={page}
-          totalPages={totalPages}
-          onChange={go}
-        />
-      )}
     </div>
   );
 }
