@@ -128,13 +128,19 @@ export function ListSkeleton({
   return (
     <Loading label={label} className="divide-y divide-border">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex items-center gap-4 py-4">
-          <Skeleton className="aspect-[4/3] w-20 shrink-0 rounded-sm" />
-          <div className="flex flex-1 flex-col gap-2">
+        <div key={i} className="flex items-center gap-4 py-3.5">
+          <Skeleton className="aspect-[4/3] w-16 shrink-0 rounded-sm sm:w-20" />
+          <div className="flex flex-1 flex-col gap-2 lg:flex-[2.2]">
             <Skeleton className="h-5 w-3/5" />
-            <Skeleton className="h-4 w-2/5" />
-            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-2/5 lg:hidden" />
           </div>
+          <div className="hidden flex-[1.3] flex-col gap-2 lg:flex">
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-4 w-2/5" />
+          </div>
+          <Skeleton className="hidden h-6 w-24 rounded-full lg:block" />
+          <Skeleton className="hidden h-4 w-20 lg:block" />
+          <span className="hidden w-11 lg:block" />
         </div>
       ))}
     </Loading>
