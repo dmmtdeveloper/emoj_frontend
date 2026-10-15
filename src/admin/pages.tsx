@@ -1,7 +1,6 @@
 /**
  * Panel pages inside the shell: Resumen (dashboard), Mensajes (contact
- * inbox, read-only, admins only), Cuenta, and the sections still under
- * construction.
+ * inbox, read-only, admins only) and Cuenta.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -733,26 +732,6 @@ export function AccountPage() {
               : "Cerrar sesión en todos los dispositivos"}
           </Button>
         </div>
-      </Card>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Secciones en construcción                                           */
-/* ------------------------------------------------------------------ */
-
-export function ComingSoonPage({ what }: { what: string }) {
-  return (
-    <div className="mx-auto max-w-3xl">
-      <Card className="flex flex-col gap-3">
-        <h2 className="text-lg leading-6 font-semibold text-ink">
-          Esta sección llega en la próxima etapa
-        </h2>
-        <p className="text-ink-muted">
-          Aquí vas a poder crear, editar y publicar {what}. Por ahora, el
-          contenido del sitio se carga desde el equipo técnico.
-        </p>
       </Card>
     </div>
   );

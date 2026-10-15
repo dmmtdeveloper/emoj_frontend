@@ -5,6 +5,7 @@ import {
   formatBytes,
   orderedIds,
   smallForCover,
+  mediaUsage,
   withAddedIds,
   uploadError,
 } from "../src/lib/admin/media";
@@ -70,5 +71,62 @@ describe("withAddedIds", () => {
       "d",
     ]);
     expect(withAddedIds([], [])).toEqual([]);
+  });
+});
+
+describe("mediaUsage", () => {
+  const project = {
+    id: "p1",
+    title: "Canal La Petaca",
+    coverMediaId: "m1",
+    gallery: ["m2", "m1"],
+    seo: { ogImageMediaId: "m3" },
+  };
+  const news = {
+    id: "n1",
+    title: "",
+    coverMediaId: null,
+    gallery: ["m2"],
+    seo: {},
+  };
+  const hero = { photos: [{ mediaId: "m2" }] };
+
+  it("lists every place an image appears, with its role and editor", () => {
+    const usage = mediaUsage({ projects: [project], news: [news], hero });
+    expect(usage.get("m1")).toEqual([
+      {
+        label: "Canal La Petaca",
+        kind: "Proyecto",
+        roles: ["portada", "galería"],
+        href: "/admin/proyectos/editar?id=p1",
+      },
+    ]);
+    expect(usage.get("m2")).toEqual([
+      {
+        label: "Canal La Petaca",
+        kind: "Proyecto",
+        roles: ["galería"],
+        href: "/admin/proyectos/editar?id=p1",
+      },
+      {
+        label: "Sin título",
+        kind: "Noticia",
+        roles: ["galería"],
+        href: "/admin/noticias/editar?id=n1",
+      },
+      {
+        label: "Portada del sitio",
+        kind: "Inicio",
+        roles: ["foto"],
+        href: "/admin/portada",
+      },
+    ]);
+    expect(usage.get("m3")?.[0]?.roles).toEqual(["imagen para compartir"]);
+  });
+
+  it("leaves unused images out", () => {
+    const usage = mediaUsage({ projects: [project], news: [], hero: null });
+    expect(usage.has("m9")).toBe(false);
+    expect(usage.get("m2")).toHaveLength(1);
   });
 });
