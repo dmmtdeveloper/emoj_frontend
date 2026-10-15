@@ -17,3 +17,28 @@ export function pageItems(current: number, total: number): PageItem[] {
   }
   return [1, "…", page - 1, page, page + 1, "…", total];
 }
+
+/**
+ * What a list shows, for the line above it: "1 proyecto", "7 proyectos"
+ * when everything fits in one page, or "1–5 de 7 proyectos" when there
+ * are more pages.
+ */
+export function resultSummary({
+  page,
+  pageSize,
+  total,
+  one,
+  many,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  one: string;
+  many: string;
+}): string {
+  if (total === 1) return `1 ${one}`;
+  if (total <= pageSize) return `${total} ${many}`;
+  const first = (page - 1) * pageSize + 1;
+  const last = Math.min(page * pageSize, total);
+  return `${first}–${last} de ${total} ${many}`;
+}

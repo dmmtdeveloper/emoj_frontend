@@ -1,6 +1,7 @@
 /**
  * Noticias: the shared list page (content-list.tsx) configured for news.
  */
+import { FileText } from "lucide-react";
 import type { AdminNews } from "../lib/admin/api";
 import { adminApi } from "./api";
 import { ContentListPage, type ListConfig } from "./content-list";
@@ -17,13 +18,16 @@ const CONFIG: ListConfig<AdminNews> = {
     title: n.title,
     editHref: editNewsHref(n.id),
     siteHref: n.status === "published" ? `/noticias/${n.slug}` : null,
-    meta: [n.category, n.excerpt].filter(Boolean).join(" · "),
+    meta: n.category,
+    metaSub: n.location,
     cover: n.cover,
     status: n.status,
     updatedAt: n.updatedAt,
   }),
   one: "noticia",
   many: "noticias",
+  columns: { item: "Noticia", meta: "Categoría" },
+  icon: FileText,
   filters: { all: "Todas", published: "Publicadas", draft: "Borradores" },
   newHref: "/admin/noticias/nueva",
   newLabel: "Nueva noticia",
