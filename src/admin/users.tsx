@@ -5,28 +5,50 @@
  * and the API keeps at least one active admin.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MailPlus, UserPlus } from "lucide-react";
+import {
+  KeyRound,
+  MailPlus,
+  PenLine,
+  RotateCcw,
+  Send,
+  ShieldCheck,
+  UserCog,
+  UserPlus,
+  UserX,
+  type LucideIcon,
+} from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 import type { ManagedUser, Role, UserStatus } from "../lib/admin/api";
 import { fieldErrors } from "../lib/admin/form-errors";
+import { relativeTime } from "../lib/admin/dashboard";
+import { initials } from "../lib/admin/messages";
 import {
   inviteErrors,
   lastAccessLabel,
   ROLE_HINT,
   ROLE_LABEL,
+  roleCounts,
   STATUS_LABEL,
+  statusCounts,
   userActionMessage,
   userActions,
+  usersWithStatus,
   type InviteFields,
+  type StatusFilter,
   type UserAction,
 } from "../lib/admin/users";
 import { adminApi } from "./api";
-import { ErrorNotice, unwrap } from "./common";
+import { ErrorNotice, formatDateTime, unwrap } from "./common";
 import { useUser } from "./session";
-import { MessagesSkeleton } from "./skeletons";
+import { ListSkeleton } from "./skeletons";
 import { Button, Card, cx, Dialog, Field, Notice } from "./ui";
 
 const ROLES: readonly Role[] = ["admin", "editor"];
+const iconProps = { size: 18, strokeWidth: 1.75, "aria-hidden": true } as const;
+const ROLE_ICON: Record<Role, LucideIcon> = {
+  admin: ShieldCheck,
+  editor: PenLine,
+};
 
 function StatusPill({ status }: { status: UserStatus }) {
   return (
@@ -38,7 +60,26 @@ function StatusPill({ status }: { status: UserStatus }) {
         status === "disabled" && "border border-border-strong text-ink-muted",
       )}
     >
+      <span
+        aria-hidden="true"
+        className={cx(
+          "size-1.5 rounded-full",
+          status === "active" && "bg-on-accent",
+          status === "invited" && "bg-brand",
+          status === "disabled" && "bg-ink-muted",
+        )}
+      />
       {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+function RoleLabel({ role }: { role: Role }) {
+  const Icon = ROLE_ICON[role];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-base text-ink">
+      <Icon {...iconProps} size={16} className="text-ink-muted" />
+      {ROLE_LABEL[role]}
     </span>
   );
 }
@@ -267,9 +308,9 @@ type Open = { action: "role" | "disable"; user: ManagedUser } | null;
 
 /** Columns of the users table on wide screens (rows stack below that). */
 const WIDE_GRID =
-  "min-[1360px]:grid min-[1360px]:grid-cols-[minmax(0,1fr)_7.5rem_11rem_6.5rem_23rem] min-[1360px]:items-center min-[1360px]:gap-x-4";
+  "xl:grid xl:grid-cols-[minmax(14rem,1fr)_8.5rem_10.5rem_7rem_21rem] xl:items-center xl:gap-x-4";
 
-const actionClass = "px-3 text-sm whitespace-nowrap";
+const actionClass = "min-h-9 gap-1.5 px-2.5 text-sm whitespace-nowrap";
 
 function UserRow({
   user,
@@ -285,22 +326,46 @@ function UserRow({
   const actions = userActions(user, isMe ? user.id : "");
   const who = user.name || user.email;
   return (
-    <li className={cx("flex flex-col gap-3 py-4", WIDE_GRID)}>
-      <div className="min-w-0">
-        <p className="font-semibold text-ink">
-          {user.name || "Sin nombre"}
-          {isMe && (
-            <span className="ml-2 text-sm font-medium text-ink-muted">
-              (tú)
-            </span>
+    <li
+      className={cx(
+        "flex flex-col gap-3 px-5 py-4 md:px-6",
+        user.status === "disabled" && "bg-surface-sunken/40",
+        WIDE_GRID,
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          aria-hidden="true"
+          className={cx(
+            "grid size-10 shrink-0 place-items-center rounded-full text-sm font-semibold",
+            isMe
+              ? "bg-surface-inverse text-ink-inverse"
+              : "bg-surface-sunken text-ink",
+            user.status === "disabled" && "opacity-60",
           )}
-        </p>
-        <p className="text-sm break-all text-ink-muted">{user.email}</p>
+        >
+          {initials(user.name || user.email)}
+        </span>
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-semibold text-ink">
+            <span className="truncate">{user.name || "Sin nombre"}</span>
+            {isMe && (
+              <span className="shrink-0 rounded-full border border-border-strong px-2 text-xs leading-5 font-medium text-ink-muted">
+                Tú
+              </span>
+            )}
+          </p>
+          <p className="truncate text-sm text-ink-muted" title={user.email}>
+            {user.email}
+          </p>
+        </div>
       </div>
-      <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm min-[1360px]:contents">
+      <dl className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm sm:pl-13 xl:contents">
         <div>
           <dt className="sr-only">Rol</dt>
-          <dd className="text-ink">{ROLE_LABEL[user.role]}</dd>
+          <dd>
+            <RoleLabel role={user.role} />
+          </dd>
         </div>
         <div>
           <dt className="sr-only">Estado</dt>
@@ -309,13 +374,14 @@ function UserRow({
           </dd>
         </div>
         <div className="flex gap-1">
-          <dt className="text-ink-muted min-[1360px]:sr-only">
-            Último acceso:
-          </dt>
+          <dt className="text-ink-muted xl:sr-only">Último acceso:</dt>
           <dd className="text-ink-muted">
             {user.lastLoginAt ? (
-              <time dateTime={user.lastLoginAt}>
-                {lastAccessLabel(user.lastLoginAt)}
+              <time
+                dateTime={user.lastLoginAt}
+                title={formatDateTime(user.lastLoginAt)}
+              >
+                {relativeTime(user.lastLoginAt)}
               </time>
             ) : (
               lastAccessLabel(null)
@@ -323,7 +389,7 @@ function UserRow({
           </dd>
         </div>
       </dl>
-      <div className="flex flex-wrap gap-2 min-[1360px]:flex-nowrap min-[1360px]:justify-end">
+      <div className="flex flex-wrap gap-1.5 sm:pl-13 xl:flex-nowrap xl:justify-end xl:pl-0">
         {actions.includes("role") && (
           <Button
             variant="secondary"
@@ -332,6 +398,7 @@ function UserRow({
             aria-label={`Cambiar el rol de ${who}`}
             className={actionClass}
           >
+            <UserCog {...iconProps} size={16} />
             Cambiar rol
           </Button>
         )}
@@ -343,6 +410,7 @@ function UserRow({
             aria-label={`Reenviar la invitación a ${who}`}
             className={actionClass}
           >
+            <Send {...iconProps} size={16} />
             Reenviar
           </Button>
         )}
@@ -352,9 +420,12 @@ function UserRow({
             disabled={busy}
             onClick={() => onAction("disable")}
             aria-label={`Quitar el acceso a ${who}`}
+            title="Quitar acceso"
             className={actionClass}
           >
-            Quitar acceso
+            <UserX {...iconProps} size={16} />
+            {/* Icon only in the table, where three actions share 21rem. */}
+            <span className="xl:sr-only">Quitar acceso</span>
           </Button>
         )}
         {actions.includes("enable") && (
@@ -365,6 +436,7 @@ function UserRow({
             aria-label={`Devolver el acceso a ${who}`}
             className={actionClass}
           >
+            <RotateCcw {...iconProps} size={16} />
             Devolver acceso
           </Button>
         )}
@@ -372,6 +444,35 @@ function UserRow({
     </li>
   );
 }
+
+/** What each role can do, with how many people have it. */
+function RoleCard({ role, count }: { role: Role; count: number }) {
+  const Icon = ROLE_ICON[role];
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface-raised p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-sunken text-ink">
+        <Icon {...iconProps} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="flex items-baseline gap-2 font-semibold text-ink">
+          {ROLE_LABEL[role]}
+          <span className="text-sm font-medium text-ink-muted">
+            <span className="font-data tabular-nums">{count}</span>{" "}
+            {count === 1 ? "persona" : "personas"}
+          </span>
+        </p>
+        <p className="text-sm text-ink-muted">{ROLE_HINT[role]}</p>
+      </div>
+    </div>
+  );
+}
+
+const FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "active", label: "Activos" },
+  { value: "invited", label: "Invitaciones" },
+  { value: "disabled", label: "Sin acceso" },
+];
 
 export function UsersPage() {
   const me = useUser();
@@ -381,6 +482,7 @@ export function UsersPage() {
     queryFn: async () => unwrap(await adminApi.listUsers()),
   });
   const [inviting, setInviting] = useState(false);
+  const [filter, setFilter] = useState<StatusFilter>("all");
   const [open, setOpen] = useState<Open>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -443,21 +545,60 @@ export function UsersPage() {
     void run(action, user);
   }
 
+  const users = query.data?.items ?? [];
+  const counts = statusCounts(users);
+  const roles = roleCounts(users);
+  const shown = usersWithStatus(users, filter);
+
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="max-w-[60ch] text-ink-muted">
-          Los administradores ven todo el panel, incluidos los mensajes del
-          formulario y esta sección. Los editores gestionan la portada, los
-          proyectos, las noticias y los medios.
-        </p>
+        <fieldset className="min-w-0">
+          <legend className="sr-only">Mostrar</legend>
+          <div className="inline-flex min-h-11 max-w-full items-stretch gap-1 overflow-x-auto rounded-full border border-border bg-surface-raised p-1">
+            {FILTERS.map((f) => {
+              const active = filter === f.value;
+              return (
+                <label
+                  key={f.value}
+                  className={cx(
+                    "flex cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors has-focus-visible:outline-2 has-focus-visible:outline-focus-ring",
+                    active
+                      ? "bg-surface-inverse text-ink-inverse"
+                      : "text-ink hover:bg-surface-sunken",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="filtro-usuarios"
+                    value={f.value}
+                    checked={active}
+                    onChange={() => setFilter(f.value)}
+                    className="sr-only"
+                  />
+                  {f.label}
+                  {query.data && (
+                    <span
+                      className={cx(
+                        "font-data text-xs tabular-nums",
+                        active ? "text-ink-inverse" : "text-ink-muted",
+                      )}
+                    >
+                      {counts[f.value]}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
         <Button
           onClick={() => {
             setNotice(null);
             setInviting(true);
           }}
         >
-          <UserPlus size={18} strokeWidth={1.75} aria-hidden="true" />
+          <UserPlus {...iconProps} />
           Invitar usuario
         </Button>
       </div>
@@ -467,16 +608,29 @@ export function UsersPage() {
         <ErrorNotice error={query.error} retry={() => void query.refetch()} />
       )}
 
-      <Card>
+      {query.data && (
+        <section
+          aria-label="Roles del panel"
+          className="grid gap-4 md:grid-cols-2"
+        >
+          {ROLES.map((role) => (
+            <RoleCard key={role} role={role} count={roles[role]} />
+          ))}
+        </section>
+      )}
+
+      <Card className="overflow-hidden p-0! md:p-0!">
         {query.isPending ? (
-          <MessagesSkeleton />
+          <div className="px-5 md:px-6">
+            <ListSkeleton label="Cargando usuarios…" rows={3} />
+          </div>
         ) : query.data ? (
           <>
             <h2 className="sr-only">Usuarios del panel</h2>
             <div
               aria-hidden="true"
               className={cx(
-                "hidden border-b border-border pb-3 text-sm font-semibold text-ink-muted",
+                "hidden border-b border-border px-6 py-2.5 text-xs font-medium tracking-[0.06em] text-ink-muted uppercase",
                 WIDE_GRID,
               )}
             >
@@ -486,17 +640,28 @@ export function UsersPage() {
               <span>Último acceso</span>
               <span />
             </div>
-            <ul className="-my-4 divide-y divide-border min-[1360px]:my-0 min-[1360px]:-mb-4">
-              {query.data.items.map((user) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  isMe={user.id === me.id}
-                  busy={busyId === user.id}
-                  onAction={(action) => onAction(user, action)}
-                />
-              ))}
-            </ul>
+            {shown.length === 0 ? (
+              <p className="flex items-center justify-center gap-2 px-6 py-12 text-ink-muted">
+                <KeyRound {...iconProps} />
+                {filter === "invited"
+                  ? "No hay invitaciones pendientes."
+                  : filter === "disabled"
+                    ? "Nadie está sin acceso."
+                    : "No hay usuarios con ese estado."}
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {shown.map((user) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    isMe={user.id === me.id}
+                    busy={busyId === user.id}
+                    onAction={(action) => onAction(user, action)}
+                  />
+                ))}
+              </ul>
+            )}
           </>
         ) : null}
       </Card>

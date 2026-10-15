@@ -235,7 +235,7 @@ function StatusTabs({
   options: { value: StatusFilter; label: string; count: number | undefined }[];
 }) {
   return (
-    <fieldset>
+    <fieldset className="min-w-0">
       <legend className="sr-only">Estado</legend>
       <div className="inline-flex min-h-11 max-w-full items-stretch gap-1 overflow-x-auto rounded-full border border-border bg-surface-raised p-1">
         {options.map((f) => {

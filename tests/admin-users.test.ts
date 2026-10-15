@@ -7,7 +7,10 @@ import {
   lastAccessLabel,
   navFor,
   resetMessage,
+  roleCounts,
   ROLE_LABEL,
+  statusCounts,
+  usersWithStatus,
   STATUS_LABEL,
   userActionMessage,
   userActions,
@@ -199,5 +202,37 @@ describe("invitation links", () => {
     expect(resetMessage(expired, false)).toBe(
       "El enlace para cambiar la contraseña no es válido o ya venció. Pide uno nuevo.",
     );
+  });
+});
+
+describe("users summary", () => {
+  const team = [
+    user({ id: "a", role: "admin", status: "active" }),
+    user({ id: "b", role: "editor", status: "invited" }),
+    user({ id: "c", role: "editor", status: "active" }),
+    user({ id: "d", role: "admin", status: "disabled" }),
+  ];
+
+  it("counts people by status for the tabs", () => {
+    expect(statusCounts(team)).toEqual({
+      all: 4,
+      active: 2,
+      invited: 1,
+      disabled: 1,
+    });
+  });
+
+  it("counts roles among people who still have access", () => {
+    expect(roleCounts(team)).toEqual({ admin: 1, editor: 2 });
+  });
+
+  it("filters by status, or keeps everyone", () => {
+    expect(usersWithStatus(team, "all").map((u) => u.id)).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(usersWithStatus(team, "invited").map((u) => u.id)).toEqual(["b"]);
   });
 });

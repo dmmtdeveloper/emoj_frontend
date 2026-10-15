@@ -415,7 +415,7 @@ export function MediaLibraryPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <fieldset>
+        <fieldset className="min-w-0">
           <legend className="sr-only">Mostrar</legend>
           <div className="inline-flex min-h-11 max-w-full items-stretch gap-1 overflow-x-auto rounded-full border border-border bg-surface-raised p-1">
             {tabs.map((t) => {
