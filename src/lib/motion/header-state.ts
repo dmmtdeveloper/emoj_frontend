@@ -1,10 +1,12 @@
 /**
  * Header over the home hero: transparent at the top, solid `surface` once
- * the page scrolls. A CSS scroll-driven animation paints the first frame;
- * src/scripts/motion.ts then writes `--header-solid` (0..1) from the scroll
- * position, because Chrome can leave that timeline inactive (a restored
- * tab, for example) and the bar then showed solid over the photo. This is
- * the script's pure logic. Without JavaScript or the timeline, the header
+ * the page scrolls past a small threshold. It has two states only, with a
+ * short CSS transition between them: a bar that followed the scroll stopped
+ * half way when Chrome restored the scroll position on reload (washed-out
+ * quote button). A CSS scroll-driven animation paints the first frame;
+ * src/scripts/motion.ts then writes `--header-solid` (0 or 1), because
+ * Chrome can leave that timeline inactive (a restored tab, for example).
+ * This is the script's pure logic. Without JavaScript or the timeline, the header
  * stays solid (the safe, readable default).
  */
 
@@ -15,17 +17,18 @@ export interface HeaderEnv {
   hasOverlay: boolean;
 }
 
-/** Scroll distance (px) over which the bar goes from transparent to solid. */
-export const HEADER_SOLID_RANGE = 140;
+/** Scroll distance (px) past which the bar turns solid. */
+export const HEADER_SOLID_AT = 24;
 
 export function headerMode(env: HeaderEnv): HeaderMode {
   return env.hasOverlay ? "scroll" : "static";
 }
 
 /**
- * How solid the bar is (0 transparent, 1 solid) at a scroll offset. `start`
- * is where it starts to turn solid (`--header-solid-start`, 0 by default).
+ * The bar's state at a scroll offset: 0 transparent, 1 solid, never in
+ * between. `start` moves the threshold down (`--header-solid-start`, 0 by
+ * default).
  */
-export function headerSolidAt(scrollY: number, start = 0): number {
-  return Math.min(1, Math.max(0, (scrollY - start) / HEADER_SOLID_RANGE));
+export function headerSolidAt(scrollY: number, start = 0): 0 | 1 {
+  return scrollY - start > HEADER_SOLID_AT ? 1 : 0;
 }

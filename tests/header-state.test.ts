@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  HEADER_SOLID_RANGE,
+  HEADER_SOLID_AT,
   headerMode,
   headerSolidAt,
 } from "../src/lib/motion/header-state";
@@ -20,18 +20,25 @@ describe("headerSolidAt", () => {
     expect(headerSolidAt(0)).toBe(0);
   });
 
-  it("turns solid gradually over the range", () => {
-    expect(headerSolidAt(HEADER_SOLID_RANGE / 2)).toBeCloseTo(0.5);
+  it("stays transparent up to the threshold", () => {
+    expect(headerSolidAt(HEADER_SOLID_AT)).toBe(0);
   });
 
-  it("is fully solid past the range", () => {
-    expect(headerSolidAt(HEADER_SOLID_RANGE)).toBe(1);
+  it("is solid as soon as the page passes the threshold", () => {
+    expect(headerSolidAt(HEADER_SOLID_AT + 1)).toBe(1);
     expect(headerSolidAt(5000)).toBe(1);
   });
 
+  it("never stops half way (a restored scroll lands anywhere)", () => {
+    for (let y = -50; y <= 400; y += 7) {
+      expect([0, 1]).toContain(headerSolidAt(y));
+      expect([0, 1]).toContain(headerSolidAt(y, 200));
+    }
+  });
+
   it("waits for the start offset before turning solid", () => {
-    expect(headerSolidAt(100, 200)).toBe(0);
-    expect(headerSolidAt(200 + HEADER_SOLID_RANGE / 2, 200)).toBeCloseTo(0.5);
+    expect(headerSolidAt(200, 200)).toBe(0);
+    expect(headerSolidAt(200 + HEADER_SOLID_AT + 1, 200)).toBe(1);
   });
 
   it("treats overscroll above the top as transparent", () => {

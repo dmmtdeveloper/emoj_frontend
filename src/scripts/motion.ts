@@ -3,8 +3,8 @@
  * safe). Everything here is optional: the HTML ships final states and CSS
  * handles motion where scroll-driven animations exist.
  *
- * - Header: over the home hero, `--header-solid` follows the scroll
- *   (transparent at the top, solid after 140px).
+ * - Header: over the home hero, `--header-solid` is 0 at the top and 1
+ *   once the page scrolls past a small threshold (CSS eases between them).
  * - Reveal: IntersectionObserver fallback for `[data-reveal]`.
  * - Count-up: `[data-count]` numbers count from 0 when they scroll in.
  * - Draw on view: `[data-draw-on-view]` (footer logo) draws once when it
@@ -47,7 +47,7 @@ function initHeader(): void {
     queued = false;
     header.style.setProperty(
       "--header-solid",
-      headerSolidAt(window.scrollY, start).toFixed(3),
+      String(headerSolidAt(window.scrollY, start)),
     );
   };
   header.setAttribute("data-header-js", "");
