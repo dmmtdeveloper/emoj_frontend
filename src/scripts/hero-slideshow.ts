@@ -56,6 +56,8 @@ function init(): void {
   });
 
   let onScreen = true;
+  /** The first observer report always counts (the page may load scrolled). */
+  let observed = false;
   const updateVisibility = () => {
     const visible = onScreen && !document.hidden;
     frame.toggleAttribute("data-held", !visible);
@@ -79,7 +81,9 @@ function init(): void {
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(
       ([entry]) => {
-        if (!entry || entry.isIntersecting === onScreen) return;
+        if (!entry) return;
+        if (observed && entry.isIntersecting === onScreen) return;
+        observed = true;
         onScreen = entry.isIntersecting;
         updateVisibility();
       },
@@ -91,6 +95,11 @@ function init(): void {
   frame.setAttribute("data-slideshow", "");
   restartProgress();
   prepare(1);
+  // A reload in a background tab starts hidden: no change until it shows.
+  if (document.hidden) {
+    frame.setAttribute("data-held", "");
+    show.setVisible(false);
+  }
   show.start();
   syncPause();
 }

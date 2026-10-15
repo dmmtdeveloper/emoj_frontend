@@ -356,9 +356,12 @@ const secondary = withTarget(copy.secondaryCta);
       animation: hero-fill var(--hero-slide-ms, 6500ms) linear both;
     }
 
-    /* Paused by the person or off screen: everything holds still. */
+    /*
+     * Paused by the person or off screen: the zoom and the progress line
+     * hold still. The wipe never does: a wipe frozen half way leaves a
+     * strip of the previous photo on screen (seen after a reload).
+     */
     .hero__frame:is([data-paused], [data-held]) .hero__progress[data-run],
-    .hero__frame:is([data-paused], [data-held]) .hero__media[data-state],
     .hero__frame:is([data-paused], [data-held])
       .hero__media[data-state]
       :global(.hero__img) {
