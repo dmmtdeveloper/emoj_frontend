@@ -5,6 +5,7 @@
  * from editor-kit.tsx (the news editor uses the same ones).
  */
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -44,7 +45,7 @@ import {
 } from "./editor-kit";
 import { mediaById, MediaPicker, useMediaLibrary } from "./MediaPicker";
 import { editProjectHref } from "./projects";
-import { Card, Counter, Field, Notice, SelectField, TextArea } from "./ui";
+import { Card, Counter, cx, Field, Notice, SelectField, TextArea } from "./ui";
 
 const LIST_PATH = "/admin/proyectos";
 
@@ -559,11 +560,24 @@ function ServicesField({
             Elige los servicios que se prestaron. Sirven para filtrar los
             proyectos en el sitio.
           </p>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+          <div className="flex flex-wrap gap-2 pt-1">
             {SERVICE_SLUGS.map((slug, i) => {
               const checked = field.value.includes(slug);
               return (
-                <label key={slug} className="flex min-h-11 items-center gap-3">
+                <label
+                  key={slug}
+                  className={cx(
+                    "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-base transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring",
+                    checked
+                      ? "border-surface-inverse bg-surface-inverse text-ink-inverse"
+                      : "border-border-strong bg-surface-raised text-ink hover:bg-surface-sunken",
+                  )}
+                >
+                  {checked ? (
+                    <Check size={16} strokeWidth={2.25} aria-hidden="true" />
+                  ) : (
+                    <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+                  )}
                   <input
                     type="checkbox"
                     ref={i === 0 ? field.ref : undefined}
@@ -578,11 +592,9 @@ function ServicesField({
                             ),
                       )
                     }
-                    className="size-5 accent-brand"
+                    className="sr-only"
                   />
-                  <span className="text-ink">
-                    {serviceTitles[slug] ?? slug}
-                  </span>
+                  <span>{serviceTitles[slug] ?? slug}</span>
                 </label>
               );
             })}
