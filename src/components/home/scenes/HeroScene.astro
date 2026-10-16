@@ -1,0 +1,205 @@
+---
+/**
+ * Chapter 1 · "El primer trazo". The home opens on a cream drawing sheet
+ * (frame, grid references and a title block, like a technical drawing)
+ * with the hero copy and the EMOJ isotype stroke. On load the pen starts
+ * the stroke; scrolling finishes it and its end dot opens as a lens onto a
+ * real photo of the work, until the photo fills the screen: from the first
+ * stroke to the built work. Inside the lens the copy is cream, so the text
+ * seems to change color where the lens passes (a decorative copy, see
+ * HeroCopy.astro), and the stroke carries on over the photo, faint.
+ *
+ * Scene: src/scripts/scenes/hero.ts (progress from src/scripts/scenes.ts).
+ * Without JavaScript or with reduced motion the hero is the finished state:
+ * the photo, cream copy on top, no pinning.
+ *
+ * Copy and photos come from the panel (GET /v1/home/hero), with the copy
+ * and photo the site shipped with as a fallback.
+ */
+import type { ImageMetadata } from "astro";
+import { Image, Picture } from "astro:assets";
+import water from "../../../assets/photos/agua-manos.jpg";
+import type { CallToAction, HomeHero } from "../../../lib/api/client";
+import { fitWidth } from "../../../lib/content/format";
+import {
+  BUILT_IN_PHOTOS,
+  focusClasses,
+  heroCopy,
+  isExternalHref,
+  titleParts,
+} from "../../../lib/content/home-hero";
+import { HERO_MEDIA_SLUG, mediaPath } from "../../../lib/content/media";
+import HeroCopy from "./HeroCopy.astro";
+import { ISOTYPE } from "./isotype";
+
+interface Props {
+  hero: HomeHero | null;
+}
+
+const { hero } = Astro.props;
+const copy = heroCopy(hero);
+const title = titleParts(copy.title, copy.highlight);
+const withTarget = (cta: CallToAction | null) =>
+  cta && { ...cta, external: isExternalHref(cta.href) };
+const primary = withTarget(copy.primaryCta);
+const secondary = withTarget(copy.secondaryCta);
+
+const panelPhoto = hero?.photos?.[0];
+const photo:
+  | { kind: "local"; src: ImageMetadata; alt: string }
+  | {
+      kind: "remote";
+      src: string;
+      alt: string;
+      width: number;
+      height: number;
+      focus: string;
+    } = panelPhoto
+  ? {
+      kind: "remote",
+      src: mediaPath("portada", HERO_MEDIA_SLUG, panelPhoto),
+      alt: panelPhoto.alt,
+      ...fitWidth(panelPhoto, 2000),
+      focus: focusClasses(panelPhoto.focusX, panelPhoto.focusY),
+    }
+  : { kind: "local", src: water, alt: BUILT_IN_PHOTOS[0].alt };
+
+const year = new Date().getFullYear();
+const COLUMNS = ["A", "B", "C", "D", "E", "F"];
+const ROWS = ["1", "2", "3", "4"];
+---
+
+<section
+  class="hero-scene -mt-(--header-h)"
+  data-scene="hero"
+  data-hero
+  aria-labelledby="hero-title"
+>
+  <div class="scene-stage hero-stage" data-tone="photo" data-hero-stage>
+    {/* The drawing sheet. */}
+    <div class="hero-sheet" aria-hidden="true">
+      <div class="hero-sheet__grid blueprint"></div>
+      <div class="hero-sheet__frame">
+        <div class="hero-sheet__cols">
+          {COLUMNS.map((c) => (
+            <span>{c}</span>
+          ))}
+        </div>
+        <div class="hero-sheet__rows">
+          {ROWS.map((r) => (
+            <span>{r}</span>
+          ))}
+        </div>
+      </div>
+      <dl class="hero-sheet__block">
+        <div class="hero-sheet__block-title">
+          <dt>EMOJ Consultora</dt>
+          <dd>Lámina 01</dd>
+        </div>
+        <div>
+          <dt>Proyecto</dt>
+          <dd>Tu obra</dd>
+        </div>
+        <div>
+          <dt>Escala</dt>
+          <dd>1:1</dd>
+        </div>
+        <div>
+          <dt>Lugar</dt>
+          <dd>Quilpué</dd>
+        </div>
+        <div>
+          <dt>Año</dt>
+          <dd>{year}</dd>
+        </div>
+      </dl>
+    </div>
+
+    {/* The pen stroke on the sheet (left dot to right dot). */}
+    <svg
+      class="hero-stroke"
+      viewBox={ISOTYPE.viewBox}
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+      data-hero-stroke
+    >
+      <path class="hero-stroke__path" d={ISOTYPE.stroke} pathLength="1" />
+      <circle
+        class="hero-stroke__dot hero-stroke__dot--start"
+        cx={ISOTYPE.start.x}
+        cy={ISOTYPE.start.y}
+        r={ISOTYPE.dot}
+      />
+      <circle
+        class="hero-stroke__dot hero-stroke__dot--end"
+        cx={ISOTYPE.end.x}
+        cy={ISOTYPE.end.y}
+        r={ISOTYPE.dot}
+        data-hero-dot
+      />
+    </svg>
+
+    <HeroCopy
+      title={title}
+      lead={copy.lead}
+      primary={primary}
+      secondary={secondary}
+    />
+
+    {/* The lens: the photo, the stroke carrying on and the cream copy. */}
+    <div class="hero-lens" data-hero-lens aria-hidden="true">
+      <div class="hero-lens__photo">
+        {photo.kind === "local" ? (
+          <Picture
+            src={photo.src}
+            alt=""
+            formats={["avif", "webp"]}
+            widths={[640, 960, 1280, 1600, 2130]}
+            sizes="100vw"
+            loading="eager"
+            fetchpriority="high"
+            class="hero-lens__img object-[60%_center]"
+            pictureAttributes={{ class: "contents" }}
+          />
+        ) : (
+          <Image
+            src={photo.src}
+            alt=""
+            width={photo.width}
+            height={photo.height}
+            widths={[640, 960, 1280, 1600, 2000]}
+            sizes="100vw"
+            loading="eager"
+            fetchpriority="high"
+            class:list={["hero-lens__img object-focus", photo.focus]}
+          />
+        )}
+      </div>
+      <div class="hero-lens__veil"></div>
+      <svg
+        class="hero-stroke hero-stroke--lens"
+        viewBox={ISOTYPE.viewBox}
+        fill="none"
+        focusable="false"
+      >
+        <path class="hero-stroke__path" d={ISOTYPE.stroke} pathLength="1" />
+      </svg>
+      <HeroCopy
+        title={title}
+        lead={copy.lead}
+        primary={primary}
+        secondary={secondary}
+        decorative
+      />
+    </div>
+
+    <div class="hero-cue" aria-hidden="true">
+      <span>Desliza</span>
+      <span class="hero-cue__line"></span>
+    </div>
+  </div>
+</section>
+<script>
+  import "../../../scripts/home-scroll";
+</script>

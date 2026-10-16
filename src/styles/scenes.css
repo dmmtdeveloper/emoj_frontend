@@ -1,0 +1,527 @@
+/*
+ * Home scroll scenes (src/scripts/scenes.ts, src/components/home/scenes).
+ *
+ * Every chapter renders its final state by default: that is what visitors
+ * get without JavaScript or with reduced motion. The engine arms a chapter
+ * with `data-scene-armed`: only then the track grows, the stage sticks and
+ * the scene's custom properties (set every frame through the CSSOM) drive
+ * transform, opacity and clip-path. Scene variables carry a chapter prefix
+ * (`--hero-*`, `--svc-*`…) so they never clash with the design tokens.
+ */
+
+@layer components {
+  /* ---------------------------------------------------------------- */
+  /* Shared: track and sticky stage                                   */
+  /* ---------------------------------------------------------------- */
+
+  [data-scene] {
+    position: relative;
+  }
+
+  [data-scene-armed] > .scene-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: clip;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Chapter 1 · Hero "El primer trazo"                               */
+  /* ---------------------------------------------------------------- */
+
+  .hero-stage {
+    position: relative;
+    isolation: isolate;
+    min-height: max(640px, 100svh);
+    overflow: clip;
+    background: var(--surface);
+  }
+
+  .hero-scene[data-scene-armed] {
+    height: calc(100svh + 190svh);
+  }
+
+  .hero-scene[data-scene-armed] .hero-stage {
+    min-height: 0;
+  }
+
+  /* The drawing sheet: faint grid, frame with references, title block. */
+  .hero-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    color: var(--ink-muted);
+  }
+
+  .hero-sheet__grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.55;
+    mask-image: radial-gradient(
+      ellipse 85% 75% at 60% 50%,
+      #000 40%,
+      transparent 100%
+    );
+  }
+
+  .hero-sheet__frame {
+    position: absolute;
+    inset: calc(var(--header-h) + 12px) 16px 16px;
+    border: 1px solid color-mix(in oklab, var(--ink) 16%, transparent);
+  }
+
+  .hero-sheet__cols,
+  .hero-sheet__rows {
+    position: absolute;
+    display: grid;
+    font-family: var(--font-data);
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    color: color-mix(in oklab, var(--ink) 45%, transparent);
+  }
+
+  .hero-sheet__cols {
+    top: 0;
+    inset-inline: 0;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .hero-sheet__cols > span {
+    padding: 6px 0 0 8px;
+    border-left: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  }
+
+  .hero-sheet__cols > span:first-child {
+    border-left: 0;
+  }
+
+  .hero-sheet__rows {
+    left: 0;
+    inset-block: 0;
+    display: none;
+    grid-auto-rows: 1fr;
+  }
+
+  @media (min-width: 48rem) {
+    .hero-sheet__rows {
+      display: grid;
+    }
+  }
+
+  .hero-sheet__rows > span {
+    padding: 8px 0 0 6px;
+  }
+
+  .hero-sheet__block {
+    position: absolute;
+    right: 112px;
+    bottom: 16px;
+    display: none;
+    grid-template-columns: repeat(4, auto);
+    font-family: var(--font-data);
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--ink) 70%, transparent);
+    border-top: 1px solid color-mix(in oklab, var(--ink) 16%, transparent);
+    border-left: 1px solid color-mix(in oklab, var(--ink) 16%, transparent);
+  }
+
+  .hero-sheet__block > div {
+    padding: 8px 14px;
+    border-left: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+  }
+
+  .hero-sheet__block > div:nth-child(2) {
+    border-left: 0;
+  }
+
+  .hero-sheet__block-title {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid color-mix(in oklab, var(--ink) 10%, transparent);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .hero-sheet__block dd {
+    margin: 2px 0 0;
+    color: var(--ink);
+  }
+
+  .hero-sheet__block-title dd {
+    margin: 0;
+    color: var(--brand);
+  }
+
+  @media (min-width: 64rem) {
+    .hero-sheet__block {
+      display: grid;
+    }
+  }
+
+  /* The pen stroke. Phones: across the top; wider: the right side. */
+  .hero-stroke {
+    position: absolute;
+    z-index: 1;
+    width: 100vw;
+    height: auto;
+    left: 0;
+    top: calc(var(--header-h) + 6svh);
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  @media (min-width: 48rem) {
+    .hero-stroke {
+      width: min(48vw, 860px);
+      left: auto;
+      right: 4vw;
+      top: 50%;
+      translate: 0 -40%;
+    }
+  }
+
+  .hero-stroke__path {
+    stroke: var(--brand);
+    stroke-width: 10.19;
+    stroke-linecap: round;
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: calc(var(--hero-draw, 1) - 1);
+  }
+
+  .hero-stroke__dot {
+    fill: var(--ink);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .hero-stroke__dot--start {
+    scale: var(--hero-dot-a, 1);
+  }
+
+  .hero-stroke__dot--end {
+    scale: var(--hero-dot-b, 1);
+  }
+
+  /* Over the photo the stroke carries on, cream and faint. */
+  .hero-stroke--lens {
+    z-index: 1;
+    opacity: 0.4;
+  }
+
+  .hero-stroke--lens .hero-stroke__path {
+    stroke: var(--sand-50);
+    stroke-width: 3;
+  }
+
+  /* The copy. */
+  .hero-copy {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-top: calc(var(--header-h) + 32px);
+    padding-bottom: max(72px, 11svh);
+    pointer-events: none;
+    translate: 0 calc(var(--hero-lift, 0) * -5svh);
+  }
+
+  @media (min-width: 48rem) {
+    .hero-copy {
+      justify-content: center;
+      padding-bottom: 48px;
+    }
+  }
+
+  .hero-copy__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 40rem;
+    pointer-events: auto;
+  }
+
+  .hero-copy__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-data);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brand);
+  }
+
+  .hero-copy__tick {
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+
+  .hero-copy__title {
+    max-width: 14ch;
+    font-size: clamp(2.75rem, 1.4rem + 4vw, 5rem);
+    line-height: 0.98;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  .hero-copy__title em {
+    font-weight: 500;
+    color: var(--brand);
+  }
+
+  .hero-copy__lead {
+    max-width: 44ch;
+    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+
+  .hero-copy__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 28px;
+    padding-top: 4px;
+  }
+
+  .hero-copy__primary {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 500;
+    text-decoration: none;
+    background: var(--brand);
+    color: var(--on-brand);
+    transition:
+      background-color 200ms var(--ease-out),
+      scale 200ms var(--ease-out);
+  }
+
+  .hero-copy__primary:hover {
+    background: var(--brand-hover);
+    color: var(--on-brand);
+  }
+
+  .hero-copy__primary:active {
+    scale: 0.97;
+  }
+
+  .hero-copy__secondary {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .hero-copy__secondary:hover {
+    color: var(--ink);
+  }
+
+  .hero-copy__secondary svg {
+    transition: translate 300ms var(--ease-out);
+  }
+
+  .hero-copy__secondary:hover svg {
+    translate: 4px 0;
+  }
+
+  /* Cream tone, over the photo (inside the lens, and the finished hero). */
+  .hero-copy--lens,
+  .hero-stage[data-tone="photo"] .hero-copy--real {
+    --ink: var(--sand-50);
+    --ink-muted: var(--sand-100);
+  }
+
+  .hero-copy--lens .hero-copy__eyebrow,
+  .hero-stage[data-tone="photo"] .hero-copy--real .hero-copy__eyebrow {
+    color: var(--sage-300);
+  }
+
+  .hero-copy--lens .hero-copy__title em,
+  .hero-stage[data-tone="photo"] .hero-copy--real .hero-copy__title em {
+    color: var(--sage-300);
+  }
+
+  /* `brand` on plum is a forbidden pair: cream fill over the photo. */
+  .hero-copy--lens .hero-copy__primary,
+  .hero-stage[data-tone="photo"] .hero-copy--real .hero-copy__primary {
+    background: var(--sand-50);
+    color: var(--plum-950);
+  }
+
+  .hero-stage[data-tone="photo"] .hero-copy--real .hero-copy__primary:hover {
+    background: var(--sand-100);
+    color: var(--plum-950);
+  }
+
+  .hero-stage[data-tone="photo"] .hero-copy--real {
+    z-index: 4;
+  }
+
+  /* The lens copy shows only while the lens is still opening. */
+  .hero-copy--lens {
+    visibility: hidden;
+  }
+
+  .hero-stage[data-tone="sheet"] .hero-copy--lens {
+    visibility: visible;
+  }
+
+  .hero-copy--lens .hero-copy__inner {
+    pointer-events: none;
+  }
+
+  /* The lens: the photo and its veils. Finished state: it fills the hero. */
+  .hero-lens {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    overflow: hidden;
+    background: var(--plum-950);
+    pointer-events: none;
+  }
+
+  [data-scene-armed] .hero-lens {
+    clip-path: circle(
+      calc(var(--lens-r, 0) * 1px) at calc(var(--lens-x, 0) * 1px)
+        calc(var(--lens-y, 0) * 1px)
+    );
+  }
+
+  .hero-lens__photo {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero-lens__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform-origin: calc(var(--lens-x, 960) * 1px)
+      calc(var(--lens-y, 400) * 1px);
+    scale: var(--hero-photo-scale, 1);
+  }
+
+  .hero-lens__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--plum-950) 88%, transparent),
+      color-mix(in oklab, var(--plum-950) 40%, transparent) 55%,
+      color-mix(in oklab, var(--plum-950) 25%, transparent)
+    );
+  }
+
+  @media (min-width: 48rem) {
+    .hero-lens__veil {
+      background:
+        linear-gradient(
+          to right,
+          color-mix(in oklab, var(--plum-950) 82%, transparent),
+          color-mix(in oklab, var(--plum-950) 40%, transparent) 45%,
+          transparent 75%
+        ),
+        linear-gradient(
+          to top,
+          color-mix(in oklab, var(--plum-950) 55%, transparent),
+          transparent 40%
+        );
+    }
+  }
+
+  /* Scroll cue, only while the scene plays. */
+  .hero-cue {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: 24px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    translate: -50% 0;
+    font-family: var(--font-data);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    opacity: var(--hero-cue, 1);
+  }
+
+  .hero-cue__line {
+    position: relative;
+    width: 1px;
+    height: 40px;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--ink) 15%, transparent);
+  }
+
+  .hero-cue__line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--brand);
+    animation: hero-cue 1800ms var(--ease-in-out) infinite;
+  }
+
+  [data-scene-armed] .hero-cue {
+    display: flex;
+  }
+
+  @media (max-width: 47.99rem) {
+    [data-scene-armed] .hero-cue {
+      display: none;
+    }
+  }
+}
+
+@keyframes hero-cue {
+  from {
+    translate: 0 -100%;
+  }
+  to {
+    translate: 0 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-scene .hero-in {
+    animation: rise 900ms var(--ease-out) 300ms both;
+  }
+
+  .hero-scene .hero-in--2 {
+    animation-delay: 420ms;
+  }
+
+  .hero-scene .hero-in--3 {
+    animation-delay: 600ms;
+  }
+
+  .hero-scene .hero-in--4 {
+    animation-delay: 760ms;
+  }
+}
