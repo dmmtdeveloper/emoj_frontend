@@ -7,8 +7,9 @@ import {
   enterShare,
   heroLens,
   heroPhases,
-  layerDraw,
-  phaseBeats,
+  focusCurve,
+  itemShare,
+  deckPlace,
   mix,
   popIn,
   reelShift,
@@ -255,68 +256,61 @@ describe("heroPhases", () => {
   });
 });
 
-describe("layerDraw", () => {
-  it("draws the layers one after another, each in the first part of its stretch", () => {
-    // 4 layers: stretch of 0.25 each, drawn over its first 60%.
-    expect(layerDraw(0, 0, 4)).toBe(0);
-    expect(layerDraw(0.075, 0, 4)).toBeCloseTo(0.5);
-    expect(layerDraw(0.15, 0, 4)).toBe(1);
-    expect(layerDraw(0.2, 0, 4)).toBe(1);
-    expect(layerDraw(0.2, 1, 4)).toBe(0);
-    expect(layerDraw(0.325, 1, 4)).toBeCloseTo(0.5);
-  });
-
-  it("keeps earlier layers drawn and later ones blank", () => {
-    expect(layerDraw(0.9, 0, 4)).toBe(1);
-    expect(layerDraw(0.1, 3, 4)).toBe(0);
-    expect(layerDraw(1, 3, 4)).toBe(1);
+describe("focusCurve", () => {
+  it("rises, holds and falls back", () => {
+    const beats = [0.1, 0.2, 0.8, 0.9] as const;
+    expect(focusCurve(0, beats)).toBe(0);
+    expect(focusCurve(0.1, beats)).toBe(0);
+    expect(focusCurve(0.15, beats)).toBeCloseTo(0.5);
+    expect(focusCurve(0.5, beats)).toBe(1);
+    expect(focusCurve(0.85, beats)).toBeCloseTo(0.5);
+    expect(focusCurve(1, beats)).toBe(0);
   });
 });
 
-describe("phaseBeats", () => {
-  // 4 phases: a stretch of 0.25 each. Each phase arrives at rest (detail
-  // beside the drawing, its layer drawn), then the drawing grows to the
-  // centre (focus 1) for a closer look and goes back before the next one.
-  const at = (phase: number, local: number) => (phase + local) / 4;
+describe("itemShare", () => {
+  it("splits a range of the progress into one stretch per item", () => {
+    // Range 0.2..0.6, 4 items: 0.1 each.
+    expect(itemShare(0.2, 0, 4, 0.2, 0.6)).toBe(0);
+    expect(itemShare(0.25, 0, 4, 0.2, 0.6)).toBeCloseTo(0.5);
+    expect(itemShare(0.3, 0, 4, 0.2, 0.6)).toBe(1);
+    expect(itemShare(0.3, 1, 4, 0.2, 0.6)).toBe(0);
+    expect(itemShare(0.6, 3, 4, 0.2, 0.6)).toBe(1);
+  });
+});
 
-  it("arrives at rest with the detail and the drawing already there", () => {
-    const start = phaseBeats(at(0, 0), 4);
-    expect(start.phase).toBe(0);
-    expect(start.focus).toBe(0);
-    expect(start.card).toBe(1);
-    expect(start.draw).toBe(1);
+describe("deckPlace", () => {
+  it("leaves the top card square and in place", () => {
+    const top = deckPlace(0, 1);
+    expect(top.x).toBe(0);
+    expect(top.y).toBe(0);
+    expect(top.rotate).toBe(0);
+    expect(top.scale).toBe(1);
+    expect(top.opacity).toBe(1);
   });
 
-  it("draws each later layer as its phase arrives", () => {
-    expect(phaseBeats(at(1, 0), 4).draw).toBe(0);
-    expect(phaseBeats(at(1, 0.07), 4).draw).toBeGreaterThan(0);
-    expect(phaseBeats(at(1, 0.15), 4).draw).toBe(1);
+  it("fans the next cards out behind, smaller, to their side", () => {
+    const right = deckPlace(1, 1);
+    const left = deckPlace(1, -1);
+    expect(right.x).toBeGreaterThan(0);
+    expect(left.x).toBeLessThan(0);
+    expect(right.rotate).toBeGreaterThan(0);
+    expect(right.scale).toBeLessThan(1);
+    expect(right.z).toBeLessThan(deckPlace(0, 1).z);
+    expect(deckPlace(4, 1).opacity).toBe(0);
   });
 
-  it("grows the drawing in the middle of the phase, without the detail", () => {
-    const zoom = phaseBeats(at(2, 0.5), 4);
-    expect(zoom.phase).toBe(2);
-    expect(zoom.focus).toBe(1);
-    expect(zoom.card).toBe(0);
+  it("throws a passed card off to the left and fades it", () => {
+    const going = deckPlace(-0.5, 1);
+    expect(going.x).toBeLessThan(0);
+    expect(going.rotate).toBeLessThan(0);
+    expect(deckPlace(-1, 1).opacity).toBe(0);
   });
 
-  it("goes back to rest before the next phase", () => {
-    const back = phaseBeats(at(2, 0.9), 4);
-    expect(back.focus).toBe(0);
-    expect(back.card).toBe(1);
-  });
-
-  it("never shows the detail while the drawing is large", () => {
-    for (let p = 0; p <= 1; p += 0.005) {
-      const { focus, card } = phaseBeats(p, 4);
-      expect(focus > 0.5 && card > 0.5).toBe(false);
-    }
-  });
-
-  it("ends at rest on the last detail", () => {
-    const end = phaseBeats(1, 4);
-    expect(end.phase).toBe(3);
-    expect(end.card).toBe(1);
-    expect(end.focus).toBe(0);
+  it("moves continuously through the top spot", () => {
+    const before = deckPlace(0.001, 1);
+    const after = deckPlace(-0.001, 1);
+    expect(Math.abs(before.x - after.x)).toBeLessThan(0.01);
+    expect(Math.abs(before.rotate - after.rotate)).toBeLessThan(0.1);
   });
 });

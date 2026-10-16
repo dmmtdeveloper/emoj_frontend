@@ -1,32 +1,26 @@
 ---
 /**
- * Chapter 3 · Cómo trabajamos, "del primer trazo a la obra". One
- * engineering section builds up with the scroll, a layer per stage of an
- * EMOJ project (ObraDrawing.astro): the scope, the terrain, the studies,
- * the design and the approval stamp; at the sixth stage the photo of a
- * built work slides in under the pen, with the drawing carrying on over it
- * in cream (a second copy of the drawing).
+ * Chapter 3 · Cómo trabajamos, "la lámina se completa" (deivid.space's
+ * "diseño la experiencia" rhythm). At rest: the chapter title and a short
+ * text on the left, and on the right a drawing sheet (a "lámina") listing
+ * the six stages of an EMOJ project, still blank but for their names.
+ * Scrolling on, the sheet moves to the centre and grows while the text
+ * steps back; there the stages fill in one by one like lines being
+ * written (each one ticked as it completes), the APROBADO stamp lands on
+ * the title block, and the photo of a built work comes out of the sheet.
+ * Then it goes back beside the text, complete.
  *
- * Every stage arrives at rest: its card on the left (what it involves and
- * two facts) and the drawing on the right, in the slot (`data-obra-slot`),
- * with the stage's layer drawn. Scrolling on, the drawing grows to the
- * centre for a closer look while the card steps back and a small label
- * names the stage; then it goes back to rest and the next stage comes. A
- * column of numbers on the right jumps to any stage.
- *
- * Scene: src/scripts/scenes/obra.ts (beats from phaseBeats()). Without
- * JavaScript or with reduced motion the chapter is the finished drawing
- * over the photo and the six stages as a list.
+ * The sheet is the chapter's content (an ordered list of the stages); the
+ * photo card is decorative. Scene: src/scripts/scenes/obra.ts. Without
+ * JavaScript or with reduced motion the chapter shows the sheet complete.
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import works from "../../../assets/photos/puente-llollito-excavacion.jpg";
 import { WORK_STAGES } from "../../../lib/content/work-stages";
-import ObraDrawing from "./ObraDrawing.astro";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const total = pad(WORK_STAGES.length);
-const last = WORK_STAGES.length - 1;
 ---
 
 <section
@@ -36,84 +30,97 @@ const last = WORK_STAGES.length - 1;
   data-nav-section="/nosotros"
 >
   <div class="scene-stage obra-stage" data-obra-stage>
-    <div class="obra-visual" aria-hidden="true">
-      <div class="obra-visual__paper blueprint"></div>
-      {/* Where the drawing sits beside the detail (measured, never shown). */}
-      <span class="obra-visual__slot" data-obra-slot></span>
-      <ObraDrawing class="obra-visual__drawing" />
-      <div class="obra-visual__ink" data-obra-ink>
+    <div class="obra-layout container-site">
+      <div class="obra-text">
+        <p class="obra-eyebrow">
+          <span>03</span> Cómo trabajamos
+        </p>
+        <div class="obra-fade">
+          <h2 id="como-trabajamos" class="obra-title">
+            Del primer trazo a la <em>obra</em>.
+          </h2>
+          <p class="obra-lead">
+            Seis etapas, un mismo equipo: te acompañamos desde la primera
+            conversación hasta que lo diseñado está construido.
+          </p>
+          <a href="/contacto" class="obra-cta">
+            Cotizar proyecto
+            <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+      {/* Where the sheet rests (measured, never shown). */}
+      <span class="obra-slot" data-obra-slot aria-hidden="true"></span>
+    </div>
+
+    <div class="obra-sheet-area">
+      <div class="obra-sheet" data-obra-sheet>
+        <div class="obra-sheet__bar" aria-hidden="true">
+          <span class="obra-sheet__dots">
+            <i></i>
+            <i></i>
+            <i></i>
+          </span>
+          <span>Lámina 03 · Del primer trazo a la obra</span>
+        </div>
+        <ol class="obra-rows" aria-label="Las etapas de un proyecto">
+          {WORK_STAGES.map((stage, i) => (
+            <li class="obra-row" data-obra-row>
+              <span class="obra-row__num" aria-hidden="true">
+                {pad(i + 1)}
+              </span>
+              <span class="obra-row__body">
+                <span class="obra-row__title">{stage.title}</span>
+                <span class="obra-row__text">{stage.text}</span>
+              </span>
+              <svg
+                class="obra-row__check"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" />
+                <path d="M7 12.5L10.5 16L17 8.5" pathLength="1" />
+              </svg>
+            </li>
+          ))}
+        </ol>
+        <div class="obra-sheet__foot" aria-hidden="true">
+          <dl class="obra-block">
+            <div>
+              <dt>Proyecto</dt>
+              <dd>Tu obra</dd>
+            </div>
+            <div>
+              <dt>Etapas</dt>
+              <dd>
+                <span data-obra-done>{total}</span> / {total}
+              </dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>Aprobado</dd>
+            </div>
+          </dl>
+          <span class="obra-stamp" data-obra-stamp>
+            Aprobado
+          </span>
+        </div>
+      </div>
+
+      <div class="obra-built" aria-hidden="true">
         <Image
           src={works}
           alt=""
-          widths={[640, 960, 1280, 1600, 2000]}
-          sizes="100vw"
+          widths={[400, 640, 960]}
+          sizes="(min-width: 1024px) 360px, 60vw"
           loading="lazy"
-          class="obra-visual__photo"
+          class="obra-built__photo"
         />
-        <ObraDrawing class="obra-visual__drawing obra-visual__drawing--ink" />
-        <span class="obra-visual__built">Ya es obra</span>
+        <span class="obra-built__label">
+          <span class="obra-built__dot"></span> Ya es obra
+        </span>
       </div>
     </div>
-
-    {/* During the closer look: the stage's number and name, small. */}
-    <ol class="obra-captions container-site" aria-hidden="true">
-      {WORK_STAGES.map((stage, i) => (
-        <li class="obra-caption" data-obra-caption>
-          <span class="obra-caption__num">{pad(i + 1)}</span>
-          <span class="obra-caption__title">{stage.title}</span>
-        </li>
-      ))}
-    </ol>
-
-    <div class="obra-head container-site" data-obra-head>
-      <p class="obra-eyebrow">
-        <span>03</span> Cómo trabajamos
-      </p>
-      <h2 id="como-trabajamos" class="obra-title">
-        Del primer trazo a la <em>obra</em>.
-      </h2>
-    </div>
-
-    <ol class="obra-cards">
-      {WORK_STAGES.map((stage, i) => (
-        <li class="obra-card" data-obra-card>
-          <p class="obra-card__step" aria-hidden="true">
-            <span>{pad(i + 1)}</span> / {total}
-          </p>
-          <h3 class="obra-card__title">{stage.title}</h3>
-          <p class="obra-card__text">{stage.text}</p>
-          <dl class="obra-card__facts">
-            {stage.facts.map(([label, value]) => (
-              <div>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-          {i === last && (
-            <a href="/contacto" class="obra-card__cta">
-              Cotizar proyecto
-              <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
-            </a>
-          )}
-        </li>
-      ))}
-    </ol>
-
-    <ol class="obra-nav" aria-label="Ir a una etapa">
-      {WORK_STAGES.map((stage, i) => (
-        <li>
-          <button type="button" class="obra-nav__item" data-obra-jump={i}>
-            <span class="obra-nav__num" aria-hidden="true">
-              {pad(i + 1)}
-            </span>
-            <span class="obra-nav__bar" aria-hidden="true">
-              <span data-obra-bar />
-            </span>
-            <span class="sr-only">{stage.title}</span>
-          </button>
-        </li>
-      ))}
-    </ol>
   </div>
 </section>

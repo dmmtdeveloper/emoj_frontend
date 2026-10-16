@@ -109,51 +109,6 @@ export function heroLens(
   return mix(sizes.dot, sizes.cover, t * t * (3 - 2 * t));
 }
 
-/** Share of each layer's stretch spent drawing it; the rest holds. */
-export const LAYER_DRAW = 0.6;
-
-/**
- * How much of layer `index` (of `count`, one stretch of the progress each)
- * is drawn: blank before its stretch, drawn over the first LAYER_DRAW of
- * it, then complete for good.
- */
-export function layerDraw(
-  progress: number,
-  index: number,
-  count: number,
-): number {
-  const start = index / count;
-  return segment(progress, start, start + LAYER_DRAW / count);
-}
-
-/**
- * The beats of a phase in a "rest, closer look, rest" chapter (the home's
- * Cómo trabajamos, like deivid.space). The progress is one stretch per
- * phase; in each:
- * - it arrives at rest: the detail card beside the drawing, whose layer
- *   for this phase draws right away (`draw`; the first one is drawn from
- *   the start, so the chapter never opens on an empty sheet),
- * - then the drawing grows to the centre for a closer look (`focus` 1)
- *   while the card steps back (`card` 0),
- * - and it goes back to rest before the next phase swaps the card.
- */
-export function phaseBeats(
-  progress: number,
-  count: number,
-): { phase: number; draw: number; focus: number; card: number } {
-  const { index, local } = sliceOf(progress, count);
-  const first = index === 0;
-  const last = index === count - 1;
-  const draw = first ? 1 : segment(local, 0, 0.14);
-  const focus =
-    easeInOutCubic(segment(local, 0.18, 0.36)) *
-    (1 - easeInOutCubic(segment(local, 0.64, 0.82)));
-  const arrive = first ? 1 : segment(local, 0, 0.08);
-  const leave = last ? 0 : segment(local, 0.94, 1);
-  const card = arrive * (1 - leave) * (1 - focus);
-  return { phase: index, draw, focus, card };
-}
-
 /** Screens of scroll the hero's stroke and lens take, and each extra photo. */
 export const HERO_LENS_SCREENS = 1.9;
 export const HERO_PHOTO_SCREENS = 0.9;
@@ -228,4 +183,75 @@ export function sceneMode(env: {
   return env.prefersReducedMotion || !env.hasIntersectionObserver
     ? "static"
     : "scroll";
+}
+
+/**
+ * A rest → closer look → rest curve (deivid.space's focus): 0 before
+ * `beats[0]`, up to 1 by `beats[1]`, held, back to 0 from `beats[2]` to
+ * `beats[3]`.
+ */
+export function focusCurve(
+  progress: number,
+  beats: readonly [number, number, number, number],
+): number {
+  const [inFrom, inTo, outFrom, outTo] = beats;
+  return (
+    easeInOutCubic(segment(progress, inFrom, inTo)) *
+    (1 - easeInOutCubic(segment(progress, outFrom, outTo)))
+  );
+}
+
+/** How far item `index` (of `count`) is through its stretch of [from, to]. */
+export function itemShare(
+  progress: number,
+  index: number,
+  count: number,
+  from: number,
+  to: number,
+): number {
+  const step = (to - from) / count;
+  return segment(progress, from + index * step, from + (index + 1) * step);
+}
+
+export interface DeckPlace {
+  /** Offsets as shares of the card's width and height. */
+  x: number;
+  y: number;
+  /** Degrees. */
+  rotate: number;
+  scale: number;
+  opacity: number;
+  /** Stacking order (higher is in front). */
+  z: number;
+}
+
+/**
+ * Where a card of a fanned deck sits for its place `pos` (0 on top, 1 and 2
+ * fanned out behind on its `side`, -1 thrown off to the left). Continuous,
+ * so a deck shuffled by the scroll moves smoothly both ways.
+ */
+export function deckPlace(pos: number, side: 1 | -1): DeckPlace {
+  const z = Math.round(100 - pos * 10);
+  if (pos < 0) {
+    const t = clamp01(-pos);
+    const eased = easeInOutCubic(t);
+    return {
+      x: -0.75 * eased,
+      y: 0.06 * eased,
+      rotate: -12 * eased,
+      scale: 1,
+      opacity: 1 - segment(t, 0.55, 1),
+      z,
+    };
+  }
+  const depth = Math.min(pos, 2);
+  // `+ 0` turns -0 into 0 (a square, unmoved top card).
+  return {
+    x: side * 0.07 * depth + 0,
+    y: -0.035 * depth + 0,
+    rotate: side * 4.5 * depth + 0,
+    scale: 1 - 0.06 * depth,
+    opacity: 1 - segment(pos, 2, 3),
+    z,
+  };
 }

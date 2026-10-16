@@ -1,121 +1,65 @@
 /**
- * Chapter 3 · "Del primer trazo a la obra"
+ * Chapter 3 · "La lámina se completa"
  * (src/components/home/scenes/ObraScene.astro).
  *
- * One stretch of the pinned progress per stage, in three beats
- * (phaseBeats()), the same rhythm as deivid.space:
- * - at rest: the stage's card beside the drawing, whose layer for this
- *   stage draws as it arrives (`--obra-draw` on that layer);
- * - a closer look: the drawing grows to the centre (`--obra-focus` 1), the
- *   card and the chapter title step back, a small label names the stage;
- * - back at rest before the next stage swaps the card.
- * The last stage's layer is the photo of the built work sliding in under
- * the pen (`--obra-ink`). Only the card on screen is reachable.
- *
- * The growth is one transform from the drawing's resting box (the slot) to
- * its large box, measured on resize (`--obra-dx`, `--obra-dy`, `--obra-s`).
+ * At rest the sheet sits beside the text with the stages blank. Scrolling
+ * on, it grows to the centre (`--focus`, focusCurve()) and the stages fill
+ * in one by one (`--row` on each row, itemShare()): the text is written
+ * across and the box is ticked. Then the APROBADO stamp lands (`--stamp`),
+ * the photo of the built work comes out of the sheet (`--built`), and the
+ * sheet goes back beside the text, complete.
  */
-import { easeOutCubic, phaseBeats } from "../../lib/motion/scenes";
+import {
+  easeOutCubic,
+  focusCurve,
+  itemShare,
+  segment,
+} from "../../lib/motion/scenes";
+import { measureFocus } from "./focus";
 import { setVar, type SceneFactory } from "./types";
 
-export const obraScene: SceneFactory = (track, tools) => {
-  const stage = track.querySelector<HTMLElement>("[data-obra-stage]");
-  const ink = track.querySelector<HTMLElement>("[data-obra-ink]");
-  const slot = track.querySelector<HTMLElement>("[data-obra-slot]");
-  const head = track.querySelector<HTMLElement>("[data-obra-head]");
-  const cards = [...track.querySelectorAll<HTMLElement>("[data-obra-card]")];
-  const captions = [
-    ...track.querySelectorAll<HTMLElement>("[data-obra-caption]"),
-  ];
-  const bars = [...track.querySelectorAll<HTMLElement>("[data-obra-bar]")];
-  const jumps = [...track.querySelectorAll<HTMLElement>("[data-obra-jump]")];
-  // Both copies of the drawing (on the paper and over the photo).
-  const drawings = [...track.querySelectorAll<SVGSVGElement>(".obra")];
-  const layersOf = drawings.map((svg) => [
-    ...svg.querySelectorAll<SVGGElement>("[data-obra-layer]"),
-  ]);
-  const count = cards.length;
-  if (!stage || !ink || !slot || count === 0 || drawings.length === 0) {
-    return null;
-  }
-  let active = -1;
+const FOCUS = [0.05, 0.16, 0.86, 0.96] as const;
+const ROWS_FROM = 0.18;
+const ROWS_TO = 0.68;
 
-  jumps.forEach((button, i) => {
-    // Land on the stage at rest, its layer drawn.
-    button.addEventListener("click", () =>
-      tools.scrollTo(track, (i + 0.15) / count),
-    );
-  });
+export const obraScene: SceneFactory = (track) => {
+  const stage = track.querySelector<HTMLElement>("[data-obra-stage]");
+  const sheet = track.querySelector<HTMLElement>("[data-obra-sheet]");
+  const slot = track.querySelector<HTMLElement>("[data-obra-slot]");
+  const done = track.querySelector<HTMLElement>("[data-obra-done]");
+  const rows = [...track.querySelectorAll<HTMLElement>("[data-obra-row]")];
+  if (!stage || !sheet || !slot || rows.length === 0) return null;
+  let shownDone = "";
 
   return {
     measure() {
-      const drawing = drawings[0];
-      if (!drawing) return;
-      // Measure the drawing at full screen (focus 1: no transform).
-      setVar(stage, "--obra-focus", 1);
-      const origin = stage.getBoundingClientRect();
-      const rect = (el: Element) => {
-        const r = el.getBoundingClientRect();
-        return {
-          x: r.left - origin.left,
-          y: r.top - origin.top,
-          w: r.width,
-          h: r.height,
-        };
-      };
-      const full = rect(drawing);
-      const box = rect(slot);
-      if (full.w === 0 || full.h === 0 || box.w === 0) return;
-      // The drawing keeps its proportions (viewBox 960×600, centred).
-      const content = (w: number, h: number) => Math.min(w / 960, h / 600);
-      const scale = content(box.w, box.h) / content(full.w, full.h);
-      setVar(stage, "--obra-s", scale);
-      setVar(stage, "--obra-dx", box.x + box.w / 2 - (full.x + full.w / 2));
-      setVar(stage, "--obra-dy", box.y + box.h / 2 - (full.y + full.h / 2));
+      // The sheet keeps its layout and is scaled to fit the screen.
+      const area = sheet.parentElement ?? sheet;
+      setVar(stage, "--fit", 1);
+      setVar(stage, "--focus", 1);
+      const header =
+        document.querySelector<HTMLElement>("[data-site-header]")
+          ?.offsetHeight ?? 72;
+      const room = window.innerHeight - header - window.innerHeight * 0.16;
+      setVar(stage, "--fit", Math.min(1, room / area.offsetHeight));
+      measureFocus(stage, area, slot);
     },
 
     render(progress) {
-      const beat = phaseBeats(progress, count);
-      // Earlier stages' layers stay drawn; later ones are blank.
-      for (const layers of layersOf) {
-        layers.forEach((layer, i) => {
-          const drawn = i < beat.phase ? 1 : i === beat.phase ? beat.draw : 0;
-          setVar(layer, "--obra-draw", easeOutCubic(drawn));
-        });
+      setVar(stage, "--focus", focusCurve(progress, FOCUS));
+      let complete = 0;
+      rows.forEach((row, i) => {
+        const share = itemShare(progress, i, rows.length, ROWS_FROM, ROWS_TO);
+        setVar(row, "--row", share);
+        if (share >= 1) complete += 1;
+      });
+      setVar(stage, "--stamp", easeOutCubic(segment(progress, 0.7, 0.75)));
+      setVar(stage, "--built", easeOutCubic(segment(progress, 0.74, 0.84)));
+      const label = String(complete).padStart(2, "0");
+      if (done && label !== shownDone) {
+        shownDone = label;
+        done.textContent = label;
       }
-      const built = beat.phase === count - 1 ? easeOutCubic(beat.draw) : 0;
-      setVar(ink, "--obra-ink", built);
-      stage.toggleAttribute("data-built", built > 0.35);
-
-      setVar(stage, "--obra-focus", beat.focus);
-      if (head) setVar(head, "--obra-head", 1 - beat.focus);
-      captions.forEach((caption, i) => {
-        setVar(caption, "--obra-caption", i === beat.phase ? beat.focus : 0);
-      });
-      cards.forEach((card, i) => {
-        setVar(
-          card,
-          "--obra-card",
-          i === beat.phase ? easeOutCubic(beat.card) : 0,
-        );
-      });
-
-      bars.forEach((bar, i) => {
-        const fill =
-          i < beat.phase ? 1 : i === beat.phase ? progress * count - i : 0;
-        setVar(bar, "--obra-fill", Math.min(1, Math.max(0, fill)));
-      });
-      const shown = beat.card > 0.5 ? beat.phase : -1;
-      if (shown !== active) {
-        active = shown;
-        cards.forEach((card, i) => {
-          card.inert = i !== shown;
-        });
-      }
-      jumps.forEach((button, i) => {
-        if (i === beat.phase) button.setAttribute("aria-current", "step");
-        else button.removeAttribute("aria-current");
-      });
     },
   };
 };
