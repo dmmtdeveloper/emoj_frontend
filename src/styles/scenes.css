@@ -525,3 +525,435 @@
     animation-delay: 760ms;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Chapter 2 · Services "del croquis a la obra"                       */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  .svc-stage {
+    background: var(--surface);
+  }
+
+  .svc-layout {
+    display: grid;
+    gap: 40px;
+    padding-block: 96px;
+  }
+
+  .svc-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .svc-eyebrow {
+    display: flex;
+    gap: 12px;
+    font-family: var(--font-data);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .svc-eyebrow span {
+    color: var(--brand);
+  }
+
+  .svc-title {
+    max-width: 16ch;
+    font-size: clamp(2.25rem, 1.6rem + 2.6vw, 4rem);
+    line-height: 0.98;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+
+  .svc-title em {
+    font-weight: 500;
+    color: var(--brand);
+  }
+
+  .svc-lead {
+    max-width: 38ch;
+    color: var(--ink-muted);
+  }
+
+  .svc-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    min-height: 44px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .svc-all:hover {
+    color: var(--brand);
+  }
+
+  .svc-nav {
+    display: none;
+  }
+
+  /* Static: a grid of finished sheets. */
+  .svc-sheets {
+    display: grid;
+    gap: 40px 24px;
+  }
+
+  @media (min-width: 48rem) {
+    .svc-sheets {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .svc-sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .svc-sheet__visual {
+    position: relative;
+    isolation: isolate;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-signature) 0 0 var(--radius-signature);
+    background: var(--surface-raised);
+    box-shadow:
+      0 0 0 1px var(--border),
+      var(--shadow-md);
+  }
+
+  .svc-sheet__paper {
+    position: absolute;
+    inset: 0;
+    color: var(--ink-muted);
+    opacity: 0.35;
+  }
+
+  .svc-sheet__croquis {
+    position: absolute;
+    inset: 6% 5%;
+    width: 90%;
+    height: 88%;
+    color: var(--ink);
+  }
+
+  .svc-sheet__stamp {
+    position: absolute;
+    z-index: 3;
+    right: 14px;
+    top: 14px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-data);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: color-mix(in oklab, var(--surface) 88%, transparent);
+    color: var(--ink);
+  }
+
+  /* The inked side: photo (or plum) under a cream copy of the sketch. */
+  .svc-sheet__ink {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    color: var(--sand-50);
+    clip-path: inset(0 calc((1 - var(--svc-ink, 1)) * 100%) 0 0);
+  }
+
+  .svc-sheet__ink--plain {
+    background: var(--plum-950);
+  }
+
+  .svc-sheet__ink--photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, var(--plum-950) 50%, transparent);
+  }
+
+  .svc-sheet__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    scale: calc(1.12 - var(--svc-ink, 1) * 0.12);
+  }
+
+  .svc-sheet__croquis--ink {
+    z-index: 1;
+    color: var(--sand-50);
+  }
+
+  /* Pen lines, drawn in their order (k-0 … k-9). */
+  .croquis .k {
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: calc(
+      1 - clamp(0, calc((var(--svc-draw, 1) - var(--k-i, 0) * 0.065) / 0.36), 1)
+    );
+  }
+
+  .croquis .k-thin {
+    stroke-width: 1.4;
+  }
+
+  .croquis .k-0 {
+    --k-i: 0;
+  }
+  .croquis .k-1 {
+    --k-i: 1;
+  }
+  .croquis .k-2 {
+    --k-i: 2;
+  }
+  .croquis .k-3 {
+    --k-i: 3;
+  }
+  .croquis .k-4 {
+    --k-i: 4;
+  }
+  .croquis .k-5 {
+    --k-i: 5;
+  }
+  .croquis .k-6 {
+    --k-i: 6;
+  }
+  .croquis .k-7 {
+    --k-i: 7;
+  }
+  .croquis .k-8 {
+    --k-i: 8;
+  }
+  .croquis .k-9 {
+    --k-i: 9;
+  }
+
+  .croquis .k-t {
+    font-family: var(--font-data);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    fill: currentColor;
+    opacity: clamp(0, calc((var(--svc-draw, 1) - 0.72) / 0.22), 1);
+  }
+
+  .croquis .k-f {
+    fill: none;
+  }
+
+  .svc-sheet__croquis--ink .k-f {
+    fill: var(--sage-300);
+    opacity: 0.22;
+  }
+
+  .svc-sheet__caption {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .svc-sheet__num {
+    font-family: var(--font-data);
+    font-size: 15px;
+    line-height: 28px;
+    font-weight: 500;
+    color: var(--brand);
+  }
+
+  .svc-sheet__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .svc-sheet__title {
+    font-size: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .svc-sheet__title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* The whole sheet is the link. */
+  .svc-sheet__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+  }
+
+  .svc-sheet__summary {
+    max-width: 46ch;
+    color: var(--ink-muted);
+  }
+
+  .svc-sheet__go {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-strong);
+    color: var(--ink);
+    transition:
+      background-color 250ms var(--ease-out),
+      color 250ms var(--ease-out),
+      translate 300ms var(--ease-out);
+  }
+
+  .svc-sheet:hover .svc-sheet__go,
+  .svc-sheet:has(a:focus-visible) .svc-sheet__go {
+    background: var(--ink);
+    color: var(--surface);
+    translate: 4px 0;
+  }
+
+  .svc-sheet:has(a:focus-visible) .svc-sheet__visual {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 4px;
+  }
+
+  /* ---------- Armed: pinned stage, sheets stacked ---------- */
+
+  .svc-scene[data-scene-armed] {
+    height: calc(100svh + 490svh);
+  }
+
+  [data-scene-armed] .svc-layout {
+    height: 100%;
+    align-content: center;
+    gap: 20px;
+    padding-top: calc(var(--header-h) + 16px);
+    padding-bottom: 20px;
+  }
+
+  [data-scene-armed] .svc-lead,
+  [data-scene-armed] .svc-all {
+    display: none;
+  }
+
+  [data-scene-armed] .svc-title {
+    font-size: clamp(1.875rem, 1.4rem + 2vw, 4rem);
+  }
+
+  [data-scene-armed] .svc-sheets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-scene-armed] .svc-sheet {
+    grid-area: 1 / 1;
+  }
+
+  [data-scene-armed] .svc-sheet__visual {
+    width: 100%;
+    max-width: calc((100svh - var(--header-h) - 300px) * 4 / 3);
+    clip-path: inset(
+      0 0 0 calc((1 - var(--svc-enter, 1)) * 100%) round var(--radius-signature)
+        0 0 var(--radius-signature)
+    );
+    translate: calc((1 - var(--svc-enter, 1)) * 8%) 0;
+    scale: calc(1 - var(--svc-under, 0) * 0.04);
+    opacity: calc(1 - var(--svc-under, 0) * 0.5);
+  }
+
+  [data-scene-armed] .svc-sheet__caption {
+    opacity: var(--svc-caption, 1);
+    translate: 0 calc((1 - var(--svc-caption, 1)) * 14px);
+  }
+
+  @media (min-width: 64rem) {
+    [data-scene-armed] .svc-layout {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: center;
+      gap: 64px;
+    }
+
+    [data-scene-armed] .svc-lead,
+    [data-scene-armed] .svc-all {
+      display: revert;
+    }
+
+    [data-scene-armed] .svc-all {
+      display: inline-flex;
+    }
+
+    [data-scene-armed] .svc-nav {
+      display: flex;
+      flex-direction: column;
+      margin-top: 8px;
+    }
+
+    [data-scene-armed] .svc-sheet__visual {
+      max-width: calc((100svh - var(--header-h) - 200px) * 4 / 3);
+    }
+  }
+
+  .svc-nav__item {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 36px 1fr;
+    align-items: center;
+    padding: 9px 0 8px;
+    text-align: left;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: color 250ms var(--ease-out);
+  }
+
+  .svc-nav__item:hover,
+  .svc-nav__item[aria-current] {
+    color: var(--ink);
+  }
+
+  .svc-nav__num {
+    font-family: var(--font-data);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .svc-nav__item[aria-current] .svc-nav__num {
+    color: var(--brand);
+  }
+
+  .svc-nav__label {
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .svc-nav__bar {
+    grid-column: 1 / -1;
+    position: relative;
+    height: 1px;
+    margin-top: 9px;
+    background: var(--border);
+  }
+
+  .svc-nav__bar > span {
+    position: absolute;
+    inset: 0;
+    background: var(--brand);
+    transform-origin: left;
+    scale: var(--svc-fill, 0) 1;
+  }
+}

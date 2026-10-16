@@ -1,0 +1,369 @@
+---
+/**
+ * A technical sketch ("croquis") per service, drawn as pen lines in a
+ * 480×360 sheet: a pipe network, a road in perspective, a loaded beam, an
+ * intersection, a building elevation, a soil profile with a borehole and a
+ * street section under rain. Purely decorative (`aria-hidden`).
+ *
+ * Motion (src/styles/scenes.css `.croquis`): every line has `pathLength=1`
+ * and a draw order `k-0`…`k-9`; the scene sets `--svc-draw` (0..1) and the
+ * lines draw in that order. `k-t` labels fade in at the end, `k-f` washes
+ * only show in the inked layer (over the photo).
+ */
+import type { ServiceSlug } from "../../../lib/api/client";
+
+interface Props {
+  slug: ServiceSlug;
+  class?: string;
+}
+
+const { slug, class: className } = Astro.props;
+
+/** A circle as a path (so it can be drawn with pathLength like a line). */
+const ring = (cx: number, cy: number, r: number) =>
+  `M${cx - r},${cy}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
+/** Dimension tick (short slanted mark, drafting style). */
+const tick = (x: number, y: number) => `M${x - 5},${y + 5}l10,-10`;
+---
+
+<svg
+  viewBox="0 0 480 360"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+  class:list={["croquis", className]}
+>
+  {slug === "obras-sanitarias" && (
+    <>
+      <path class="k-f" d="M30 196H450V218H30Z" />
+      <path
+        class="k k-0"
+        pathLength="1"
+        d="M30 196H94M126 196H234M266 196H374M406 196H450"
+      />
+      <path
+        class="k k-0"
+        pathLength="1"
+        d="M30 218H94M126 218H234M266 218H374M406 218H450"
+      />
+      <path class="k k-1" pathLength="1" d={ring(110, 207, 16)} />
+      <path class="k k-2" pathLength="1" d={ring(250, 207, 16)} />
+      <path class="k k-3" pathLength="1" d={ring(390, 207, 16)} />
+      <path class="k k-4 k-thin" pathLength="1" d="M244 191V70M256 191V70" />
+      <path
+        class="k k-4 k-thin"
+        pathLength="1"
+        d="M384 191L346 112M396 191L358 112"
+      />
+      <path class="k k-5 k-thin" pathLength="1" d="M226 70H274V40H226Z" />
+      <path
+        class="k k-6 k-thin"
+        pathLength="1"
+        d="M160 170H210M200 164L210 170L200 176"
+      />
+      <path
+        class="k k-6 k-thin"
+        pathLength="1"
+        d="M300 170H350M340 164L350 170L340 176"
+      />
+      <path
+        class="k k-7"
+        pathLength="1"
+        d="M72 60C62 76 56 86 56 96a16 16 0 0 0 32 0C88 86 82 76 72 60Z"
+      />
+      <path
+        class="k k-8 k-thin"
+        pathLength="1"
+        d={`M110 292H390${tick(110, 292)}${tick(390, 292)}`}
+      />
+      <text class="k-t" x="102" y="245">
+        C1
+      </text>
+      <text class="k-t" x="242" y="245">
+        C2
+      </text>
+      <text class="k-t" x="382" y="245">
+        C3
+      </text>
+      <text class="k-t" x="250" y="316" text-anchor="middle">
+        L = 280 m · Ø 315 mm · i = 0,8 %
+      </text>
+      <text class="k-t" x="284" y="58">
+        Arranque domiciliario
+      </text>
+    </>
+  )}
+  {slug === "obras-viales" && (
+    <>
+      <path class="k-f" d="M60 330L224 112H256L420 330Z" />
+      <path class="k k-0 k-thin" pathLength="1" d="M20 112H460" />
+      <path class="k k-1" pathLength="1" d="M60 330L224 112" />
+      <path class="k k-1" pathLength="1" d="M420 330L256 112" />
+      <path
+        class="k k-2 k-thin"
+        pathLength="1"
+        d="M20 330L214 112M460 330L266 112"
+      />
+      <path class="k k-3" pathLength="1" d="M240 330V292" />
+      <path class="k k-4" pathLength="1" d="M240 270V240" />
+      <path class="k k-5" pathLength="1" d="M240 222V200" />
+      <path
+        class="k k-6"
+        pathLength="1"
+        d="M240 186V170M240 160V150M240 143V136"
+      />
+      <path class="k k-7 k-thin" pathLength="1" d="M330 60Q380 40 440 70" />
+      <path
+        class="k k-8 k-thin"
+        pathLength="1"
+        d={`M60 346H420${tick(60, 346)}${tick(420, 346)}`}
+      />
+      <text class="k-t" x="240" y="100" text-anchor="middle">
+        Perfil tipo
+      </text>
+      <text class="k-t" x="240" y="342" text-anchor="middle">
+        Calzada 7,0 m
+      </text>
+      <text class="k-t" x="300" y="300">
+        Bombeo 2 %
+      </text>
+    </>
+  )}
+  {slug === "calculo-estructural" && (
+    <>
+      <path class="k-f" d="M60 132H420V158H60Z" />
+      <path class="k-f" d="M90 226Q240 326 390 226Z" />
+      <path class="k k-0" pathLength="1" d="M60 132H420V158H60Z" />
+      <path class="k k-1" pathLength="1" d="M90 158L74 188H106Z" />
+      <path class="k k-1" pathLength="1" d="M390 158L374 182H406Z" />
+      <path
+        class="k k-2 k-thin"
+        pathLength="1"
+        d={`${ring(382, 188, 5)}${ring(398, 188, 5)}`}
+      />
+      <path
+        class="k k-2 k-thin"
+        pathLength="1"
+        d="M66 196H114M72 196l-8 9M84 196l-8 9M96 196l-8 9M108 196l-8 9M366 196H414M372 196l-8 9M384 196l-8 9M396 196l-8 9M408 196l-8 9"
+      />
+      <path class="k k-3 k-thin" pathLength="1" d="M60 62H420" />
+      <path
+        class="k k-4 k-thin"
+        pathLength="1"
+        d="M80 62V124M74 116L80 126L86 116M140 62V124M134 116L140 126L146 116M200 62V124M194 116L200 126L206 116M260 62V124M254 116L260 126L266 116M320 62V124M314 116L320 126L326 116M380 62V124M374 116L380 126L386 116"
+      />
+      <path class="k k-5 k-thin" pathLength="1" d="M90 226H390" />
+      <path class="k k-6" pathLength="1" d="M90 226Q240 326 390 226" />
+      <path class="k k-7 k-thin" pathLength="1" d="M240 226V276" />
+      <path
+        class="k k-8 k-thin"
+        pathLength="1"
+        d={`M90 330H390${tick(90, 330)}${tick(390, 330)}`}
+      />
+      <text class="k-t" x="240" y="50" text-anchor="middle">
+        q = 2,5 t/m
+      </text>
+      <text class="k-t" x="252" y="296">
+        M máx
+      </text>
+      <text class="k-t" x="240" y="350" text-anchor="middle">
+        L = 6,0 m
+      </text>
+    </>
+  )}
+  {slug === "estudios-de-transito" && (
+    <>
+      <path
+        class="k-f"
+        d="M200 20H280V150H460V230H280V340H200V230H20V150H200Z"
+      />
+      <path
+        class="k k-0"
+        pathLength="1"
+        d="M200 20V130A20 20 0 0 1 180 150H20"
+      />
+      <path
+        class="k k-0"
+        pathLength="1"
+        d="M280 20V130A20 20 0 0 0 300 150H460"
+      />
+      <path
+        class="k k-1"
+        pathLength="1"
+        d="M200 340V250A20 20 0 0 0 180 230H20"
+      />
+      <path
+        class="k k-1"
+        pathLength="1"
+        d="M280 340V250A20 20 0 0 1 300 230H460"
+      />
+      <path
+        class="k k-2 k-thin"
+        pathLength="1"
+        d="M240 20V120M240 260V340M20 190H170M310 190H460"
+      />
+      <path
+        class="k k-3 k-thin"
+        pathLength="1"
+        d="M204 262H276M204 270H276M204 278H276"
+      />
+      <path
+        class="k k-4"
+        pathLength="1"
+        d="M262 330V282Q262 210 330 210H372M362 202L374 210L362 218"
+      />
+      <path
+        class="k k-5"
+        pathLength="1"
+        d="M218 30V96Q218 172 150 172H108M118 164L106 172L118 180"
+      />
+      <path
+        class="k k-6"
+        pathLength="1"
+        d="M440 172H330M340 164L328 172L340 180"
+      />
+      <text class="k-t" x="300" y="60">
+        1.240 veh/h
+      </text>
+      <text class="k-t" x="30" y="270">
+        Nivel de servicio C
+      </text>
+      <text class="k-t" x="300" y="300">
+        Hora punta 18:00
+      </text>
+    </>
+  )}
+  {slug === "proyectos-arquitectonicos" && (
+    <>
+      <path class="k-f" d="M90 140L240 70L390 140Z" />
+      <path class="k k-0 k-thin" pathLength="1" d="M30 300H450" />
+      <path class="k k-1" pathLength="1" d="M90 300V140L240 70L390 140V300" />
+      <path class="k k-2 k-thin" pathLength="1" d="M90 210H390" />
+      <path
+        class="k k-3"
+        pathLength="1"
+        d="M120 158H170V192H120ZM310 158H360V192H310Z"
+      />
+      <path class="k k-4" pathLength="1" d="M215 158H265V192H215Z" />
+      <path
+        class="k k-5"
+        pathLength="1"
+        d="M120 230H170V276H120ZM310 230H360V276H310Z"
+      />
+      <path class="k k-6" pathLength="1" d="M222 300V232H258V300" />
+      <path
+        class="k k-7 k-thin"
+        pathLength="1"
+        d={`M424 70V300${tick(424, 70)}${tick(424, 300)}`}
+      />
+      <path
+        class="k k-8 k-thin"
+        pathLength="1"
+        d={`M90 326H390${tick(90, 326)}${tick(390, 326)}`}
+      />
+      <text class="k-t" x="432" y="190">
+        +7,20
+      </text>
+      <text class="k-t" x="240" y="346" text-anchor="middle">
+        Elevación principal · 1:100
+      </text>
+    </>
+  )}
+  {slug === "geotecnia" && (
+    <>
+      <path
+        class="k-f"
+        d="M20 160C140 150 260 175 460 158V245C300 228 150 250 20 240Z"
+      />
+      <path
+        class="k k-0"
+        pathLength="1"
+        d="M20 90C120 80 200 100 300 88S420 92 460 86"
+      />
+      <path
+        class="k k-1 k-thin"
+        pathLength="1"
+        d="M20 160C140 150 260 175 460 158"
+      />
+      <path
+        class="k k-2 k-thin"
+        pathLength="1"
+        d="M20 240C150 250 300 228 460 245"
+      />
+      <path class="k k-3" pathLength="1" d="M232 66V330M248 66V330" />
+      <path
+        class="k k-4 k-thin"
+        pathLength="1"
+        d="M222 66L240 26L258 66M240 26V66"
+      />
+      <path
+        class="k k-5 k-thin"
+        pathLength="1"
+        d="M248 120H264M248 180H264M248 240H264M248 300H264"
+      />
+      <path
+        class="k k-6 k-thin"
+        pathLength="1"
+        d={`${ring(80, 280, 6)}${ring(120, 296, 4)}${ring(160, 274, 5)}${ring(360, 286, 6)}${ring(400, 300, 4)}`}
+      />
+      <path
+        class="k k-7 k-thin"
+        pathLength="1"
+        d="M60 200h14M110 196h14M330 204h14M380 200h14M420 196h14"
+      />
+      <text class="k-t" x="30" y="128">
+        Relleno
+      </text>
+      <text class="k-t" x="300" y="210">
+        Arena limosa
+      </text>
+      <text class="k-t" x="300" y="330">
+        Grava arenosa
+      </text>
+      <text class="k-t" x="270" y="124">
+        N = 12
+      </text>
+      <text class="k-t" x="270" y="304">
+        N = 41
+      </text>
+      <text class="k-t" x="196" y="56" text-anchor="end">
+        S-1
+      </text>
+    </>
+  )}
+  {slug === "aguas-lluvias" && (
+    <>
+      <path class="k-f" d="M282 270a28 28 0 0 0 56 0Z" />
+      <path
+        class="k k-0 k-thin"
+        pathLength="1"
+        d="M60 30l-14 30M120 20l-14 30M180 36l-14 30M240 18l-14 30M300 32l-14 30M360 22l-14 30M420 34l-14 30"
+      />
+      <path class="k k-1" pathLength="1" d="M20 150H170L180 166" />
+      <path class="k k-1" pathLength="1" d="M460 150H310L300 166" />
+      <path class="k k-2" pathLength="1" d="M180 166Q240 154 300 166" />
+      <path
+        class="k k-3 k-thin"
+        pathLength="1"
+        d="M206 146Q240 140 274 150M266 144L276 150L266 155"
+      />
+      <path class="k k-4" pathLength="1" d="M300 166H322V186H300Z" />
+      <path class="k k-5 k-thin" pathLength="1" d="M305 186V242M317 186V242" />
+      <path class="k k-6" pathLength="1" d={ring(310, 270, 28)} />
+      <path
+        class="k k-7 k-thin"
+        pathLength="1"
+        d="M352 270H420M410 264L420 270L410 276"
+      />
+      <text class="k-t" x="330" y="200">
+        Sumidero S-3
+      </text>
+      <text class="k-t" x="190" y="276" text-anchor="end">
+        Colector Ø 600
+      </text>
+      <text class="k-t" x="20" y="120">
+        T = 10 años
+      </text>
+    </>
+  )}
+</svg>
