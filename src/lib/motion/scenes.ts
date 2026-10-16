@@ -109,6 +109,30 @@ export function heroLens(
   return mix(sizes.dot, sizes.cover, t * t * (3 - 2 * t));
 }
 
+/** Screens of scroll the hero's stroke and lens take, and each extra photo. */
+export const HERO_LENS_SCREENS = 1.9;
+export const HERO_PHOTO_SCREENS = 0.9;
+
+/**
+ * The hero's progress split into its phases: `lens` (0..1, the stroke and
+ * the lens opening), then the extra photos wiping in one after another:
+ * `photo` is how many have fully come in and `slide` how far the next one
+ * is. With one photo the whole progress is the lens.
+ */
+export function heroPhases(
+  progress: number,
+  photos: number,
+): { lens: number; photo: number; slide: number } {
+  const extra = Math.max(0, photos - 1);
+  const total = HERO_LENS_SCREENS + extra * HERO_PHOTO_SCREENS;
+  const lens = segment(progress, 0, HERO_LENS_SCREENS / total);
+  if (extra === 0) return { lens, photo: 0, slide: 0 };
+  const position = segment(progress, HERO_LENS_SCREENS / total, 1) * extra;
+  if (position >= extra) return { lens, photo: extra, slide: 1 };
+  const photo = Math.floor(position);
+  return { lens, photo, slide: position - photo };
+}
+
 /**
  * Scale for zooming into a point: exponential, so each stretch of scroll
  * feels like the same speed (1 at t = 0, `max` at t = 1).

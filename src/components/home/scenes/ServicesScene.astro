@@ -1,20 +1,21 @@
 ---
 /**
- * Chapter 2 · Services, "del croquis a la obra". The stage pins and the
- * seven services pass one per stretch of scroll. Each one is a drawing
- * sheet: its technical sketch (Croquis.astro) draws itself line by line,
- * then a real photo of a project of that service slides in under the pen,
- * with the sketch carrying on over it in cream (the same trick as the hero
- * lens: two copies of the sketch, one on each side of the reveal). Services
- * without a photo get a plum "inked" sheet instead. The next service enters
- * as a new sheet sliding over the last one.
+ * Chapter 2 · Services, "del croquis a la obra". The stage pins and opens
+ * on the chapter title; then the seven services take the whole screen one
+ * after another, a screen of scroll each. Every service is a full-bleed
+ * drawing sheet: its technical sketch (Croquis.astro) draws itself line by
+ * line, large, then a real photo of a project of that service slides in
+ * under the pen, with the sketch carrying on over it in cream (two copies
+ * of the sketch, one on each side of the reveal). Services without a photo
+ * get a plum "inked" sheet instead. Beside the drawing, a card holds the
+ * service: number, name, summary, what we deliver and the link. The next
+ * service enters as a new sheet wiping over the last one.
  *
- * On wide screens the list of services on the left follows along (each
- * entry jumps to its service). Every sheet's caption holds the real link;
- * sheets that are not on screen are `inert`.
+ * On wide screens a column of numbers on the right follows along (each one
+ * jumps to its service). Cards that are not on screen are `inert`.
  *
  * Scene: src/scripts/scenes/services.ts. Without JavaScript or with reduced
- * motion the chapter is a grid of finished sheets (sketch over photo).
+ * motion the chapter is a grid of finished sheets with their cards.
  */
 import { ArrowRight } from "@lucide/astro";
 import type { ImageMetadata } from "astro";
@@ -49,10 +50,14 @@ const photoFor = (service: (typeof services)[number]): Photo | null => {
     : null;
 };
 
+/** What each card lists of the service's deliverables. */
+const DELIVERABLES_SHOWN = 3;
+
 const sheets = services.map((service, i) => ({
   service,
   number: String(i + 1).padStart(2, "0"),
   photo: photoFor(service),
+  deliverables: service.data.deliverables.slice(0, DELIVERABLES_SHOWN),
 }));
 const total = String(services.length).padStart(2, "0");
 ---
@@ -63,100 +68,106 @@ const total = String(services.length).padStart(2, "0");
   aria-labelledby="servicios"
   data-nav-section="/servicios"
 >
-  <div class="scene-stage svc-stage">
-    <div class="svc-layout container-site">
-      <div class="svc-intro">
-        <p class="svc-eyebrow">
-          <span>02</span> Servicios · {total}
-        </p>
-        <h2 id="servicios" class="svc-title">
-          Siete especialidades. Un solo <em>equipo</em>.
-        </h2>
-        <p class="svc-lead">
-          Del primer croquis a la obra terminada, coordinamos todas las
-          especialidades de tu proyecto.
-        </p>
-        <ol class="svc-nav" aria-label="Ir a un servicio">
-          {sheets.map(({ service, number }, i) => (
-            <li>
-              <button type="button" class="svc-nav__item" data-svc-jump={i}>
-                <span class="svc-nav__num">{number}</span>
-                <span class="svc-nav__label">{service.data.title}</span>
-                <span class="svc-nav__bar" aria-hidden="true">
-                  <span data-svc-bar />
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
-        <a href="/servicios" class="svc-all">
-          Ver todos los servicios
-          <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
-        </a>
-      </div>
-
-      <ol class="svc-sheets">
-        {sheets.map(({ service, number, photo }) => (
-          <li class="svc-sheet" data-svc-sheet>
-            <div class="svc-sheet__visual" aria-hidden="true">
-              <div class="svc-sheet__paper blueprint" />
-              <Croquis slug={service.data.slug} class="svc-sheet__croquis" />
-              <span class="svc-sheet__stamp">
-                Lámina {number} / {total}
-              </span>
-              <div
-                class:list={[
-                  "svc-sheet__ink",
-                  photo ? "svc-sheet__ink--photo" : "svc-sheet__ink--plain",
-                ]}
-              >
-                {photo &&
-                  ("width" in photo ? (
-                    <Image
-                      src={photo.src}
-                      alt=""
-                      width={photo.width}
-                      height={photo.height}
-                      widths={[480, 720, 960, 1280]}
-                      sizes="(min-width: 1024px) 640px, 100vw"
-                      loading="lazy"
-                      class="svc-sheet__photo"
-                    />
-                  ) : (
-                    <Image
-                      src={photo.src}
-                      alt=""
-                      widths={[480, 720, 960, 1280]}
-                      sizes="(min-width: 1024px) 640px, 100vw"
-                      loading="lazy"
-                      class="svc-sheet__photo"
-                    />
-                  ))}
-                <Croquis
-                  slug={service.data.slug}
-                  class="svc-sheet__croquis svc-sheet__croquis--ink"
-                />
-              </div>
-            </div>
-            <div class="svc-sheet__caption">
-              <span class="svc-sheet__num" aria-hidden="true">
-                {number}
-              </span>
-              <div class="svc-sheet__text">
-                <h3 class="svc-sheet__title">
-                  <a href={`/servicios/${service.data.slug}`}>
-                    {service.data.title}
-                  </a>
-                </h3>
-                <p class="svc-sheet__summary">{service.data.summary}</p>
-              </div>
-              <span class="svc-sheet__go" aria-hidden="true">
-                <ArrowRight size={20} stroke-width={1.75} />
-              </span>
-            </div>
-          </li>
-        ))}
-      </ol>
+  <div class="scene-stage svc-stage" data-svc-stage>
+    <div class="svc-intro container-site" data-svc-intro>
+      <p class="svc-eyebrow">
+        <span>02</span> Servicios · {total}
+      </p>
+      <h2 id="servicios" class="svc-title">
+        Siete especialidades. Un solo <em>equipo</em>.
+      </h2>
+      <p class="svc-lead">
+        Del primer croquis a la obra terminada, coordinamos todas las
+        especialidades de tu proyecto.
+      </p>
+      <a href="/servicios" class="svc-all">
+        Ver todos los servicios
+        <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+      </a>
     </div>
+
+    <ol class="svc-sheets">
+      {sheets.map(({ service, number, photo, deliverables }) => (
+        <li class="svc-sheet" data-svc-sheet>
+          <div class="svc-sheet__visual" aria-hidden="true">
+            <div class="svc-sheet__paper blueprint" />
+            <Croquis slug={service.data.slug} class="svc-sheet__croquis" />
+            <div
+              class:list={[
+                "svc-sheet__ink",
+                photo ? "svc-sheet__ink--photo" : "svc-sheet__ink--plain",
+              ]}
+            >
+              {photo &&
+                ("width" in photo ? (
+                  <Image
+                    src={photo.src}
+                    alt=""
+                    width={photo.width}
+                    height={photo.height}
+                    widths={[640, 960, 1280, 1600, 2000]}
+                    sizes="100vw"
+                    loading="lazy"
+                    class="svc-sheet__photo"
+                  />
+                ) : (
+                  <Image
+                    src={photo.src}
+                    alt=""
+                    widths={[640, 960, 1280, 1600, 2000]}
+                    sizes="100vw"
+                    loading="lazy"
+                    class="svc-sheet__photo"
+                  />
+                ))}
+              <Croquis
+                slug={service.data.slug}
+                class="svc-sheet__croquis svc-sheet__croquis--ink"
+              />
+            </div>
+            <span class="svc-sheet__stamp">
+              Lámina {number} / {total}
+            </span>
+          </div>
+
+          <div class="svc-card">
+            <p class="svc-card__eyebrow" aria-hidden="true">
+              <span>{number}</span> / {total} · Servicios
+            </p>
+            <h3 class="svc-card__title">
+              <a href={`/servicios/${service.data.slug}`}>
+                {service.data.title}
+              </a>
+            </h3>
+            <p class="svc-card__summary">{service.data.summary}</p>
+            <ul class="svc-card__list" aria-label="Qué entregamos">
+              {deliverables.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+            <span class="svc-card__go" aria-hidden="true">
+              Ver servicio
+              <ArrowRight size={18} stroke-width={1.75} />
+            </span>
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    <ol class="svc-nav" aria-label="Ir a un servicio">
+      {sheets.map(({ service, number }, i) => (
+        <li>
+          <button type="button" class="svc-nav__item" data-svc-jump={i}>
+            <span class="svc-nav__bar" aria-hidden="true">
+              <span data-svc-bar />
+            </span>
+            <span class="svc-nav__num" aria-hidden="true">
+              {number}
+            </span>
+            <span class="sr-only">{service.data.title}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
   </div>
 </section>

@@ -6,6 +6,7 @@ import {
   easeOutCubic,
   enterShare,
   heroLens,
+  heroPhases,
   mix,
   popIn,
   reelShift,
@@ -215,5 +216,39 @@ describe("popIn", () => {
     expect(popIn(1)).toBeCloseTo(1);
     const peak = Math.max(...[0.5, 0.6, 0.7, 0.8].map(popIn));
     expect(peak).toBeGreaterThan(1);
+  });
+});
+
+describe("heroPhases", () => {
+  it("gives the stroke and lens the first part and each extra photo a stretch", () => {
+    const one = heroPhases(0.5, 1);
+    expect(one.lens).toBeCloseTo(0.5);
+    expect(one.photo).toBe(0);
+
+    // 3 photos: the lens runs over 1.9 of 3.7 screens, then 0.9 each.
+    const end = heroPhases(1, 3);
+    expect(end.lens).toBe(1);
+    expect(end.photo).toBe(2);
+    expect(end.slide).toBe(1);
+  });
+
+  it("wipes the photos in order as the scroll goes on", () => {
+    const share = 1.9 / 3.7;
+    const midSecond = share + (1 - share) * 0.25;
+    const phase = heroPhases(midSecond, 3);
+    // The second photo is half way in (none of the extra ones is complete).
+    expect(phase.lens).toBe(1);
+    expect(phase.photo).toBe(0);
+    expect(phase.slide).toBeCloseTo(0.5);
+  });
+
+  it("is monotonic, so scrolling back rewinds the photos", () => {
+    let last = -1;
+    for (let p = 0; p <= 1; p += 0.01) {
+      const { lens, photo, slide } = heroPhases(p, 4);
+      const position = lens + photo + slide;
+      expect(position).toBeGreaterThanOrEqual(last - 1e-9);
+      last = position;
+    }
   });
 });

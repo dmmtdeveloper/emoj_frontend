@@ -626,12 +626,12 @@
   --header-fg: color-mix(
     in oklab,
     var(--ink) calc(var(--header-solid) * 100%),
-    var(--sand-50)
+    var(--header-clear-fg, var(--sand-50))
   );
   --mark-stroke: color-mix(
     in oklab,
     var(--brand) calc(var(--header-solid) * 100%),
-    var(--brick-400)
+    var(--header-clear-mark, var(--brick-400))
   );
   --mark-dot: var(--header-fg);
   color: var(--header-fg);
@@ -650,7 +650,7 @@
  * the photo stays in front; it fades out as the surface fades in.
  */
 .site-header__glass {
-  opacity: calc(1 - var(--header-solid));
+  opacity: calc((1 - var(--header-solid)) * var(--header-glass, 1));
   background-image: linear-gradient(
     to bottom,
     color-mix(in oklab, var(--plum-950) 55%, transparent),
@@ -696,24 +696,39 @@
 }
 
 /*
- * Quote button: brand fill on the solid bar; over the hero photo, an
- * outlined cream pill (brand on plum is a forbidden pair).
+ * Clear over the home hero's drawing sheet (cream, before the lens opens
+ * onto the photo): ink text and the brand mark, no plum fade. The hero
+ * scene sets `data-over` (src/scripts/scenes/hero.ts); before it runs the
+ * armed home starts on the sheet (`data-scenes`, public/theme.js).
+ */
+.site-header[data-over="sheet"],
+:root[data-scenes] .site-header[data-overlay]:not([data-over]) {
+  --header-clear-fg: var(--ink);
+  --header-clear-mark: var(--brand);
+  --header-glass: 0;
+  --header-clear-cta: 1;
+}
+
+/*
+ * Quote button: brand fill on the solid bar and over the sheet; over the
+ * hero photo, an outlined cream pill (brand on plum is a forbidden pair).
  */
 .header-cta {
+  --cta-solid: max(var(--header-solid), var(--header-clear-cta, 0));
   border: 1px solid
     color-mix(
       in oklab,
-      var(--brand) calc(var(--header-solid) * 100%),
+      var(--brand) calc(var(--cta-solid) * 100%),
       color-mix(in oklab, var(--sand-50) 60%, transparent)
     );
   background-color: color-mix(
     in oklab,
-    var(--brand) calc(var(--header-solid) * 100%),
+    var(--brand) calc(var(--cta-solid) * 100%),
     transparent
   );
   color: color-mix(
     in oklab,
-    var(--on-brand) calc(var(--header-solid) * 100%),
+    var(--on-brand) calc(var(--cta-solid) * 100%),
     var(--sand-50)
   );
 }
@@ -721,12 +736,12 @@
 .header-cta:hover {
   background-color: color-mix(
     in oklab,
-    var(--brand-hover) calc(var(--header-solid) * 100%),
+    var(--brand-hover) calc(var(--cta-solid) * 100%),
     color-mix(in oklab, var(--sand-50) 12%, transparent)
   );
   color: color-mix(
     in oklab,
-    var(--on-brand) calc(var(--header-solid) * 100%),
+    var(--on-brand) calc(var(--cta-solid) * 100%),
     var(--sand-50)
   );
 }

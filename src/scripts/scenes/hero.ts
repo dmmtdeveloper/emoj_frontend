@@ -8,11 +8,17 @@
  *   (clip-path) onto the photo, until it covers the screen.
  * - From LENS_TO the real copy switches to its cream tone over the photo
  *   (the lens copy, identical, goes away), so its links show their hover.
+ * - Then the other photos wipe in one by one (`--slide-in`), with the
+ *   counter following. The progress is split by heroPhases().
+ *
+ * The site header follows the hero's tone (`data-over`): ink over the
+ * sheet, cream over the photos.
  */
 import {
   easeInOutCubic,
   easeOutCubic,
   heroLens,
+  heroPhases,
   LENS_FROM,
   LENS_TO,
   mix,
@@ -31,7 +37,12 @@ export const heroScene: SceneFactory = (track) => {
   const svg = track.querySelector<SVGSVGElement>("[data-hero-stroke]");
   const dot = track.querySelector<SVGCircleElement>("[data-hero-dot]");
   const lens = track.querySelector<HTMLElement>("[data-hero-lens]");
+  const slides = [...track.querySelectorAll<HTMLElement>("[data-hero-slide]")];
+  const count = track.querySelector<HTMLElement>("[data-hero-count]");
+  const countBar = track.querySelector<HTMLElement>("[data-hero-count-bar]");
+  const header = document.querySelector<HTMLElement>("[data-site-header]");
   if (!stage || !svg || !dot || !lens) return null;
+  let shownCount = "";
 
   const start = performance.now();
   let lensX = 0;
@@ -58,7 +69,10 @@ export const heroScene: SceneFactory = (track) => {
       setVar(stage, "--lens-y", lensY);
     },
 
-    render(progress, now) {
+    render(trackProgress, now) {
+      const phase = heroPhases(trackProgress, slides.length);
+      // Everything below reads the lens phase as its progress.
+      const progress = phase.lens;
       const intro = easeInOutCubic((now - start) / INTRO_MS);
       const drawn = Math.min(
         1,
@@ -82,13 +96,35 @@ export const heroScene: SceneFactory = (track) => {
       setVar(
         stage,
         "--hero-lift",
-        easeInOutCubic(segment(progress, LENS_TO, 1)),
+        easeInOutCubic(segment(trackProgress, 0.96, 1)),
       );
+
+      // The other photos: the next one wipes in over the last, from the
+      // left, and settles from a slight zoom.
+      slides.forEach((slide, i) => {
+        if (i === 0) return;
+        const shown =
+          i - 1 < phase.photo ? 1 : i - 1 === phase.photo ? phase.slide : 0;
+        setVar(slide, "--slide-in", easeInOutCubic(shown));
+      });
+      if (slides.length > 1) {
+        const settled = phase.lens < 1 ? 0 : phase.photo + phase.slide;
+        const current = Math.min(slides.length, 1 + Math.floor(settled + 0.5));
+        const label = String(current).padStart(2, "0");
+        if (count && label !== shownCount) {
+          shownCount = label;
+          count.textContent = label;
+        }
+        if (countBar) {
+          setVar(countBar, "--hero-count-fill", settled / (slides.length - 1));
+        }
+      }
 
       const next = progress >= LENS_TO - 0.005 ? "photo" : "sheet";
       if (next !== tone) {
         tone = next;
         stage.dataset["tone"] = next;
+        if (header) header.dataset["over"] = next;
       }
     },
 

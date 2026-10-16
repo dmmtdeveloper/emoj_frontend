@@ -46,3 +46,12 @@ describe("THEME_KEY", () => {
     expect(script).toMatch(/:\s*"light"/);
   });
 });
+
+describe("scene pre-arming (public/theme.js)", () => {
+  it("marks the page before paint so scenes never flash their final state", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const script = await readFile("public/theme.js", "utf8");
+    expect(script).toContain("dataset.scenes");
+    expect(script).toContain("prefers-reduced-motion: reduce");
+  });
+});

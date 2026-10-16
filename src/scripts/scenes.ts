@@ -119,13 +119,21 @@ function init(): void {
       .matches,
     hasIntersectionObserver: "IntersectionObserver" in window,
   });
-  if (mode === "static") return;
+  if (mode === "static") {
+    // public/theme.js armed the page before paint; give it back its rest.
+    delete document.documentElement.dataset["scenes"];
+    return;
+  }
 
   for (const track of document.querySelectorAll<HTMLElement>("[data-scene]")) {
     const factory = FACTORIES[track.dataset["scene"] ?? ""];
     if (!factory) continue;
     const scene = factory(track, tools);
-    if (!scene) continue;
+    if (!scene) {
+      // Nothing to play: the chapter goes back to its plain layout.
+      track.removeAttribute("data-scene");
+      continue;
+    }
     track.setAttribute("data-scene-armed", "");
     chapters.push({
       track,

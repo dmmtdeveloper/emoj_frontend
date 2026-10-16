@@ -10,8 +10,13 @@
  * HeroCopy.astro), and the stroke carries on over the photo, faint.
  *
  * Scene: src/scripts/scenes/hero.ts (progress from src/scripts/scenes.ts).
+ * Once the lens covers the screen, the other hero photos pass with the
+ * scroll, each one wiping in from the left like a stroke being drawn, with
+ * a "01 / 03" counter. The header stays clear over the whole hero
+ * (`data-header-clear`, src/scripts/motion.ts).
+ *
  * Without JavaScript or with reduced motion the hero is the finished state:
- * the photo, cream copy on top, no pinning.
+ * the first photo, cream copy on top, no pinning.
  *
  * Copy and photos come from the panel (GET /v1/home/hero), with the copy
  * and photo the site shipped with as a fallback.
@@ -19,6 +24,8 @@
 import type { ImageMetadata } from "astro";
 import { Image, Picture } from "astro:assets";
 import water from "../../../assets/photos/agua-manos.jpg";
+import pumping from "../../../assets/photos/estacion-bombeo-tuberias.jpg";
+import aerial from "../../../assets/photos/vista-aerea-industrial.jpg";
 import type { CallToAction, HomeHero } from "../../../lib/api/client";
 import { fitWidth } from "../../../lib/content/format";
 import {
@@ -44,9 +51,11 @@ const withTarget = (cta: CallToAction | null) =>
 const primary = withTarget(copy.primaryCta);
 const secondary = withTarget(copy.secondaryCta);
 
-const panelPhoto = hero?.photos?.[0];
-const photo:
-  | { kind: "local"; src: ImageMetadata; alt: string }
+/** At most this many photos pass in the hero (one screen of scroll each). */
+const MAX_PHOTOS = 5;
+
+type Photo =
+  | { kind: "local"; src: ImageMetadata; alt: string; position: string }
   | {
       kind: "remote";
       src: string;
@@ -54,15 +63,44 @@ const photo:
       width: number;
       height: number;
       focus: string;
-    } = panelPhoto
-  ? {
-      kind: "remote",
-      src: mediaPath("portada", HERO_MEDIA_SLUG, panelPhoto),
-      alt: panelPhoto.alt,
-      ...fitWidth(panelPhoto, 2000),
-      focus: focusClasses(panelPhoto.focusX, panelPhoto.focusY),
-    }
-  : { kind: "local", src: water, alt: BUILT_IN_PHOTOS[0].alt };
+    };
+
+/** The photos the site shipped with, each with its own crop on phones. */
+const builtIn: Photo[] = [
+  {
+    kind: "local",
+    src: water,
+    alt: BUILT_IN_PHOTOS[0].alt,
+    position: "object-[60%_center] md:object-[58%_center]",
+  },
+  {
+    kind: "local",
+    src: pumping,
+    alt: BUILT_IN_PHOTOS[1].alt,
+    position: "object-[48%_center] md:object-center",
+  },
+  {
+    kind: "local",
+    src: aerial,
+    alt: BUILT_IN_PHOTOS[2].alt,
+    position: "object-[38%_center] md:object-center",
+  },
+];
+
+/** Photos chosen in the panel (Portada), cropped around their focal point. */
+const fromPanel: Photo[] = (hero?.photos ?? []).map((photo) => ({
+  kind: "remote",
+  src: mediaPath("portada", HERO_MEDIA_SLUG, photo),
+  alt: photo.alt,
+  ...fitWidth(photo, 2000),
+  focus: focusClasses(photo.focusX, photo.focusY),
+}));
+
+const photos = (fromPanel.length > 0 ? fromPanel : builtIn).slice(
+  0,
+  MAX_PHOTOS,
+);
+const total = String(photos.length).padStart(2, "0");
 
 const year = new Date().getFullYear();
 const COLUMNS = ["A", "B", "C", "D", "E", "F"];
@@ -70,12 +108,13 @@ const ROWS = ["1", "2", "3", "4"];
 ---
 
 <section
-  class="hero-scene -mt-(--header-h)"
+  class:list={["hero-scene -mt-(--header-h)", `hero-scene--${photos.length}`]}
   data-scene="hero"
   data-hero
+  data-header-clear
   aria-labelledby="hero-title"
 >
-  <div class="scene-stage hero-stage" data-tone="photo" data-hero-stage>
+  <div class="scene-stage hero-stage" data-tone="sheet" data-hero-stage>
     {/* The drawing sheet. */}
     <div class="hero-sheet" aria-hidden="true">
       <div class="hero-sheet__grid blueprint"></div>
@@ -150,31 +189,35 @@ const ROWS = ["1", "2", "3", "4"];
     {/* The lens: the photo, the stroke carrying on and the cream copy. */}
     <div class="hero-lens" data-hero-lens aria-hidden="true">
       <div class="hero-lens__photo">
-        {photo.kind === "local" ? (
-          <Picture
-            src={photo.src}
-            alt=""
-            formats={["avif", "webp"]}
-            widths={[640, 960, 1280, 1600, 2130]}
-            sizes="100vw"
-            loading="eager"
-            fetchpriority="high"
-            class="hero-lens__img object-[60%_center]"
-            pictureAttributes={{ class: "contents" }}
-          />
-        ) : (
-          <Image
-            src={photo.src}
-            alt=""
-            width={photo.width}
-            height={photo.height}
-            widths={[640, 960, 1280, 1600, 2000]}
-            sizes="100vw"
-            loading="eager"
-            fetchpriority="high"
-            class:list={["hero-lens__img object-focus", photo.focus]}
-          />
-        )}
+        {photos.map((photo, i) => (
+          <div class="hero-lens__slide" data-hero-slide>
+            {photo.kind === "local" ? (
+              <Picture
+                src={photo.src}
+                alt=""
+                formats={["avif", "webp"]}
+                widths={[640, 960, 1280, 1600, 2000]}
+                sizes="100vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchpriority={i === 0 ? "high" : "low"}
+                class:list={["hero-lens__img", photo.position]}
+                pictureAttributes={{ class: "contents" }}
+              />
+            ) : (
+              <Image
+                src={photo.src}
+                alt=""
+                width={photo.width}
+                height={photo.height}
+                widths={[640, 960, 1280, 1600, 2000]}
+                sizes="100vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchpriority={i === 0 ? "high" : "low"}
+                class:list={["hero-lens__img object-focus", photo.focus]}
+              />
+            )}
+          </div>
+        ))}
       </div>
       <div class="hero-lens__veil"></div>
       <svg
@@ -193,6 +236,16 @@ const ROWS = ["1", "2", "3", "4"];
         decorative
       />
     </div>
+
+    {photos.length > 1 && (
+      <div class="hero-count container-site" aria-hidden="true">
+        <span data-hero-count>01</span>
+        <span class="hero-count__track">
+          <span data-hero-count-bar />
+        </span>
+        <span>{total}</span>
+      </div>
+    )}
 
     <div class="hero-cue" aria-hidden="true">
       <span>Desliza</span>
