@@ -24,6 +24,7 @@ import {
   publishChecklist,
   type ProjectFormValues,
 } from "../lib/admin/project-form";
+import { projectMagnitude } from "../lib/content/magnitude";
 import { SERVICE_SLUGS } from "../lib/services";
 import { adminApi } from "./api";
 import { EditorSkeleton } from "./skeletons";
@@ -260,42 +261,11 @@ function EditorForm({
                 serviceTitles={serviceTitles}
                 error={errors.services?.message}
               />
-              <fieldset className="flex flex-col gap-3">
-                <legend className="text-sm font-semibold text-ink">
-                  Cifra destacada{" "}
-                  <span className="font-medium text-ink-muted">(opcional)</span>
-                </legend>
-                <p className="text-sm text-ink-muted">
-                  La magnitud del proyecto, que la ficha muestra en grande. Ej.:
-                  Caudal · 1.200 · l/s. Déjala vacía si no aplica.
-                </p>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
-                  <Field
-                    label="Qué se mide"
-                    optional
-                    hint="Ej.: Caudal, Longitud."
-                    autoComplete="off"
-                    {...register("magnitudeLabel")}
-                    error={errors.magnitudeLabel?.message}
-                  />
-                  <Field
-                    label="Cifra"
-                    hint="Como quieres que se lea. Ej.: 1.200"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    {...register("magnitudeValue")}
-                    error={errors.magnitudeValue?.message}
-                  />
-                  <Field
-                    label="Unidad"
-                    optional
-                    hint="Ej.: l/s, km, m³."
-                    autoComplete="off"
-                    {...register("magnitudeUnit")}
-                    error={errors.magnitudeUnit?.message}
-                  />
-                </div>
-              </fieldset>
+              <MagnitudeField
+                control={control}
+                register={register}
+                errors={errors}
+              />
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -607,5 +577,129 @@ function ServicesField({
         </fieldset>
       )}
     />
+  );
+}
+
+/** Common units in EMOJ projects, offered as suggestions (any text works). */
+const UNIT_SUGGESTIONS = [
+  "l/s",
+  "m³/s",
+  "m³",
+  "m²",
+  "ha",
+  "km",
+  "m",
+  "kW",
+  "viviendas",
+  "habitantes",
+] as const;
+
+/**
+ * Headline figure ("Caudal 1.200 l/s"), in the order it reads on the site:
+ * the figure with its unit, then what it measures, which the page shows
+ * small above the number. A preview mirrors the project page as you type.
+ */
+function MagnitudeField({
+  control,
+  register,
+  errors,
+}: {
+  control: ReturnType<typeof useForm<ProjectFormValues>>["control"];
+  register: ReturnType<typeof useForm<ProjectFormValues>>["register"];
+  errors: ReturnType<typeof useForm<ProjectFormValues>>["formState"]["errors"];
+}) {
+  const unitsId = useId();
+  const [label, value, unit] = useWatch({
+    control,
+    name: ["magnitudeLabel", "magnitudeValue", "magnitudeUnit"],
+  });
+  const preview = projectMagnitude({ label, value, unit });
+  return (
+    <fieldset className="flex flex-col gap-3">
+      <legend className="text-sm font-semibold text-ink">
+        Cifra destacada{" "}
+        <span className="font-medium text-ink-muted">(opcional)</span>
+      </legend>
+      <p className="max-w-[65ch] text-sm text-ink-muted">
+        Un número que resume el tamaño del proyecto. La ficha lo muestra en
+        grande junto a la foto, y la tarjeta del proyecto, abajo. Déjalo vacío
+        si no aplica.
+      </p>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-[minmax(0,1fr)_9rem] items-start gap-3">
+            <Field
+              label="Cifra"
+              hint="Como quieres que se lea: 1.200 o 2,4."
+              inputMode="decimal"
+              autoComplete="off"
+              {...register("magnitudeValue")}
+              error={errors.magnitudeValue?.message}
+            />
+            <Field
+              label="Unidad"
+              optional
+              hint="Ej.: km, l/s."
+              autoComplete="off"
+              list={unitsId}
+              {...register("magnitudeUnit")}
+              error={errors.magnitudeUnit?.message}
+            />
+            <datalist id={unitsId}>
+              {UNIT_SUGGESTIONS.map((u) => (
+                <option key={u} value={u} />
+              ))}
+            </datalist>
+          </div>
+          <Field
+            label="Qué mide"
+            optional
+            hint="Va en letra pequeña sobre la cifra. Ej.: Caudal tratado, Canal revestido."
+            autoComplete="off"
+            {...register("magnitudeLabel")}
+            error={errors.magnitudeLabel?.message}
+          />
+        </div>
+        <figure className="flex flex-col gap-2">
+          <figcaption className="text-sm font-semibold text-ink">
+            Así se verá en la ficha
+          </figcaption>
+          {preview ? (
+            <div
+              aria-hidden="true"
+              className="flex min-h-36 flex-col justify-end gap-2 rounded-l-signature rounded-r-lg bg-surface-inverse px-6 py-5 font-data text-ink-inverse"
+            >
+              {preview.label && (
+                <span className="text-xs leading-4 font-medium tracking-[0.1em] text-ink-inverse/70 uppercase">
+                  {preview.label}
+                </span>
+              )}
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span className="truncate text-5xl leading-none font-semibold tracking-[-0.05em] tabular-nums">
+                  {preview.value}
+                </span>
+                {preview.unit && (
+                  <span className="shrink-0 text-xl leading-none font-medium text-ink-inverse/80">
+                    {preview.unit}
+                  </span>
+                )}
+              </span>
+            </div>
+          ) : (
+            <div className="grid min-h-36 place-items-center rounded-lg border-2 border-dashed border-border-strong px-6 text-center text-sm text-ink-muted">
+              Escribe una cifra para ver cómo queda.
+            </div>
+          )}
+          {preview && (
+            <p className="sr-only">
+              Vista previa:{" "}
+              {[preview.label, preview.value, preview.unit]
+                .filter(Boolean)
+                .join(" ")}
+            </p>
+          )}
+        </figure>
+      </div>
+    </fieldset>
   );
 }
