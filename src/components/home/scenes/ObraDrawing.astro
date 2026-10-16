@@ -1,0 +1,232 @@
+---
+/**
+ * "La obra se arma": one engineering section (a corte, 960×600) that gains
+ * a layer per stage of an EMOJ project, in pen lines:
+ *
+ * 0. Conversamos: the site limits and the agreed scope.
+ * 1. Vamos a terreno: the terrain profile, survey points and two boreholes.
+ * 2. Estudiamos: the soil strata, the water table and the blow counts.
+ * 3. Diseñamos: a water tank on piles, its pipes and dimensions.
+ * 4. Aprobamos: the title block signed and the APROBADO stamp.
+ *
+ * (The sixth stage, the built work, is the photo under the drawing; see
+ * ObraScene.astro.) Purely decorative (`aria-hidden`).
+ *
+ * Motion (src/styles/scenes.css `.obra`): each layer is a `<g>` whose
+ * `--obra-draw` (0..1) the scene sets; inside it every line has
+ * `pathLength=1` and a draw order `k-0`…`k-8`. Labels (`k-t`) fade in at
+ * the end of their layer, washes (`k-f`) with it.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+/** A dashed line as short drawn segments (dash arrays are taken by the draw). */
+function dashed(
+  from: [number, number],
+  to: [number, number],
+  dash = 14,
+  gap = 9,
+): string {
+  const [x1, y1] = from;
+  const [x2, y2] = to;
+  const length = Math.hypot(x2 - x1, y2 - y1);
+  const ux = (x2 - x1) / length;
+  const uy = (y2 - y1) / length;
+  const parts: string[] = [];
+  for (let at = 0; at < length; at += dash + gap) {
+    const end = Math.min(length, at + dash);
+    parts.push(
+      `M${(x1 + ux * at).toFixed(1)} ${(y1 + uy * at).toFixed(1)}L${(x1 + ux * end).toFixed(1)} ${(y1 + uy * end).toFixed(1)}`,
+    );
+  }
+  return parts.join("");
+}
+
+/** Dimension tick (short slanted mark, drafting style). */
+const tick = (x: number, y: number) => `M${x - 6} ${y + 6}l12 -12`;
+
+const GROUND = "M40 300C180 282 290 318 420 300S650 270 920 292";
+const STRATA_1 = "M40 380C220 370 420 396 920 372";
+const STRATA_2 = "M40 462C260 474 520 450 920 466";
+---
+
+<svg
+  viewBox="0 0 960 600"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+  class:list={["obra", className]}
+>
+  {/* 0 · Conversamos: limits and scope. */}
+  <g class="obra-layer" data-obra-layer>
+    <path class="k k-0" pathLength="1" d={dashed([150, 70], [150, 560])} />
+    <path class="k k-0" pathLength="1" d={dashed([810, 70], [810, 560])} />
+    <path
+      class="k k-1 k-thin"
+      pathLength="1"
+      d={`M150 46H810${tick(150, 46)}${tick(810, 46)}`}
+    />
+    <text class="k-t" x="480" y="34" text-anchor="middle">
+      Alcance acordado · 120 m
+    </text>
+    <text class="k-t" x="162" y="92">
+      Predio
+    </text>
+  </g>
+
+  {/* 1 · Vamos a terreno: terrain, survey points, boreholes. */}
+  <g class="obra-layer" data-obra-layer>
+    <path class="k k-0 k-bold" pathLength="1" d={GROUND} />
+    <path class="k k-1" pathLength="1" d="M222 300L230 284L238 300Z" />
+    <path class="k k-2" pathLength="1" d="M872 296L880 280L888 296Z" />
+    <path class="k k-3" pathLength="1" d="M712 288L720 272L728 288Z" />
+    <path class="k k-4" pathLength="1" d="M296 308H308V520H296Z" />
+    <path class="k k-5" pathLength="1" d="M646 290H658V520H646Z" />
+    <text class="k-t" x="230" y="270" text-anchor="middle">
+      +102,4
+    </text>
+    <text class="k-t" x="880" y="266" text-anchor="middle">
+      +102,9
+    </text>
+    <text class="k-t" x="720" y="258" text-anchor="middle">
+      +103,1
+    </text>
+    <text class="k-t" x="290" y="540" text-anchor="end">
+      C-1
+    </text>
+    <text class="k-t" x="640" y="540" text-anchor="end">
+      C-2
+    </text>
+  </g>
+
+  {/* 2 · Estudiamos: soil strata, water table, blow counts. */}
+  <g class="obra-layer" data-obra-layer>
+    <path class="k-f" d={`${GROUND}V372C420 396 220 370 40 380Z`} />
+    <path class="k-f k-f--deep" d={`${STRATA_1}V466C520 450 260 474 40 462Z`} />
+    <path class="k k-0" pathLength="1" d={STRATA_1} />
+    <path class="k k-1" pathLength="1" d={STRATA_2} />
+    <path
+      class="k k-2 k-thin"
+      pathLength="1"
+      d={dashed([40, 420], [920, 420], 10, 8)}
+    />
+    <path class="k k-3" pathLength="1" d="M852 404H868L860 414Z" />
+    <path
+      class="k k-4 k-thin"
+      pathLength="1"
+      d="M280 362H296M280 440H296M668 350H684M668 500H684"
+    />
+    <text class="k-t" x="56" y="350">
+      Relleno
+    </text>
+    <text class="k-t" x="56" y="440">
+      Arena limosa
+    </text>
+    <text class="k-t" x="56" y="520">
+      Grava arenosa
+    </text>
+    <text class="k-t" x="900" y="398" text-anchor="end">
+      N.F. −2,4 m
+    </text>
+    <text class="k-t" x="288" y="352" text-anchor="end">
+      N = 12
+    </text>
+    <text class="k-t" x="690" y="505">
+      N = 41
+    </text>
+  </g>
+
+  {/* 3 · Diseñamos: a water tank on piles. */}
+  <g class="obra-layer" data-obra-layer>
+    <path class="k-f" d="M370 330V160Q480 110 590 160V330Z" />
+    <path
+      class="k k-0 k-thin"
+      pathLength="1"
+      d="M330 296L360 330H600L630 286"
+    />
+    <path class="k k-1" pathLength="1" d="M350 330H610V350H350Z" />
+    <path
+      class="k k-2"
+      pathLength="1"
+      d="M380 350V500M450 350V500M510 350V500M580 350V500"
+    />
+    <path class="k k-3 k-bold" pathLength="1" d="M370 330V160H590V330" />
+    <path class="k k-4 k-bold" pathLength="1" d="M370 160Q480 110 590 160" />
+    <path
+      class="k k-5 k-thin"
+      pathLength="1"
+      d="M380 214Q400 206 420 214T460 214T500 214T540 214T580 214"
+    />
+    <path
+      class="k k-6"
+      pathLength="1"
+      d="M190 200H370M226 192L238 200L226 208M590 300H760M724 292L736 300L724 308"
+    />
+    <path
+      class="k k-7 k-thin"
+      pathLength="1"
+      d={`M640 160V330${tick(640, 160)}${tick(640, 330)}`}
+    />
+    <path
+      class="k k-8 k-thin"
+      pathLength="1"
+      d={`M370 96H590${tick(370, 96)}${tick(590, 96)}`}
+    />
+    <text class="k-t" x="480" y="270" text-anchor="middle">
+      Estanque 500 m³
+    </text>
+    <text class="k-t" x="650" y="214">
+      H = 6,0 m
+    </text>
+    <text class="k-t" x="480" y="84" text-anchor="middle">
+      Ø 12 m
+    </text>
+    <text class="k-t" x="190" y="186">
+      Entrada
+    </text>
+  </g>
+
+  {/* 4 · Aprobamos: the title block signed, then the stamp. */}
+  <g class="obra-layer" data-obra-layer>
+    <path class="k k-0 k-thin" pathLength="1" d="M700 522H920V586H700Z" />
+    <path class="k k-1 k-thin" pathLength="1" d="M700 544H920M780 522V586" />
+    <path
+      class="k k-2"
+      pathLength="1"
+      d="M796 566L806 576L826 554M856 566L866 576L886 554"
+    />
+    <text class="k-t k-t--small" x="708" y="538">
+      Proyecto
+    </text>
+    <text class="k-t k-t--small" x="708" y="568">
+      Revisó
+    </text>
+    <text class="k-t k-t--small" x="788" y="538">
+      Aprobó
+    </text>
+    <g class="obra-stamp" transform="rotate(-9 740 102)">
+      <rect
+        class="obra-stamp__ring"
+        x="620"
+        y="62"
+        width="240"
+        height="80"
+        rx="10"
+      />
+      <rect
+        class="obra-stamp__ring obra-stamp__ring--inner"
+        x="630"
+        y="72"
+        width="220"
+        height="60"
+        rx="6"
+      />
+      <text class="obra-stamp__text" x="740" y="115" text-anchor="middle">
+        APROBADO
+      </text>
+    </g>
+  </g>
+</svg>

@@ -1,9 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ClientsStrip from "../components/home/ClientsStrip.astro";
-import WorkFlow from "../components/home/WorkFlow.astro";
 import ClosingScene from "../components/home/scenes/ClosingScene.astro";
 import HeroScene from "../components/home/scenes/HeroScene.astro";
+import ObraScene from "../components/home/scenes/ObraScene.astro";
 import ReelScene from "../components/home/scenes/ReelScene.astro";
 import ServicesScene from "../components/home/scenes/ServicesScene.astro";
 import StackScene from "../components/home/scenes/StackScene.astro";
@@ -41,9 +41,7 @@ const serviceTitles = await getServiceTitles();
 >
   <HeroScene hero={hero} />
   <ServicesScene />
-  <div data-nav-section="/nosotros">
-    <WorkFlow />
-  </div>
+  <ObraScene />
   {featured.length > 0 && (
     <ReelScene projects={featured} serviceTitles={serviceTitles} />
   )}

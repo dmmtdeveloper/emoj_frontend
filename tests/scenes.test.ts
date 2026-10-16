@@ -7,6 +7,7 @@ import {
   enterShare,
   heroLens,
   heroPhases,
+  layerDraw,
   mix,
   popIn,
   reelShift,
@@ -250,5 +251,23 @@ describe("heroPhases", () => {
       expect(position).toBeGreaterThanOrEqual(last - 1e-9);
       last = position;
     }
+  });
+});
+
+describe("layerDraw", () => {
+  it("draws the layers one after another, each in the first part of its stretch", () => {
+    // 4 layers: stretch of 0.25 each, drawn over its first 60%.
+    expect(layerDraw(0, 0, 4)).toBe(0);
+    expect(layerDraw(0.075, 0, 4)).toBeCloseTo(0.5);
+    expect(layerDraw(0.15, 0, 4)).toBe(1);
+    expect(layerDraw(0.2, 0, 4)).toBe(1);
+    expect(layerDraw(0.2, 1, 4)).toBe(0);
+    expect(layerDraw(0.325, 1, 4)).toBeCloseTo(0.5);
+  });
+
+  it("keeps earlier layers drawn and later ones blank", () => {
+    expect(layerDraw(0.9, 0, 4)).toBe(1);
+    expect(layerDraw(0.1, 3, 4)).toBe(0);
+    expect(layerDraw(1, 3, 4)).toBe(1);
   });
 });

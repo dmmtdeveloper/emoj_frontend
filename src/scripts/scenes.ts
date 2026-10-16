@@ -20,6 +20,7 @@ import {
 } from "../lib/motion/scenes";
 import { closingScene } from "./scenes/closing";
 import { heroScene } from "./scenes/hero";
+import { obraScene } from "./scenes/obra";
 import { reelScene } from "./scenes/reel";
 import { servicesScene } from "./scenes/services";
 import { stackScene } from "./scenes/stack";
@@ -32,6 +33,7 @@ const SMOOTHING_MS = 110;
 const FACTORIES: Record<string, SceneFactory> = {
   hero: heroScene,
   services: servicesScene,
+  obra: obraScene,
   reel: reelScene,
   years: yearsScene,
   stack: stackScene,

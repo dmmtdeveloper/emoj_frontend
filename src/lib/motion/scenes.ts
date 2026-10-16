@@ -109,6 +109,23 @@ export function heroLens(
   return mix(sizes.dot, sizes.cover, t * t * (3 - 2 * t));
 }
 
+/** Share of each layer's stretch spent drawing it; the rest holds. */
+export const LAYER_DRAW = 0.6;
+
+/**
+ * How much of layer `index` (of `count`, one stretch of the progress each)
+ * is drawn: blank before its stretch, drawn over the first LAYER_DRAW of
+ * it, then complete for good.
+ */
+export function layerDraw(
+  progress: number,
+  index: number,
+  count: number,
+): number {
+  const start = index / count;
+  return segment(progress, start, start + LAYER_DRAW / count);
+}
+
 /** Screens of scroll the hero's stroke and lens take, and each extra photo. */
 export const HERO_LENS_SCREENS = 1.9;
 export const HERO_PHOTO_SCREENS = 0.9;
