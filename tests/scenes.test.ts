@@ -5,8 +5,14 @@ import {
   easeInOutCubic,
   easeOutCubic,
   enterShare,
-  heroLens,
+  cadReadout,
+  cadStepPhases,
   heroPhases,
+  HERO_PHOTO_SCREENS,
+  HERO_PLAN_SCREENS,
+  typedText,
+  weightedSlice,
+  zoomWindow,
   focusCurve,
   itemShare,
   deckPlace,
@@ -132,24 +138,6 @@ describe("sliceOf", () => {
   });
 });
 
-describe("heroLens", () => {
-  it("is closed (the size of the dot) until the stroke is drawn", () => {
-    expect(heroLens(0, { dot: 8, cover: 1500 })).toBe(8);
-    expect(heroLens(0.3, { dot: 8, cover: 1500 })).toBe(8);
-  });
-
-  it("grows to cover the whole screen", () => {
-    const sizes = [0.4, 0.5, 0.6, 0.7, 0.8].map((p) =>
-      heroLens(p, { dot: 8, cover: 1500 }),
-    );
-    for (let i = 1; i < sizes.length; i++) {
-      expect(sizes[i]).toBeGreaterThanOrEqual(sizes[i - 1] ?? 0);
-    }
-    expect(heroLens(0.9, { dot: 8, cover: 1500 })).toBe(1500);
-    expect(heroLens(1, { dot: 8, cover: 1500 })).toBe(1500);
-  });
-});
-
 describe("zoomScale", () => {
   it("goes from 1 to the maximum, evenly in perceived speed", () => {
     expect(zoomScale(0, 64)).toBe(1);
@@ -223,24 +211,24 @@ describe("popIn", () => {
 });
 
 describe("heroPhases", () => {
-  it("gives the stroke and lens the first part and each extra photo a stretch", () => {
+  it("gives the plan the first part and each extra photo a stretch", () => {
     const one = heroPhases(0.5, 1);
-    expect(one.lens).toBeCloseTo(0.5);
+    expect(one.plan).toBeCloseTo(0.5);
     expect(one.photo).toBe(0);
 
-    // 3 photos: the lens runs over 1.9 of 3.7 screens, then 0.9 each.
     const end = heroPhases(1, 3);
-    expect(end.lens).toBe(1);
+    expect(end.plan).toBe(1);
     expect(end.photo).toBe(2);
     expect(end.slide).toBe(1);
   });
 
   it("wipes the photos in order as the scroll goes on", () => {
-    const share = 1.9 / 3.7;
+    const total = HERO_PLAN_SCREENS + 2 * HERO_PHOTO_SCREENS;
+    const share = HERO_PLAN_SCREENS / total;
     const midSecond = share + (1 - share) * 0.25;
     const phase = heroPhases(midSecond, 3);
     // The second photo is half way in (none of the extra ones is complete).
-    expect(phase.lens).toBe(1);
+    expect(phase.plan).toBe(1);
     expect(phase.photo).toBe(0);
     expect(phase.slide).toBeCloseTo(0.5);
   });
@@ -248,11 +236,99 @@ describe("heroPhases", () => {
   it("is monotonic, so scrolling back rewinds the photos", () => {
     let last = -1;
     for (let p = 0; p <= 1; p += 0.01) {
-      const { lens, photo, slide } = heroPhases(p, 4);
-      const position = lens + photo + slide;
+      const { plan, photo, slide } = heroPhases(p, 4);
+      const position = plan + photo + slide;
       expect(position).toBeGreaterThanOrEqual(last - 1e-9);
       last = position;
     }
+  });
+});
+
+describe("weightedSlice", () => {
+  const weights = [1, 2, 1];
+
+  it("splits the share by weight", () => {
+    expect(weightedSlice(0, weights)).toEqual({ index: 0, local: 0 });
+    expect(weightedSlice(0.125, weights)).toEqual({ index: 0, local: 0.5 });
+    expect(weightedSlice(0.5, weights)).toEqual({ index: 1, local: 0.5 });
+    expect(weightedSlice(0.875, weights)).toEqual({ index: 2, local: 0.5 });
+  });
+
+  it("keeps the ends inside the first and last steps", () => {
+    expect(weightedSlice(-1, weights)).toEqual({ index: 0, local: 0 });
+    expect(weightedSlice(1, weights)).toEqual({ index: 2, local: 1 });
+    expect(weightedSlice(3, weights)).toEqual({ index: 2, local: 1 });
+  });
+});
+
+describe("cadStepPhases", () => {
+  it("types the command first, then draws", () => {
+    expect(cadStepPhases(0)).toEqual({ typed: 0, drawn: 0 });
+    const typing = cadStepPhases(0.15);
+    expect(typing.typed).toBeGreaterThan(0);
+    expect(typing.drawn).toBe(0);
+    const drawing = cadStepPhases(0.65);
+    expect(drawing.typed).toBe(1);
+    expect(drawing.drawn).toBeGreaterThan(0);
+    expect(drawing.drawn).toBeLessThan(1);
+    expect(cadStepPhases(1)).toEqual({ typed: 1, drawn: 1 });
+  });
+});
+
+describe("typedText", () => {
+  it("shows the text as it is typed", () => {
+    expect(typedText("LINEA", 0)).toBe("");
+    expect(typedText("LINEA", 0.4)).toBe("LI");
+    expect(typedText("LINEA", 1)).toBe("LINEA");
+    expect(typedText("LINEA", 7)).toBe("LINEA");
+  });
+});
+
+describe("cadReadout", () => {
+  it("prints coordinates like the CAD status bar", () => {
+    expect(cadReadout({ x: 4210.548, y: 6150.2 })).toBe("X 4210.55  Y 6150.20");
+    expect(cadReadout({ x: -0.001, y: 0 })).toBe("X 0.00  Y 0.00");
+  });
+});
+
+describe("zoomWindow", () => {
+  const stage = { width: 1000, height: 800 };
+  const win = { left: 600, top: 300, width: 200, height: 100 };
+
+  it("starts on the window as drawn", () => {
+    const z = zoomWindow(win, stage, 0);
+    expect(z.scale).toBe(1);
+    expect(z.x).toBe(0);
+    expect(z.y).toBe(0);
+    expect(z.clip).toEqual({ top: 300, right: 200, bottom: 400, left: 600 });
+  });
+
+  it("ends with the window covering the stage, centred", () => {
+    const z = zoomWindow(win, stage, 1);
+    // The window must cover 1000x800: 8 times its height.
+    expect(z.scale).toBeCloseTo(8);
+    expect(z.x).toBeCloseTo(500 - 700);
+    expect(z.y).toBeCloseTo(400 - 350);
+    expect(z.clip.top).toBeCloseTo(0);
+    expect(z.clip.right).toBeCloseTo(0);
+    expect(z.clip.bottom).toBeCloseTo(0);
+    expect(z.clip.left).toBeCloseTo(0);
+  });
+
+  it("opens the window steadily", () => {
+    let last = zoomWindow(win, stage, 0);
+    for (let t = 0.05; t <= 1; t += 0.05) {
+      const z = zoomWindow(win, stage, t);
+      expect(z.scale).toBeGreaterThan(last.scale);
+      expect(z.clip.left).toBeLessThanOrEqual(last.clip.left + 1e-9);
+      expect(z.clip.top).toBeLessThanOrEqual(last.clip.top + 1e-9);
+      last = z;
+    }
+  });
+
+  it("does nothing for an empty window", () => {
+    const z = zoomWindow({ left: 0, top: 0, width: 0, height: 0 }, stage, 0.5);
+    expect(z.scale).toBe(1);
   });
 });
 

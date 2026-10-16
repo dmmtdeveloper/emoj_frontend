@@ -91,46 +91,115 @@ export function sliceOf(
   return { index, local: position - index };
 }
 
-/** The hero lens opens over this part of the hero's progress. */
-export const LENS_FROM = 0.34;
-export const LENS_TO = 0.86;
-
-/**
- * Radius of the hero lens: the size of the stroke's end dot while the
- * stroke is being drawn, then it opens until it covers the screen.
- */
-export function heroLens(
-  progress: number,
-  sizes: { dot: number; cover: number },
-): number {
-  const t = easeInOutCubic(segment(progress, LENS_FROM, LENS_TO));
-  // Square the share so the first pixels of growth feel like the dot
-  // swelling, not a circle popping open.
-  return mix(sizes.dot, sizes.cover, t * t * (3 - 2 * t));
-}
-
-/** Screens of scroll the hero's stroke and lens take, and each extra photo. */
-export const HERO_LENS_SCREENS = 1.9;
+/** Screens of scroll the hero's plan takes (drawing and zoom), and each extra photo. */
+export const HERO_PLAN_SCREENS = 2.6;
 export const HERO_PHOTO_SCREENS = 0.9;
 
 /**
- * The hero's progress split into its phases: `lens` (0..1, the stroke and
- * the lens opening), then the extra photos wiping in one after another:
- * `photo` is how many have fully come in and `slide` how far the next one
- * is. With one photo the whole progress is the lens.
+ * The hero's progress split into its phases: `plan` (0..1, the plan being
+ * drawn and the zoom into the photo), then the extra photos wiping in one
+ * after another: `photo` is how many have fully come in and `slide` how far
+ * the next one is. With one photo the whole progress is the plan.
  */
 export function heroPhases(
   progress: number,
   photos: number,
-): { lens: number; photo: number; slide: number } {
+): { plan: number; photo: number; slide: number } {
   const extra = Math.max(0, photos - 1);
-  const total = HERO_LENS_SCREENS + extra * HERO_PHOTO_SCREENS;
-  const lens = segment(progress, 0, HERO_LENS_SCREENS / total);
-  if (extra === 0) return { lens, photo: 0, slide: 0 };
-  const position = segment(progress, HERO_LENS_SCREENS / total, 1) * extra;
-  if (position >= extra) return { lens, photo: extra, slide: 1 };
+  const total = HERO_PLAN_SCREENS + extra * HERO_PHOTO_SCREENS;
+  const plan = segment(progress, 0, HERO_PLAN_SCREENS / total);
+  if (extra === 0) return { plan, photo: 0, slide: 0 };
+  const position = segment(progress, HERO_PLAN_SCREENS / total, 1) * extra;
+  if (position >= extra) return { plan, photo: extra, slide: 1 };
   const photo = Math.floor(position);
-  return { lens, photo, slide: position - photo };
+  return { plan, photo, slide: position - photo };
+}
+
+/** Which of the weighted steps `share` (0..1) is in, and how far into it. */
+export function weightedSlice(
+  share: number,
+  weights: readonly number[],
+): { index: number; local: number } {
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  const last = weights.length - 1;
+  let position = clamp01(share) * total;
+  for (let index = 0; index < last; index++) {
+    const weight = weights[index] ?? 0;
+    if (position < weight) return { index, local: position / weight };
+    position -= weight;
+  }
+  const weight = weights[last] ?? 0;
+  return { index: last, local: weight > 0 ? clamp01(position / weight) : 1 };
+}
+
+/** Share of a CAD step spent typing its command; the rest draws. */
+export const CAD_TYPING = 0.3;
+
+/** Inside a step of the CAD plan: the command is typed, then drawn. */
+export function cadStepPhases(local: number): { typed: number; drawn: number } {
+  return {
+    typed: segment(local, 0, CAD_TYPING),
+    drawn: segment(local, CAD_TYPING, 1),
+  };
+}
+
+/** The part of `text` typed so far. */
+export function typedText(text: string, share: number): string {
+  return text.slice(0, Math.floor(text.length * clamp01(share) + 1e-9));
+}
+
+/** The CAD status bar's coordinates. */
+export function cadReadout(point: { x: number; y: number }): string {
+  const format = (value: number) =>
+    (Math.round(value * 100) / 100 + 0).toFixed(2);
+  return `X ${format(point.x)}  Y ${format(point.y)}`;
+}
+
+export interface Box {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * A CAD "zoom window": the drawing is scaled about the window's centre and
+ * moved so the window ends up covering the stage, centred. `scale`, `x`
+ * and `y` are the drawing's transform (origin at the window's centre);
+ * `clip` is where the window is at that moment, as insets of the stage.
+ * The scale grows exponentially, so the zoom feels even.
+ */
+export function zoomWindow(
+  win: Box,
+  stage: { width: number; height: number },
+  t: number,
+): {
+  scale: number;
+  x: number;
+  y: number;
+  clip: { top: number; right: number; bottom: number; left: number };
+} {
+  const inset = (scale: number, x: number, y: number) => {
+    const cx = win.left + win.width / 2 + x;
+    const cy = win.top + win.height / 2 + y;
+    const w = (win.width * scale) / 2;
+    const h = (win.height * scale) / 2;
+    return {
+      top: Math.max(0, cy - h),
+      right: Math.max(0, stage.width - (cx + w)),
+      bottom: Math.max(0, stage.height - (cy + h)),
+      left: Math.max(0, cx - w),
+    };
+  };
+  if (win.width <= 0 || win.height <= 0) {
+    return { scale: 1, x: 0, y: 0, clip: inset(1, 0, 0) };
+  }
+  const cover = Math.max(stage.width / win.width, stage.height / win.height);
+  const scale = zoomScale(t, cover);
+  const share = cover > 1 ? (scale - 1) / (cover - 1) : 1;
+  const x = (stage.width / 2 - (win.left + win.width / 2)) * share + 0;
+  const y = (stage.height / 2 - (win.top + win.height / 2)) * share + 0;
+  return { scale, x, y, clip: inset(scale, x, y) };
 }
 
 /**

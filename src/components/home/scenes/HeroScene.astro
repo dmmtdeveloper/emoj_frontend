@@ -1,22 +1,20 @@
 ---
 /**
- * Chapter 1 · "El primer trazo". The home opens on a cream drawing sheet
- * (frame, grid references and a title block, like a technical drawing)
- * with the hero copy and the EMOJ isotype stroke. On load the pen starts
- * the stroke; scrolling finishes it and its end dot opens as a lens onto a
- * real photo of the work, until the photo fills the screen: from the first
- * stroke to the built work. Inside the lens the copy is cream, so the text
- * seems to change color where the lens passes (a decorative copy, see
- * HeroCopy.astro), and the stroke carries on over the photo, faint.
- *
- * Scene: src/scripts/scenes/hero.ts (progress from src/scripts/scenes.ts).
- * Once the lens covers the screen, the other hero photos pass with the
- * scroll, each one wiping in from the left like a stroke being drawn, with
- * a "01 / 03" counter. The header stays clear over the whole hero
+ * Chapter 1 · "El plano". The home opens on a CAD screen in EMOJ plum:
+ * a grid, the crosshair, the command line and the status bar, and a site
+ * plan (src/components/home/scenes/cad-plan.ts) being drawn layer by layer
+ * as the commands are typed: topography, road, sewer, buildings,
+ * dimensions and the EMOJ title block. On load the first layers are drawn;
+ * the scroll draws the rest. Then a "zoom window" is dragged over the pump
+ * station, the photo of the work appears inside it and the zoom takes it to
+ * the full screen: from the plan to the built work. The other hero photos
+ * then pass with the scroll, each one wiping in from the left, with a
+ * "01 / 03" counter. The header stays clear over the whole hero
  * (`data-header-clear`, src/scripts/motion.ts).
  *
+ * Scene: src/scripts/scenes/hero.ts (progress from src/scripts/scenes.ts).
  * Without JavaScript or with reduced motion the hero is the finished state:
- * the first photo, cream copy on top, no pinning.
+ * the first photo, cream copy on top, no CAD screen and no pinning.
  *
  * Copy and photos come from the panel (GET /v1/home/hero), with the copy
  * and photo the site shipped with as a fallback.
@@ -36,6 +34,7 @@ import {
   titleParts,
 } from "../../../lib/content/home-hero";
 import { HERO_MEDIA_SLUG, mediaPath } from "../../../lib/content/media";
+import { PLAN } from "./cad-plan";
 import HeroCopy from "./HeroCopy.astro";
 import { ISOTYPE } from "./isotype";
 
@@ -103,8 +102,52 @@ const photos = (fromPanel.length > 0 ? fromPanel : builtIn).slice(
 const total = String(photos.length).padStart(2, "0");
 
 const year = new Date().getFullYear();
-const COLUMNS = ["A", "B", "C", "D", "E", "F"];
-const ROWS = ["1", "2", "3", "4"];
+
+/**
+ * The plan's layers, drawn in this order, each with the command typed for
+ * it (`weight`: its share of the drawing time).
+ */
+const STEPS = [
+  {
+    layer: "Topografía",
+    command: "SPLINE",
+    detail: "Curvas de nivel c/ 1 m",
+    weight: 1,
+  },
+  {
+    layer: "Vialidad",
+    command: "POLILINEA",
+    detail: "Eje de calzada · DESFASE 3.50",
+    weight: 1.3,
+  },
+  {
+    layer: "Sanitario",
+    command: "CIRCULO",
+    detail: "Cámaras C-1 a C-6 · Colector Ø400",
+    weight: 1.2,
+  },
+  {
+    layer: "Edificación",
+    command: "RECTANG",
+    detail: "Planta elevadora PE-1 · Lotes",
+    weight: 1,
+  },
+  {
+    layer: "Cotas",
+    command: "ACOTAR",
+    detail: "Alineada 45.00 · Ancho 7.00",
+    weight: 0.8,
+  },
+  {
+    layer: "Rótulo",
+    command: "INSERTAR",
+    detail: "Rótulo EMOJ · Lámina 01",
+    weight: 0.9,
+  },
+] as const;
+
+const station = PLAN.station;
+const win = PLAN.window;
 ---
 
 <section
@@ -114,70 +157,306 @@ const ROWS = ["1", "2", "3", "4"];
   data-header-clear
   aria-labelledby="hero-title"
 >
-  <div class="scene-stage hero-stage" data-tone="sheet" data-hero-stage>
-    {/* The drawing sheet. */}
-    <div class="hero-sheet" aria-hidden="true">
-      <div class="hero-sheet__grid blueprint"></div>
-      <div class="hero-sheet__frame">
-        <div class="hero-sheet__cols">
-          {COLUMNS.map((c) => (
-            <span>{c}</span>
-          ))}
+  <div class="scene-stage hero-stage" data-tone="plan" data-hero-stage>
+    {/* The photos: inside the zoom window first, then the whole screen. */}
+    <div class="hero-photo" data-hero-photo aria-hidden="true">
+      {photos.map((photo, i) => (
+        <div class="hero-photo__slide" data-hero-slide>
+          {photo.kind === "local" ? (
+            <Picture
+              src={photo.src}
+              alt=""
+              formats={["avif", "webp"]}
+              widths={[640, 960, 1280, 1600, 2000]}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class:list={["hero-photo__img", photo.position]}
+              pictureAttributes={{ class: "contents" }}
+            />
+          ) : (
+            <Image
+              src={photo.src}
+              alt=""
+              width={photo.width}
+              height={photo.height}
+              widths={[640, 960, 1280, 1600, 2000]}
+              sizes="100vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "low"}
+              class:list={["hero-photo__img object-focus", photo.focus]}
+            />
+          )}
         </div>
-        <div class="hero-sheet__rows">
-          {ROWS.map((r) => (
-            <span>{r}</span>
-          ))}
-        </div>
-      </div>
-      <dl class="hero-sheet__block">
-        <div class="hero-sheet__block-title">
-          <dt>EMOJ Consultora</dt>
-          <dd>Lámina 01</dd>
-        </div>
-        <div>
-          <dt>Proyecto</dt>
-          <dd>Tu obra</dd>
-        </div>
-        <div>
-          <dt>Escala</dt>
-          <dd>1:1</dd>
-        </div>
-        <div>
-          <dt>Lugar</dt>
-          <dd>Quilpué</dd>
-        </div>
-        <div>
-          <dt>Año</dt>
-          <dd>{year}</dd>
-        </div>
-      </dl>
+      ))}
+      <div class="hero-photo__veil"></div>
     </div>
 
-    {/* The pen stroke on the sheet (left dot to right dot). */}
-    <svg
-      class="hero-stroke"
-      viewBox={ISOTYPE.viewBox}
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-      data-hero-stroke
-    >
-      <path class="hero-stroke__path" d={ISOTYPE.stroke} pathLength="1" />
-      <circle
-        class="hero-stroke__dot hero-stroke__dot--start"
-        cx={ISOTYPE.start.x}
-        cy={ISOTYPE.start.y}
-        r={ISOTYPE.dot}
-      />
-      <circle
-        class="hero-stroke__dot hero-stroke__dot--end"
-        cx={ISOTYPE.end.x}
-        cy={ISOTYPE.end.y}
-        r={ISOTYPE.dot}
-        data-hero-dot
-      />
-    </svg>
+    {/* The CAD screen: model space (grid and plan) and its chrome. */}
+    <div class="hero-cad" aria-hidden="true">
+      <div class="hero-world" data-hero-world>
+        <div class="hero-grid"></div>
+        <svg
+          class="hero-plan"
+          viewBox="0 0 1000 700"
+          fill="none"
+          focusable="false"
+          data-hero-plan
+        >
+          <g
+            class="cad-step cad-topo"
+            data-cad-step
+            data-layer={STEPS[0].layer}
+            data-command={`${STEPS[0].command}  ${STEPS[0].detail}`}
+            data-weight={STEPS[0].weight}
+          >
+            {PLAN.topo.map((c) => (
+              <>
+                <path class="cad-line" d={c.d} pathLength="1" />
+                <text
+                  class="cad-label"
+                  x={c.label.x}
+                  y={c.label.y}
+                  transform={`rotate(${c.label.angle} ${c.label.x} ${c.label.y})`}
+                >
+                  {c.label.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-road"
+            data-cad-step
+            data-layer={STEPS[1].layer}
+            data-command={`${STEPS[1].command}  ${STEPS[1].detail}`}
+            data-weight={STEPS[1].weight}
+          >
+            {PLAN.curbs.map((d) => (
+              <path class="cad-line" d={d} pathLength="1" />
+            ))}
+            <path class="cad-line cad-axis" d={PLAN.axis} pathLength="1" />
+            {PLAN.side.curbs.map((d) => (
+              <path class="cad-line" d={d} pathLength="1" />
+            ))}
+            <path class="cad-line cad-axis" d={PLAN.side.axis} pathLength="1" />
+            {PLAN.props.map((d) => (
+              <path class="cad-line cad-prop" d={d} pathLength="1" />
+            ))}
+            {PLAN.stations.map((st) => (
+              <>
+                <path class="cad-line" d={st.d} pathLength="1" />
+                <text
+                  class="cad-label"
+                  x={st.label.x}
+                  y={st.label.y}
+                  transform={`rotate(${st.label.angle} ${st.label.x} ${st.label.y})`}
+                >
+                  {st.label.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-sewer"
+            data-cad-step
+            data-layer={STEPS[2].layer}
+            data-command={`${STEPS[2].command}  ${STEPS[2].detail}`}
+            data-weight={STEPS[2].weight}
+          >
+            <path class="cad-line" d={PLAN.collector} pathLength="1" />
+            <text
+              class="cad-label"
+              x={PLAN.pipe.x}
+              y={PLAN.pipe.y}
+              transform={`rotate(${PLAN.pipe.angle} ${PLAN.pipe.x} ${PLAN.pipe.y})`}
+            >
+              {PLAN.pipe.text}
+            </text>
+            {PLAN.manholes.map((m) => (
+              <>
+                <circle
+                  class="cad-line"
+                  cx={m.x}
+                  cy={m.y}
+                  r="6"
+                  pathLength="1"
+                />
+                <text class="cad-label" x={m.label.x} y={m.label.y}>
+                  {m.label.text}
+                </text>
+              </>
+            ))}
+            <path class="cad-line" d={PLAN.forceMain} pathLength="1" />
+          </g>
+
+          <g
+            class="cad-step cad-build"
+            data-cad-step
+            data-layer={STEPS[3].layer}
+            data-command={`${STEPS[3].command}  ${STEPS[3].detail}`}
+            data-weight={STEPS[3].weight}
+          >
+            {PLAN.lots.map((d) => (
+              <path class="cad-line cad-lot" d={d} pathLength="1" />
+            ))}
+            {PLAN.houses.map((d) => (
+              <path class="cad-line cad-lot" d={d} pathLength="1" />
+            ))}
+            <g
+              transform={`translate(${station.x} ${station.y}) rotate(${station.angle})`}
+            >
+              <rect
+                class="cad-line"
+                x={-station.w / 2}
+                y={-station.h / 2}
+                width={station.w}
+                height={station.h}
+                pathLength="1"
+              />
+              <circle class="cad-line" cx="-30" cy="0" r="16" pathLength="1" />
+              <path class="cad-line" d="M-6 -35V35M-6 0H60" pathLength="1" />
+              <path
+                class="cad-line cad-prop"
+                d={station.fence}
+                pathLength="1"
+              />
+              <text class="cad-label" x="-78" y="68">
+                {station.text}
+              </text>
+            </g>
+          </g>
+
+          <g
+            class="cad-step cad-dims"
+            data-cad-step
+            data-layer={STEPS[4].layer}
+            data-command={`${STEPS[4].command}  ${STEPS[4].detail}`}
+            data-weight={STEPS[4].weight}
+          >
+            {PLAN.dims.map((dim) => (
+              <>
+                {dim.lines.map((d) => (
+                  <path class="cad-line" d={d} pathLength="1" />
+                ))}
+                <text
+                  class="cad-label cad-label--mid"
+                  x={dim.text.x}
+                  y={dim.text.y}
+                  transform={`rotate(${dim.text.angle} ${dim.text.x} ${dim.text.y})`}
+                >
+                  {dim.text.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-block"
+            data-cad-step
+            data-layer={STEPS[5].layer}
+            data-command={`${STEPS[5].command}  ${STEPS[5].detail}`}
+            data-weight={STEPS[5].weight}
+          >
+            {/* North arrow. */}
+            <circle class="cad-line" cx="948" cy="62" r="20" pathLength="1" />
+            <path
+              class="cad-line"
+              d="M948 34L958 72L948 64L938 72Z"
+              pathLength="1"
+            />
+            <text class="cad-label cad-label--mid" x="948" y="28">
+              N
+            </text>
+            {/* Title block, with the isotype. */}
+            <rect class="cad-sheet" x="702" y="606" width="290" height="86" />
+            <path class="cad-line" d="M702 606H992V692H702Z" pathLength="1" />
+            <path
+              class="cad-line"
+              d="M782 606V692M782 636H992M782 664H992"
+              pathLength="1"
+            />
+            <svg
+              x="708"
+              y="626"
+              width="68"
+              height="40"
+              viewBox={ISOTYPE.viewBox}
+              class="cad-isotype"
+            >
+              <path class="cad-line" d={ISOTYPE.stroke} pathLength="1" />
+            </svg>
+            <text class="cad-label cad-label--strong" x="792" y="627">
+              EMOJ Consultora
+            </text>
+            <text class="cad-label" x="792" y="655">
+              Planta general · Alcantarillado
+            </text>
+            <text class="cad-label" x="792" y="683">
+              Esc. 1:500 · Lám. 01 · {year}
+            </text>
+          </g>
+
+          {/* The zoom window, dragged from its top-left corner. */}
+          <rect
+            class="hero-window"
+            x={win.x}
+            y={win.y}
+            width={win.w}
+            height={win.h}
+            data-hero-window
+          />
+        </svg>
+      </div>
+
+      <span class="hero-cad__veil"></span>
+
+      {/* Crosshair cursor with its pickbox. */}
+      <span class="hero-cursor" data-hero-cursor>
+        <span class="hero-cursor__box"></span>
+      </span>
+
+      {/* UCS icon. */}
+      <svg class="hero-ucs" viewBox="0 0 48 48" focusable="false">
+        <path class="hero-ucs__x" d="M6 42H40M34 38L40 42L34 46" />
+        <path class="hero-ucs__y" d="M6 42V8M2 14L6 8L10 14" />
+        <text x="42" y="40">
+          X
+        </text>
+        <text x="10" y="8">
+          Y
+        </text>
+      </svg>
+
+      {/* Command line and status bar. */}
+      <div class="hero-cmd" data-hero-cmd>
+        <p class="hero-cmd__history" data-hero-history></p>
+        <p class="hero-cmd__line">
+          <span class="hero-cmd__prompt">Comando:</span>
+          <span data-hero-typed></span>
+          <span class="hero-cmd__caret"></span>
+          <span class="hero-cmd__hint" data-hero-hint hidden>
+            Desliza para seguir dibujando
+          </span>
+        </p>
+      </div>
+      <div class="hero-status">
+        <span class="hero-status__xy" data-hero-xy>
+          X 4200.00 Y 6150.00
+        </span>
+        <span class="hero-status__layer">
+          <span class="hero-status__swatch" data-hero-swatch></span>
+          Capa: <span data-hero-layer>0</span>
+        </span>
+        <span class="hero-status__toggles">
+          <span>Rejilla</span>
+          <span>Orto</span>
+          <span>Polar</span>
+          <span>Refent</span>
+        </span>
+      </div>
+    </div>
 
     <HeroCopy
       title={title}
@@ -185,57 +464,6 @@ const ROWS = ["1", "2", "3", "4"];
       primary={primary}
       secondary={secondary}
     />
-
-    {/* The lens: the photo, the stroke carrying on and the cream copy. */}
-    <div class="hero-lens" data-hero-lens aria-hidden="true">
-      <div class="hero-lens__photo">
-        {photos.map((photo, i) => (
-          <div class="hero-lens__slide" data-hero-slide>
-            {photo.kind === "local" ? (
-              <Picture
-                src={photo.src}
-                alt=""
-                formats={["avif", "webp"]}
-                widths={[640, 960, 1280, 1600, 2000]}
-                sizes="100vw"
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchpriority={i === 0 ? "high" : "low"}
-                class:list={["hero-lens__img", photo.position]}
-                pictureAttributes={{ class: "contents" }}
-              />
-            ) : (
-              <Image
-                src={photo.src}
-                alt=""
-                width={photo.width}
-                height={photo.height}
-                widths={[640, 960, 1280, 1600, 2000]}
-                sizes="100vw"
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchpriority={i === 0 ? "high" : "low"}
-                class:list={["hero-lens__img object-focus", photo.focus]}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-      <div class="hero-lens__veil"></div>
-      <svg
-        class="hero-stroke hero-stroke--lens"
-        viewBox={ISOTYPE.viewBox}
-        fill="none"
-        focusable="false"
-      >
-        <path class="hero-stroke__path" d={ISOTYPE.stroke} pathLength="1" />
-      </svg>
-      <HeroCopy
-        title={title}
-        lead={copy.lead}
-        primary={primary}
-        secondary={secondary}
-        decorative
-      />
-    </div>
 
     {photos.length > 1 && (
       <div class="hero-count container-site" aria-hidden="true">
@@ -246,11 +474,6 @@ const ROWS = ["1", "2", "3", "4"];
         <span>{total}</span>
       </div>
     )}
-
-    <div class="hero-cue" aria-hidden="true">
-      <span>Desliza</span>
-      <span class="hero-cue__line"></span>
-    </div>
   </div>
 </section>
 <script>

@@ -1,10 +1,7 @@
 ---
 /**
- * The hero copy (HeroScene). Rendered twice: the real one (heading and
- * links) and a decorative copy inside the lens, cream on the photo, that
- * lines up with it pixel for pixel (same container, same classes), so the
- * text seems to change color where the lens passes. The decorative copy is
- * hidden from assistive technology and has no links.
+ * The hero copy (HeroScene): tagline, heading, lead and the two calls to
+ * action, cream over the CAD screen and over the photos.
  */
 import { ArrowRight } from "@lucide/astro";
 import type { CallToAction } from "../../../lib/api/client";
@@ -20,63 +17,47 @@ interface Props {
   lead: string;
   primary: Cta | null;
   secondary: Cta | null;
-  /** The copy inside the lens: no heading, no links. */
-  decorative?: boolean;
 }
 
-const { title, lead, primary, secondary, decorative = false } = Astro.props;
-const Heading = decorative ? "p" : "h1";
-const Link = decorative ? "span" : "a";
-const linkProps = (cta: Cta) =>
-  decorative
-    ? {}
-    : {
-        href: cta.href,
-        target: cta.external ? "_blank" : undefined,
-        rel: cta.external ? "noopener noreferrer" : undefined,
-      };
+const { title, lead, primary, secondary } = Astro.props;
+const linkProps = (cta: Cta) => ({
+  href: cta.href,
+  target: cta.external ? "_blank" : undefined,
+  rel: cta.external ? "noopener noreferrer" : undefined,
+});
 ---
 
-<div
-  class:list={[
-    "hero-copy container-site",
-    decorative ? "hero-copy--lens" : "hero-copy--real",
-  ]}
-  aria-hidden={decorative ? "true" : undefined}
->
+<div class="hero-copy container-site">
   <div class="hero-copy__inner">
     <p class="hero-copy__eyebrow hero-in">
       <span class="hero-copy__tick" aria-hidden="true"></span>
       {TAGLINE}
     </p>
-    <Heading
-      id={decorative ? undefined : "hero-title"}
-      class="hero-copy__title hero-in hero-in--2"
-    >
+    <h1 id="hero-title" class="hero-copy__title hero-in hero-in--2">
       {keepNumbersTogether(title.before)}
       {title.highlight && <em>{title.highlight}</em>}
       {keepNumbersTogether(title.after)}
-    </Heading>
+    </h1>
     <p class="hero-copy__lead hero-in hero-in--3">
       {keepNumbersTogether(lead)}
     </p>
     <div class="hero-copy__actions hero-in hero-in--4">
       {primary && (
-        <Link class="hero-copy__primary" {...linkProps(primary)}>
+        <a class="hero-copy__primary" {...linkProps(primary)}>
           {primary.label}
-          {!decorative && primary.external && (
+          {primary.external && (
             <span class="sr-only">(se abre en una pestaña nueva)</span>
           )}
-        </Link>
+        </a>
       )}
       {secondary && (
-        <Link class="hero-copy__secondary group" {...linkProps(secondary)}>
+        <a class="hero-copy__secondary group" {...linkProps(secondary)}>
           {secondary.label}
-          {!decorative && secondary.external && (
+          {secondary.external && (
             <span class="sr-only">(se abre en una pestaña nueva)</span>
           )}
           <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
-        </Link>
+        </a>
       )}
     </div>
   </div>
