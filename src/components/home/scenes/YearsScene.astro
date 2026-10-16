@@ -60,10 +60,12 @@ const FACTS = [
             </text>
           </mask>
         </defs>
-        <rect class="years-cut__sheet" mask="url(#years-mask)"></rect>
-        <text class="years-cut__outline" text-anchor="middle" data-years-text>
-          30
-        </text>
+        <g data-years-zoom>
+          <rect class="years-cut__sheet" mask="url(#years-mask)"></rect>
+          <text class="years-cut__outline" text-anchor="middle" data-years-text>
+            30
+          </text>
+        </g>
       </svg>
     </div>
     <div class="years-around" aria-hidden="true">

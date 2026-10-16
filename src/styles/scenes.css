@@ -18,6 +18,12 @@
     position: relative;
   }
 
+  /* Scenes change sizes as they play; the browser must not shift the page
+     to compensate (scroll anchoring), or jumps land off target. */
+  [data-scene-armed] {
+    overflow-anchor: none;
+  }
+
   [data-scene-armed] > .scene-stage {
     position: sticky;
     top: 0;
@@ -1489,11 +1495,10 @@
     inset: 0;
     z-index: 0;
     display: block;
-    will-change: transform;
   }
 
   [data-scene-armed] .years-stage[data-state="through"] .years-cut {
-    visibility: hidden;
+    display: none;
   }
 
   .years-cut__svg {

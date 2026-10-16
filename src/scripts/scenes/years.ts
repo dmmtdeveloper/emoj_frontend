@@ -26,14 +26,17 @@ export const yearsScene: SceneFactory = (track) => {
   const stage = track.querySelector<HTMLElement>("[data-years-stage]");
   const cut = track.querySelector<HTMLElement>("[data-years-cut]");
   const svg = track.querySelector<SVGSVGElement>("[data-years-svg]");
+  const zoomGroup = track.querySelector<SVGGElement>("[data-years-zoom]");
   const texts = [
     ...track.querySelectorAll<SVGTextElement>("[data-years-text]"),
   ];
   const content = track.querySelector<HTMLElement>("[data-years-content]");
   const counts = [...track.querySelectorAll<HTMLElement>("[data-years-count]")];
-  if (!stage || !cut || !svg || texts.length === 0 || !content) return null;
+  if (!stage || !cut || !svg || !zoomGroup || texts.length === 0 || !content)
+    return null;
 
   let maxScale = 60;
+  let origin = { x: 0, y: 0 };
   let shownState = "";
   const values = counts.map((el) => Number(el.dataset["yearsCount"]) || 0);
   const shownCounts: string[] = counts.map(() => "");
@@ -93,7 +96,7 @@ export const yearsScene: SceneFactory = (track) => {
     if (end < 0) end = span;
     const originX = x0 + (start + end) / 2;
     const inkWidth = Math.max(4, end - start);
-    cut.style.transformOrigin = `${originX}px ${row}px`;
+    origin = { x: originX, y: row };
     // Enough that the stroke is wider than the whole screen from its point.
     maxScale = ((2.4 * Math.hypot(width, height)) / inkWidth) * 1.05;
   };
@@ -109,8 +112,14 @@ export const yearsScene: SceneFactory = (track) => {
 
     render(progress) {
       const zoom = easeInOutCubic(segment(progress, ZOOM_FROM, ZOOM_TO));
-      cut.style.transform = `scale(${zoomScale(zoom, maxScale)})`;
       const state = zoom >= 1 ? "through" : "sheet";
+      // The zoom is an SVG transform, not a CSS one: Chrome repaints the
+      // mask correctly when the attribute changes, also on a jump back.
+      const scale = zoomScale(zoom, maxScale);
+      zoomGroup.setAttribute(
+        "transform",
+        `translate(${origin.x} ${origin.y}) scale(${scale}) translate(${-origin.x} ${-origin.y})`,
+      );
       if (state !== shownState) {
         shownState = state;
         stage.dataset["state"] = state;
