@@ -7,6 +7,7 @@ import {
   enterShare,
   heroLens,
   mix,
+  popIn,
   reelShift,
   sceneMode,
   scrollForProgress,
@@ -166,11 +167,13 @@ describe("reelShift", () => {
 });
 
 describe("enterShare", () => {
-  it("is 0 while a card is beyond the right edge and 1 once well inside", () => {
-    expect(enterShare({ left: 1500, viewport: 1440 })).toBe(0);
-    expect(enterShare({ left: 1440, viewport: 1440 })).toBe(0);
-    expect(enterShare({ left: 1080, viewport: 1440 })).toBeCloseTo(0.5);
-    expect(enterShare({ left: 200, viewport: 1440 })).toBe(1);
+  it("is 0 while a card is beyond the right edge and 1 once fully in", () => {
+    const card = { width: 400, viewport: 1440 };
+    expect(enterShare({ ...card, left: 1500 })).toBe(0);
+    expect(enterShare({ ...card, left: 1440 })).toBe(0);
+    expect(enterShare({ ...card, left: 1240 })).toBeCloseTo(0.5);
+    expect(enterShare({ ...card, left: 1040 })).toBe(1);
+    expect(enterShare({ ...card, left: 100 })).toBe(1);
   });
 });
 
@@ -203,5 +206,14 @@ describe("sceneMode", () => {
         hasIntersectionObserver: false,
       }),
     ).toBe("static");
+  });
+});
+
+describe("popIn", () => {
+  it("is hidden at 0, overshoots on the way and settles at 1", () => {
+    expect(popIn(0)).toBe(0);
+    expect(popIn(1)).toBeCloseTo(1);
+    const peak = Math.max(...[0.5, 0.6, 0.7, 0.8].map(popIn));
+    expect(peak).toBeGreaterThan(1);
   });
 });

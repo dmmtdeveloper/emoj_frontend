@@ -1,13 +1,13 @@
 ---
-import AboutTeaser from "../components/home/AboutTeaser.astro";
-import FactsBand from "../components/home/FactsBand.astro";
-import FeaturedProjects from "../components/home/FeaturedProjects.astro";
-import HeroScene from "../components/home/scenes/HeroScene.astro";
-import ServicesScene from "../components/home/scenes/ServicesScene.astro";
-import WhyEmoj from "../components/home/WhyEmoj.astro";
-import WorkFlow from "../components/home/WorkFlow.astro";
-import CtaBlock from "../components/ui/CtaBlock.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ClientsStrip from "../components/home/ClientsStrip.astro";
+import WorkFlow from "../components/home/WorkFlow.astro";
+import ClosingScene from "../components/home/scenes/ClosingScene.astro";
+import HeroScene from "../components/home/scenes/HeroScene.astro";
+import ReelScene from "../components/home/scenes/ReelScene.astro";
+import ServicesScene from "../components/home/scenes/ServicesScene.astro";
+import StackScene from "../components/home/scenes/StackScene.astro";
+import YearsScene from "../components/home/scenes/YearsScene.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
 import { contentSource } from "../lib/content";
@@ -22,37 +22,34 @@ const [projects, hero] = await Promise.all([
   source.getProjects(),
   source.findHomeHero(),
 ]);
-/** The home rail shows every published project, the featured ones first. */
+/** The home reel shows every published project, the featured ones first. */
 const featured = railProjects(projects, 12);
 const serviceTitles = await getServiceTitles();
-const hasFeatured = featured.length > 0;
 ---
 
+{/*
+  The home as seven scroll chapters ("del primer trazo a la obra"): each
+  chapter pins and its scene plays with the scroll (src/scripts/scenes.ts).
+  `data-nav-section` on each chapter lets the header highlight its link
+  (src/scripts/nav-spy.ts).
+*/}
 <BaseLayout
   title={SITE_NAME}
   description="Consultora de ingeniería civil en Quilpué con más de 30 años: obras sanitarias, viales, cálculo estructural y geotecnia en Valparaíso y Coquimbo."
   jsonLd={[organizationJsonLd(Astro.site)]}
 >
   <HeroScene hero={hero} />
-  {/* `data-nav-section`: the header highlights that link while the
-      section is on screen (src/scripts/nav-spy.ts). */}
   <ServicesScene />
   <div data-nav-section="/nosotros">
     <WorkFlow />
   </div>
-  {hasFeatured && (
-    <div data-nav-section="/proyectos">
-      <FeaturedProjects projects={featured} serviceTitles={serviceTitles} />
-    </div>
+  {featured.length > 0 && (
+    <ReelScene projects={featured} serviceTitles={serviceTitles} />
   )}
-  <div data-nav-section="/nosotros">
-    <WhyEmoj background={hasFeatured ? "surface-sunken" : "surface"} />
-    <FactsBand />
-    <AboutTeaser />
-  </div>
-  <div data-nav-section="/contacto">
-    <CtaBlock background="surface-sunken" />
-  </div>
+  <YearsScene />
+  <ClientsStrip />
+  <StackScene />
+  <ClosingScene />
 </BaseLayout>
 <script>
   import "../scripts/scenes";

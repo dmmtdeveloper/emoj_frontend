@@ -22,6 +22,16 @@ export function easeInOutCubic(x: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+/** A dot popping in: 0 hidden, overshoots a little, then settles at 1. */
+export function popIn(t: number): number {
+  const x = clamp01(t);
+  if (x === 0) return 0;
+  const overshoot = 2.2;
+  return (
+    1 + (overshoot + 1) * Math.pow(x - 1, 3) + overshoot * Math.pow(x - 1, 2)
+  );
+}
+
 /** Where `progress` is inside the stretch [start, end], as 0..1. */
 export function segment(progress: number, start: number, end: number): number {
   if (end <= start) return progress >= start ? 1 : 0;
@@ -115,11 +125,16 @@ export function reelShift(progress: number, overflow: number): number {
 }
 
 /**
- * How far a card has come in from the right edge: 0 at the edge, 1 once
- * its left side is half a screen inside.
+ * How far a card has come in from the right edge: 0 while it is beyond the
+ * edge, 1 once the whole card is on screen.
  */
-export function enterShare(card: { left: number; viewport: number }): number {
-  return clamp01((card.viewport - card.left) / (card.viewport * 0.5));
+export function enterShare(card: {
+  left: number;
+  width: number;
+  viewport: number;
+}): number {
+  if (card.width <= 0) return card.left < card.viewport ? 1 : 0;
+  return clamp01((card.viewport - card.left) / card.width);
 }
 
 /**

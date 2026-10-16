@@ -1,0 +1,76 @@
+---
+/**
+ * Chapter 6 · Why EMOJ. The heading stays on the left while four cards,
+ * one per reason, stack on the right: each card pins under the header and
+ * the next one slides over it, pressing the one below back (smaller,
+ * dimmer). Cards keep the signature shape and alternate the brand surfaces.
+ *
+ * Scene: src/scripts/scenes/stack.ts reads where each card is and sets how
+ * much it is covered (`--stack-press`). Without JavaScript or with reduced
+ * motion the cards are a plain list.
+ */
+import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
+
+const REASONS = [
+  {
+    icon: CalendarCheck,
+    tone: "sage",
+    title: "Cumplimiento de plazos",
+    text: "Acordamos contigo un calendario de entregas desde el inicio y te mantenemos al tanto del avance en cada etapa.",
+  },
+  {
+    icon: BadgeCheck,
+    tone: "plum",
+    title: "Calidad garantizada",
+    text: "Diseñamos según la normativa chilena vigente y revisamos cada memoria y cada plano antes de entregártelo.",
+  },
+  {
+    icon: Users,
+    tone: "brick",
+    title: "Trabajo colaborativo",
+    text: "Ingenieros civiles y dibujantes proyectistas trabajan en un mismo equipo, coordinando las especialidades desde el primer día.",
+  },
+  {
+    icon: Handshake,
+    tone: "paper",
+    title: "Confianza y respaldo",
+    text: "Más de 30 años trabajando con empresas como ESVAL, Aguas del Valle y SAAM respaldan cada proyecto que firmamos.",
+  },
+] as const;
+---
+
+<section
+  class="stack-scene"
+  data-scene="stack"
+  aria-labelledby="por-que-emoj"
+  data-nav-section="/nosotros"
+>
+  <div class="stack-layout container-site">
+    <div class="stack-intro">
+      <p class="stack-eyebrow">
+        <span>06</span> Por qué EMOJ
+      </p>
+      <h2 id="por-que-emoj" class="stack-title">
+        Ingeniería precisa, trato <em>cercano</em>.
+      </h2>
+      <p class="stack-lead">
+        Acercar la ingeniería es explicarte cada decisión técnica con claridad,
+        cumplir lo que acordamos y estar disponibles cuando nos necesitas.
+      </p>
+    </div>
+    <ul class="stack-cards" aria-label="Por qué elegirnos">
+      {REASONS.map(({ icon: Icon, tone, title, text }, i) => (
+        <li class:list={["stack-card", `stack-card--${tone}`]} data-stack-card>
+          <div class="stack-card__head">
+            <span class="stack-card__num" aria-hidden="true">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <Icon size={44} stroke-width={1.5} aria-hidden="true" />
+          </div>
+          <h3 class="stack-card__title">{title}</h3>
+          <p class="stack-card__text">{text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

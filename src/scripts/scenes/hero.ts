@@ -10,13 +10,13 @@
  *   (the lens copy, identical, goes away), so its links show their hover.
  */
 import {
-  clamp01,
   easeInOutCubic,
   easeOutCubic,
   heroLens,
   LENS_FROM,
   LENS_TO,
   mix,
+  popIn,
   segment,
 } from "../../lib/motion/scenes";
 import { setVar, type SceneFactory } from "./types";
@@ -25,14 +25,6 @@ const INTRO_MS = 1900;
 /** Share of the stroke the load intro draws; the scroll draws the rest. */
 const INTRO_SHARE = 0.46;
 const DRAW_TO = 0.3;
-
-/** A dot popping in: overshoots a little, then settles at 1. */
-function pop(t: number): number {
-  const x = clamp01(t);
-  if (x === 0) return 0;
-  const c = 2.2;
-  return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
-}
 
 export const heroScene: SceneFactory = (track) => {
   const stage = track.querySelector<HTMLElement>("[data-hero-stage]");
@@ -74,8 +66,8 @@ export const heroScene: SceneFactory = (track) => {
           (1 - INTRO_SHARE) * easeInOutCubic(segment(progress, 0, DRAW_TO)),
       );
       setVar(stage, "--hero-draw", drawn);
-      setVar(stage, "--hero-dot-a", pop(segment(intro, 0, 0.22)));
-      setVar(stage, "--hero-dot-b", pop(segment(drawn, 0.965, 1) * 1.0));
+      setVar(stage, "--hero-dot-a", popIn(segment(intro, 0, 0.22)));
+      setVar(stage, "--hero-dot-b", popIn(segment(drawn, 0.965, 1)));
 
       const radius =
         drawn >= 0.999 ? heroLens(progress, { dot: dotRadius, cover }) : 0;
