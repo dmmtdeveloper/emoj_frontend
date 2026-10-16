@@ -274,46 +274,49 @@ describe("layerDraw", () => {
 });
 
 describe("phaseBeats", () => {
-  // 4 phases: a stretch of 0.25 each. In each one the drawing first takes
-  // the screen (focus 1) while its layer draws, then steps aside (focus 0)
-  // and the detail card comes in; the next phase takes the screen again.
+  // 4 phases: a stretch of 0.25 each. Each phase arrives at rest (detail
+  // beside the drawing, its layer drawn), then the drawing grows to the
+  // centre (focus 1) for a closer look and goes back before the next one.
   const at = (phase: number, local: number) => (phase + local) / 4;
 
-  it("starts full screen and drawing the first layer", () => {
+  it("arrives at rest with the detail and the drawing already there", () => {
     const start = phaseBeats(at(0, 0), 4);
     expect(start.phase).toBe(0);
-    expect(start.focus).toBe(1);
-    expect(start.detail).toBe(0);
-    expect(phaseBeats(at(0, 0.25), 4).draw).toBeGreaterThan(0);
-    expect(phaseBeats(at(0, 0.45), 4).draw).toBe(1);
+    expect(start.focus).toBe(0);
+    expect(start.card).toBe(1);
+    expect(start.draw).toBe(1);
   });
 
-  it("steps aside and shows the detail later in the phase", () => {
-    const detail = phaseBeats(at(1, 0.8), 4);
-    expect(detail.phase).toBe(1);
-    expect(detail.focus).toBe(0);
-    expect(detail.detail).toBe(1);
-    expect(detail.draw).toBe(1);
+  it("draws each later layer as its phase arrives", () => {
+    expect(phaseBeats(at(1, 0), 4).draw).toBe(0);
+    expect(phaseBeats(at(1, 0.07), 4).draw).toBeGreaterThan(0);
+    expect(phaseBeats(at(1, 0.15), 4).draw).toBe(1);
   });
 
-  it("takes the screen again at the start of the next phase", () => {
-    const next = phaseBeats(at(2, 0.2), 4);
-    expect(next.phase).toBe(2);
-    expect(next.focus).toBe(1);
-    expect(next.detail).toBe(0);
+  it("grows the drawing in the middle of the phase, without the detail", () => {
+    const zoom = phaseBeats(at(2, 0.5), 4);
+    expect(zoom.phase).toBe(2);
+    expect(zoom.focus).toBe(1);
+    expect(zoom.card).toBe(0);
   });
 
-  it("never shows the detail while the drawing is full screen", () => {
+  it("goes back to rest before the next phase", () => {
+    const back = phaseBeats(at(2, 0.9), 4);
+    expect(back.focus).toBe(0);
+    expect(back.card).toBe(1);
+  });
+
+  it("never shows the detail while the drawing is large", () => {
     for (let p = 0; p <= 1; p += 0.005) {
-      const { focus, detail } = phaseBeats(p, 4);
-      expect(focus > 0.5 && detail > 0.5).toBe(false);
+      const { focus, card } = phaseBeats(p, 4);
+      expect(focus > 0.5 && card > 0.5).toBe(false);
     }
   });
 
-  it("keeps the last detail on screen at the end", () => {
+  it("ends at rest on the last detail", () => {
     const end = phaseBeats(1, 4);
     expect(end.phase).toBe(3);
-    expect(end.detail).toBe(1);
+    expect(end.card).toBe(1);
     expect(end.focus).toBe(0);
   });
 });

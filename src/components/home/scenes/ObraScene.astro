@@ -7,12 +7,12 @@
  * built work slides in under the pen, with the drawing carrying on over it
  * in cream (a second copy of the drawing).
  *
- * Every stage has two beats. First the drawing takes the whole screen while
- * the stage's layer draws, with only its number and name (the caption).
- * Scrolling on, the drawing steps aside (into the slot, `data-obra-slot`)
- * and the stage's detail comes in beside it: what it involves and two
- * facts. The next stage takes the screen again. A column of numbers on the
- * right jumps to any stage.
+ * Every stage arrives at rest: its card on the left (what it involves and
+ * two facts) and the drawing on the right, in the slot (`data-obra-slot`),
+ * with the stage's layer drawn. Scrolling on, the drawing grows to the
+ * centre for a closer look while the card steps back and a small label
+ * names the stage; then it goes back to rest and the next stage comes. A
+ * column of numbers on the right jumps to any stage.
  *
  * Scene: src/scripts/scenes/obra.ts (beats from phaseBeats()). Without
  * JavaScript or with reduced motion the chapter is the finished drawing
@@ -55,7 +55,7 @@ const last = WORK_STAGES.length - 1;
       </div>
     </div>
 
-    {/* While a stage holds the screen: its number and name, large. */}
+    {/* During the closer look: the stage's number and name, small. */}
     <ol class="obra-captions container-site" aria-hidden="true">
       {WORK_STAGES.map((stage, i) => (
         <li class="obra-caption" data-obra-caption>

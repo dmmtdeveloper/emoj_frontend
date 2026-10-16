@@ -127,25 +127,31 @@ export function layerDraw(
 }
 
 /**
- * The two beats of a phase in a "full screen, then detail" chapter (the
- * home's Cómo trabajamos). The progress is one stretch per phase; in each:
- * - the drawing takes the screen (`focus` 1) and its layer draws (`draw`),
- * - then it steps aside (`focus` 0) and the detail card comes in
- *   (`detail`), which leaves again just before the next phase takes the
- *   screen. The last phase's detail stays to the end.
+ * The beats of a phase in a "rest, closer look, rest" chapter (the home's
+ * Cómo trabajamos, like deivid.space). The progress is one stretch per
+ * phase; in each:
+ * - it arrives at rest: the detail card beside the drawing, whose layer
+ *   for this phase draws right away (`draw`; the first one is drawn from
+ *   the start, so the chapter never opens on an empty sheet),
+ * - then the drawing grows to the centre for a closer look (`focus` 1)
+ *   while the card steps back (`card` 0),
+ * - and it goes back to rest before the next phase swaps the card.
  */
 export function phaseBeats(
   progress: number,
   count: number,
-): { phase: number; draw: number; focus: number; detail: number } {
+): { phase: number; draw: number; focus: number; card: number } {
   const { index, local } = sliceOf(progress, count);
+  const first = index === 0;
   const last = index === count - 1;
-  const draw = segment(local, 0.04, 0.42);
-  const comeBack = index === 0 ? 1 : segment(local, 0, 0.1);
-  const focus = comeBack * (1 - easeInOutCubic(segment(local, 0.46, 0.62)));
-  const leave = last ? 0 : segment(local, 0.93, 1);
-  const detail = segment(local, 0.56, 0.7) * (1 - leave);
-  return { phase: index, draw, focus, detail };
+  const draw = first ? 1 : segment(local, 0, 0.14);
+  const focus =
+    easeInOutCubic(segment(local, 0.18, 0.36)) *
+    (1 - easeInOutCubic(segment(local, 0.64, 0.82)));
+  const arrive = first ? 1 : segment(local, 0, 0.08);
+  const leave = last ? 0 : segment(local, 0.94, 1);
+  const card = arrive * (1 - leave) * (1 - focus);
+  return { phase: index, draw, focus, card };
 }
 
 /** Screens of scroll the hero's stroke and lens take, and each extra photo. */

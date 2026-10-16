@@ -1634,7 +1634,7 @@
   :root[data-scenes] [data-scene] .obra-captions {
     position: absolute;
     inset-inline: 0;
-    bottom: 6svh;
+    bottom: 9svh;
     z-index: 3;
     display: block;
     pointer-events: none;
@@ -1642,28 +1642,37 @@
 
   .obra-caption {
     position: absolute;
+    left: 50%;
     bottom: 0;
     display: flex;
-    align-items: baseline;
-    gap: 18px;
+    align-items: center;
+    gap: 14px;
+    white-space: nowrap;
+    font-family: var(--font-data);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     opacity: var(--obra-caption, 0);
-    translate: 0 calc((1 - var(--obra-caption, 0)) * 24px);
+    translate: -50% calc((1 - var(--obra-caption, 0)) * 12px);
   }
 
   .obra-caption__num {
-    font-family: var(--font-data);
-    font-size: clamp(2.5rem, 1.6rem + 3vw, 5rem);
-    line-height: 1;
-    font-weight: 600;
-    letter-spacing: -0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     color: var(--brand);
   }
 
+  .obra-caption__num::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: currentColor;
+  }
+
   .obra-caption__title {
-    font-size: clamp(2rem, 1.2rem + 3vw, 4.5rem);
-    line-height: 1;
-    font-weight: 600;
-    letter-spacing: -0.04em;
     color: var(--ink);
   }
 
@@ -1692,7 +1701,12 @@
     inset-inline: 0;
     top: calc(var(--header-h) + 20px);
     pointer-events: none;
-    opacity: var(--obra-head, 0);
+  }
+
+  /* The title steps back during the closer look; the eyebrow stays. */
+  :root[data-scenes] [data-scene] .obra-title {
+    opacity: var(--obra-head, 1);
+    translate: 0 calc((1 - var(--obra-head, 1)) * -12px);
   }
 
   :root[data-scenes] [data-scene] .obra-title {

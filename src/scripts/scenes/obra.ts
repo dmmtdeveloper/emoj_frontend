@@ -2,17 +2,18 @@
  * Chapter 3 · "Del primer trazo a la obra"
  * (src/components/home/scenes/ObraScene.astro).
  *
- * One stretch of the pinned progress per stage, in two beats
- * (phaseBeats()): the drawing takes the screen while the stage's layer
- * draws (`--obra-draw` on that layer, `--obra-focus` 1, the caption on),
- * then it steps aside into the slot and the stage's card comes in
- * (`--obra-focus` 0, `--obra-card`). The last stage's layer is the photo of
- * the built work sliding in under the pen (`--obra-ink`). Only the card on
- * screen is reachable (`inert` on the rest).
+ * One stretch of the pinned progress per stage, in three beats
+ * (phaseBeats()), the same rhythm as deivid.space:
+ * - at rest: the stage's card beside the drawing, whose layer for this
+ *   stage draws as it arrives (`--obra-draw` on that layer);
+ * - a closer look: the drawing grows to the centre (`--obra-focus` 1), the
+ *   card and the chapter title step back, a small label names the stage;
+ * - back at rest before the next stage swaps the card.
+ * The last stage's layer is the photo of the built work sliding in under
+ * the pen (`--obra-ink`). Only the card on screen is reachable.
  *
- * The step aside is one transform from the drawing's full-screen box to
- * the slot's box, measured on resize (`--obra-dx`, `--obra-dy`,
- * `--obra-s`).
+ * The growth is one transform from the drawing's resting box (the slot) to
+ * its large box, measured on resize (`--obra-dx`, `--obra-dy`, `--obra-s`).
  */
 import { easeOutCubic, phaseBeats } from "../../lib/motion/scenes";
 import { setVar, type SceneFactory } from "./types";
@@ -40,9 +41,9 @@ export const obraScene: SceneFactory = (track, tools) => {
   let active = -1;
 
   jumps.forEach((button, i) => {
-    // Land on the stage's detail.
+    // Land on the stage at rest, its layer drawn.
     button.addEventListener("click", () =>
-      tools.scrollTo(track, (i + 0.8) / count),
+      tools.scrollTo(track, (i + 0.15) / count),
     );
   });
 
@@ -95,7 +96,7 @@ export const obraScene: SceneFactory = (track, tools) => {
         setVar(
           card,
           "--obra-card",
-          i === beat.phase ? easeOutCubic(beat.detail) : 0,
+          i === beat.phase ? easeOutCubic(beat.card) : 0,
         );
       });
 
@@ -104,7 +105,7 @@ export const obraScene: SceneFactory = (track, tools) => {
           i < beat.phase ? 1 : i === beat.phase ? progress * count - i : 0;
         setVar(bar, "--obra-fill", Math.min(1, Math.max(0, fill)));
       });
-      const shown = beat.detail > 0.5 ? beat.phase : -1;
+      const shown = beat.card > 0.5 ? beat.phase : -1;
       if (shown !== active) {
         active = shown;
         cards.forEach((card, i) => {
