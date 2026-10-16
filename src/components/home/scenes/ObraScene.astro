@@ -1,26 +1,68 @@
 ---
 /**
- * Chapter 3 · Cómo trabajamos, "la lámina se completa" (deivid.space's
- * "diseño la experiencia" rhythm). At rest: the chapter title and a short
- * text on the left, and on the right a drawing sheet (a "lámina") listing
- * the six stages of an EMOJ project, still blank but for their names.
- * Scrolling on, the sheet moves to the centre and grows while the text
- * steps back; there the stages fill in one by one like lines being
- * written (each one ticked as it completes), the APROBADO stamp lands on
- * the title block, and the photo of a built work comes out of the sheet.
- * Then it goes back beside the text, complete.
+ * Chapter 3 · Cómo trabajamos, "la órbita". On plum: the chapter title and
+ * a short text on the left, and on the right an orbit with EMOJ at its
+ * centre and the six stages of a project on the ring, each one an icon
+ * with its name outside. The scroll draws an arc around the orbit: a
+ * satellite dot travels from stage to stage, the stage it reaches lights
+ * up and its detail shows on the left.
  *
- * The sheet is the chapter's content (an ordered list of the stages); the
- * photo card is decorative. Scene: src/scripts/scenes/obra.ts. Without
- * JavaScript or with reduced motion the chapter shows the sheet complete.
+ * The stages are the chapter's content (the ordered list on the left); the
+ * orbit is decorative. Scene: src/scripts/scenes/obra.ts. Without
+ * JavaScript or with reduced motion the chapter shows the whole orbit lit
+ * and the six stages listed.
  */
-import { ArrowRight } from "@lucide/astro";
-import { Image } from "astro:assets";
-import works from "../../../assets/photos/puente-llollito-excavacion.jpg";
+import {
+  ArrowRight,
+  FlaskConical,
+  HardHat,
+  MapPin,
+  MessagesSquare,
+  PencilRuler,
+  Stamp,
+} from "@lucide/astro";
+import { orbitPoint } from "../../../lib/motion/scenes";
 import { WORK_STAGES } from "../../../lib/content/work-stages";
+import { ISOTYPE } from "./isotype";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const total = pad(WORK_STAGES.length);
+const ICONS = [
+  MessagesSquare,
+  MapPin,
+  FlaskConical,
+  PencilRuler,
+  Stamp,
+  HardHat,
+];
+
+/** The orbit, in the SVG's units (centre 300, 300; room for the labels). */
+const CENTER = { x: 300, y: 300 };
+const RING = 175;
+const step = 360 / WORK_STAGES.length;
+const stages = WORK_STAGES.map((stage, i) => {
+  // Each stage owns a slice of the ring: its icon sits on the ring in the
+  // middle of the slice, its name just outside.
+  const angle = (i + 0.5) * step;
+  const tile = orbitPoint(angle, RING, CENTER);
+  const label = orbitPoint(angle, RING + 52, CENTER);
+  const anchor =
+    label.x > CENTER.x + 12
+      ? "start"
+      : label.x < CENTER.x - 12
+        ? "end"
+        : "middle";
+  return {
+    ...stage,
+    Icon: ICONS[i] ?? MessagesSquare,
+    label,
+    tile,
+    anchor,
+    // Labels at the top and bottom sit a little away from the ring.
+    dy: label.y < CENTER.y - 100 ? -4 : label.y > CENTER.y + 100 ? 12 : 4,
+  };
+});
+const TILE = 46;
 ---
 
 <section
@@ -35,91 +77,117 @@ const total = pad(WORK_STAGES.length);
         <p class="obra-eyebrow">
           <span>03</span> Cómo trabajamos
         </p>
-        <div class="obra-fade">
-          <h2 id="como-trabajamos" class="obra-title">
-            Del primer trazo a la <em>obra</em>.
-          </h2>
-          <p class="obra-lead">
-            Seis etapas, un mismo equipo: te acompañamos desde la primera
-            conversación hasta que lo diseñado está construido.
-          </p>
-          <a href="/contacto" class="obra-cta">
-            Cotizar proyecto
-            <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
-          </a>
-        </div>
-      </div>
-      {/* Where the sheet rests (measured, never shown). */}
-      <span class="obra-slot" data-obra-slot aria-hidden="true"></span>
-    </div>
+        <h2 id="como-trabajamos" class="obra-title">
+          Del primer trazo a la obra.
+        </h2>
+        <p class="obra-lead">
+          <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+          coordinadas: te acompañamos desde la primera conversación hasta que lo
+          diseñado está construido.
+        </p>
 
-    <div class="obra-sheet-area">
-      <div class="obra-sheet" data-obra-sheet>
-        <div class="obra-sheet__bar" aria-hidden="true">
-          <span class="obra-sheet__dots">
-            <i></i>
-            <i></i>
-            <i></i>
-          </span>
-          <span>Lámina 03 · Del primer trazo a la obra</span>
-        </div>
-        <ol class="obra-rows" aria-label="Las etapas de un proyecto">
+        <ol class="obra-stages">
           {WORK_STAGES.map((stage, i) => (
-            <li class="obra-row" data-obra-row>
-              <span class="obra-row__num" aria-hidden="true">
-                {pad(i + 1)}
-              </span>
-              <span class="obra-row__body">
-                <span class="obra-row__title">{stage.title}</span>
-                <span class="obra-row__text">{stage.text}</span>
-              </span>
-              <svg
-                class="obra-row__check"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <rect x="2" y="2" width="20" height="20" rx="5" />
-                <path d="M7 12.5L10.5 16L17 8.5" pathLength="1" />
-              </svg>
+            <li class="obra-stage-item" data-obra-item>
+              <p class="obra-stage-item__num">
+                {pad(i + 1)} <span>/ {total}</span>
+              </p>
+              <h3 class="obra-stage-item__title">{stage.title}</h3>
+              <p class="obra-stage-item__text">{stage.text}</p>
             </li>
           ))}
         </ol>
-        <div class="obra-sheet__foot" aria-hidden="true">
-          <dl class="obra-block">
-            <div>
-              <dt>Proyecto</dt>
-              <dd>Tu obra</dd>
-            </div>
-            <div>
-              <dt>Etapas</dt>
-              <dd>
-                <span data-obra-done>{total}</span> / {total}
-              </dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd>Aprobado</dd>
-            </div>
-          </dl>
-          <span class="obra-stamp" data-obra-stamp>
-            Aprobado
-          </span>
-        </div>
+
+        <a href="/contacto" class="obra-cta">
+          Cotizar proyecto
+          <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+        </a>
       </div>
 
-      <div class="obra-built" aria-hidden="true">
-        <Image
-          src={works}
-          alt=""
-          widths={[400, 640, 960]}
-          sizes="(min-width: 1024px) 360px, 60vw"
-          loading="lazy"
-          class="obra-built__photo"
-        />
-        <span class="obra-built__label">
-          <span class="obra-built__dot"></span> Ya es obra
-        </span>
+      <div class="obra-orbit" aria-hidden="true">
+        <svg
+          class="obra-orbit__svg"
+          viewBox="-60 -20 720 640"
+          fill="none"
+          focusable="false"
+        >
+          <circle
+            class="obra-orbit__outer"
+            cx={CENTER.x}
+            cy={CENTER.y}
+            r="262"
+          />
+          <circle
+            class="obra-orbit__ring"
+            cx={CENTER.x}
+            cy={CENTER.y}
+            r={RING}
+          />
+          <circle
+            class="obra-orbit__arc"
+            cx={CENTER.x}
+            cy={CENTER.y}
+            r={RING}
+            pathLength="1"
+          />
+          <g class="obra-orbit__sat">
+            <circle cx={CENTER.x} cy={CENTER.y - RING} r="7" />
+          </g>
+
+          {stages.map((stage) => (
+            <text
+              class="obra-orbit__label"
+              x={stage.label.x}
+              y={stage.label.y + stage.dy}
+              text-anchor={stage.anchor}
+              data-obra-label
+            >
+              {stage.short}
+            </text>
+          ))}
+
+          {stages.map((stage) => (
+            <g class="obra-tile" data-obra-tile>
+              <rect
+                class="obra-tile__box"
+                x={stage.tile.x - TILE / 2}
+                y={stage.tile.y - TILE / 2}
+                width={TILE}
+                height={TILE}
+                rx="13"
+              />
+              <stage.Icon
+                class="obra-tile__icon"
+                x={stage.tile.x - 11}
+                y={stage.tile.y - 11}
+                width={22}
+                height={22}
+                stroke-width={1.6}
+              />
+            </g>
+          ))}
+
+          <circle class="obra-orbit__dots" cx={CENTER.x} cy={CENTER.y} r="70" />
+          <circle class="obra-orbit__core" cx={CENTER.x} cy={CENTER.y} r="58" />
+          <svg
+            class="obra-orbit__mark"
+            x={CENTER.x - 38}
+            y={CENTER.y - 26}
+            width="76"
+            height="30"
+            viewBox={ISOTYPE.viewBox}
+          >
+            <path d={ISOTYPE.stroke} />
+          </svg>
+          <text
+            class="obra-orbit__core-label"
+            x={CENTER.x}
+            y={CENTER.y + 24}
+            text-anchor="middle"
+          >
+            Tu obra
+          </text>
+        </svg>
       </div>
     </div>
   </div>

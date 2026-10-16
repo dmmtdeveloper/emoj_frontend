@@ -246,16 +246,33 @@ export function focusCurve(
   );
 }
 
-/** How far item `index` (of `count`) is through its stretch of [from, to]. */
-export function itemShare(
-  progress: number,
-  index: number,
+/** A point on a circle, `angle` in degrees clockwise from the top. */
+export function orbitPoint(
+  angle: number,
+  radius: number,
+  center: { x: number; y: number },
+): { x: number; y: number } {
+  const rad = (angle * Math.PI) / 180;
+  return {
+    x: center.x + radius * Math.sin(rad),
+    y: center.y - radius * Math.cos(rad),
+  };
+}
+
+/**
+ * The stages around an orbit as an arc (0..1) is drawn over it: each stage
+ * owns an equal slice with its label in the middle. `active` is the slice
+ * the arc's tip is in; `reached` how many labels the arc has passed.
+ */
+export function orbitStage(
+  arc: number,
   count: number,
-  from: number,
-  to: number,
-): number {
-  const step = (to - from) / count;
-  return segment(progress, from + index * step, from + (index + 1) * step);
+): { active: number; reached: number } {
+  const position = clamp01(arc) * count;
+  return {
+    active: Math.min(count - 1, Math.floor(position)),
+    reached: Math.min(count, Math.floor(position + 0.5)),
+  };
 }
 
 export interface DeckPlace {

@@ -5,6 +5,8 @@
  */
 export interface WorkStage {
   title: string;
+  /** One word for the stage, around the orbit. */
+  short: string;
   text: string;
   facts: readonly (readonly [string, string])[];
 }
@@ -12,6 +14,7 @@ export interface WorkStage {
 export const WORK_STAGES: readonly WorkStage[] = [
   {
     title: "Conversamos",
+    short: "Conversación",
     text: "Escuchamos qué necesitas, revisamos tus antecedentes y definimos contigo el alcance, los plazos y los entregables.",
     facts: [
       ["Entregamos", "Propuesta técnica y económica"],
@@ -20,6 +23,7 @@ export const WORK_STAGES: readonly WorkStage[] = [
   },
   {
     title: "Vamos a terreno",
+    short: "Terreno",
     text: "Visitamos el lugar, levantamos la topografía y tomamos las muestras de suelo que el diseño va a necesitar.",
     facts: [
       ["En terreno", "Topografía · calicatas · catastro"],
@@ -28,6 +32,7 @@ export const WORK_STAGES: readonly WorkStage[] = [
   },
   {
     title: "Estudiamos",
+    short: "Estudios",
     text: "Hacemos los estudios base de hidráulica, tránsito y mecánica de suelos para diseñar sobre lo que el terreno nos dice.",
     facts: [
       ["Estudios", "Hidráulico · tránsito · geotecnia"],
@@ -36,6 +41,7 @@ export const WORK_STAGES: readonly WorkStage[] = [
   },
   {
     title: "Diseñamos",
+    short: "Diseño",
     text: "Ingenieros y proyectistas desarrollan el proyecto completo, con cada especialidad coordinada desde el primer plano.",
     facts: [
       ["Entregamos", "Planos · memorias de cálculo · presupuesto"],
@@ -44,6 +50,7 @@ export const WORK_STAGES: readonly WorkStage[] = [
   },
   {
     title: "Aprobamos",
+    short: "Aprobación",
     text: "Ingresamos el proyecto a los organismos que corresponda y respondemos sus observaciones hasta que queda aprobado.",
     facts: [
       ["Ante", "SERVIU · MOP · DOH · sanitarias · DOM"],
@@ -52,6 +59,7 @@ export const WORK_STAGES: readonly WorkStage[] = [
   },
   {
     title: "Acompañamos la obra",
+    short: "Obra",
     text: "Asesoramos durante la construcción para que lo que se construye sea lo que se diseñó.",
     facts: [
       ["En obra", "Asesoría técnica e inspección"],

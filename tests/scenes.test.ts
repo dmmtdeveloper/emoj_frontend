@@ -11,7 +11,8 @@ import {
   weightedSlice,
   zoomWindow,
   focusCurve,
-  itemShare,
+  orbitPoint,
+  orbitStage,
   deckPlace,
   mix,
   popIn,
@@ -307,14 +308,26 @@ describe("focusCurve", () => {
   });
 });
 
-describe("itemShare", () => {
-  it("splits a range of the progress into one stretch per item", () => {
-    // Range 0.2..0.6, 4 items: 0.1 each.
-    expect(itemShare(0.2, 0, 4, 0.2, 0.6)).toBe(0);
-    expect(itemShare(0.25, 0, 4, 0.2, 0.6)).toBeCloseTo(0.5);
-    expect(itemShare(0.3, 0, 4, 0.2, 0.6)).toBe(1);
-    expect(itemShare(0.3, 1, 4, 0.2, 0.6)).toBe(0);
-    expect(itemShare(0.6, 3, 4, 0.2, 0.6)).toBe(1);
+describe("orbitPoint", () => {
+  it("places a point on a circle, clockwise from the top", () => {
+    const top = orbitPoint(0, 100, { x: 300, y: 300 });
+    expect(top.x).toBeCloseTo(300);
+    expect(top.y).toBeCloseTo(200);
+    const right = orbitPoint(90, 100, { x: 300, y: 300 });
+    expect(right.x).toBeCloseTo(400);
+    expect(right.y).toBeCloseTo(300);
+    const bottom = orbitPoint(180, 100, { x: 300, y: 300 });
+    expect(bottom.y).toBeCloseTo(400);
+  });
+});
+
+describe("orbitStage", () => {
+  it("follows the arc around the stages, each one in its slice", () => {
+    expect(orbitStage(0, 6)).toEqual({ active: 0, reached: 0 });
+    // Stage 0's label is half way through its slice.
+    expect(orbitStage(1 / 12, 6)).toEqual({ active: 0, reached: 1 });
+    expect(orbitStage(0.5, 6)).toEqual({ active: 3, reached: 3 });
+    expect(orbitStage(1, 6)).toEqual({ active: 5, reached: 6 });
   });
 });
 
