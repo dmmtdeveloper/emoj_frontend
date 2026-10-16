@@ -1,17 +1,22 @@
 ---
 /**
- * Chapter 3 · Cómo trabajamos, "la obra se arma". One engineering section
- * takes the screen and builds up with the scroll, a layer per stage of an
+ * Chapter 3 · Cómo trabajamos, "del primer trazo a la obra". One
+ * engineering section builds up with the scroll, a layer per stage of an
  * EMOJ project (ObraDrawing.astro): the scope, the terrain, the studies,
  * the design and the approval stamp; at the sixth stage the photo of a
  * built work slides in under the pen, with the drawing carrying on over it
- * in cream (a second copy of the drawing). Beside it, a card tells the
- * stage, and a column of numbers on the right jumps to any of them.
+ * in cream (a second copy of the drawing).
  *
- * Scene: src/scripts/scenes/obra.ts. It stays pinned only about three
- * quarters of a screen per stage. Without JavaScript or with reduced
- * motion the chapter is the finished drawing over the photo and the six
- * stages as a list.
+ * Every stage has two beats. First the drawing takes the whole screen while
+ * the stage's layer draws, with only its number and name (the caption).
+ * Scrolling on, the drawing steps aside (into the slot, `data-obra-slot`)
+ * and the stage's detail comes in beside it: what it involves and two
+ * facts. The next stage takes the screen again. A column of numbers on the
+ * right jumps to any stage.
+ *
+ * Scene: src/scripts/scenes/obra.ts (beats from phaseBeats()). Without
+ * JavaScript or with reduced motion the chapter is the finished drawing
+ * over the photo and the six stages as a list.
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
@@ -33,6 +38,8 @@ const last = WORK_STAGES.length - 1;
   <div class="scene-stage obra-stage" data-obra-stage>
     <div class="obra-visual" aria-hidden="true">
       <div class="obra-visual__paper blueprint"></div>
+      {/* Where the drawing sits beside the detail (measured, never shown). */}
+      <span class="obra-visual__slot" data-obra-slot></span>
       <ObraDrawing class="obra-visual__drawing" />
       <div class="obra-visual__ink" data-obra-ink>
         <Image
@@ -48,7 +55,17 @@ const last = WORK_STAGES.length - 1;
       </div>
     </div>
 
-    <div class="obra-head container-site">
+    {/* While a stage holds the screen: its number and name, large. */}
+    <ol class="obra-captions container-site" aria-hidden="true">
+      {WORK_STAGES.map((stage, i) => (
+        <li class="obra-caption" data-obra-caption>
+          <span class="obra-caption__num">{pad(i + 1)}</span>
+          <span class="obra-caption__title">{stage.title}</span>
+        </li>
+      ))}
+    </ol>
+
+    <div class="obra-head container-site" data-obra-head>
       <p class="obra-eyebrow">
         <span>03</span> Cómo trabajamos
       </p>

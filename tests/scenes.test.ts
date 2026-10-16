@@ -8,6 +8,7 @@ import {
   heroLens,
   heroPhases,
   layerDraw,
+  phaseBeats,
   mix,
   popIn,
   reelShift,
@@ -269,5 +270,50 @@ describe("layerDraw", () => {
     expect(layerDraw(0.9, 0, 4)).toBe(1);
     expect(layerDraw(0.1, 3, 4)).toBe(0);
     expect(layerDraw(1, 3, 4)).toBe(1);
+  });
+});
+
+describe("phaseBeats", () => {
+  // 4 phases: a stretch of 0.25 each. In each one the drawing first takes
+  // the screen (focus 1) while its layer draws, then steps aside (focus 0)
+  // and the detail card comes in; the next phase takes the screen again.
+  const at = (phase: number, local: number) => (phase + local) / 4;
+
+  it("starts full screen and drawing the first layer", () => {
+    const start = phaseBeats(at(0, 0), 4);
+    expect(start.phase).toBe(0);
+    expect(start.focus).toBe(1);
+    expect(start.detail).toBe(0);
+    expect(phaseBeats(at(0, 0.25), 4).draw).toBeGreaterThan(0);
+    expect(phaseBeats(at(0, 0.45), 4).draw).toBe(1);
+  });
+
+  it("steps aside and shows the detail later in the phase", () => {
+    const detail = phaseBeats(at(1, 0.8), 4);
+    expect(detail.phase).toBe(1);
+    expect(detail.focus).toBe(0);
+    expect(detail.detail).toBe(1);
+    expect(detail.draw).toBe(1);
+  });
+
+  it("takes the screen again at the start of the next phase", () => {
+    const next = phaseBeats(at(2, 0.2), 4);
+    expect(next.phase).toBe(2);
+    expect(next.focus).toBe(1);
+    expect(next.detail).toBe(0);
+  });
+
+  it("never shows the detail while the drawing is full screen", () => {
+    for (let p = 0; p <= 1; p += 0.005) {
+      const { focus, detail } = phaseBeats(p, 4);
+      expect(focus > 0.5 && detail > 0.5).toBe(false);
+    }
+  });
+
+  it("keeps the last detail on screen at the end", () => {
+    const end = phaseBeats(1, 4);
+    expect(end.phase).toBe(3);
+    expect(end.detail).toBe(1);
+    expect(end.focus).toBe(0);
   });
 });

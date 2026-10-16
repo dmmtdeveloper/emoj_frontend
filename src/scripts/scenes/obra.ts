@@ -1,28 +1,31 @@
 /**
- * Chapter 3 · "La obra se arma" (src/components/home/scenes/ObraScene.astro).
+ * Chapter 3 · "Del primer trazo a la obra"
+ * (src/components/home/scenes/ObraScene.astro).
  *
- * One stretch of the pinned progress per stage. The drawing's layers build
- * up in order (`--obra-draw` on each layer, layerDraw()); the last stage
- * slides the photo of the built work in under the pen (`--obra-ink`). The
- * cards cross-fade at each boundary (`--obra-card`), and only the one on
+ * One stretch of the pinned progress per stage, in two beats
+ * (phaseBeats()): the drawing takes the screen while the stage's layer
+ * draws (`--obra-draw` on that layer, `--obra-focus` 1, the caption on),
+ * then it steps aside into the slot and the stage's card comes in
+ * (`--obra-focus` 0, `--obra-card`). The last stage's layer is the photo of
+ * the built work sliding in under the pen (`--obra-ink`). Only the card on
  * screen is reachable (`inert` on the rest).
+ *
+ * The step aside is one transform from the drawing's full-screen box to
+ * the slot's box, measured on resize (`--obra-dx`, `--obra-dy`,
+ * `--obra-s`).
  */
-import {
-  easeInOutCubic,
-  easeOutCubic,
-  layerDraw,
-  segment,
-  sliceOf,
-} from "../../lib/motion/scenes";
+import { easeOutCubic, phaseBeats } from "../../lib/motion/scenes";
 import { setVar, type SceneFactory } from "./types";
-
-/** Half the width of the cross-fade between two cards, in progress. */
-const HANDOVER = 0.03;
 
 export const obraScene: SceneFactory = (track, tools) => {
   const stage = track.querySelector<HTMLElement>("[data-obra-stage]");
   const ink = track.querySelector<HTMLElement>("[data-obra-ink]");
+  const slot = track.querySelector<HTMLElement>("[data-obra-slot]");
+  const head = track.querySelector<HTMLElement>("[data-obra-head]");
   const cards = [...track.querySelectorAll<HTMLElement>("[data-obra-card]")];
+  const captions = [
+    ...track.querySelectorAll<HTMLElement>("[data-obra-caption]"),
+  ];
   const bars = [...track.querySelectorAll<HTMLElement>("[data-obra-bar]")];
   const jumps = [...track.querySelectorAll<HTMLElement>("[data-obra-jump]")];
   // Both copies of the drawing (on the paper and over the photo).
@@ -31,56 +34,87 @@ export const obraScene: SceneFactory = (track, tools) => {
     ...svg.querySelectorAll<SVGGElement>("[data-obra-layer]"),
   ]);
   const count = cards.length;
-  if (!stage || !ink || count === 0) return null;
+  if (!stage || !ink || !slot || count === 0 || drawings.length === 0) {
+    return null;
+  }
   let active = -1;
 
-  /** Handover into card `i`: 0 before, 1 after. */
-  const handover = (i: number, progress: number): number =>
-    i === 0 ? 1 : segment(progress, i / count - HANDOVER, i / count + HANDOVER);
-
   jumps.forEach((button, i) => {
-    button.addEventListener("click", () => {
-      tools.scrollTo(track, (i + 0.75) / count);
-    });
+    // Land on the stage's detail.
+    button.addEventListener("click", () =>
+      tools.scrollTo(track, (i + 0.8) / count),
+    );
   });
 
   return {
+    measure() {
+      const drawing = drawings[0];
+      if (!drawing) return;
+      // Measure the drawing at full screen (focus 1: no transform).
+      setVar(stage, "--obra-focus", 1);
+      const origin = stage.getBoundingClientRect();
+      const rect = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        return {
+          x: r.left - origin.left,
+          y: r.top - origin.top,
+          w: r.width,
+          h: r.height,
+        };
+      };
+      const full = rect(drawing);
+      const box = rect(slot);
+      if (full.w === 0 || full.h === 0 || box.w === 0) return;
+      // The drawing keeps its proportions (viewBox 960×600, centred).
+      const content = (w: number, h: number) => Math.min(w / 960, h / 600);
+      const scale = content(box.w, box.h) / content(full.w, full.h);
+      setVar(stage, "--obra-s", scale);
+      setVar(stage, "--obra-dx", box.x + box.w / 2 - (full.x + full.w / 2));
+      setVar(stage, "--obra-dy", box.y + box.h / 2 - (full.y + full.h / 2));
+    },
+
     render(progress) {
-      // The drawn layers are the first stages; the last one is the photo.
+      const beat = phaseBeats(progress, count);
+      // Earlier stages' layers stay drawn; later ones are blank.
       for (const layers of layersOf) {
         layers.forEach((layer, i) => {
-          setVar(
-            layer,
-            "--obra-draw",
-            easeOutCubic(layerDraw(progress, i, count)),
-          );
+          const drawn = i < beat.phase ? 1 : i === beat.phase ? beat.draw : 0;
+          setVar(layer, "--obra-draw", easeOutCubic(drawn));
         });
       }
-      const built = easeInOutCubic(layerDraw(progress, count - 1, count));
+      const built = beat.phase === count - 1 ? easeOutCubic(beat.draw) : 0;
       setVar(ink, "--obra-ink", built);
       stage.toggleAttribute("data-built", built > 0.35);
 
+      setVar(stage, "--obra-focus", beat.focus);
+      if (head) setVar(head, "--obra-head", 1 - beat.focus);
+      captions.forEach((caption, i) => {
+        setVar(caption, "--obra-caption", i === beat.phase ? beat.focus : 0);
+      });
       cards.forEach((card, i) => {
-        const arrive = segment(handover(i, progress), 0.5, 1);
-        const depart =
-          i === count - 1 ? 0 : segment(handover(i + 1, progress), 0, 0.5);
-        setVar(card, "--obra-card", easeOutCubic(arrive) * (1 - depart));
+        setVar(
+          card,
+          "--obra-card",
+          i === beat.phase ? easeOutCubic(beat.detail) : 0,
+        );
       });
 
-      const { index, local } = sliceOf(progress, count);
       bars.forEach((bar, i) => {
-        setVar(bar, "--obra-fill", i < index ? 1 : i === index ? local : 0);
+        const fill =
+          i < beat.phase ? 1 : i === beat.phase ? progress * count - i : 0;
+        setVar(bar, "--obra-fill", Math.min(1, Math.max(0, fill)));
       });
-      if (index !== active) {
-        active = index;
+      const shown = beat.detail > 0.5 ? beat.phase : -1;
+      if (shown !== active) {
+        active = shown;
         cards.forEach((card, i) => {
-          card.inert = i !== index;
-        });
-        jumps.forEach((button, i) => {
-          if (i === index) button.setAttribute("aria-current", "step");
-          else button.removeAttribute("aria-current");
+          card.inert = i !== shown;
         });
       }
+      jumps.forEach((button, i) => {
+        if (i === beat.phase) button.setAttribute("aria-current", "step");
+        else button.removeAttribute("aria-current");
+      });
     },
   };
 };

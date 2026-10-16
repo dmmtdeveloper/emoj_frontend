@@ -126,6 +126,28 @@ export function layerDraw(
   return segment(progress, start, start + LAYER_DRAW / count);
 }
 
+/**
+ * The two beats of a phase in a "full screen, then detail" chapter (the
+ * home's Cómo trabajamos). The progress is one stretch per phase; in each:
+ * - the drawing takes the screen (`focus` 1) and its layer draws (`draw`),
+ * - then it steps aside (`focus` 0) and the detail card comes in
+ *   (`detail`), which leaves again just before the next phase takes the
+ *   screen. The last phase's detail stays to the end.
+ */
+export function phaseBeats(
+  progress: number,
+  count: number,
+): { phase: number; draw: number; focus: number; detail: number } {
+  const { index, local } = sliceOf(progress, count);
+  const last = index === count - 1;
+  const draw = segment(local, 0.04, 0.42);
+  const comeBack = index === 0 ? 1 : segment(local, 0, 0.1);
+  const focus = comeBack * (1 - easeInOutCubic(segment(local, 0.46, 0.62)));
+  const leave = last ? 0 : segment(local, 0.93, 1);
+  const detail = segment(local, 0.56, 0.7) * (1 - leave);
+  return { phase: index, draw, focus, detail };
+}
+
 /** Screens of scroll the hero's stroke and lens take, and each extra photo. */
 export const HERO_LENS_SCREENS = 1.9;
 export const HERO_PHOTO_SCREENS = 0.9;

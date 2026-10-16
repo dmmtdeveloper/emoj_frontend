@@ -830,6 +830,12 @@
     stroke-dashoffset: calc(
       1 - clamp(0, calc((var(--svc-draw, 1) - var(--k-i, 0) * 0.065) / 0.36), 1)
     );
+    /* A round cap paints a dot at zero length: hide lines not yet started. */
+    opacity: clamp(
+      0,
+      calc((var(--svc-draw, 1) - var(--k-i, 0) * 0.065) * 60),
+      1
+    );
   }
 
   .croquis .k-thin {
@@ -1308,6 +1314,12 @@
     stroke-dashoffset: calc(
       1 - clamp(0, calc((var(--obra-draw, 1) - var(--k-i, 0) * 0.07) / 0.4), 1)
     );
+    /* A round cap paints a dot at zero length: hide lines not yet started. */
+    opacity: clamp(
+      0,
+      calc((var(--obra-draw, 1) - var(--k-i, 0) * 0.07) * 60),
+      1
+    );
   }
 
   .obra .k-thin {
@@ -1582,13 +1594,86 @@
     box-shadow: none;
   }
 
-  /* Phones: the drawing in the upper part, the card at the foot. */
+  /*
+   * The drawing sits in its full-screen box; beside the detail it is moved
+   * and scaled into the slot (`--obra-focus` 0). Phones: full screen in the
+   * middle, aside in the upper part over the card.
+   */
   :root[data-scenes] [data-scene] .obra-visual__drawing {
     inset: auto;
-    top: calc(var(--header-h) + 12svh);
-    left: 2vw;
-    width: 96vw;
-    height: 36svh;
+    top: calc(var(--header-h) + 10svh);
+    left: 3vw;
+    width: 94vw;
+    height: 46svh;
+    transform-origin: center;
+    translate: calc(var(--obra-dx, 0) * (1 - var(--obra-focus, 1)) * 1px)
+      calc(var(--obra-dy, 0) * (1 - var(--obra-focus, 1)) * 1px);
+    scale: calc(1 - (1 - var(--obra-s, 1)) * (1 - var(--obra-focus, 1)));
+    will-change: translate, scale;
+  }
+
+  .obra-visual__slot {
+    display: none;
+  }
+
+  :root[data-scenes] [data-scene] .obra-visual__slot {
+    position: absolute;
+    display: block;
+    visibility: hidden;
+    top: calc(var(--header-h) + 15svh);
+    left: 4vw;
+    width: 92vw;
+    height: 30svh;
+  }
+
+  /* The stage's number and name while it holds the screen. */
+  .obra-captions {
+    display: none;
+  }
+
+  :root[data-scenes] [data-scene] .obra-captions {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 6svh;
+    z-index: 3;
+    display: block;
+    pointer-events: none;
+  }
+
+  .obra-caption {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    opacity: var(--obra-caption, 0);
+    translate: 0 calc((1 - var(--obra-caption, 0)) * 24px);
+  }
+
+  .obra-caption__num {
+    font-family: var(--font-data);
+    font-size: clamp(2.5rem, 1.6rem + 3vw, 5rem);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--brand);
+  }
+
+  .obra-caption__title {
+    font-size: clamp(2rem, 1.2rem + 3vw, 4.5rem);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+  }
+
+  /* Over the photo of the built work, cream (brand on plum is forbidden). */
+  .obra-stage[data-built] .obra-caption__title {
+    color: var(--sand-50);
+  }
+
+  .obra-stage[data-built] .obra-caption__num {
+    color: var(--sage-300);
   }
 
   :root[data-scenes] [data-scene] .obra-visual__ink::after {
@@ -1607,6 +1692,7 @@
     inset-inline: 0;
     top: calc(var(--header-h) + 20px);
     pointer-events: none;
+    opacity: var(--obra-head, 0);
   }
 
   :root[data-scenes] [data-scene] .obra-title {
@@ -1649,10 +1735,18 @@
   }
 
   @media (min-width: 64rem) {
+    /* An <svg> keeps its own ratio with top + bottom: size it explicitly. */
     :root[data-scenes] [data-scene] .obra-visual__drawing {
+      top: calc(var(--header-h) + 3svh);
+      left: 6vw;
+      width: 88vw;
+      height: calc(100svh - var(--header-h) - 24svh);
+    }
+
+    /* Beside the card: clear of its right edge, plus a gap. */
+    :root[data-scenes] [data-scene] .obra-visual__slot {
       top: calc(var(--header-h) + 5svh);
       bottom: 5svh;
-      /* Clear of the card (its right edge, plus a gap). */
       left: max(40vw, calc((100vw - 1200px) / 2 + 520px));
       right: 6vw;
       width: auto;
