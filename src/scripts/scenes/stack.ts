@@ -1,5 +1,5 @@
 /**
- * Chapter 6 · Why EMOJ (src/components/home/scenes/StackScene.astro).
+ * Chapter 7 · Why EMOJ (src/components/home/scenes/StackScene.astro).
  *
  * The cards are sticky (armed CSS); each frame reads how close the next
  * card is to its pinned place and presses the card under it back by that

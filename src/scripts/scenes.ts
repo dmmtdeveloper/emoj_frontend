@@ -19,8 +19,8 @@ import {
   trackProgress,
 } from "../lib/motion/scenes";
 import { closingScene } from "./scenes/closing";
-import { heroScene } from "./scenes/hero";
 import { obraScene } from "./scenes/obra";
+import { planoScene } from "./scenes/plano";
 import { reelScene } from "./scenes/reel";
 import { servicesScene } from "./scenes/services";
 import { stackScene } from "./scenes/stack";
@@ -31,9 +31,9 @@ import type { Scene, SceneFactory, SceneTools } from "./scenes/types";
 const SMOOTHING_MS = 110;
 
 const FACTORIES: Record<string, SceneFactory> = {
-  hero: heroScene,
   services: servicesScene,
   obra: obraScene,
+  plano: planoScene,
   reel: reelScene,
   years: yearsScene,
   stack: stackScene,

@@ -1,5 +1,5 @@
 /**
- * Chapter 5 · "30 años" (src/components/home/scenes/YearsScene.astro).
+ * Chapter 6 · "30 años" (src/components/home/scenes/YearsScene.astro).
  *
  * Lays out the cut-out "30" to the stage, finds a point with ink inside the
  * "0" (drawing the same text on a canvas and reading one row of pixels),

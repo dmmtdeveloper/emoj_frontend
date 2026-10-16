@@ -1,5 +1,5 @@
 /**
- * The hero's site plan (HeroScene.astro): a small sewer project on a street,
+ * The site plan of the "El plano" chapter (PlanoScene.astro): a small sewer project on a street,
  * in SVG user units (viewBox 0 0 1000 700). Generated geometry, layer by
  * layer: topography, road, sewer, buildings and dimensions. Dashed lines are
  * stored as separate dashes so the pen reveal (stroke-dashoffset with

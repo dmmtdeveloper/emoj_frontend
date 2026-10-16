@@ -32,10 +32,10 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* Chapter 1 · Hero "El plano"                                      */
+  /* Chapter 4 · "El plano"                                            */
   /* ---------------------------------------------------------------- */
 
-  .hero-stage {
+  .plano-stage {
     position: relative;
     isolation: isolate;
     min-height: max(640px, 100svh);
@@ -43,29 +43,13 @@
     background: var(--plum-950);
   }
 
-  /* HERO_PLAN_SCREENS + HERO_PHOTO_SCREENS per extra photo (scenes.ts). */
-  :root[data-scenes] .hero-scene[data-scene] {
+  /* PLANO_SCREENS of scroll (src/scripts/scenes/plano.ts). */
+  :root[data-scenes] .plano-scene[data-scene] {
     height: calc(100svh + 260svh);
   }
 
-  :root[data-scenes] .hero-scene--2[data-scene] {
-    height: calc(100svh + 350svh);
-  }
-
-  :root[data-scenes] .hero-scene--3[data-scene] {
-    height: calc(100svh + 440svh);
-  }
-
-  :root[data-scenes] .hero-scene--4[data-scene] {
-    height: calc(100svh + 530svh);
-  }
-
-  :root[data-scenes] .hero-scene--5[data-scene] {
-    height: calc(100svh + 620svh);
-  }
-
   /* First frame before the script runs: an empty CAD screen. */
-  :root[data-scenes] .hero-stage {
+  :root[data-scenes] .plano-stage {
     --zs: 1;
     --zx: 0;
     --zy: 0;
@@ -78,7 +62,7 @@
     --cur-y: -100;
   }
 
-  :root[data-scenes] .hero-scene[data-scene] .hero-stage {
+  :root[data-scenes] .plano-scene[data-scene] .plano-stage {
     min-height: 0;
   }
 
@@ -86,8 +70,8 @@
     --s: 0;
   }
 
-  /* The photos. Finished state: the first one fills the hero. */
-  .hero-photo {
+  /* The photo. Finished state: it fills the chapter. */
+  .plano-photo {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -96,7 +80,7 @@
   }
 
   /* Inside the zoom window first, then the whole screen. */
-  :root[data-scenes] [data-scene] .hero-photo {
+  :root[data-scenes] [data-scene] .plano-photo {
     opacity: var(--photo-in);
     clip-path: inset(
       calc(var(--clip-t, 0) * 1px) calc(var(--clip-r, 0) * 1px)
@@ -104,45 +88,13 @@
     );
   }
 
-  .hero-photo__slide {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-
-  .hero-photo__slide:not(:first-child) {
-    display: none;
-  }
-
-  :root[data-scenes] [data-scene] .hero-photo__slide:not(:first-child) {
-    display: block;
-    clip-path: inset(0 calc((1 - var(--slide-in, 0)) * 100%) 0 0);
-  }
-
-  /* The wipe's leading edge: a thin sage stroke, like a pen line. */
-  :root[data-scenes] [data-scene] .hero-photo__slide:not(:first-child)::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(var(--slide-in, 0) * 100% - 3px);
-    width: 3px;
-    background: var(--sage-300);
-    opacity: calc(min(var(--slide-in, 0), 1 - var(--slide-in, 0)) * 8);
-  }
-
-  .hero-photo__img {
+  .plano-photo__img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .hero-photo__slide:not(:first-child) .hero-photo__img {
-    transform-origin: 30% 50%;
-    scale: calc(1.14 - var(--slide-in, 1) * 0.14);
-  }
-
-  .hero-photo__veil {
+  .plano-photo__veil {
     position: absolute;
     inset: 0;
     background: linear-gradient(
@@ -154,7 +106,7 @@
   }
 
   @media (min-width: 48rem) {
-    .hero-photo__veil {
+    .plano-photo__veil {
       background:
         linear-gradient(
           to right,
@@ -171,11 +123,11 @@
   }
 
   /* The CAD screen, only while the scene plays. */
-  .hero-cad {
+  .plano-cad {
     display: none;
   }
 
-  :root[data-scenes] [data-scene] .hero-cad {
+  :root[data-scenes] [data-scene] .plano-cad {
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -184,7 +136,7 @@
   }
 
   /* Model space: zoomed about the window's centre (zoomWindow()). */
-  .hero-world {
+  .plano-world {
     position: absolute;
     inset: 0;
     transform-origin: calc(var(--zox, 0) * 1px) calc(var(--zoy, 0) * 1px);
@@ -192,7 +144,7 @@
     scale: var(--zs, 1);
   }
 
-  .hero-grid {
+  .plano-grid {
     position: absolute;
     inset: 0;
     opacity: var(--chrome);
@@ -226,7 +178,7 @@
   }
 
   /* The plan. Phones: under the command line; wider: the right side. */
-  .hero-plan {
+  .plano-plan {
     position: absolute;
     left: -14%;
     top: calc(var(--header-h) + 56px);
@@ -237,7 +189,7 @@
   }
 
   @media (min-width: 48rem) {
-    .hero-plan {
+    .plano-plan {
       left: auto;
       right: 1vw;
       top: calc(var(--header-h) + 1svh);
@@ -246,7 +198,7 @@
     }
   }
 
-  /* Each line is drawn in its turn within its layer (hero.ts). Lines keep
+  /* Each line is drawn in its turn within its layer (plano.ts). Lines keep
      their weight while the zoom scales the drawing, like in CAD. */
   .cad-line {
     --w: 1.4;
@@ -354,7 +306,7 @@
   }
 
   /* The zoom window: a selection rectangle dragged from its corner. */
-  .hero-window {
+  .plano-window {
     fill: color-mix(in oklab, var(--sage-300) 16%, transparent);
     fill-opacity: calc(1 - var(--photo-in, 0));
     stroke: var(--sage-300);
@@ -367,7 +319,7 @@
   }
 
   /* Keeps the copy readable over the plan. */
-  .hero-cad__veil {
+  .plano-cad__veil {
     position: absolute;
     inset: 0;
     opacity: calc(1 - var(--plan-out, 0));
@@ -380,7 +332,7 @@
   }
 
   @media (min-width: 48rem) {
-    .hero-cad__veil {
+    .plano-cad__veil {
       background: linear-gradient(
         to right,
         color-mix(in oklab, var(--plum-950) 92%, transparent) 20%,
@@ -391,7 +343,7 @@
   }
 
   /* Crosshair cursor with its pickbox. */
-  .hero-cursor {
+  .plano-cursor {
     position: absolute;
     top: 0;
     left: 0;
@@ -399,28 +351,28 @@
     opacity: var(--chrome);
   }
 
-  .hero-cursor::before,
-  .hero-cursor::after {
+  .plano-cursor::before,
+  .plano-cursor::after {
     content: "";
     position: absolute;
     background: var(--sand-50);
   }
 
-  .hero-cursor::before {
+  .plano-cursor::before {
     top: -0.5px;
     left: -40px;
     width: 80px;
     height: 1px;
   }
 
-  .hero-cursor::after {
+  .plano-cursor::after {
     top: -40px;
     left: -0.5px;
     width: 1px;
     height: 80px;
   }
 
-  .hero-cursor__box {
+  .plano-cursor__box {
     position: absolute;
     top: -5px;
     left: -5px;
@@ -430,12 +382,12 @@
   }
 
   /* UCS icon, beside the plan. */
-  .hero-ucs {
+  .plano-ucs {
     display: none;
   }
 
   @media (min-width: 48rem) {
-    .hero-ucs {
+    .plano-ucs {
       position: absolute;
       left: 39vw;
       bottom: 112px;
@@ -449,15 +401,15 @@
     }
   }
 
-  .hero-ucs__x {
+  .plano-ucs__x {
     stroke: var(--brick-400);
   }
 
-  .hero-ucs__y {
+  .plano-ucs__y {
     stroke: var(--sage-300);
   }
 
-  .hero-ucs text {
+  .plano-ucs text {
     fill: var(--sand-200);
     stroke: none;
     font-family: var(--font-data);
@@ -465,7 +417,7 @@
   }
 
   /* Command line: phones, under the header; wider, under the plan. */
-  .hero-cmd {
+  .plano-cmd {
     position: absolute;
     top: calc(var(--header-h) + 8px);
     inset-inline: 16px;
@@ -480,7 +432,7 @@
   }
 
   @media (min-width: 48rem) {
-    .hero-cmd {
+    .plano-cmd {
       top: auto;
       bottom: 44px;
       left: 39vw;
@@ -488,7 +440,7 @@
     }
   }
 
-  .hero-cmd__history {
+  .plano-cmd__history {
     display: none;
     min-height: 32px;
     padding-inline: 12px;
@@ -497,12 +449,12 @@
   }
 
   @media (min-width: 48rem) {
-    .hero-cmd__history {
+    .plano-cmd__history {
       display: block;
     }
   }
 
-  .hero-cmd__line {
+  .plano-cmd__line {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -515,11 +467,11 @@
     overflow: hidden;
   }
 
-  .hero-cmd__prompt {
+  .plano-cmd__prompt {
     color: var(--sage-300);
   }
 
-  .hero-cmd__caret {
+  .plano-cmd__caret {
     flex: none;
     width: 7px;
     height: 14px;
@@ -527,7 +479,7 @@
     animation: caret-blink 1060ms steps(1, end) infinite;
   }
 
-  .hero-cmd__hint {
+  .plano-cmd__hint {
     margin-left: auto;
     font-size: 11px;
     letter-spacing: 0.12em;
@@ -536,18 +488,18 @@
   }
 
   @media (max-width: 29.99rem) {
-    .hero-cmd__hint {
+    .plano-cmd__hint {
       display: none;
     }
   }
 
   /* Status bar: coordinates, current layer, drawing aids. */
-  .hero-status {
+  .plano-status {
     display: none;
   }
 
   @media (min-width: 48rem) {
-    .hero-status {
+    .plano-status {
       position: absolute;
       left: 39vw;
       right: 88px;
@@ -567,13 +519,13 @@
     }
   }
 
-  .hero-status__xy {
+  .plano-status__xy {
     min-width: 22ch;
     white-space: pre;
     color: var(--sand-100);
   }
 
-  .hero-status__swatch {
+  .plano-status__swatch {
     display: inline-block;
     width: 10px;
     height: 10px;
@@ -583,44 +535,42 @@
     background: var(--sand-100);
   }
 
-  .hero-status__swatch[data-step="0"] {
+  .plano-status__swatch[data-step="0"] {
     background: var(--sage-500);
   }
 
-  .hero-status__swatch:is([data-step="2"], [data-step="5"]) {
+  .plano-status__swatch:is([data-step="2"], [data-step="5"]) {
     background: var(--brick-400);
   }
 
-  .hero-status__swatch[data-step="4"] {
+  .plano-status__swatch[data-step="4"] {
     background: var(--sage-300);
   }
 
-  .hero-status__toggles {
+  .plano-status__toggles {
     display: none;
     margin-left: auto;
     gap: 6px;
   }
 
   @media (min-width: 64rem) {
-    .hero-status__toggles {
+    .plano-status__toggles {
       display: flex;
     }
   }
 
-  .hero-status__toggles > span {
+  .plano-status__toggles > span {
     padding: 2px 7px;
     border-radius: 4px;
     background: color-mix(in oklab, var(--sand-50) 8%, transparent);
   }
 
-  .hero-status__toggles > span:nth-child(-n + 2) {
+  .plano-status__toggles > span:nth-child(-n + 2) {
     color: var(--sage-300);
   }
 
-  /* The copy: cream over the CAD screen and over the photos. */
-  .hero-copy {
-    --ink: var(--sand-50);
-    --ink-muted: var(--sand-100);
+  /* The copy: cream over the CAD screen and over the photo. */
+  .plano-copy {
     position: absolute;
     inset: 0;
     z-index: 3;
@@ -630,33 +580,32 @@
     padding-top: calc(var(--header-h) + 32px);
     padding-bottom: max(40px, 6svh);
     pointer-events: none;
-    translate: 0 calc(var(--hero-lift, 0) * -5svh);
   }
 
   @media (min-width: 48rem) {
-    .hero-copy {
+    .plano-copy {
       justify-content: center;
       padding-bottom: 48px;
     }
   }
 
-  .hero-copy__inner {
+  .plano-copy__inner {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    max-width: 40rem;
+    align-items: flex-start;
+    gap: 20px;
+    max-width: 36rem;
     pointer-events: auto;
   }
 
   @media (min-width: 48rem) {
-    .hero-copy__inner {
-      max-width: min(40rem, 38vw);
+    .plano-copy__inner {
+      max-width: min(36rem, 36vw);
     }
   }
 
-  .hero-copy__eyebrow {
-    display: inline-flex;
-    align-items: center;
+  .plano-copy__eyebrow {
+    display: flex;
     gap: 12px;
     font-family: var(--font-data);
     font-size: 13px;
@@ -664,74 +613,36 @@
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    color: var(--sand-200);
+  }
+
+  .plano-copy__eyebrow span {
     color: var(--sage-300);
   }
 
-  .hero-copy__tick {
-    width: 28px;
-    height: 2px;
-    border-radius: 2px;
-    background: currentColor;
-  }
-
-  .hero-copy__title {
+  .plano-copy__title {
     max-width: 14ch;
-    font-size: clamp(2.5rem, 1.4rem + 3.6vw, 5rem);
-    line-height: 0.98;
+    font-size: clamp(2.25rem, 1.3rem + 3vw, 4.25rem);
+    line-height: 1;
     font-weight: 600;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.04em;
     text-wrap: balance;
-    color: var(--ink);
+    color: var(--sand-50);
   }
 
-  .hero-copy__title em {
+  .plano-copy__title em {
     font-weight: 500;
     color: var(--sage-300);
   }
 
-  .hero-copy__lead {
+  .plano-copy__lead {
     max-width: 44ch;
-    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.25rem);
-    line-height: 1.55;
-    color: var(--ink-muted);
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+    line-height: 1.6;
+    color: var(--sand-100);
   }
 
-  .hero-copy__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 28px;
-    padding-top: 4px;
-  }
-
-  /* `brand` on plum is a forbidden pair: a cream button. */
-  .hero-copy__primary {
-    display: inline-flex;
-    min-height: 48px;
-    align-items: center;
-    padding: 12px 24px;
-    border-radius: var(--radius-full);
-    font-size: 16px;
-    line-height: 20px;
-    font-weight: 500;
-    text-decoration: none;
-    background: var(--sand-50);
-    color: var(--plum-950);
-    transition:
-      background-color 200ms var(--ease-out),
-      scale 200ms var(--ease-out);
-  }
-
-  .hero-copy__primary:hover {
-    background: var(--sand-100);
-    color: var(--plum-950);
-  }
-
-  .hero-copy__primary:active {
-    scale: 0.97;
-  }
-
-  .hero-copy__secondary {
+  .plano-copy__link {
     display: inline-flex;
     min-height: 48px;
     align-items: center;
@@ -739,83 +650,63 @@
     font-size: 16px;
     font-weight: 500;
     text-decoration: none;
-    color: var(--ink);
+    color: var(--sand-50);
   }
 
-  .hero-copy__secondary:hover {
-    color: var(--ink);
+  .plano-copy__link:hover {
+    color: var(--sand-50);
   }
 
-  .hero-copy__secondary svg {
+  .plano-copy__link svg {
     transition: translate 300ms var(--ease-out);
   }
 
-  .hero-copy__secondary:hover svg {
+  .plano-copy__link:hover svg {
     translate: 4px 0;
   }
 
-  /* Photo counter, bottom right, once the photos lead. */
-  .hero-count {
+  /* Caption once the zoom has landed on the built work. */
+  .plano-caption {
     position: absolute;
-    z-index: 5;
-    inset-inline: 0;
+    z-index: 3;
+    right: 0;
     bottom: 28px;
-    display: none;
-    align-items: center;
+    left: 0;
+    display: flex;
     justify-content: flex-end;
-    gap: 14px;
+    gap: 10px;
+    align-items: center;
     font-family: var(--font-data);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.14em;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--sand-100);
     pointer-events: none;
   }
 
-  :root[data-scenes] .hero-stage[data-tone="photo"] .hero-count {
-    display: flex;
+  .plano-caption::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--sage-300);
   }
 
-  .hero-count__track {
-    position: relative;
-    width: 96px;
-    height: 2px;
-    overflow: hidden;
-    border-radius: 2px;
-    background: color-mix(in oklab, var(--sand-50) 25%, transparent);
+  :root[data-scenes] [data-scene] .plano-caption {
+    opacity: var(--plan-out, 1);
   }
 
-  .hero-count__track > span {
-    position: absolute;
-    inset: 0;
-    background: var(--sand-50);
-    transform-origin: left;
-    scale: var(--hero-count-fill, 0) 1;
+  @media (max-width: 47.99rem) {
+    .plano-caption {
+      display: none;
+    }
   }
 }
 
 @keyframes caret-blink {
   50% {
     opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-scene .hero-in {
-    animation: rise 900ms var(--ease-out) 300ms both;
-  }
-
-  .hero-scene .hero-in--2 {
-    animation-delay: 420ms;
-  }
-
-  .hero-scene .hero-in--3 {
-    animation-delay: 600ms;
-  }
-
-  .hero-scene .hero-in--4 {
-    animation-delay: 760ms;
   }
 }
 
@@ -1796,7 +1687,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Chapter 4 · Projects reel "Ya son obra."                            */
+/* Chapter 5 · Projects reel "Ya son obra."                            */
 /* ------------------------------------------------------------------ */
 
 @layer components {
@@ -2155,7 +2046,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Chapter 5 · "30 años", through the zero                              */
+/* Chapter 6 · "30 años", through the zero                              */
 /* ------------------------------------------------------------------ */
 
 @layer components {
@@ -2385,7 +2276,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Chapter 6 · Why EMOJ, stacked cards                                  */
+/* Chapter 7 · Why EMOJ, stacked cards                                  */
 /* ------------------------------------------------------------------ */
 
 @layer components {
@@ -2571,7 +2462,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Chapter 7 · "El último trazo"                                        */
+/* Chapter 8 · "El último trazo"                                        */
 /* ------------------------------------------------------------------ */
 
 @layer components {

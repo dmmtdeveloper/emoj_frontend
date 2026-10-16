@@ -1,5 +1,5 @@
 /**
- * Chapter 7 · "El último trazo" (src/components/home/scenes/ClosingScene.astro).
+ * Chapter 8 · "El último trazo" (src/components/home/scenes/ClosingScene.astro).
  *
  * The scroll draws the isotype stroke from the left dot; at its end the
  * right dot swells (`--close-dot`) and opens leftwards into the quote

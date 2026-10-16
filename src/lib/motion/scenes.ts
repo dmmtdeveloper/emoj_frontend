@@ -91,30 +91,6 @@ export function sliceOf(
   return { index, local: position - index };
 }
 
-/** Screens of scroll the hero's plan takes (drawing and zoom), and each extra photo. */
-export const HERO_PLAN_SCREENS = 2.6;
-export const HERO_PHOTO_SCREENS = 0.9;
-
-/**
- * The hero's progress split into its phases: `plan` (0..1, the plan being
- * drawn and the zoom into the photo), then the extra photos wiping in one
- * after another: `photo` is how many have fully come in and `slide` how far
- * the next one is. With one photo the whole progress is the plan.
- */
-export function heroPhases(
-  progress: number,
-  photos: number,
-): { plan: number; photo: number; slide: number } {
-  const extra = Math.max(0, photos - 1);
-  const total = HERO_PLAN_SCREENS + extra * HERO_PHOTO_SCREENS;
-  const plan = segment(progress, 0, HERO_PLAN_SCREENS / total);
-  if (extra === 0) return { plan, photo: 0, slide: 0 };
-  const position = segment(progress, HERO_PLAN_SCREENS / total, 1) * extra;
-  if (position >= extra) return { plan, photo: extra, slide: 1 };
-  const photo = Math.floor(position);
-  return { plan, photo, slide: position - photo };
-}
-
 /** Which of the weighted steps `share` (0..1) is in, and how far into it. */
 export function weightedSlice(
   share: number,

@@ -696,25 +696,24 @@
 }
 
 /*
- * Quote button: brand fill on the solid bar; over the hero, an outlined
- * cream pill (brand on plum is a forbidden pair).
+ * Quote button: brand fill on the solid bar; over the hero photo, an
+ * outlined cream pill (brand on plum is a forbidden pair).
  */
 .header-cta {
-  --cta-solid: var(--header-solid);
   border: 1px solid
     color-mix(
       in oklab,
-      var(--brand) calc(var(--cta-solid) * 100%),
+      var(--brand) calc(var(--header-solid) * 100%),
       color-mix(in oklab, var(--sand-50) 60%, transparent)
     );
   background-color: color-mix(
     in oklab,
-    var(--brand) calc(var(--cta-solid) * 100%),
+    var(--brand) calc(var(--header-solid) * 100%),
     transparent
   );
   color: color-mix(
     in oklab,
-    var(--on-brand) calc(var(--cta-solid) * 100%),
+    var(--on-brand) calc(var(--header-solid) * 100%),
     var(--sand-50)
   );
 }
@@ -722,12 +721,12 @@
 .header-cta:hover {
   background-color: color-mix(
     in oklab,
-    var(--brand-hover) calc(var(--cta-solid) * 100%),
+    var(--brand-hover) calc(var(--header-solid) * 100%),
     color-mix(in oklab, var(--sand-50) 12%, transparent)
   );
   color: color-mix(
     in oklab,
-    var(--on-brand) calc(var(--cta-solid) * 100%),
+    var(--on-brand) calc(var(--header-solid) * 100%),
     var(--sand-50)
   );
 }

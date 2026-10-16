@@ -1,5 +1,5 @@
 /**
- * Chapter 4 · Projects reel (src/components/home/scenes/ReelScene.astro).
+ * Chapter 5 · Projects reel (src/components/home/scenes/ReelScene.astro).
  *
  * The track is as tall as the reel is wider than the screen (plus a short
  * pause at each end), so one pixel of scroll moves the reel one pixel.

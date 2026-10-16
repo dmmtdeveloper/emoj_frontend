@@ -1,24 +1,22 @@
 /**
- * Chapter 1 · "El plano" (src/components/home/scenes/HeroScene.astro).
+ * Chapter 4 · "El plano" (src/components/home/scenes/PlanoScene.astro).
  *
  * The plan is drawn step by step (a layer each, `[data-cad-step]`): the
  * step's command is typed on the command line, then the crosshair draws its
  * lines one after another (`--s` on the step; each line has its place `--k`
- * of `--n`). On load the first two layers are drawn (a short, time-based
- * intro); then the scroll takes over:
+ * of `--n`). When the chapter comes into view the first two layers draw
+ * themselves (a short, time-based intro), so it never arrives empty; then
+ * the scroll takes over:
  * - 0 → DRAW_TO: the remaining layers.
  * - WINDOW_FROM → WINDOW_TO: "ZOOM Ventana" is typed and the window is
  *   dragged over the pump station; the photo appears inside it.
  * - ZOOM_FROM → ZOOM_TO: the zoom takes the window to the full screen
  *   (zoomWindow()); the CAD chrome and then the plan go away.
- * - Then the other photos wipe in one by one (`--slide-in`), with the
- *   counter following. The progress is split by heroPhases().
  */
 import {
   cadReadout,
   cadStepPhases,
   easeInOutCubic,
-  heroPhases,
   mix,
   segment,
   typedText,
@@ -29,13 +27,13 @@ import {
 import { setVar, type SceneFactory } from "./types";
 
 const INTRO_MS = 3400;
-/** Layers the load intro draws; the scroll draws the rest. */
+/** Layers the intro draws; the scroll draws the rest. */
 const INTRO_STEPS = 2;
 const DRAW_TO = 0.4;
 const WINDOW_FROM = 0.42;
 const WINDOW_TO = 0.54;
 const ZOOM_FROM = 0.58;
-const ZOOM_TO = 0.93;
+const ZOOM_TO = 0.88;
 const WINDOW_COMMAND = "ZOOM  Ventana";
 
 interface Point {
@@ -51,22 +49,19 @@ interface Step {
   command: string;
 }
 
-export const heroScene: SceneFactory = (track) => {
-  const stage = track.querySelector<HTMLElement>("[data-hero-stage]");
-  const world = track.querySelector<HTMLElement>("[data-hero-world]");
-  const plan = track.querySelector<SVGSVGElement>("[data-hero-plan]");
-  const windowRect = track.querySelector<SVGRectElement>("[data-hero-window]");
-  const photo = track.querySelector<HTMLElement>("[data-hero-photo]");
-  const cursor = track.querySelector<HTMLElement>("[data-hero-cursor]");
-  const typed = track.querySelector<HTMLElement>("[data-hero-typed]");
-  const history = track.querySelector<HTMLElement>("[data-hero-history]");
-  const hint = track.querySelector<HTMLElement>("[data-hero-hint]");
-  const xy = track.querySelector<HTMLElement>("[data-hero-xy]");
-  const layer = track.querySelector<HTMLElement>("[data-hero-layer]");
-  const swatch = track.querySelector<HTMLElement>("[data-hero-swatch]");
-  const slides = [...track.querySelectorAll<HTMLElement>("[data-hero-slide]")];
-  const count = track.querySelector<HTMLElement>("[data-hero-count]");
-  const countBar = track.querySelector<HTMLElement>("[data-hero-count-bar]");
+export const planoScene: SceneFactory = (track) => {
+  const stage = track.querySelector<HTMLElement>("[data-plano-stage]");
+  const world = track.querySelector<HTMLElement>("[data-plano-world]");
+  const plan = track.querySelector<SVGSVGElement>("[data-plano-plan]");
+  const windowRect = track.querySelector<SVGRectElement>("[data-plano-window]");
+  const photo = track.querySelector<HTMLElement>("[data-plano-photo]");
+  const cursor = track.querySelector<HTMLElement>("[data-plano-cursor]");
+  const typed = track.querySelector<HTMLElement>("[data-plano-typed]");
+  const history = track.querySelector<HTMLElement>("[data-plano-history]");
+  const hint = track.querySelector<HTMLElement>("[data-plano-hint]");
+  const xy = track.querySelector<HTMLElement>("[data-plano-xy]");
+  const layer = track.querySelector<HTMLElement>("[data-plano-layer]");
+  const swatch = track.querySelector<HTMLElement>("[data-plano-swatch]");
   if (!stage || !world || !plan || !windowRect || !photo || !cursor) {
     return null;
   }
@@ -101,11 +96,10 @@ export const heroScene: SceneFactory = (track) => {
   const introShare =
     weights.slice(0, INTRO_STEPS).reduce((sum, w) => sum + w, 0) / total;
 
-  const start = performance.now();
+  let start: number | null = null;
   let stageBox = { left: 0, top: 0, width: 0, height: 0 };
   let win: Box = { left: 0, top: 0, width: 0, height: 0 };
-  let shown = { typed: "", history: "", layer: "", xy: "", count: "" };
-  let tone = "";
+  let shown = { typed: "", history: "", layer: "", xy: "" };
   let hintOn: boolean | null = null;
 
   /** Where a point of an element of the plan is on the stage. */
@@ -175,12 +169,13 @@ export const heroScene: SceneFactory = (track) => {
       setVar(stage, "--zoy", win.top + win.height / 2);
     },
 
-    render(trackProgress, now) {
+    render(progress, now) {
       const box = stage.getBoundingClientRect();
       stageBox = { ...stageBox, left: box.left, top: box.top };
-      const phase = heroPhases(trackProgress, slides.length);
-      const progress = phase.plan;
-      const intro = easeInOutCubic((now - start) / INTRO_MS);
+      // The intro starts once the chapter is well into view.
+      if (start === null && box.top < window.innerHeight * 0.6) start = now;
+      const intro =
+        start === null ? 0 : easeInOutCubic((now - start) / INTRO_MS);
       const drawn = Math.min(
         1,
         introShare * intro + (1 - introShare) * segment(progress, 0, DRAW_TO),
@@ -271,39 +266,11 @@ export const heroScene: SceneFactory = (track) => {
       setVar(stage, "--clip-b", windowShare > 0 ? z.clip.bottom : 0);
       setVar(stage, "--clip-l", windowShare > 0 ? z.clip.left : 0);
       setVar(stage, "--chrome", 1 - segment(progress, ZOOM_FROM + 0.02, 0.72));
-      setVar(stage, "--plan-out", segment(progress, 0.76, ZOOM_TO));
-      setVar(
-        stage,
-        "--hero-lift",
-        easeInOutCubic(segment(trackProgress, 0.96, 1)),
-      );
-
-      // The other photos: the next one wipes in over the last, from the
-      // left, and settles from a slight zoom.
-      slides.forEach((slide, i) => {
-        if (i === 0) return;
-        const share =
-          i - 1 < phase.photo ? 1 : i - 1 === phase.photo ? phase.slide : 0;
-        setVar(slide, "--slide-in", easeInOutCubic(share));
-      });
-      if (slides.length > 1) {
-        const settled = phase.plan < 1 ? 0 : phase.photo + phase.slide;
-        const number = Math.min(slides.length, 1 + Math.floor(settled + 0.5));
-        write("count", count, String(number).padStart(2, "0"));
-        if (countBar) {
-          setVar(countBar, "--hero-count-fill", settled / (slides.length - 1));
-        }
-      }
-
-      const next = progress >= ZOOM_TO - 0.005 ? "photo" : "plan";
-      if (next !== tone) {
-        tone = next;
-        stage.dataset["tone"] = next;
-      }
+      setVar(stage, "--plan-out", segment(progress, 0.74, ZOOM_TO));
     },
 
     busy(now) {
-      return now - start < INTRO_MS;
+      return start !== null && now - start < INTRO_MS;
     },
   };
 };
