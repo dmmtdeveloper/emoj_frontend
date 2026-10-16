@@ -53,6 +53,35 @@ export function lastAccessLabel(iso: string | null | undefined): string {
   return iso ? chileDate.format(new Date(iso)) : "Nunca";
 }
 
+export type StatusFilter = "all" | UserStatus;
+
+/** People per status, for the tabs of the Usuarios page. */
+export function statusCounts(
+  users: readonly Pick<ManagedUser, "status">[],
+): Record<StatusFilter, number> {
+  const counts = { all: users.length, active: 0, invited: 0, disabled: 0 };
+  for (const u of users) counts[u.status] += 1;
+  return counts;
+}
+
+/** People per role among those with access (active or invited). */
+export function roleCounts(
+  users: readonly Pick<ManagedUser, "role" | "status">[],
+): Record<Role, number> {
+  const counts = { admin: 0, editor: 0 };
+  for (const u of users) if (u.status !== "disabled") counts[u.role] += 1;
+  return counts;
+}
+
+export function usersWithStatus<T extends Pick<ManagedUser, "status">>(
+  users: readonly T[],
+  filter: StatusFilter,
+): T[] {
+  return filter === "all"
+    ? [...users]
+    : users.filter((u) => u.status === filter);
+}
+
 /** Same limit as the API. */
 const MAX_NAME = 120;
 
