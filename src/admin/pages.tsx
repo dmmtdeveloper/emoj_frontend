@@ -7,13 +7,19 @@ import {
   ArrowRight,
   FileText,
   FolderKanban,
+  KeyRound,
+  LogOut,
   Mail,
+  MonitorSmartphone,
+  PenLine,
   Pencil,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import { useState, type ReactNode, type SyntheticEvent } from "react";
 import type { AdminNews, AdminProject } from "../lib/admin/api";
 import { mergeRecent, relativeTime } from "../lib/admin/dashboard";
+import { initials } from "../lib/admin/messages";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
 import { ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
@@ -453,10 +459,11 @@ function NameForm({ name, onDone }: { name: string; onDone: () => void }) {
   return (
     <form
       onSubmit={(event) => void save(event)}
-      className="mt-4 flex flex-col gap-4"
+      className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-end"
     >
       <Field
         label="Nombre"
+        className="sm:w-80"
         value={value}
         maxLength={120}
         autoComplete="name"
@@ -475,6 +482,29 @@ function NameForm({ name, onDone }: { name: string; onDone: () => void }) {
   );
 }
 
+/** Icon in a soft circle beside a card heading. */
+function CardHead({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof KeyRound;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-sunken text-ink">
+        <Icon {...iconProps} />
+      </span>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg leading-6 font-semibold text-ink">{title}</h2>
+        <p className="max-w-[55ch] text-ink-muted">{children}</p>
+      </div>
+    </div>
+  );
+}
+
 export function AccountPage() {
   const user = useUser();
   const [editingName, setEditingName] = useState(false);
@@ -484,7 +514,9 @@ export function AccountPage() {
     | { kind: "sent" }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
+  const [confirmEndAll, setConfirmEndAll] = useState(false);
   const [endingAll, setEndingAll] = useState(false);
+  const RoleIcon = user.role === "admin" ? ShieldCheck : PenLine;
 
   async function sendReset() {
     setState({ kind: "busy" });
@@ -503,88 +535,123 @@ export function AccountPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg leading-6 font-semibold text-ink">
-            Tus datos
-          </h2>
+    <div className="flex w-full flex-col gap-6">
+      <Card className="overflow-hidden p-0! md:p-0!">
+        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center md:p-6">
+          <span
+            aria-hidden="true"
+            className="grid size-16 shrink-0 place-items-center rounded-full bg-surface-inverse text-xl font-semibold tracking-[0.04em] text-ink-inverse"
+          >
+            {initials(user.name || user.email)}
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h2 className="truncate text-[28px] leading-9 font-semibold tracking-[-0.01em] text-ink">
+              {user.name || "Sin nombre"}
+            </h2>
+            <p className="truncate text-ink-muted">{user.email}</p>
+          </div>
           {!editingName && (
-            <Button variant="ghost" onClick={() => setEditingName(true)}>
-              <Pencil size={18} strokeWidth={1.75} aria-hidden="true" />
+            <Button
+              variant="secondary"
+              className="self-start sm:self-center"
+              onClick={() => setEditingName(true)}
+            >
+              <Pencil {...iconProps} />
               Cambiar nombre
             </Button>
           )}
         </div>
-        {editingName ? (
-          <NameForm name={user.name} onDone={() => setEditingName(false)} />
-        ) : null}
-        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
-          {!editingName && (
-            <div>
-              <dt className="text-sm text-ink-muted">Nombre</dt>
-              <dd className="text-ink">{user.name || "Sin nombre"}</dd>
-            </div>
+        {editingName && (
+          <div className="border-t border-border px-5 pb-5 md:px-6 md:pb-6">
+            <NameForm name={user.name} onDone={() => setEditingName(false)} />
+          </div>
+        )}
+        <div className="flex items-start gap-3 border-t border-border bg-surface-sunken/50 px-5 py-4 md:px-6">
+          <RoleIcon {...iconProps} className="mt-0.5 shrink-0 text-ink" />
+          <p className="text-ink">
+            <span className="font-semibold">{ROLE_LABEL[user.role]}.</span>{" "}
+            <span className="text-ink-muted">{ROLE_HINT[user.role]}</span>
+            {user.role === "editor" && (
+              <span className="text-ink-muted">
+                {" "}
+                Para cambiar tu rol, pídeselo a un administrador.
+              </span>
+            )}
+          </p>
+        </div>
+      </Card>
+
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Card className="flex flex-col gap-5">
+          <CardHead icon={KeyRound} title="Contraseña">
+            Para cambiarla te enviamos un enlace a tu correo. Así nadie puede
+            cambiarla solo con tener tu computador abierto.
+          </CardHead>
+          {state.kind === "sent" && (
+            <Notice tone="success">
+              Te enviamos el enlace a {user.email}. Vence en 30 minutos.
+            </Notice>
+          )}
+          {state.kind === "error" && (
+            <Notice tone="error">{state.message}</Notice>
           )}
           <div>
-            <dt className="text-sm text-ink-muted">Correo</dt>
-            <dd className="break-all text-ink">{user.email}</dd>
+            <Button
+              variant="secondary"
+              disabled={state.kind === "busy"}
+              onClick={() => void sendReset()}
+            >
+              <Mail {...iconProps} />
+              {state.kind === "busy"
+                ? "Enviando…"
+                : state.kind === "sent"
+                  ? "Enviar otro enlace"
+                  : "Enviarme el enlace"}
+            </Button>
           </div>
-          <div>
-            <dt className="text-sm text-ink-muted">Rol</dt>
-            <dd className="text-ink">
-              {ROLE_LABEL[user.role]}
-              <span className="block text-sm text-ink-muted">
-                {ROLE_HINT[user.role]}
-              </span>
-            </dd>
-          </div>
-        </dl>
-      </Card>
+        </Card>
 
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-lg leading-6 font-semibold text-ink">Contraseña</h2>
-        <p className="max-w-[60ch] text-ink-muted">
-          Para cambiarla te enviamos un enlace a tu correo. Así nadie puede
-          cambiarla solo con tener tu computador abierto.
-        </p>
-        {state.kind === "sent" && (
-          <Notice tone="success">
-            Te enviamos el enlace a {user.email}. Vence en 30 minutos.
-          </Notice>
-        )}
-        {state.kind === "error" && (
-          <Notice tone="error">{state.message}</Notice>
-        )}
-        <div>
-          <Button
-            variant="secondary"
-            disabled={state.kind === "busy"}
-            onClick={() => void sendReset()}
-          >
-            {state.kind === "busy" ? "Enviando…" : "Enviarme el enlace"}
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-lg leading-6 font-semibold text-ink">Sesiones</h2>
-        <p className="max-w-[60ch] text-ink-muted">
-          Si entraste desde un computador que no es tuyo o perdiste tu celular,
-          cierra la sesión en todos los dispositivos.
-        </p>
-        <div>
-          <Button
-            variant="secondary"
-            disabled={endingAll}
-            onClick={() => void endAllSessions()}
-          >
-            {endingAll
-              ? "Cerrando…"
-              : "Cerrar sesión en todos los dispositivos"}
-          </Button>
-        </div>
-      </Card>
+        <Card className="flex flex-col gap-5">
+          <CardHead icon={MonitorSmartphone} title="Sesiones">
+            Si entraste desde un computador que no es tuyo o perdiste tu
+            celular, cierra la sesión en todos los dispositivos.
+          </CardHead>
+          {confirmEndAll ? (
+            <div className="flex flex-col gap-3">
+              <Notice tone="info">
+                También se cerrará aquí: tendrás que volver a entrar con tu
+                correo y contraseña.
+              </Notice>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={endingAll}
+                  onClick={() => void endAllSessions()}
+                >
+                  <LogOut {...iconProps} />
+                  {endingAll ? "Cerrando…" : "Sí, cerrar en todos"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={endingAll}
+                  onClick={() => setConfirmEndAll(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmEndAll(true)}
+              >
+                <LogOut {...iconProps} />
+                Cerrar sesión en todos los dispositivos
+              </Button>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
