@@ -17,12 +17,16 @@
  *   steps back; near the end everything returns (`--stage-focus` 0 → 1 → 0,
  *   turned into motion by chapters.css).
  *
+ * While the scenes play, a fast scroll cannot skip the chapters: it stops at
+ * each one (./scroll-gate.ts).
+ *
  * Without the scenes mark (public/theme.js: no IntersectionObserver or
  * reduced motion) the timeline jumps to its end, so every scene reads at
  * rest, and nothing pins.
  */
 import { createTimeline, onScroll, stagger, utils } from "animejs";
 import { focusFit, SCENE_LENGTH } from "../../lib/motion/chapters";
+import { initScrollGate } from "./scroll-gate";
 
 export { SCENE_LENGTH };
 
@@ -160,6 +164,8 @@ export function scrubbedScene(
   build: (timeline: SceneTimeline) => void,
 ): SceneTimeline {
   const on = scenesOn();
+  // A fast scroll stops at every chapter instead of skipping them.
+  if (on) initScrollGate();
   const track = root.closest<HTMLElement>("[data-track]");
   const stage = track?.querySelector<HTMLElement>("[data-stage]") ?? null;
   const pinned = stage ? pinnedBounds(stage) : null;

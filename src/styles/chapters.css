@@ -31,6 +31,28 @@
     height: var(--ch-pin);
   }
 
+  /*
+   * Scroll stops on touch screens: each chapter is a stop a fling cannot
+   * fly past (`scroll-snap-stop: always`), so a fast swipe ends at the
+   * start of the next chapter, pinned. Inside a chapter the scroll stays
+   * free (proximity), so its scene scrubs. Mouse and trackpad get the same
+   * stops from src/scripts/chapters/scroll-gate.ts (a wheel spin is many
+   * small scrolls, which snapping does not hold). The negative margin
+   * cancels the root's scroll-padding extra, so the track lands exactly
+   * where its stage pins (under the header).
+   */
+  @media (hover: none) and (pointer: coarse) {
+    :root[data-scenes] {
+      scroll-snap-type: y proximity;
+    }
+
+    :root[data-scenes] .ch-track {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      scroll-margin-top: -16px;
+    }
+  }
+
   .ch-stage {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

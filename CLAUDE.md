@@ -22,6 +22,7 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 ## Home chapters
 
 - The home (below the hero) is a sequence of pinned chapters built with `src/components/home/chapters/Chapter.astro` (head, scene, body) and animated with anime.js, the same pattern as the deividportfolio site: each scene builds one timeline authored against `SCENE_LENGTH` (10000) through `scrubbedScene()` in `src/scripts/chapters/scrub.ts`, which scrubs it with the scroll, reveals the copy and adds the desktop focus.
+- A fast scroll cannot skip the chapters: on mouse and trackpad, Lenis plus the gates in `src/scripts/chapters/scroll-gate.ts` (logic in `src/lib/motion/scroll-gate.ts`) stop each wheel burst at the next chapter's start; on touch, CSS `scroll-snap-stop` does the same (`chapters.css`). Keyboard, scrollbar and anchors stay native.
 - Scenes are decorative (`aria-hidden`) unless they hold content (stage captions, the team photo); the chapter body carries the real text and links. Without the `data-scenes` mark (no JS, reduced motion) every scene must read complete at rest.
 
 ## Code rules
