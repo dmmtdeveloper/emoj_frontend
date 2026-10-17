@@ -1,0 +1,244 @@
+---
+/**
+ * Chapter 07 · Por qué EMOJ. A road's cross-section ("corte tipo"): four
+ * layers, from the subgrade up to the asphalt, each one carrying one of
+ * the reasons to work with EMOJ. While the chapter is pinned the aggregate
+ * falls and settles layer by layer from the bottom up, each layer naming
+ * its reason as it is laid; then a roller passes over the top and the
+ * thickness of each layer is dimensioned.
+ *
+ * The section is decorative; the list under the title holds the reasons.
+ */
+import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
+import { noise } from "../../../lib/motion/chapters";
+import Chapter from "./Chapter.astro";
+
+/** Top to bottom, as the section is drawn. */
+const REASONS = [
+  {
+    icon: CalendarCheck,
+    layer: "Carpeta asfáltica",
+    thickness: "e = 5 cm",
+    title: "Cumplimiento de plazos",
+    text: "Acordamos contigo un calendario de entregas desde el inicio y te mantenemos al tanto del avance en cada etapa.",
+  },
+  {
+    icon: BadgeCheck,
+    layer: "Base granular",
+    thickness: "e = 20 cm",
+    title: "Calidad garantizada",
+    text: "Diseñamos según la normativa chilena vigente y revisamos cada memoria y cada plano antes de entregártelo.",
+  },
+  {
+    icon: Users,
+    layer: "Subbase",
+    thickness: "e = 25 cm",
+    title: "Trabajo colaborativo",
+    text: "Ingenieros civiles y dibujantes proyectistas trabajan en un mismo equipo, coordinando las especialidades desde el primer día.",
+  },
+  {
+    icon: Handshake,
+    layer: "Subrasante",
+    thickness: "Terreno natural",
+    title: "Confianza y respaldo",
+    text: "Más de 30 años trabajando con empresas como ESVAL, Aguas del Valle y SAAM respaldan cada proyecto que firmamos.",
+  },
+] as const;
+
+/** Stones per layer, scattered the same way on every visit. */
+const STONES = 14;
+const stones = (layer: number) =>
+  Array.from({ length: STONES }, (_, i) => {
+    const seed = layer * 100 + i;
+    return {
+      x: Math.round((i / STONES) * 96 + noise(seed) * 4),
+      y: Math.round(18 + noise(seed + 7) * 50),
+      size: 6 + Math.round(noise(seed + 13) * 6),
+      cls: `lay-stone--${Math.floor(noise(seed + 21) * 3)}`,
+    };
+  });
+const pos = (n: number) => `${n}%`;
+---
+
+<Chapter
+  id="por-que-emoj"
+  number="07"
+  label="Por qué EMOJ"
+  navSection="/nosotros"
+  tone="sunken"
+  class="ch-reasons"
+>
+  <Fragment slot="title">
+    Ingeniería precisa, trato <em>cercano</em>.
+  </Fragment>
+
+  <div class="lay" slot="scene" aria-hidden="true" data-scene-layers>
+    <p class="lay-caption">Corte tipo · Calzada</p>
+    <div class="lay-section">
+      <span class="lay-roller" data-roller></span>
+      {REASONS.map((reason, i) => (
+        <div class:list={["lay-layer", `lay-layer--${i}`]} data-layer>
+          <span class="lay-fill" data-fill />
+          {stones(i).map((stone) => (
+            <span
+              class:list={["lay-stone", stone.cls]}
+              data-stone
+              data-x={pos(stone.x)}
+              data-y={pos(stone.y)}
+              data-size={stone.size}
+            />
+          ))}
+          <span class="lay-name" data-name>
+            <reason.icon size={18} stroke-width={1.75} />
+            {reason.title}
+          </span>
+          <span class="lay-dim" data-dim>
+            <b>{reason.layer}</b>
+            {reason.thickness}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <p class="ch-text">
+    <strong>Acercar la ingeniería</strong> es explicarte cada decisión técnica
+    con claridad, cumplir lo que acordamos y estar disponibles cuando nos
+    necesitas.
+  </p>
+  <ul class="ch-list">
+    {REASONS.map((reason, i) => (
+      <li class="ch-row">
+        <div class="ch-row--static">
+          <span class="ch-row__num">{String(i + 1).padStart(2, "0")}</span>
+          <span class="ch-row__title">{reason.title}</span>
+          <span />
+          <span class="ch-row__meta">{reason.text}</span>
+        </div>
+      </li>
+    ))}
+  </ul>
+</Chapter>
+
+<script>
+  import { stagger, utils } from "animejs";
+  import { noise } from "../../../lib/motion/chapters";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  const L = SCENE_LENGTH;
+  const LAY_FROM = L * 0.14;
+  const PER_LAYER = L * 0.12;
+  const ROLL_FROM = L * 0.66;
+  const ROLL = L * 0.14;
+
+  eachScene("[data-scene-layers]", (root, $, $$) => {
+    const layers = $$("[data-layer]");
+    const roller = $("[data-roller]");
+    const allStones = $$("[data-stone]");
+
+    // Place the stones in their layer (CSSOM: no inline styles in markup).
+    allStones.forEach((stone) => {
+      stone.style.setProperty("left", stone.dataset["x"] ?? "0%");
+      stone.style.setProperty("top", stone.dataset["y"] ?? "0%");
+      const size = `${stone.dataset["size"] ?? 8}px`;
+      stone.style.setProperty("width", size);
+      stone.style.setProperty("height", size);
+    });
+
+    const fall = (target: unknown) => {
+      const i = allStones.indexOf(target as HTMLElement);
+      return -160 - noise(i + 3) * 220;
+    };
+    const turn = (target: unknown) =>
+      (noise(allStones.indexOf(target as HTMLElement) + 9) - 0.5) * 220;
+
+    if (scenesOn()) {
+      layers.forEach((layer) => {
+        utils.set(layer.querySelectorAll("[data-stone]"), {
+          translateY: fall,
+          rotate: turn,
+          opacity: 0,
+        });
+        utils.set(
+          layer.querySelectorAll("[data-fill], [data-name], [data-dim]"),
+          {
+            opacity: 0,
+          },
+        );
+      });
+      utils.set(roller, { opacity: 0 });
+    }
+
+    scrubbedScene(root, (tl) => {
+      // Laid from the subgrade up: the bottom layer first.
+      [...layers].reverse().forEach((layer, k) => {
+        const at = LAY_FROM + k * PER_LAYER;
+        tl.add(
+          layer.querySelectorAll("[data-stone]"),
+          {
+            translateY: [fall, 0],
+            rotate: [turn, 0],
+            opacity: [
+              { to: 1, duration: PER_LAYER * 0.15 },
+              { to: 1, duration: PER_LAYER * 0.85 },
+            ],
+            duration: PER_LAYER,
+            delay: stagger(PER_LAYER * 0.035),
+            ease: "outBounce",
+          },
+          at,
+        )
+          .add(
+            layer.querySelector("[data-fill]") ?? [],
+            { opacity: [0, 1], duration: PER_LAYER * 0.6 },
+            at + PER_LAYER * 0.5,
+          )
+          .add(
+            layer.querySelector("[data-name]") ?? [],
+            {
+              opacity: [0, 1],
+              translateX: [-10, 0],
+              duration: PER_LAYER * 0.4,
+            },
+            at + PER_LAYER * 0.9,
+          );
+      });
+      // The roller passes over the top; then each thickness is dimensioned.
+      tl.add(
+        roller,
+        {
+          opacity: [
+            { to: 1, duration: ROLL * 0.1 },
+            { to: 1, duration: ROLL * 0.8 },
+            { to: 0, duration: ROLL * 0.1 },
+          ],
+          left: ["-10%", "100%"],
+          rotate: [0, 720],
+          duration: ROLL,
+          ease: "inOutSine",
+        },
+        ROLL_FROM,
+      )
+        .add(
+          layers[0]?.querySelectorAll("[data-stone]") ?? [],
+          { scale: [1, 0.85], duration: ROLL, ease: "linear" },
+          ROLL_FROM,
+        )
+        .add(
+          layers.map((layer) => layer.querySelector("[data-dim]")),
+          {
+            opacity: [0, 1],
+            translateX: [12, 0],
+            duration: L * 0.05,
+            delay: stagger(L * 0.025),
+          },
+          ROLL_FROM + ROLL,
+        );
+    });
+  });
+</script>

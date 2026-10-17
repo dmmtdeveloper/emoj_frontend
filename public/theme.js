@@ -10,7 +10,7 @@ try {
 }
 document.documentElement.dataset.theme = theme;
 
-// The home's scroll scenes (src/scripts/scenes.ts) start pinned and at
+// The home's chapters (src/scripts/chapters/scrub.ts) start pinned and at
 // their first frame. Marking the page here, before paint, keeps a reload
 // from flashing their finished state first. Without JavaScript or with
 // reduced motion the mark is never set and every scene shows at rest.

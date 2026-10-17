@@ -19,6 +19,11 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Tagline: "Acercamos la ingeniería" (the one in the official `vertical-tagline-*` files).
 - Logos: the official files are in `design/brand/oficial/` (see its README). Build marks from their geometry, never redraw them; fine stroke (`recorte`) for large sizes, `bold` for small ones. The `vertical-tagline-*` files carry the tagline and may be used. Brand pattern tile: `public/brand/patron.svg` (`.brand-pattern`).
 
+## Home chapters
+
+- The home (below the hero) is a sequence of pinned chapters built with `src/components/home/chapters/Chapter.astro` (head, scene, body) and animated with anime.js, the same pattern as the deividportfolio site: each scene builds one timeline authored against `SCENE_LENGTH` (10000) through `scrubbedScene()` in `src/scripts/chapters/scrub.ts`, which scrubs it with the scroll, reveals the copy and adds the desktop focus.
+- Scenes are decorative (`aria-hidden`) unless they hold content (stage captions, the team photo); the chapter body carries the real text and links. Without the `data-scenes` mark (no JS, reduced motion) every scene must read complete at rest.
+
 ## Code rules
 
 - UI copy in Spanish (neutral, "tú"); code, comments, identifiers and docs in English.

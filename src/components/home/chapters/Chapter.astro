@@ -1,0 +1,61 @@
+---
+/**
+ * A home chapter: a track ([data-track]) with a sticky stage ([data-stage])
+ * holding the head (label and title), the live scene beside it and the
+ * body (text, lists and links) under the head. While the scenes play
+ * (`data-scenes`, public/theme.js) the track grows a tail (`--ch-pin`) so
+ * the stage stays pinned and the scene's timeline follows the scroll
+ * (src/scripts/chapters/scrub.ts). Without it the chapter is a plain
+ * section with every scene at rest.
+ *
+ * Slots: `title` (the heading's content), `scene` (decorative visual,
+ * hidden from assistive technology by the scene itself) and the default
+ * slot (the body).
+ */
+interface Props {
+  /** Heading id, for `aria-labelledby`. */
+  id: string;
+  /** Chapter number in the label ("02"). */
+  number: string;
+  label: string;
+  /** Header link highlighted while the chapter is on screen. */
+  navSection: string;
+  /** Background: the page surface or the sunken one. */
+  tone?: "surface" | "sunken";
+  /** Extra class for the track (per-chapter pin length and scene sizes). */
+  class?: string;
+}
+
+const {
+  id,
+  number,
+  label,
+  navSection,
+  tone = "surface",
+  class: extra,
+} = Astro.props;
+---
+
+<section
+  class:list={["ch-track", `ch-track--${tone}`, extra]}
+  aria-labelledby={id}
+  data-track
+  data-nav-section={navSection}
+>
+  <div class="ch-stage container-site" data-stage>
+    <div class="ch-head">
+      <p class="ch-label">
+        <span>{number}</span> {label}
+      </p>
+      <h2 class="ch-title" id={id}>
+        <slot name="title" />
+      </h2>
+    </div>
+    <div class="ch-scene">
+      <slot name="scene" />
+    </div>
+    <div class="ch-body">
+      <slot />
+    </div>
+  </div>
+</section>

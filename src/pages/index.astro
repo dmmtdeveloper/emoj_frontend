@@ -2,13 +2,13 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ClientsStrip from "../components/home/ClientsStrip.astro";
 import Hero from "../components/home/Hero.astro";
-import ClosingScene from "../components/home/scenes/ClosingScene.astro";
-import ObraScene from "../components/home/scenes/ObraScene.astro";
-import PlanoScene from "../components/home/scenes/PlanoScene.astro";
-import ReelScene from "../components/home/scenes/ReelScene.astro";
-import ServicesScene from "../components/home/scenes/ServicesScene.astro";
-import StackScene from "../components/home/scenes/StackScene.astro";
-import YearsScene from "../components/home/scenes/YearsScene.astro";
+import ContactChapter from "../components/home/chapters/ContactChapter.astro";
+import WorkChapter from "../components/home/chapters/WorkChapter.astro";
+import PlanChapter from "../components/home/chapters/PlanChapter.astro";
+import ProjectsChapter from "../components/home/chapters/ProjectsChapter.astro";
+import ServicesChapter from "../components/home/chapters/ServicesChapter.astro";
+import ReasonsChapter from "../components/home/chapters/ReasonsChapter.astro";
+import YearsChapter from "../components/home/chapters/YearsChapter.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
 import { contentSource } from "../lib/content";
@@ -31,7 +31,7 @@ const serviceTitles = await getServiceTitles();
 {/*
   The home: the hero (the photo slideshow), then seven scroll chapters
   ("del primer trazo a la obra"): each chapter pins and its scene plays
-  with the scroll (src/scripts/scenes.ts). `data-nav-section` on each
+  with the scroll (src/scripts/chapters/scrub.ts). `data-nav-section` on each
   chapter lets the header highlight its link (src/scripts/nav-spy.ts).
 */}
 <BaseLayout
@@ -41,17 +41,14 @@ const serviceTitles = await getServiceTitles();
   headerOverlay
 >
   <Hero hero={hero} />
-  <ServicesScene />
-  <ObraScene />
-  <PlanoScene />
+  <ServicesChapter />
+  <WorkChapter />
+  <PlanChapter />
   {featured.length > 0 && (
-    <ReelScene projects={featured} serviceTitles={serviceTitles} />
+    <ProjectsChapter projects={featured} serviceTitles={serviceTitles} />
   )}
-  <YearsScene />
+  <YearsChapter />
   <ClientsStrip />
-  <StackScene />
-  <ClosingScene />
+  <ReasonsChapter />
+  <ContactChapter />
 </BaseLayout>
-<script>
-  import "../scripts/scenes";
-</script>

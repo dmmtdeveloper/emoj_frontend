@@ -1,0 +1,232 @@
+---
+/**
+ * Chapter 05 · Proyectos. A viewer with crop marks, like a photo laid on a
+ * drawing sheet: the covers of the published projects (featured first)
+ * pass one by one while the chapter is pinned, each one wiping in from the
+ * left behind a pen stroke, with its service, place and size under it and
+ * a strip of thumbnails marking which one is showing.
+ *
+ * The viewer is decorative; the list under the title holds the links.
+ */
+import { ArrowRight, ArrowUpRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import type { ProjectSummary } from "../../../lib/api/client";
+import { fitWidth } from "../../../lib/content/format";
+import { projectMagnitude } from "../../../lib/content/magnitude";
+import { mediaPath } from "../../../lib/content/media";
+import Chapter from "./Chapter.astro";
+
+interface Props {
+  projects: ProjectSummary[];
+  serviceTitles: Record<string, string>;
+}
+
+const { projects, serviceTitles } = Astro.props;
+/** At most this many projects pass in the viewer. */
+const SHOWN = 5;
+const shown = projects.filter((project) => project.cover).slice(0, SHOWN);
+const pad = (n: number) => String(n).padStart(2, "0");
+const total = pad(shown.length);
+const place = (project: ProjectSummary) =>
+  [project.location || project.region, project.year]
+    .filter(Boolean)
+    .join(" · ");
+const service = (project: ProjectSummary) => {
+  const slug = project.services[0];
+  return slug ? (serviceTitles[slug] ?? slug) : null;
+};
+---
+
+<Chapter
+  id="proyectos-destacados"
+  number="05"
+  label="Proyectos"
+  navSection="/proyectos"
+  tone="sunken"
+  class="ch-projects"
+>
+  <Fragment slot="title">
+    Ya son <em>obra</em>.
+  </Fragment>
+
+  {shown.length > 0 && (
+    <div class="prj" slot="scene" aria-hidden="true" data-scene-projects>
+      <div class="prj-frame">
+        <span class="prj-mark prj-mark--tl" />
+        <span class="prj-mark prj-mark--tr" />
+        <span class="prj-mark prj-mark--bl" />
+        <span class="prj-mark prj-mark--br" />
+        <div class="prj-view">
+          {shown.map((project, i) =>
+            project.cover ? (
+              <div class="prj-slide" data-slide>
+                <Image
+                  src={mediaPath("proyectos", project.slug, project.cover)}
+                  alt=""
+                  {...fitWidth(project.cover, 1200)}
+                  widths={[480, 800, 1200]}
+                  sizes="(min-width: 1024px) 40vw, 92vw"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  class="prj-slide__img"
+                />
+                <span class="prj-slide__pen" data-pen />
+              </div>
+            ) : null,
+          )}
+        </div>
+      </div>
+
+      <div class="prj-captions">
+        {shown.map((project, i) => {
+          const magnitude = projectMagnitude(project.magnitude);
+          return (
+            <div class="prj-caption" data-caption>
+              <p class="prj-caption__meta">
+                <span>
+                  {pad(i + 1)} / {total}
+                </span>
+                {service(project)}
+              </p>
+              <p class="prj-caption__title">{project.title}</p>
+              <p class="prj-caption__facts">
+                {place(project)}
+                {magnitude && (
+                  <span>
+                    {magnitude.value}
+                    {magnitude.unit && ` ${magnitude.unit}`}
+                  </span>
+                )}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div class="prj-strip">
+        {shown.map((project) =>
+          project.cover ? (
+            <Image
+              src={mediaPath("proyectos", project.slug, project.cover)}
+              alt=""
+              {...fitWidth(project.cover, 240)}
+              widths={[120, 240]}
+              sizes="96px"
+              loading="lazy"
+              class="prj-strip__thumb"
+            />
+          ) : null,
+        )}
+        <span class="prj-strip__marker" data-marker />
+      </div>
+    </div>
+  )}
+
+  <p class="ch-text">
+    <strong>Obras sanitarias, viales y estructurales</strong> que diseñamos y
+    que hoy están construidas en las regiones de Valparaíso y Coquimbo.
+  </p>
+  <ul class="ch-list">
+    {shown.map((project) => (
+      <li class="ch-row">
+        <a href={`/proyectos/${project.slug}`} class="ch-row__link">
+          <span class="ch-row__num">{project.year ?? "—"}</span>
+          <span class="ch-row__title">{project.title}</span>
+          <ArrowUpRight size={16} stroke-width={1.75} aria-hidden="true" />
+          {service(project) && (
+            <span class="ch-row__meta">{service(project)}</span>
+          )}
+        </a>
+      </li>
+    ))}
+  </ul>
+  <a href="/proyectos" class="ch-more">
+    Ver todos los proyectos
+    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+  </a>
+</Chapter>
+
+<script>
+  import { utils } from "animejs";
+  import { stageTimes } from "../../../lib/motion/chapters";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  eachScene("[data-scene-projects]", (root, $, $$) => {
+    const slides = $$("[data-slide]");
+    const pens = $$("[data-pen]");
+    const captions = $$("[data-caption]");
+    const marker = $("[data-marker]");
+    const count = slides.length;
+    if (count === 0) return;
+    marker.style.setProperty("width", `${100 / count}%`);
+    const L = SCENE_LENGTH;
+    // The first project is showing at rest; the others come in turn.
+    const starts = stageTimes(Math.max(1, count - 1), 0.16, 0.86);
+    const span = (L * 0.7) / Math.max(1, count - 1);
+
+    if (scenesOn()) {
+      slides.forEach((slide, i) => {
+        if (i > 0) utils.set(slide, { clipPath: "inset(0% 100% 0% 0%)" });
+      });
+      utils.set(captions.slice(1), { opacity: 0, translateY: 10 });
+    }
+
+    scrubbedScene(root, (tl) => {
+      for (let i = 1; i < count; i++) {
+        const at = starts[i - 1] ?? 0;
+        const wipe = span * 0.55;
+        tl.add(
+          slides[i] ?? [],
+          {
+            clipPath: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"],
+            duration: wipe,
+            ease: "inOutCubic",
+          },
+          at,
+        )
+          .add(
+            slides[i]?.querySelector("img") ?? [],
+            { scale: [1.12, 1], duration: span * 0.8, ease: "outCubic" },
+            at,
+          )
+          .add(
+            pens[i] ?? [],
+            {
+              left: ["0%", "100%"],
+              opacity: [
+                { to: 1, duration: wipe * 0.1 },
+                { to: 1, duration: wipe * 0.8 },
+                { to: 0, duration: wipe * 0.1 },
+              ],
+              duration: wipe,
+              ease: "inOutCubic",
+            },
+            at,
+          )
+          .add(
+            captions[i - 1] ?? [],
+            { opacity: [1, 0], translateY: [0, -8], duration: span * 0.2 },
+            at,
+          )
+          .add(
+            captions[i] ?? [],
+            { opacity: [0, 1], translateY: [10, 0], duration: span * 0.25 },
+            at + span * 0.25,
+          )
+          .add(
+            marker,
+            {
+              translateX: [`${(i - 1) * 100}%`, `${i * 100}%`],
+              duration: wipe,
+              ease: "inOutCubic",
+            },
+            at,
+          );
+      }
+    });
+  });
+</script>

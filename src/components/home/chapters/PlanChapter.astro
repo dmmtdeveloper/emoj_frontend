@@ -1,0 +1,564 @@
+---
+/**
+ * Chapter 04 · Ingeniería. A CAD window in EMOJ plum: model-space grid,
+ * crosshair, command line and status bar around a site plan (cad-plan.ts).
+ * While the chapter is pinned the plan is drawn layer by layer as each
+ * command is typed (topography, road, sewer, buildings, dimensions and the
+ * EMOJ title block); then a zoom window is dragged over the pump station,
+ * the photo of a built one appears inside it and the zoom takes it to the
+ * whole window: from the plan to the built work.
+ *
+ * The CAD window is decorative; the chapter text says what it shows.
+ */
+import { ArrowRight } from "@lucide/astro";
+import { Picture } from "astro:assets";
+import pumping from "../../../assets/photos/estacion-bombeo-tuberias.jpg";
+import { PLAN } from "./cad-plan";
+import { ISOTYPE } from "./isotype";
+import Chapter from "./Chapter.astro";
+
+const year = new Date().getFullYear();
+
+/**
+ * The plan's layers, drawn in this order, each with the command typed for
+ * it (`weight`: its share of the drawing time).
+ */
+const STEPS = [
+  {
+    layer: "Topografía",
+    command: "SPLINE",
+    detail: "Curvas de nivel c/ 1 m",
+    weight: 1,
+  },
+  {
+    layer: "Vialidad",
+    command: "POLILINEA",
+    detail: "Eje de calzada · DESFASE 3.50",
+    weight: 1.3,
+  },
+  {
+    layer: "Sanitario",
+    command: "CIRCULO",
+    detail: "Cámaras C-1 a C-6 · Colector Ø400",
+    weight: 1.2,
+  },
+  {
+    layer: "Edificación",
+    command: "RECTANG",
+    detail: "Planta elevadora PE-1 · Lotes",
+    weight: 1,
+  },
+  {
+    layer: "Cotas",
+    command: "ACOTAR",
+    detail: "Alineada 45.00 · Ancho 7.00",
+    weight: 0.8,
+  },
+  {
+    layer: "Rótulo",
+    command: "INSERTAR",
+    detail: "Rótulo EMOJ · Lámina 01",
+    weight: 0.9,
+  },
+] as const;
+
+const station = PLAN.station;
+const win = PLAN.window;
+const pct = (value: number, of: number) =>
+  `${Math.round((value / of) * 10000) / 100}%`;
+/** Where the window sits in the viewport (insets, in %), for the photo. */
+const windowInset = [
+  pct(win.y, 700),
+  pct(1000 - win.x - win.w, 1000),
+  pct(700 - win.y - win.h, 700),
+  pct(win.x, 1000),
+].join(" ");
+---
+
+<Chapter
+  id="ingenieria"
+  number="04"
+  label="Ingeniería"
+  navSection="/proyectos"
+  class="ch-plan"
+>
+  <Fragment slot="title">
+    Cada obra empieza en <em>un plano</em>.
+  </Fragment>
+
+  <div
+    class="cad"
+    slot="scene"
+    aria-hidden="true"
+    data-scene-plan
+    data-window={windowInset}
+  >
+    <div class="cad-bar">
+      <span class="cad-bar__dots">
+        <i></i>
+        <i></i>
+        <i></i>
+      </span>
+      <span class="cad-bar__file">PE-1_planta-general.dwg</span>
+      <span class="cad-bar__scale">Esc. 1:500</span>
+    </div>
+    <div class="cad-view">
+      <div class="cad-photo" data-photo>
+        <Picture
+          src={pumping}
+          alt=""
+          formats={["avif", "webp"]}
+          widths={[480, 800, 1200, 1600]}
+          sizes="(min-width: 1024px) 50vw, 92vw"
+          class="cad-photo__img"
+          pictureAttributes={{ class: "contents" }}
+        />
+      </div>
+      <svg
+        class="cad-plan"
+        viewBox="0 0 1000 700"
+        fill="none"
+        focusable="false"
+      >
+        <g class="cad-world" data-world>
+          <g
+            class="cad-step cad-topo"
+            data-cad-step
+            data-layer={STEPS[0].layer}
+            data-command={`${STEPS[0].command}  ${STEPS[0].detail}`}
+            data-weight={STEPS[0].weight}
+          >
+            {PLAN.topo.map((c) => (
+              <>
+                <path class="cad-line" d={c.d} />
+                <text
+                  class="cad-label"
+                  x={c.label.x}
+                  y={c.label.y}
+                  transform={`rotate(${c.label.angle} ${c.label.x} ${c.label.y})`}
+                >
+                  {c.label.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-road"
+            data-cad-step
+            data-layer={STEPS[1].layer}
+            data-command={`${STEPS[1].command}  ${STEPS[1].detail}`}
+            data-weight={STEPS[1].weight}
+          >
+            {PLAN.curbs.map((d) => (
+              <path class="cad-line" d={d} />
+            ))}
+            <path class="cad-line cad-axis" d={PLAN.axis} />
+            {PLAN.side.curbs.map((d) => (
+              <path class="cad-line" d={d} />
+            ))}
+            <path class="cad-line cad-axis" d={PLAN.side.axis} />
+            {PLAN.props.map((d) => (
+              <path class="cad-line cad-prop" d={d} />
+            ))}
+            {PLAN.stations.map((st) => (
+              <>
+                <path class="cad-line" d={st.d} />
+                <text
+                  class="cad-label"
+                  x={st.label.x}
+                  y={st.label.y}
+                  transform={`rotate(${st.label.angle} ${st.label.x} ${st.label.y})`}
+                >
+                  {st.label.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-sewer"
+            data-cad-step
+            data-layer={STEPS[2].layer}
+            data-command={`${STEPS[2].command}  ${STEPS[2].detail}`}
+            data-weight={STEPS[2].weight}
+          >
+            <path class="cad-line" d={PLAN.collector} />
+            <text
+              class="cad-label"
+              x={PLAN.pipe.x}
+              y={PLAN.pipe.y}
+              transform={`rotate(${PLAN.pipe.angle} ${PLAN.pipe.x} ${PLAN.pipe.y})`}
+            >
+              {PLAN.pipe.text}
+            </text>
+            {PLAN.manholes.map((m) => (
+              <>
+                <circle class="cad-line" cx={m.x} cy={m.y} r="6" />
+                <text class="cad-label" x={m.label.x} y={m.label.y}>
+                  {m.label.text}
+                </text>
+              </>
+            ))}
+            <path class="cad-line" d={PLAN.forceMain} />
+          </g>
+
+          <g
+            class="cad-step cad-build"
+            data-cad-step
+            data-layer={STEPS[3].layer}
+            data-command={`${STEPS[3].command}  ${STEPS[3].detail}`}
+            data-weight={STEPS[3].weight}
+          >
+            {PLAN.lots.map((d) => (
+              <path class="cad-line cad-lot" d={d} />
+            ))}
+            {PLAN.houses.map((d) => (
+              <path class="cad-line cad-lot" d={d} />
+            ))}
+            <g
+              transform={`translate(${station.x} ${station.y}) rotate(${station.angle})`}
+            >
+              <rect
+                class="cad-line"
+                x={-station.w / 2}
+                y={-station.h / 2}
+                width={station.w}
+                height={station.h}
+              />
+              <circle class="cad-line" cx="-30" cy="0" r="16" />
+              <path class="cad-line" d="M-6 -35V35M-6 0H60" />
+              <path class="cad-line cad-prop" d={station.fence} />
+              <text class="cad-label" x="-78" y="68">
+                {station.text}
+              </text>
+            </g>
+          </g>
+
+          <g
+            class="cad-step cad-dims"
+            data-cad-step
+            data-layer={STEPS[4].layer}
+            data-command={`${STEPS[4].command}  ${STEPS[4].detail}`}
+            data-weight={STEPS[4].weight}
+          >
+            {PLAN.dims.map((dim) => (
+              <>
+                {dim.lines.map((d) => (
+                  <path class="cad-line" d={d} />
+                ))}
+                <text
+                  class="cad-label cad-label--mid"
+                  x={dim.text.x}
+                  y={dim.text.y}
+                  transform={`rotate(${dim.text.angle} ${dim.text.x} ${dim.text.y})`}
+                >
+                  {dim.text.text}
+                </text>
+              </>
+            ))}
+          </g>
+
+          <g
+            class="cad-step cad-block"
+            data-cad-step
+            data-layer={STEPS[5].layer}
+            data-command={`${STEPS[5].command}  ${STEPS[5].detail}`}
+            data-weight={STEPS[5].weight}
+          >
+            {/* North arrow. */}
+            <circle class="cad-line" cx="948" cy="62" r="20" />
+            <path class="cad-line" d="M948 34L958 72L948 64L938 72Z" />
+            <text class="cad-label cad-label--mid" x="948" y="28">
+              N
+            </text>
+            {/* Title block, with the isotype. */}
+            <rect class="cad-sheet" x="702" y="606" width="290" height="86" />
+            <path class="cad-line" d="M702 606H992V692H702Z" />
+            <path class="cad-line" d="M782 606V692M782 636H992M782 664H992" />
+            <svg
+              x="708"
+              y="626"
+              width="68"
+              height="40"
+              viewBox={ISOTYPE.viewBox}
+              class="cad-isotype"
+            >
+              <path class="cad-line" d={ISOTYPE.stroke} />
+            </svg>
+            <text class="cad-label cad-label--strong" x="792" y="627">
+              EMOJ Consultora
+            </text>
+            <text class="cad-label" x="792" y="655">
+              Planta general · Alcantarillado
+            </text>
+            <text class="cad-label" x="792" y="683">
+              Esc. 1:500 · Lám. 01 · {year}
+            </text>
+          </g>
+
+          <rect
+            class="cad-window"
+            x={win.x}
+            y={win.y}
+            width={win.w}
+            height={win.h}
+            data-window-rect
+          />
+        </g>
+        <g class="cad-cursor" data-cursor>
+          <path d="M-46 0H-7M7 0H46M0 -46V-7M0 7V46" />
+          <rect x="-6" y="-6" width="12" height="12" />
+        </g>
+      </svg>
+      <p class="cad-caption" data-caption>
+        Planta elevadora · ya construida
+      </p>
+    </div>
+    <div class="cad-cmd">
+      <span class="cad-cmd__prompt">Comando:</span>
+      <span class="cad-cmd__typed" data-typed></span>
+      <span class="cad-cmd__caret"></span>
+    </div>
+    <div class="cad-status">
+      <span>
+        Capa: <b data-layer-name>0</b>
+      </span>
+      <span class="cad-status__aids">Rejilla · Orto · Refent</span>
+    </div>
+  </div>
+
+  <p class="ch-text">
+    <strong>Topografía, vialidad, redes sanitarias y estructuras</strong> en un
+    mismo proyecto, coordinadas desde la primera línea hasta la obra construida.
+  </p>
+  <p class="ch-tags">{STEPS.map((step) => step.layer).join(" · ")}</p>
+  <a href="/proyectos" class="ch-more">
+    Ver proyectos
+    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+  </a>
+</Chapter>
+
+<script>
+  import { stagger, svg, utils } from "animejs";
+  import { typedText } from "../../../lib/motion/chapters";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  const L = SCENE_LENGTH;
+  const DRAW_FROM = L * 0.08;
+  const DRAW_TO = L * 0.6;
+  const WINDOW_FROM = L * 0.62;
+  const DRAG_FROM = L * 0.65;
+  const ZOOM_FROM = L * 0.73;
+  const ZOOM_TO = L * 0.88;
+  /** Share of a step spent typing its command; the rest draws. */
+  const TYPING = 0.25;
+  const ZOOM_COMMAND = "ZOOM  Ventana";
+
+  /** A path for the cursor to follow, without turning with it. */
+  const along = (path: SVGGeometryElement) => {
+    const { translateX, translateY } = svg.createMotionPath(
+      path as SVGPathElement,
+    );
+    return { translateX, translateY };
+  };
+
+  eachScene("[data-scene-plan]", (root, $, $$) => {
+    const world = $<SVGGElement>("[data-world]");
+    const cursor = $<SVGGElement>("[data-cursor]");
+    const windowRect = $<SVGRectElement>("[data-window-rect]");
+    const photo = $("[data-photo]");
+    const caption = $("[data-caption]");
+    const typed = $("[data-typed]");
+    const layer = $("[data-layer-name]");
+    const inset = root.dataset["window"] ?? "0 0 0 0";
+
+    const groups = $$<SVGGElement>("[data-cad-step]");
+    const weights = groups.map((g) => Number(g.dataset["weight"] ?? 1));
+    const total = weights.reduce((sum, w) => sum + w, 0);
+    let cursorAt = DRAW_FROM;
+    const steps = groups.map((g, i) => {
+      const span = ((DRAW_TO - DRAW_FROM) * (weights[i] ?? 1)) / total;
+      const start = cursorAt;
+      cursorAt += span;
+      const lines = [...g.querySelectorAll<SVGGeometryElement>(".cad-line")];
+      return {
+        start,
+        span,
+        lines,
+        drawables: svg.createDrawable(lines),
+        labels: [...g.querySelectorAll(".cad-label, .cad-sheet")],
+        lead: lines[0],
+        layer: g.dataset["layer"] ?? "",
+        command: g.dataset["command"] ?? "",
+      };
+    });
+
+    // The window and the zoom that takes it to the whole viewport.
+    const win = {
+      x: windowRect.x.baseVal.value,
+      y: windowRect.y.baseVal.value,
+      w: windowRect.width.baseVal.value,
+      h: windowRect.height.baseVal.value,
+    };
+    const centre = { x: win.x + win.w / 2, y: win.y + win.h / 2 };
+    const zoom = Math.min(1000 / win.w, 700 / win.h);
+    world.style.setProperty("transform-origin", `${centre.x}px ${centre.y}px`);
+
+    if (scenesOn()) {
+      steps.forEach((step) => {
+        utils.set(step.drawables, { draw: "0 0" });
+        utils.set(step.labels, { opacity: 0 });
+      });
+      utils.set(windowRect, { scale: 0, opacity: 0 });
+      utils.set(photo, { opacity: 0, clipPath: `inset(${inset})` });
+      utils.set(caption, { opacity: 0 });
+      utils.set(cursor, { translateX: 620, translateY: 360, opacity: 1 });
+    }
+
+    // The command line and the status bar follow the timeline's time.
+    const write = (time: number) => {
+      let text = "";
+      let name = "0";
+      if (time >= WINDOW_FROM && time < ZOOM_TO) {
+        text = typedText(
+          ZOOM_COMMAND,
+          (time - WINDOW_FROM) / (DRAG_FROM - WINDOW_FROM),
+        );
+      } else if (time < DRAW_TO) {
+        const step = steps.find((s) => time < s.start + s.span) ?? steps[0];
+        if (step && time >= step.start) {
+          text = typedText(
+            step.command,
+            (time - step.start) / (step.span * TYPING),
+          );
+          name = step.layer;
+        }
+      }
+      if (typed.textContent !== text) typed.textContent = text;
+      if (layer.textContent !== name) layer.textContent = name;
+    };
+
+    const timeline = scrubbedScene(root, (tl) => {
+      steps.forEach((step) => {
+        const drawFrom = step.start + step.span * TYPING;
+        const drawSpan = step.span * (1 - TYPING);
+        const n = Math.max(1, step.drawables.length);
+        const each = drawSpan / (n + 0.6);
+        // While the command is typed, the cursor goes to where it starts.
+        if (step.lead) {
+          const from = step.lead.getPointAtLength(0);
+          tl.add(
+            cursor,
+            {
+              translateX: from.x,
+              translateY: from.y,
+              duration: step.span * TYPING,
+              ease: "inOutQuad",
+            },
+            step.start,
+          ).add(
+            cursor,
+            {
+              ...along(step.lead),
+              duration: each * 1.6,
+              ease: "linear",
+            },
+            drawFrom,
+          );
+        }
+        tl.add(
+          step.drawables,
+          {
+            draw: ["0 0", "0 1"],
+            duration: each * 1.6,
+            delay: stagger(each),
+            ease: "linear",
+          },
+          drawFrom,
+        ).add(
+          step.labels,
+          {
+            opacity: [0, 1],
+            duration: step.span * 0.2,
+            delay: stagger(step.span * 0.02),
+          },
+          step.start + step.span * 0.75,
+        );
+      });
+
+      // ZOOM Ventana: the window is dragged from its corner.
+      tl.add(
+        cursor,
+        {
+          translateX: win.x,
+          translateY: win.y,
+          duration: DRAG_FROM - WINDOW_FROM,
+        },
+        WINDOW_FROM,
+      )
+        .add(windowRect, { opacity: [0, 1], duration: 1 }, DRAG_FROM)
+        .add(
+          windowRect,
+          {
+            scale: [0, 1],
+            duration: ZOOM_FROM - DRAG_FROM - L * 0.02,
+            ease: "inOutCubic",
+          },
+          DRAG_FROM,
+        )
+        .add(
+          cursor,
+          {
+            translateX: win.x + win.w,
+            translateY: win.y + win.h,
+            duration: ZOOM_FROM - DRAG_FROM - L * 0.02,
+            ease: "inOutCubic",
+          },
+          DRAG_FROM,
+        )
+        // The photo of the built work appears inside the window…
+        .add(
+          photo,
+          { opacity: [0, 1], duration: L * 0.03 },
+          ZOOM_FROM - L * 0.03,
+        )
+        .add(cursor, { opacity: [1, 0], duration: L * 0.03 }, ZOOM_FROM)
+        // …and the zoom takes it to the whole viewport.
+        .add(
+          world,
+          {
+            x: [0, 500 - centre.x],
+            y: [0, 350 - centre.y],
+            scale: [1, zoom],
+            "--zs": [1, zoom],
+            duration: ZOOM_TO - ZOOM_FROM,
+            ease: "inOutCubic",
+          },
+          ZOOM_FROM,
+        )
+        .add(
+          photo,
+          {
+            clipPath: [`inset(${inset})`, "inset(0% 0% 0% 0%)"],
+            duration: ZOOM_TO - ZOOM_FROM,
+            ease: "inOutCubic",
+          },
+          ZOOM_FROM,
+        )
+        .add(world, { opacity: [1, 0], duration: L * 0.06 }, ZOOM_TO - L * 0.04)
+        .add(
+          caption,
+          { opacity: [0, 1], translateY: [8, 0], duration: L * 0.04 },
+          ZOOM_TO,
+        );
+    });
+    timeline.onUpdate = (self) => write(self.currentTime);
+    write(timeline.currentTime);
+  });
+</script>

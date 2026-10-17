@@ -1,0 +1,302 @@
+---
+/**
+ * Chapter 03 · Cómo trabajamos. EMOJ at the centre of an orbit and the six
+ * stages of a project on the ring, each one an icon with its name outside.
+ * While the chapter is pinned a pulse runs one lap around the orbit: it
+ * draws the ring stage by stage, lights each stage's icon and name as it
+ * passes and shows what that stage is about under the orbit; the dotted
+ * ring at the centre keeps turning.
+ *
+ * The orbit is decorative; the stage captions under it are the six stages
+ * as an ordered list.
+ */
+import {
+  ArrowRight,
+  FlaskConical,
+  HardHat,
+  MapPin,
+  MessagesSquare,
+  PencilRuler,
+  Stamp,
+} from "@lucide/astro";
+import { WORK_STAGES } from "../../../lib/content/work-stages";
+import { orbitPoint } from "../../../lib/motion/chapters";
+import { ISOTYPE } from "./isotype";
+import Chapter from "./Chapter.astro";
+
+const ICONS = [
+  MessagesSquare,
+  MapPin,
+  FlaskConical,
+  PencilRuler,
+  Stamp,
+  HardHat,
+];
+const pad = (n: number) => String(n).padStart(2, "0");
+const total = pad(WORK_STAGES.length);
+
+/** The orbit, in the SVG's units (centre 300, 300; room for the names). */
+const C = { x: 300, y: 300 };
+const RING = 175;
+const TILE = 46;
+const step = 360 / WORK_STAGES.length;
+const at = (angle: number, r = RING) => orbitPoint(angle, r, C);
+const f = (n: number) => Math.round(n * 10) / 10;
+
+const stages = WORK_STAGES.map((stage, i) => {
+  // Each stage owns a slice of the ring: its icon sits in the middle of the
+  // slice, its name just outside.
+  const mid = (i + 0.5) * step;
+  const from = at(i * step);
+  const to = at((i + 1) * step);
+  const label = at(mid, RING + 52);
+  return {
+    ...stage,
+    Icon: ICONS[i] ?? MessagesSquare,
+    tile: at(mid),
+    label,
+    anchor:
+      label.x > C.x + 12 ? "start" : label.x < C.x - 12 ? "end" : "middle",
+    dy: label.y < C.y - 100 ? -4 : label.y > C.y + 100 ? 12 : 4,
+    arc: `M${f(from.x)} ${f(from.y)}A${RING} ${RING} 0 0 1 ${f(to.x)} ${f(to.y)}`,
+  };
+});
+/** One lap, clockwise from the top, for the pulse to follow. */
+const loop = `M${C.x} ${C.y - RING}A${RING} ${RING} 0 1 1 ${C.x} ${C.y + RING}A${RING} ${RING} 0 1 1 ${C.x} ${C.y - RING}`;
+---
+
+<Chapter
+  id="como-trabajamos"
+  number="03"
+  label="Cómo trabajamos"
+  navSection="/nosotros"
+  tone="sunken"
+  class="ch-work"
+>
+  <Fragment slot="title">
+    Del primer trazo a la <em>obra</em>.
+  </Fragment>
+
+  <div class="orb" slot="scene" data-scene-orbit>
+    <div class="orb-dial">
+      <svg
+        class="orb-svg"
+        viewBox="-60 -20 720 640"
+        fill="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle class="orb-halo" cx={C.x} cy={C.y} r="250" />
+        <circle class="orb-outer" cx={C.x} cy={C.y} r="262" data-outer />
+        <circle class="orb-ring" cx={C.x} cy={C.y} r={RING} />
+        {stages.map((stage) => (
+          <path class="orb-arc" d={stage.arc} data-arc />
+        ))}
+        <path class="orb-loop" d={loop} data-loop />
+
+        {stages.map((stage) => (
+          <text
+            class="orb-label"
+            x={f(stage.label.x)}
+            y={f(stage.label.y + stage.dy)}
+            text-anchor={stage.anchor}
+            data-label
+          >
+            {stage.short}
+          </text>
+        ))}
+
+        {stages.map((stage) => (
+          <g class="orb-tile" data-tile>
+            <rect
+              class="orb-tile__box"
+              x={f(stage.tile.x - TILE / 2)}
+              y={f(stage.tile.y - TILE / 2)}
+              width={TILE}
+              height={TILE}
+              rx="13"
+            />
+            <rect
+              class="orb-tile__glow"
+              x={f(stage.tile.x - TILE / 2)}
+              y={f(stage.tile.y - TILE / 2)}
+              width={TILE}
+              height={TILE}
+              rx="13"
+              data-glow
+            />
+            <stage.Icon
+              class="orb-tile__icon"
+              x={f(stage.tile.x - 11)}
+              y={f(stage.tile.y - 11)}
+              width={22}
+              height={22}
+              stroke-width={1.6}
+            />
+          </g>
+        ))}
+
+        <circle class="orb-pulse" r="7" data-pulse />
+
+        <circle class="orb-dots" cx={C.x} cy={C.y} r="70" data-spin />
+        <circle class="orb-core" cx={C.x} cy={C.y} r="58" />
+        <svg
+          class="orb-mark"
+          x={C.x - 38}
+          y={C.y - 26}
+          width="76"
+          height="30"
+          viewBox={ISOTYPE.viewBox}
+        >
+          <path d={ISOTYPE.stroke} />
+        </svg>
+        <text class="orb-core-label" x={C.x} y={C.y + 24} text-anchor="middle">
+          Tu obra
+        </text>
+      </svg>
+    </div>
+
+    <ol class="orb-captions">
+      {WORK_STAGES.map((stage, i) => (
+        <li class="orb-caption" data-caption>
+          <p class="orb-caption__num">
+            {pad(i + 1)} <span>/ {total}</span>
+          </p>
+          <h3 class="orb-caption__title">{stage.title}</h3>
+          <p class="orb-caption__text">{stage.text}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  <p class="ch-text">
+    <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+    coordinadas: te acompañamos desde la primera conversación hasta que lo
+    diseñado está construido.
+  </p>
+  <p class="ch-tags">{WORK_STAGES.map((stage) => stage.short).join(" · ")}</p>
+  <a href="/contacto" class="ch-more">
+    Cotizar proyecto
+    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+  </a>
+</Chapter>
+
+<script>
+  import { svg, utils } from "animejs";
+  import { stageTimes } from "../../../lib/motion/chapters";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  eachScene("[data-scene-orbit]", (root, $, $$) => {
+    const arcs = svg.createDrawable($$<SVGPathElement>("[data-arc]"));
+    const labels = $$<SVGTextElement>("[data-label]");
+    const tiles = $$<SVGGElement>("[data-tile]");
+    const glows = $$<SVGRectElement>("[data-glow]");
+    const captions = $$("[data-caption]");
+    const loop = $<SVGPathElement>("[data-loop]");
+    const pulse = $<SVGCircleElement>("[data-pulse]");
+    const spin = $<SVGCircleElement>("[data-spin]");
+    const outer = $<SVGCircleElement>("[data-outer]");
+
+    // The script starts the lap from nothing; at rest it reads complete.
+    const playing = scenesOn();
+    if (playing) {
+      utils.set(arcs, { draw: "0 0" });
+      utils.set(labels, { opacity: 0.4 });
+      utils.set(glows, { opacity: 0 });
+      utils.set(captions, { opacity: 0, translateY: 10 });
+      utils.set(pulse, { opacity: 0 });
+    }
+
+    const L = SCENE_LENGTH;
+    const FROM = 0.14;
+    const TO = 0.86;
+    const starts = stageTimes(arcs.length, FROM, TO);
+    const Q = ((TO - FROM) * L) / arcs.length;
+
+    scrubbedScene(root, (tl) => {
+      // The centre keeps turning; the outer dots drift the other way.
+      tl.add(spin, { rotate: [0, 300], duration: L, ease: "linear" }, 0).add(
+        outer,
+        { rotate: [0, -40], duration: L, ease: "linear" },
+        0,
+      );
+      // One lap of the pulse draws each stage as it passes.
+      tl.add(
+        pulse,
+        {
+          ...svg.createMotionPath(loop),
+          opacity: [
+            { to: 1, duration: L * 0.02 },
+            { to: 1, duration: (TO - FROM) * L - L * 0.04 },
+            { to: 0, duration: L * 0.02 },
+          ],
+          duration: (TO - FROM) * L,
+          ease: "linear",
+        },
+        L * FROM,
+      );
+      arcs.forEach((arc, k) => {
+        const start = starts[k] ?? 0;
+        const last = k === arcs.length - 1;
+        tl.add(
+          arc,
+          { draw: ["0 0", "0 1"], duration: Q, ease: "linear" },
+          start,
+        )
+          .add(
+            labels[k] ?? [],
+            { opacity: [0.4, 1], duration: Q * 0.3 },
+            start + Q * 0.35,
+          )
+          .add(
+            tiles[k] ?? [],
+            {
+              scale: [
+                { to: 1.18, duration: Q * 0.2, ease: "outBack" },
+                { to: 1.18, duration: Q * 0.5 },
+                { to: 1, duration: Q * 0.2 },
+              ],
+            },
+            start + Q * 0.35,
+          )
+          .add(
+            glows[k] ?? [],
+            {
+              opacity: [
+                { to: 1, duration: Q * 0.2 },
+                { to: 1, duration: Q * 0.5 },
+                { to: 0.35, duration: Q * 0.2 },
+              ],
+            },
+            start + Q * 0.35,
+          )
+          // At rest every caption stays listed; only the lap shows one at a time.
+          .add(
+            (playing ? captions[k] : null) ?? [],
+            {
+              opacity: last
+                ? [{ to: 1, duration: Q * 0.2 }]
+                : [
+                    { to: 1, duration: Q * 0.2 },
+                    { to: 1, duration: Q * 0.6 },
+                    { to: 0, duration: Q * 0.15 },
+                  ],
+              translateY: last
+                ? [{ to: 0, duration: Q * 0.2 }]
+                : [
+                    { to: 0, duration: Q * 0.2 },
+                    { to: 0, duration: Q * 0.6 },
+                    { to: -8, duration: Q * 0.15 },
+                  ],
+            },
+            start + Q * 0.3,
+          );
+      });
+    });
+  });
+</script>

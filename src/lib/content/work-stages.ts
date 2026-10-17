@@ -1,6 +1,6 @@
 /**
  * The six stages of an EMOJ project, told on the home ("Cómo trabajamos",
- * src/components/home/scenes/ObraScene.astro). Each one has a short text
+ * src/components/home/chapters/WorkChapter.astro). Each one has a short text
  * and two facts (label and value). Real practice, no invented figures.
  */
 export interface WorkStage {

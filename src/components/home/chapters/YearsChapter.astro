@@ -1,0 +1,212 @@
+---
+/**
+ * Chapter 06 · Quiénes somos. The team photo in the signature shape and,
+ * under it, a dimension line ("cota") from 0 to 30 years. While the chapter
+ * is pinned a marker runs along the cota and the photo turns to colour
+ * with it, the big figure counts the years up to "30+", and the facts land one
+ * by one with their own figures.
+ *
+ * The photo keeps its alt text; the rest of the scene is decorative.
+ */
+import { ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+import team from "../../../assets/photos/equipo-emoj.jpg";
+import { CLIENTS, MISSION } from "../../../lib/site";
+import Chapter from "./Chapter.astro";
+
+const YEARS = 30;
+const FACTS = [
+  { value: 7, label: "especialidades" },
+  { value: 2, label: "regiones" },
+  { value: CLIENTS.length, label: "clientes de referencia" },
+] as const;
+/** Ticks of the cota, every ten years. */
+const TICKS = [0, 10, 20, 30];
+const START = 16;
+const END = 464;
+const x = (year: number) => START + (year / YEARS) * (END - START);
+---
+
+<Chapter
+  id="treinta-anos"
+  number="06"
+  label="Quiénes somos"
+  navSection="/nosotros"
+  class="ch-years"
+>
+  <Fragment slot="title">
+    Más de 30 años acercando la <em>ingeniería</em>.
+  </Fragment>
+
+  <div class="yrs" slot="scene" data-scene-years>
+    <div class="yrs-photo">
+      <Image
+        src={team}
+        alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
+        widths={[480, 800, 1200, 1600]}
+        sizes="(min-width: 1024px) 40vw, 92vw"
+        loading="lazy"
+        class="yrs-photo__img yrs-photo__img--base"
+      />
+      {/* The same photo in colour, revealed as the cota runs. */}
+      <Image
+        src={team}
+        alt=""
+        widths={[480, 800, 1200, 1600]}
+        sizes="(min-width: 1024px) 40vw, 92vw"
+        loading="lazy"
+        class="yrs-photo__img yrs-photo__img--colour"
+        data-photo
+      />
+      <p class="yrs-count" aria-hidden="true">
+        <span data-count>{YEARS}</span>
+        <small>+ años</small>
+      </p>
+    </div>
+
+    <svg
+      class="yrs-cota"
+      viewBox="0 0 480 64"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <line class="yrs-cota__base" x1={START} y1="24" x2={END} y2="24" />
+      <line
+        class="yrs-cota__trail"
+        x1={START}
+        y1="24"
+        x2={END}
+        y2="24"
+        data-trail
+      />
+      {TICKS.map((year) => (
+        <g class="yrs-tick" data-tick>
+          <line x1={x(year) - 6} y1="30" x2={x(year) + 6} y2="18" />
+          <text x={x(year)} y="54" text-anchor="middle">
+            {year}
+          </text>
+        </g>
+      ))}
+      <circle class="yrs-cota__marker" cx={END} cy="24" r="6" data-marker />
+    </svg>
+
+    <dl class="yrs-facts">
+      {FACTS.map(({ value, label }) => (
+        <div class="yrs-fact" data-fact>
+          <dt>{label}</dt>
+          <dd data-value={value}>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+
+  <p class="ch-text">
+    <strong>Nacimos en Quilpué, en la Región de Valparaíso.</strong> Nuestra
+    misión: {MISSION.charAt(0).toLowerCase() + MISSION.slice(1)}
+  </p>
+  <a href="/nosotros" class="ch-more">
+    Conoce al equipo
+    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+  </a>
+</Chapter>
+
+<script>
+  import { stagger, utils } from "animejs";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  const L = SCENE_LENGTH;
+  const RUN_FROM = L * 0.14;
+  const RUN = L * 0.5;
+  const FACTS_FROM = RUN_FROM + RUN + L * 0.04;
+  const YEARS = 30;
+
+  eachScene("[data-scene-years]", (root, $, $$) => {
+    const photo = $("[data-photo]");
+    const trail = $<SVGLineElement>("[data-trail]");
+    const marker = $<SVGCircleElement>("[data-marker]");
+    const ticks = $$<SVGGElement>("[data-tick]");
+    const count = $("[data-count]");
+    const facts = $$("[data-fact]");
+    const values = facts.map((fact) => fact.querySelector("dd"));
+    const start = trail.x1.baseVal.value;
+    const end = trail.x2.baseVal.value;
+
+    if (scenesOn()) {
+      utils.set(photo, { clipPath: "inset(0% 100% 0% 0%)" });
+      utils.set(trail, { x2: start });
+      utils.set(marker, { cx: start });
+      utils.set(ticks, { opacity: 0.35 });
+      utils.set(facts, { opacity: 0, translateY: 12 });
+    }
+
+    // Figures follow the timeline's time, so a scrub back counts down.
+    const write = (time: number) => {
+      const run = Math.min(1, Math.max(0, (time - RUN_FROM) / RUN));
+      const years = String(Math.round(run * YEARS)).padStart(2, "0");
+      if (count.textContent !== years) count.textContent = years;
+      values.forEach((dd, i) => {
+        if (!dd) return;
+        const from = FACTS_FROM + i * L * 0.05;
+        const share = Math.min(1, Math.max(0, (time - from) / (L * 0.08)));
+        const value = Number(dd.dataset["value"] ?? 0);
+        const text = String(Math.round(share * value));
+        if (dd.textContent !== text) dd.textContent = text;
+      });
+    };
+
+    const timeline = scrubbedScene(root, (tl) => {
+      tl.add(
+        trail,
+        { x2: [start, end], duration: RUN, ease: "linear" },
+        RUN_FROM,
+      )
+        .add(
+          marker,
+          { cx: [start, end], duration: RUN, ease: "linear" },
+          RUN_FROM,
+        )
+        .add(
+          photo,
+          {
+            clipPath: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"],
+            duration: RUN,
+            ease: "linear",
+          },
+          RUN_FROM,
+        );
+      ticks.forEach((tick, i) => {
+        const when = RUN_FROM + (i / Math.max(1, ticks.length - 1)) * RUN;
+        tl.add(
+          tick,
+          {
+            opacity: [0.35, 1],
+            scale: [
+              { to: 1.3, duration: L * 0.015 },
+              { to: 1, duration: L * 0.03 },
+            ],
+          },
+          when,
+        );
+      });
+      tl.add(
+        facts,
+        {
+          opacity: [0, 1],
+          translateY: [12, 0],
+          duration: L * 0.06,
+          delay: stagger(L * 0.05),
+          ease: "outCubic",
+        },
+        FACTS_FROM,
+      );
+    });
+    timeline.onUpdate = (self) => write(self.currentTime);
+    write(timeline.currentTime);
+  });
+</script>

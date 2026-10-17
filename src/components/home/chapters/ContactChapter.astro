@@ -1,0 +1,290 @@
+---
+/**
+ * Chapter 08 · Contacto. A new message to EMOJ composing itself: the
+ * address types, threads from four specialties join the message and drop
+ * their topic into it, the subject is written, the cursor sends it and the
+ * EMOJ stroke signs it; then the channels where the conversation goes on
+ * appear. Decorative: the real address and links live in the chapter text.
+ */
+import {
+  ArrowRight,
+  Building,
+  Droplets,
+  Mail,
+  Mountain,
+  Phone,
+  Route,
+  Send,
+} from "@lucide/astro";
+import { CONTACT } from "../../../lib/site";
+import { whatsappHref } from "../../../lib/whatsapp";
+import WhatsAppIcon from "../../ui/WhatsAppIcon.astro";
+import { ISOTYPE } from "./isotype";
+import Chapter from "./Chapter.astro";
+
+const SUBJECT = "Cotización de proyecto";
+/** The four sides of the work that join the message (left side). */
+const TOPICS = [
+  { icon: Droplets, label: "Obras sanitarias" },
+  { icon: Route, label: "Obras viales" },
+  { icon: Building, label: "Cálculo estructural" },
+  { icon: Mountain, label: "Geotecnia" },
+] as const;
+/** Threads from each topic (left) into the message body (right), in the
+ * scene's 100×100 box. */
+const threads = TOPICS.map((_, i) => {
+  const y = 16 + i * 22;
+  const endY = 52 + i * 6;
+  return `M8 ${y}C22 ${y} 22 ${endY} 36 ${endY}`;
+});
+---
+
+<Chapter
+  id="conversemos"
+  number="08"
+  label="Contacto"
+  navSection="/contacto"
+  class="ch-contact"
+>
+  <Fragment slot="title">
+    ¿Tienes un proyecto? <em>Conversemos.</em>
+  </Fragment>
+
+  <div
+    class="msg"
+    slot="scene"
+    aria-hidden="true"
+    data-scene-contact
+    data-address={CONTACT.email}
+    data-subject={SUBJECT}
+  >
+    <ul class="msg-topics">
+      {TOPICS.map((topic) => (
+        <li class="msg-topic">
+          <topic.icon size={18} stroke-width={1.75} />
+        </li>
+      ))}
+    </ul>
+    <svg
+      class="msg-threads"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      fill="none"
+      focusable="false"
+    >
+      {threads.map((d) => (
+        <path class="msg-thread" d={d} data-thread />
+      ))}
+    </svg>
+
+    <div class="msg-card">
+      <p class="msg-card__bar">
+        <span>Nuevo mensaje</span>
+        <Mail size={14} stroke-width={1.75} />
+      </p>
+      <p class="msg-field">
+        <span class="msg-field__key">Para</span>
+        <span class="msg-field__value" data-address-text>
+          {CONTACT.email}
+        </span>
+      </p>
+      <p class="msg-field">
+        <span class="msg-field__key">Asunto</span>
+        <span class="msg-field__value" data-subject-text>
+          {SUBJECT}
+        </span>
+      </p>
+      <div class="msg-body">
+        <p class="msg-body__hello">Hola, EMOJ: necesito apoyo en…</p>
+        <p class="msg-tags">
+          {TOPICS.map((topic) => (
+            <span class="msg-tag" data-tag>
+              {topic.label}
+            </span>
+          ))}
+        </p>
+        <svg
+          class="msg-sign"
+          viewBox={ISOTYPE.viewBox}
+          fill="none"
+          focusable="false"
+        >
+          <path d={ISOTYPE.stroke} data-sign />
+        </svg>
+      </div>
+      <p class="msg-card__foot">
+        <span class="msg-send" data-send>
+          <span class="msg-send__ring" data-ring></span>
+          <Send size={16} stroke-width={1.75} />
+          <span data-send-idle>Enviar</span>
+          <span class="msg-send__done" data-send-done>
+            Enviado
+          </span>
+        </span>
+      </p>
+      <span class="msg-cursor" data-cursor></span>
+    </div>
+
+    <ul class="msg-channels">
+      <li class="msg-channel" data-channel>
+        <WhatsAppIcon />
+        WhatsApp
+      </li>
+      <li class="msg-channel" data-channel>
+        <Mail size={16} stroke-width={1.75} />
+        Correo
+      </li>
+      <li class="msg-channel" data-channel>
+        <Phone size={16} stroke-width={1.75} />
+        Teléfono
+      </li>
+    </ul>
+  </div>
+
+  <p class="ch-text">
+    <strong>Cuéntanos qué necesitas</strong> y te ayudamos a definir el alcance,
+    los plazos y los entregables de tu proyecto.
+  </p>
+  <div class="ch-actions">
+    <a href="/contacto" class="ch-button">
+      Cotizar proyecto
+      <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+    </a>
+    <a
+      href={whatsappHref()}
+      class="ch-more"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      WhatsApp {CONTACT.whatsapp.display}
+      <span class="sr-only">(se abre en una pestaña nueva)</span>
+    </a>
+  </div>
+  <a href={`mailto:${CONTACT.email}`} class="ch-more">
+    {CONTACT.email}
+  </a>
+</Chapter>
+
+<script>
+  import { stagger, svg, utils } from "animejs";
+  import { typedText } from "../../../lib/motion/chapters";
+  import {
+    eachScene,
+    SCENE_LENGTH,
+    scenesOn,
+    scrubbedScene,
+  } from "../../../scripts/chapters/scrub";
+
+  const L = SCENE_LENGTH;
+  const ADDRESS = [L * 0.1, L * 0.2] as const;
+  const SUBJECT = [L * 0.5, L * 0.6] as const;
+  const TRAVEL = L * 0.06;
+  const PRESS = L * 0.7;
+
+  eachScene("[data-scene-contact]", (root, $, $$) => {
+    const threads = svg.createDrawable($$<SVGPathElement>("[data-thread]"));
+    const tags = $$("[data-tag]");
+    const address = $("[data-address-text]");
+    const subject = $("[data-subject-text]");
+    const sign = svg.createDrawable($<SVGPathElement>("[data-sign]"));
+    const send = $("[data-send]");
+    const idle = $("[data-send-idle]");
+    const done = $("[data-send-done]");
+    const ring = $("[data-ring]");
+    const cursor = $("[data-cursor]");
+    const channels = $$("[data-channel]");
+    const addressText = root.dataset["address"] ?? "";
+    const subjectText = root.dataset["subject"] ?? "";
+
+    if (scenesOn()) {
+      utils.set(threads, { draw: "0 0" });
+      utils.set(sign, { draw: "0 0" });
+      utils.set(tags, { opacity: 0, scale: 0.6 });
+      utils.set([...channels, done, cursor], { opacity: 0 });
+      utils.set(idle, { opacity: 1 });
+    }
+
+    const typing = (time: number, [from, to]: readonly [number, number]) =>
+      Math.min(1, Math.max(0, (time - from) / (to - from)));
+    const write = (time: number) => {
+      const a = typedText(addressText, typing(time, ADDRESS));
+      const s = typedText(subjectText, typing(time, SUBJECT));
+      if (address.textContent !== a) address.textContent = a;
+      if (subject.textContent !== s) subject.textContent = s;
+    };
+
+    const timeline = scrubbedScene(root, (tl) => {
+      // 1. The threads draw from each specialty; then each drops its topic.
+      tl.add(
+        threads,
+        {
+          draw: ["0 0", "0 1"],
+          duration: TRAVEL,
+          delay: stagger(L * 0.05),
+          ease: "inOutSine",
+        },
+        L * 0.22,
+      ).add(
+        tags,
+        {
+          opacity: [0, 1],
+          scale: [0.6, 1],
+          duration: L * 0.03,
+          delay: stagger(L * 0.05),
+          ease: "outBack",
+        },
+        L * 0.22 + TRAVEL,
+      );
+
+      // 2. The cursor goes to "Enviar" and presses it.
+      tl.add(cursor, { opacity: [0, 1], duration: L * 0.02 }, L * 0.62)
+        .add(
+          cursor,
+          {
+            left: ["92%", "24%"],
+            top: ["70%", "90%"],
+            duration: L * 0.07,
+            ease: "outCubic",
+          },
+          L * 0.62,
+        )
+        .add(
+          [cursor, send],
+          {
+            scale: [
+              { to: 0.9, duration: L * 0.01 },
+              { to: 1, duration: L * 0.015 },
+            ],
+          },
+          PRESS,
+        )
+        .add(idle, { opacity: [1, 0], duration: L * 0.015 }, PRESS + L * 0.01)
+        .add(done, { opacity: [0, 1], duration: L * 0.02 }, PRESS + L * 0.02)
+        .add(
+          ring,
+          { opacity: [0.9, 0], scale: [1, 1.8], duration: L * 0.08 },
+          PRESS + L * 0.01,
+        )
+        .add(cursor, { opacity: [1, 0], duration: L * 0.03 }, PRESS + L * 0.04)
+        // 3. EMOJ signs it, and the channels appear.
+        .add(
+          sign,
+          { draw: ["0 0", "0 1"], duration: L * 0.08, ease: "inOutSine" },
+          PRESS + L * 0.03,
+        )
+        .add(
+          channels,
+          {
+            opacity: [0, 1],
+            translateY: [10, 0],
+            duration: L * 0.04,
+            delay: stagger(L * 0.015),
+            ease: "outBack",
+          },
+          L * 0.8,
+        );
+    });
+    timeline.onUpdate = (self) => write(self.currentTime);
+    write(timeline.currentTime);
+  });
+</script>

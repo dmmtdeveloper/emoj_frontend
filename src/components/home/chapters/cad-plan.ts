@@ -127,5 +127,5 @@ export const PLAN = {
       text: { x: 189.3, y: 542.2, angle: -103.9, text: "7.00" },
     },
   ],
-  window: { x: 568.2, y: 314.6, w: 300, h: 190 },
+  window: { x: 568.2, y: 304.6, w: 300, h: 210 },
 } as const;
