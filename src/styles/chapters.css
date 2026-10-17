@@ -1247,18 +1247,25 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 06 · Quiénes somos: the photo measured by a cota                     */
+/* 06 · Quiénes somos: the team photo, measured by a cota               */
 /* ------------------------------------------------------------------ */
 
 @layer components {
-  .yrs {
-    display: grid;
-    gap: 10px;
+  /* The team photo leads this chapter: a wider scene column and the cota,
+     the years and the facts laid over the photo. */
+  @media (min-width: 64rem) {
+    .ch-years .ch-stage {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+
+    .ch-years .ch-scene {
+      width: min(100%, 52rem);
+    }
   }
 
   .yrs-photo {
     position: relative;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     border-radius: var(--radius-signature) 0 0 var(--radius-signature);
     background: var(--plum-950);
@@ -1281,24 +1288,31 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to top,
-      color-mix(in oklab, var(--plum-950) 75%, transparent),
-      transparent 55%
-    );
+    background:
+      linear-gradient(
+        to top,
+        color-mix(in oklab, var(--plum-950) 85%, transparent),
+        transparent 45%
+      ),
+      linear-gradient(
+        to bottom left,
+        color-mix(in oklab, var(--plum-950) 45%, transparent),
+        transparent 35%
+      );
+    pointer-events: none;
   }
 
   .yrs-count {
     position: absolute;
     z-index: 1;
-    left: 28px;
-    bottom: 14px;
+    left: 32px;
+    bottom: 72px;
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
     font-family: var(--font-data);
-    font-size: clamp(3.5rem, 2.5rem + 3vw, 5.5rem);
-    line-height: 1;
+    font-size: clamp(4rem, 2.5rem + 5vw, 8rem);
+    line-height: 0.9;
     font-weight: 600;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
@@ -1314,27 +1328,32 @@
   }
 
   .yrs-cota {
-    width: 100%;
+    position: absolute;
+    z-index: 1;
+    right: 24px;
+    bottom: 8px;
+    left: 24px;
+    width: calc(100% - 48px);
     overflow: visible;
   }
 
   .yrs-cota__base {
-    stroke: var(--border-strong);
+    stroke: color-mix(in oklab, var(--sand-50) 35%, transparent);
     stroke-width: 1;
   }
 
   .yrs-cota__trail {
-    stroke: var(--brand);
+    stroke: var(--brick-400);
     stroke-width: 2.5;
     stroke-linecap: round;
   }
 
   .yrs-cota__marker {
-    fill: var(--brand);
+    fill: var(--brick-400);
   }
 
   .yrs-tick {
-    stroke: var(--ink);
+    stroke: var(--sand-50);
     stroke-width: 1.5;
     transform-box: fill-box;
     transform-origin: center;
@@ -1342,41 +1361,77 @@
 
   .yrs-tick text {
     stroke: none;
-    fill: var(--ink-muted);
+    fill: var(--sand-100);
     font-family: var(--font-data);
     font-size: 12px;
     font-variant-numeric: tabular-nums;
   }
 
   .yrs-facts {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    position: absolute;
+    z-index: 1;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .yrs-fact {
     display: flex;
     flex-direction: column-reverse;
-    gap: 2px;
-    padding: 12px 14px;
+    min-width: 9rem;
+    padding: 8px 12px;
     border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    box-shadow: 0 0 0 1px var(--border);
+    background: color-mix(in oklab, var(--plum-950) 72%, transparent);
+    backdrop-filter: blur(6px);
   }
 
   .yrs-fact dd {
     font-family: var(--font-data);
-    font-size: 30px;
+    font-size: 24px;
     line-height: 1;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: var(--brand);
+    color: var(--sand-50);
   }
 
   .yrs-fact dt {
     font-size: 13px;
     line-height: 1.3;
-    color: var(--ink-muted);
+    color: var(--sand-200);
+  }
+
+  @media (max-width: 47.99rem) {
+    .yrs-photo {
+      aspect-ratio: 4 / 4.4;
+    }
+
+    .yrs-count {
+      left: 24px;
+      bottom: 64px;
+    }
+
+    .yrs-facts {
+      top: 12px;
+      right: 12px;
+      left: 12px;
+      flex-direction: row;
+    }
+
+    .yrs-fact {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+    }
+
+    .yrs-fact dd {
+      font-size: 20px;
+    }
+
+    .yrs-fact dt {
+      font-size: 11px;
+    }
   }
 }
 

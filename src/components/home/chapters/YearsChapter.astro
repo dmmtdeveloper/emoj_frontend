@@ -1,7 +1,8 @@
 ---
 /**
- * Chapter 06 · Quiénes somos. The team photo in the signature shape and,
- * under it, a dimension line ("cota") from 0 to 30 years. While the chapter
+ * Chapter 06 · Quiénes somos. The team photo leads: large, in the
+ * signature shape, with a dimension line ("cota") from 0 to 30 years and
+ * the facts laid over it. While the chapter
  * is pinned a marker runs along the cota and the photo turns to colour
  * with it, the big figure counts the years up to "30+", and the facts land one
  * by one with their own figures.
@@ -43,8 +44,8 @@ const x = (year: number) => START + (year / YEARS) * (END - START);
       <Image
         src={team}
         alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
-        widths={[480, 800, 1200, 1600]}
-        sizes="(min-width: 1024px) 40vw, 92vw"
+        widths={[480, 800, 1200, 1600, 2000]}
+        sizes="(min-width: 1024px) 60vw, 92vw"
         loading="lazy"
         class="yrs-photo__img yrs-photo__img--base"
       />
@@ -52,8 +53,8 @@ const x = (year: number) => START + (year / YEARS) * (END - START);
       <Image
         src={team}
         alt=""
-        widths={[480, 800, 1200, 1600]}
-        sizes="(min-width: 1024px) 40vw, 92vw"
+        widths={[480, 800, 1200, 1600, 2000]}
+        sizes="(min-width: 1024px) 60vw, 92vw"
         loading="lazy"
         class="yrs-photo__img yrs-photo__img--colour"
         data-photo
@@ -62,43 +63,43 @@ const x = (year: number) => START + (year / YEARS) * (END - START);
         <span data-count>{YEARS}</span>
         <small>+ años</small>
       </p>
+
+      <svg
+        class="yrs-cota"
+        viewBox="0 0 480 64"
+        fill="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <line class="yrs-cota__base" x1={START} y1="24" x2={END} y2="24" />
+        <line
+          class="yrs-cota__trail"
+          x1={START}
+          y1="24"
+          x2={END}
+          y2="24"
+          data-trail
+        />
+        {TICKS.map((year) => (
+          <g class="yrs-tick" data-tick>
+            <line x1={x(year) - 6} y1="30" x2={x(year) + 6} y2="18" />
+            <text x={x(year)} y="54" text-anchor="middle">
+              {year}
+            </text>
+          </g>
+        ))}
+        <circle class="yrs-cota__marker" cx={END} cy="24" r="6" data-marker />
+      </svg>
+
+      <dl class="yrs-facts">
+        {FACTS.map(({ value, label }) => (
+          <div class="yrs-fact" data-fact>
+            <dt>{label}</dt>
+            <dd data-value={value}>{value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
-
-    <svg
-      class="yrs-cota"
-      viewBox="0 0 480 64"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <line class="yrs-cota__base" x1={START} y1="24" x2={END} y2="24" />
-      <line
-        class="yrs-cota__trail"
-        x1={START}
-        y1="24"
-        x2={END}
-        y2="24"
-        data-trail
-      />
-      {TICKS.map((year) => (
-        <g class="yrs-tick" data-tick>
-          <line x1={x(year) - 6} y1="30" x2={x(year) + 6} y2="18" />
-          <text x={x(year)} y="54" text-anchor="middle">
-            {year}
-          </text>
-        </g>
-      ))}
-      <circle class="yrs-cota__marker" cx={END} cy="24" r="6" data-marker />
-    </svg>
-
-    <dl class="yrs-facts">
-      {FACTS.map(({ value, label }) => (
-        <div class="yrs-fact" data-fact>
-          <dt>{label}</dt>
-          <dd data-value={value}>{value}</dd>
-        </div>
-      ))}
-    </dl>
   </div>
 
   <p class="ch-text">
