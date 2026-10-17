@@ -519,6 +519,26 @@
 }
 
 /*
+ * Wide container (the home, the header and the footer): 92rem max with
+ * 1.5rem gutters, 2rem from sm and 3rem from lg, the same width as
+ * deivid.space.
+ */
+@utility container-wide {
+  width: 100%;
+  max-width: calc(92rem + 6rem);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+
+  @media (min-width: 40rem) {
+    padding-inline: 2rem;
+  }
+
+  @media (min-width: 64rem) {
+    padding-inline: 3rem;
+  }
+}
+
+/*
  * Focal point of a photo edited in the panel (home hero), in 5% steps:
  * `focus-x-30 focus-y-70` crops around 30% from the left, 70% from the top
  * (src/lib/content/home-hero.ts). Classes, because style="" is not allowed
@@ -626,4 +646,22 @@
   --logo: url("/logos/clientes/codelco.svg");
   --ratio: 4.565;
   --h: 32px;
+}
+
+/* Footer (SiteFooter.astro): the WhatsApp mark at the size of the other
+   contact icons, and a brand hairline along the bottom edge. */
+.footer-wa svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+}
+
+.footer-glint {
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    var(--brand) 50%,
+    transparent 95%
+  );
 }
