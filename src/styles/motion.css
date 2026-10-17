@@ -279,6 +279,69 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Footer lockup with tagline (TaglineLockup.astro)                     */
+/* ------------------------------------------------------------------ */
+
+/* Official colours: stroke and "Emoj" in brand, the rest in ink. */
+.tagline-lockup {
+  overflow: visible;
+}
+
+.tagline-lockup__stroke {
+  stroke: var(--brand);
+  stroke-dasharray: 1;
+}
+
+.tagline-lockup__emoj {
+  fill: var(--brand);
+}
+
+.tagline-lockup__dot,
+.tagline-lockup__consultora,
+.tagline-lockup__tagline {
+  fill: var(--ink);
+}
+
+.tagline-lockup__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Same drawing as the lockup above, then the tagline is written last. */
+[data-draw-state="armed"] .tagline-lockup__stroke {
+  stroke-dashoffset: -1;
+}
+
+[data-draw-state="armed"] .tagline-lockup__dot {
+  transform: scale(0);
+}
+
+[data-draw-state="armed"] .tagline-lockup__name,
+[data-draw-state="armed"] .tagline-lockup__tagline {
+  clip-path: inset(0 100% 0 0);
+}
+
+[data-draw-state="play"] .tagline-lockup__dot--start {
+  animation: pop 420ms var(--ease-spring) 80ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__stroke {
+  animation: draw-back 1300ms var(--ease-in-out) 250ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__dot--end {
+  animation: pop 420ms var(--ease-spring) 1500ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__name {
+  animation: wipe-right 900ms var(--ease-in-out) 1550ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__tagline {
+  animation: wipe-right 1000ms var(--ease-in-out) 2300ms both;
+}
+
+/* ------------------------------------------------------------------ */
 /* Drawn lines (StrokeLine, Scribble)                                  */
 /* ------------------------------------------------------------------ */
 

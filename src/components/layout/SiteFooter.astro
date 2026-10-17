@@ -3,10 +3,9 @@
  * Site footer, laid out like deivid.space's: on the sunken surface with a
  * hairline on top, the same width as the home (`container-wide`).
  *
- * - Signature band: the official lockup (fine stroke), drawn once when it
- *   comes into view, beside the tagline "Acercamos la ingeniería" in large
- *   type with a short description of the firm.
- * - Columns: the services (internal links that also help SEO), the company pages,
+ * - Columns: the official lockup with the tagline ("acercamos la
+ *   ingeniería"), drawn once when it comes into view, and a short
+ *   description of the firm; then the services (internal links that also help SEO), the company pages,
  *   legal (privacy policy and rights under Ley 21.719), social profiles
  *   and direct contact.
  * - Bottom bar: the isotype, the legal line (name, RUT, place) and the
@@ -24,18 +23,10 @@ import {
   ShieldCheck,
 } from "@lucide/astro";
 import { getServices } from "../../lib/get-services";
-import {
-  CONTACT,
-  LEGAL_NAME,
-  RUT,
-  SITE_NAME,
-  SOCIAL,
-  TAGLINE,
-} from "../../lib/site";
+import { CONTACT, LEGAL_NAME, RUT, SITE_NAME, SOCIAL } from "../../lib/site";
 import IsotipoMark from "../IsotipoMark.astro";
-import LogoLockup from "../LogoLockup.astro";
+import TaglineLockup from "../TaglineLockup.astro";
 import SocialIcon from "../ui/SocialIcon.astro";
-import StrokeLine from "../ui/StrokeLine.astro";
 import WhatsAppIcon from "../ui/WhatsAppIcon.astro";
 
 const year = new Date().getFullYear();
@@ -67,43 +58,28 @@ const meta =
   aria-label="Pie de página"
 >
   <div class="container-wide pt-12 pb-5 md:pt-16">
-    {/* The signature band: the lockup drawn again when it comes into
-        view (the old footer's animation), next to the brand's tagline. */}
-    <div
-      class="footer-sign relative isolate grid gap-10 border-b border-border pb-12 md:pb-14 lg:grid-cols-12 lg:items-end lg:gap-8"
-      data-draw-on-view
-    >
-      <StrokeLine class="footer-sign__wave absolute -top-6 right-0 -z-10 hidden w-[min(52rem,62%)] text-brand opacity-[0.14] lg:block" />
-      <a
-        href="/"
-        class="inline-flex self-start text-brand no-underline lg:col-span-4"
-        aria-label={`${SITE_NAME} — Inicio`}
-      >
-        <LogoLockup
-          label=""
-          width="240"
-          height="121"
-          class="h-auto w-48 md:w-60"
-        />
-      </a>
-      <div class="lg:col-span-8">
-        <p class="footer-sign__tagline" lang="es">
-          {TAGLINE.split(" ").map((word, i, words) => (
-            <span class="footer-sign__word">
-              {i === words.length - 1 ? <em>{word}</em> : word}
-            </span>
-          ))}
-          <span class="footer-sign__dot" aria-hidden="true"></span>
-        </p>
-        <p class="footer-sign__text mt-5 max-w-[52ch] text-base leading-7 text-ink-muted">
+    <div class="grid grid-cols-2 gap-x-6 gap-y-10 border-b border-border pb-10 sm:gap-10 md:pb-12 lg:grid-cols-3 lg:gap-8 xl:grid-cols-[minmax(14rem,1.3fr)_minmax(11rem,0.8fr)_repeat(3,minmax(7rem,0.5fr))_minmax(14rem,0.9fr)] xl:gap-10">
+      <div class="col-span-2 max-w-[25rem] sm:col-span-1">
+        <a
+          href="/"
+          class="inline-flex no-underline"
+          aria-label={`${SITE_NAME} — Inicio`}
+        >
+          <TaglineLockup
+            draw="view"
+            label=""
+            width="208"
+            height="132"
+            class="h-auto w-52"
+          />
+        </a>
+        <p class="mt-5 max-w-[34ch] text-sm leading-6 text-ink-muted">
           Consultora de ingeniería civil con base en Quilpué. Diseñamos agua
           potable, caminos, estructuras y fundaciones para las regiones de
           Valparaíso y Coquimbo.
         </p>
       </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-x-6 gap-y-10 border-b border-border py-10 sm:gap-10 md:py-12 lg:grid-cols-5 lg:gap-8 xl:grid-cols-[minmax(11rem,1fr)_repeat(3,minmax(7rem,0.6fr))_minmax(14rem,1fr)] xl:gap-10">
       <nav aria-labelledby="footer-servicios">
         <h2 id="footer-servicios" class={heading}>
           Servicios
@@ -183,7 +159,7 @@ const meta =
         </ul>
       </div>
 
-      <address class="col-span-2 not-italic sm:col-span-1 lg:col-span-1">
+      <address class="col-span-2 not-italic sm:col-span-1">
         <h2 class={heading}>Contacto</h2>
         <ul class="mt-4 grid gap-3">
           {CONTACT.phones.map((phone) => (
