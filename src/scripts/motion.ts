@@ -18,7 +18,11 @@ import {
   parseCount,
   type CountSpec,
 } from "../lib/motion/count-up";
-import { drawOnViewMode, initDrawOnView } from "../lib/motion/draw-on-view";
+import {
+  drawOnViewMode,
+  drawStateOnScroll,
+  initDrawOnView,
+} from "../lib/motion/draw-on-view";
 import {
   headerMode,
   headerSolidAt,
@@ -178,6 +182,30 @@ function initDrawOnViewElements(): void {
         { rootMargin: "0px 0px -10% 0px", threshold: 0.6 },
       ),
   });
+  // A jump past an armed element crosses no threshold: settle it from the
+  // scroll position instead.
+  const settle = () => {
+    const armed = document.querySelectorAll<Element>(
+      '[data-draw-on-view][data-draw-state="armed"]',
+    );
+    if (armed.length === 0) {
+      window.removeEventListener("scroll", onScroll);
+      return;
+    }
+    for (const element of armed) {
+      const state = drawStateOnScroll(
+        element.getBoundingClientRect(),
+        window.innerHeight,
+      );
+      if (state) element.setAttribute("data-draw-state", state);
+    }
+  };
+  let frame = 0;
+  const onScroll = () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(settle);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
 }
 
 /** Space between each line end of a signature frame and its dot, in px. */

@@ -665,3 +665,102 @@
     transparent 95%
   );
 }
+
+/* Footer signature band (SiteFooter.astro): the lockup in the official
+   colours (stroke and "Emoj" in brand, dots and "Consultora" in ink) and
+   the tagline in large type. */
+.footer-sign .logo-lockup__dot,
+.footer-sign .logo-lockup__words path:nth-child(n + 5) {
+  fill: var(--ink);
+}
+
+.footer-sign__tagline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.24em;
+  font-size: clamp(2.5rem, 1.4rem + 3.6vw, 5.25rem);
+  line-height: 0.98;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  color: var(--ink);
+}
+
+.footer-sign__tagline em {
+  font-weight: 500;
+  color: var(--brand);
+}
+
+.footer-sign__word {
+  display: inline-block;
+}
+
+/* The full stop is the isotype's dot. */
+.footer-sign__dot {
+  align-self: last baseline;
+  width: 0.16em;
+  height: 0.16em;
+  margin-left: -0.2em;
+  border-radius: var(--radius-full);
+  background: var(--ink);
+}
+
+/*
+ * Drawn once when the band comes into view (data-draw-state, set by
+ * src/lib/motion/draw-on-view.ts; never set with reduced motion or without
+ * JavaScript, so the band reads complete). The lockup keeps its own timing
+ * (motion.css); the wave behind draws slowly, the tagline rises word by
+ * word once the logo is written and the dot lands last.
+ */
+.footer-sign__wave path {
+  stroke-dasharray: 1;
+}
+
+[data-draw-state="armed"] .footer-sign__wave path {
+  stroke-dashoffset: -1;
+}
+
+[data-draw-state="armed"] .footer-sign__word,
+[data-draw-state="armed"] .footer-sign__text {
+  opacity: 0;
+  transform: translateY(0.4em);
+}
+
+[data-draw-state="armed"] .footer-sign__dot {
+  transform: scale(0);
+}
+
+[data-draw-state="play"] .footer-sign__wave path {
+  animation: draw-back 2600ms var(--ease-in-out) 200ms both;
+}
+
+[data-draw-state="play"] .footer-sign__word {
+  animation: footer-word 700ms var(--ease-out) 1500ms both;
+}
+
+[data-draw-state="play"] .footer-sign__word:nth-child(2) {
+  animation-delay: 1620ms;
+}
+
+[data-draw-state="play"] .footer-sign__word:nth-child(3) {
+  animation-delay: 1740ms;
+}
+
+[data-draw-state="play"] .footer-sign__dot {
+  animation: pop 420ms var(--ease-spring) 2350ms both;
+}
+
+[data-draw-state="play"] .footer-sign__text {
+  animation: footer-word 700ms var(--ease-out) 2100ms both;
+}
+
+@keyframes footer-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

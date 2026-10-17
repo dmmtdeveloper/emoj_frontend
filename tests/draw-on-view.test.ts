@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   drawOnViewMode,
   drawStateFor,
+  drawStateOnScroll,
   initDrawOnView,
   type DrawTarget,
 } from "../src/lib/motion/draw-on-view";
@@ -70,6 +71,9 @@ function fakeTarget(): DrawTarget & { state: string | undefined } {
     setAttribute(_name: string, value: string) {
       this.state = value;
     },
+    getAttribute() {
+      return this.state ?? null;
+    },
   };
 }
 
@@ -83,6 +87,29 @@ type Emit = (
 ) => void;
 
 describe("initDrawOnView", () => {
+  it("never re-arms an element the scroll fallback already settled", () => {
+    const element = fakeTarget();
+    let emit: Emit = () => undefined;
+    const unobserve = vi.fn();
+    initDrawOnView<Fake>({
+      elements: [element],
+      factory: (callback) => {
+        emit = callback;
+        return { observe: vi.fn(), unobserve };
+      },
+    });
+    element.setAttribute("data-draw-state", "play");
+    emit([
+      {
+        target: element,
+        isIntersecting: false,
+        boundingClientRect: { bottom: 1200 },
+      },
+    ]);
+    expect(element.state).toBe("play");
+    expect(unobserve).toHaveBeenCalledWith(element);
+  });
+
   it("arms each element, plays it when it enters and stops observing it", () => {
     const element = fakeTarget();
     let emit: Emit = () => undefined;
@@ -143,5 +170,21 @@ describe("initDrawOnView", () => {
     const factory = vi.fn();
     initDrawOnView({ elements: [], factory });
     expect(factory).not.toHaveBeenCalled();
+  });
+});
+
+describe("drawStateOnScroll", () => {
+  // A jump past the element (a fast fling, an anchor) crosses no observer
+  // threshold, so the scroll fallback decides from where it ended up.
+  it("plays once the whole element is above the bottom of the viewport", () => {
+    expect(drawStateOnScroll({ top: 300, bottom: 700 }, 800)).toBe("play");
+  });
+
+  it("shows it complete when it was skipped above the viewport", () => {
+    expect(drawStateOnScroll({ top: -900, bottom: -20 }, 800)).toBe("done");
+  });
+
+  it("leaves it to the observer while it is still coming in", () => {
+    expect(drawStateOnScroll({ top: 600, bottom: 1100 }, 800)).toBeNull();
   });
 });
