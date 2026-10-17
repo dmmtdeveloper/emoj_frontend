@@ -317,7 +317,9 @@ const data = pulled(2, 6, [10, 10]);
     // The script starts the lap from nothing; at rest it reads complete.
     if (playing) {
       utils.set(arcs, { draw: "0 0" });
-      utils.set(mark, { draw: "0 0" });
+      // The path starts on the right: an empty draw at its end (the left)
+      // grows back to its start, so the mark is written left to right.
+      utils.set(mark, { draw: "1 1" });
       utils.set(dots, { scale: 0 });
       utils.set(labels, { opacity: 0.45 });
       utils.set([...glows, ...pings, ...messages, ...data, pulse], {
@@ -344,7 +346,7 @@ const data = pulled(2, 6, [10, 10]);
         )
         .add(
           mark,
-          { draw: ["0 0", "0 1"], duration: lap, ease: "linear" },
+          { draw: ["1 1", "0 1"], duration: lap, ease: "linear" },
           L * FROM,
         )
         .add(
