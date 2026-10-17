@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   BURST_GAP,
+  chapterPace,
   gateStep,
   HOLD_MAX,
   INITIAL_GATE,
+  INSIDE_MULTIPLIER,
+  LEAD_SHARE,
   type GateState,
 } from "../src/lib/motion/scroll-gate";
 
@@ -93,5 +96,66 @@ describe("gateStep", () => {
     const step = gateStep(GATES, INITIAL_GATE, { from: 600, to: 1000, now: 0 });
     expect(step.target).toBe(1000);
     expect(step.state.hold?.at).toBe(1000);
+  });
+});
+
+describe("chapterPace", () => {
+  const RANGES = [{ start: 1000, end: 2800 }];
+  const VIEWPORT = 900;
+  const lead = VIEWPORT * LEAD_SHARE;
+
+  it("leaves the scroll alone outside the chapters", () => {
+    expect(
+      chapterPace(RANGES, {
+        from: 200,
+        delta: 400,
+        current: 200,
+        viewport: VIEWPORT,
+      }),
+    ).toBe(600);
+  });
+
+  it("slows each wheel step inside a chapter", () => {
+    expect(
+      chapterPace(RANGES, {
+        from: 1200,
+        delta: 100,
+        current: 1200,
+        viewport: VIEWPORT,
+      }),
+    ).toBe(1200 + 100 * INSIDE_MULTIPLIER);
+  });
+
+  it("never lets the target run more than a lead ahead of the scene", () => {
+    expect(
+      chapterPace(RANGES, {
+        from: 1200,
+        delta: 4000,
+        current: 1200,
+        viewport: VIEWPORT,
+      }),
+    ).toBe(1200 + lead);
+  });
+
+  it("holds still while the target is already a full lead ahead", () => {
+    expect(
+      chapterPace(RANGES, {
+        from: 1200 + lead,
+        delta: 400,
+        current: 1200,
+        viewport: VIEWPORT,
+      }),
+    ).toBe(1200 + lead);
+  });
+
+  it("caps the pace going up too", () => {
+    expect(
+      chapterPace(RANGES, {
+        from: 2500,
+        delta: -4000,
+        current: 2500,
+        viewport: VIEWPORT,
+      }),
+    ).toBe(2500 - lead);
   });
 });

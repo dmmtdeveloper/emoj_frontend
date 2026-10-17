@@ -86,3 +86,38 @@ export function gateStep(
     state: { hold: { at: gate, dir, since: now }, last: now },
   };
 }
+
+/**
+ * Inside a chapter (pinned, then scrolling away) each wheel step moves less,
+ * and the scroll target may run at most this share of the viewport ahead
+ * of where the scroll actually is. The smoothed scroll eases toward the
+ * target, so this caps the speed: a hard spin plays the scene at a steady
+ * pace instead of jumping through it.
+ */
+export const INSIDE_MULTIPLIER = 0.7;
+export const LEAD_SHARE = 0.12;
+
+/** A chapter's stretch of scroll (pinned and leaving), in positions. */
+export interface ChapterRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * The target for a wheel step of `delta` from target `from`, with the
+ * scroll currently at `current`: unchanged outside the chapters, slowed and
+ * capped to a lead inside them.
+ */
+export function chapterPace(
+  ranges: readonly ChapterRange[],
+  step: { from: number; delta: number; current: number; viewport: number },
+): number {
+  const { from, delta, current, viewport } = step;
+  const inside = ranges.some(({ start, end }) => from >= start && from <= end);
+  if (!inside) return from + delta;
+  const to = from + delta * INSIDE_MULTIPLIER;
+  const lead = viewport * LEAD_SHARE;
+  return delta > 0
+    ? Math.max(from, Math.min(to, current + lead))
+    : Math.min(from, Math.max(to, current - lead));
+}
