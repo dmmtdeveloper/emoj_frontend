@@ -594,71 +594,167 @@
 /* ------------------------------------------------------------------ */
 
 @layer components {
+  /* Each stage has its own colour (arc, name, icon, card). */
+  .orb-lane-0 {
+    --lane: var(--brand);
+  }
+
+  .orb-lane-1 {
+    --lane: var(--plum-600);
+  }
+
+  .orb-lane-2 {
+    --lane: var(--sage-600);
+  }
+
+  .orb-lane-3 {
+    --lane: var(--brick-500);
+  }
+
+  .orb-lane-4 {
+    --lane: var(--plum-800);
+  }
+
+  .orb-lane-5 {
+    --lane: var(--sand-700);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .orb-lane-1 {
+      --lane: var(--plum-300);
+    }
+
+    :root:not([data-theme="light"]) .orb-lane-2 {
+      --lane: var(--sage-300);
+    }
+
+    :root:not([data-theme="light"]) .orb-lane-3 {
+      --lane: var(--brick-300);
+    }
+
+    :root:not([data-theme="light"]) .orb-lane-4 {
+      --lane: var(--plum-200);
+    }
+
+    :root:not([data-theme="light"]) .orb-lane-5 {
+      --lane: var(--sand-300);
+    }
+  }
+
+  :root[data-theme="dark"] .orb-lane-1 {
+    --lane: var(--plum-300);
+  }
+
+  :root[data-theme="dark"] .orb-lane-2 {
+    --lane: var(--sage-300);
+  }
+
+  :root[data-theme="dark"] .orb-lane-3 {
+    --lane: var(--brick-300);
+  }
+
+  :root[data-theme="dark"] .orb-lane-4 {
+    --lane: var(--plum-200);
+  }
+
+  :root[data-theme="dark"] .orb-lane-5 {
+    --lane: var(--sand-300);
+  }
+
+  /* The scene is the orbit alone (square), so in focus it takes the
+     screen; sizes inside follow its width (cqw). */
   .orb {
-    display: grid;
-    gap: 8px;
+    position: relative;
+    container-type: inline-size;
   }
 
   .orb-dial {
-    width: 100%;
-    aspect-ratio: 720 / 640;
+    position: relative;
+    aspect-ratio: 1;
+  }
+
+  .orb-dial::before {
+    content: "";
+    position: absolute;
+    inset: -4%;
+    border-radius: var(--radius-full);
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--accent) 30%, transparent),
+      transparent
+    );
+    pointer-events: none;
   }
 
   .orb-svg {
+    position: relative;
     width: 100%;
     height: 100%;
     overflow: visible;
   }
 
-  .orb-halo {
-    fill: color-mix(in oklab, var(--accent) 22%, transparent);
-    stroke: none;
-    filter: blur(28px);
-  }
-
   .orb-outer,
-  .orb-dots {
-    transform-origin: 300px 300px;
+  .orb-dots,
+  .orb-core {
+    transform-origin: 200px 200px;
   }
 
   .orb-outer {
     stroke: color-mix(in oklab, var(--ink) 18%, transparent);
-    stroke-width: 2;
+    stroke-width: 1.5;
     stroke-linecap: round;
-    stroke-dasharray: 0 14;
+    stroke-dasharray: 0 9;
   }
 
   .orb-ring {
-    stroke: color-mix(in oklab, var(--ink) 28%, transparent);
-    stroke-width: 1.5;
-    stroke-dasharray: 3 7;
+    stroke: color-mix(in oklab, var(--ink) 25%, transparent);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 6;
   }
 
   .orb-arc {
-    stroke: var(--brand);
-    stroke-width: 2.5;
+    stroke: var(--lane);
+    stroke-width: 4;
     stroke-linecap: round;
+    filter: drop-shadow(
+      0 0 4px color-mix(in oklab, var(--lane) 55%, transparent)
+    );
   }
 
   .orb-loop {
     stroke: none;
   }
 
-  .orb-pulse {
-    fill: var(--brand);
-    opacity: 0;
-    filter: drop-shadow(
-      0 0 8px color-mix(in oklab, var(--brand) 60%, transparent)
-    );
-  }
-
   .orb-label {
     font-family: var(--font-data);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    fill: var(--ink);
+    fill: var(--lane);
+  }
+
+  .orb-chip {
+    stroke-width: 1;
+    opacity: 0;
+  }
+
+  .orb-chip--message {
+    fill: color-mix(in oklab, var(--brand) 18%, var(--surface-raised));
+    stroke: var(--brand);
+  }
+
+  .orb-chip--data {
+    fill: color-mix(in oklab, var(--sage-600) 22%, var(--surface-raised));
+    stroke: var(--sage-600);
+  }
+
+  .orb-ping {
+    stroke: var(--lane);
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
   }
 
   .orb-tile {
@@ -670,98 +766,231 @@
   .orb-tile__box {
     fill: var(--surface-raised);
     stroke: var(--border-strong);
-    stroke-width: 1;
+    stroke-width: 0.8;
   }
 
   .orb-tile__glow {
-    fill: color-mix(in oklab, var(--brand) 14%, transparent);
-    stroke: var(--brand);
+    fill: color-mix(in oklab, var(--lane) 16%, transparent);
+    stroke: var(--lane);
+    stroke-width: 1.2;
+    opacity: 0.4;
+  }
+
+  .orb-pulse {
+    fill: var(--brand);
+    stroke: var(--surface-raised);
     stroke-width: 1.5;
-    opacity: 0.35;
+    opacity: 0;
+    filter: drop-shadow(
+      0 0 6px color-mix(in oklab, var(--brand) 70%, transparent)
+    );
+  }
+
+  .orb-halo {
+    fill: color-mix(in oklab, var(--brand) 18%, transparent);
+    filter: blur(10px);
   }
 
   .orb-dots {
     stroke: var(--brand);
-    stroke-width: 2.5;
+    stroke-width: 2;
     stroke-linecap: round;
-    stroke-dasharray: 0 9;
+    stroke-dasharray: 0 7;
   }
 
-  .orb-core {
+  .orb-core__disc {
     fill: var(--surface-raised);
     stroke: var(--brand);
-    stroke-width: 3;
+    stroke-width: 2.5;
   }
 
-  .orb-mark path {
+  .orb-mark__stroke {
     stroke: var(--brand);
-    stroke-width: 24;
+    stroke-width: 26;
     stroke-linecap: round;
   }
 
-  .orb-core-label {
+  .orb-mark__dot {
+    fill: var(--ink);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .orb-core__label {
     font-family: var(--font-data);
-    font-size: 10px;
+    font-size: 7px;
     font-weight: 500;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     fill: var(--ink-muted);
   }
 
-  /* The stage captions: listed at rest, one at a time while pinned. */
-  .orb-captions {
+  .orb-ship {
+    position: absolute;
+    top: 63%;
+    left: 50%;
+    translate: -50% 0;
+    padding: 1cqw 2.4cqw;
+    border: 1px solid var(--brand);
+    border-radius: var(--radius-full);
+    font-family: var(--font-data);
+    font-size: 2.4cqw;
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--surface-raised);
+    color: var(--brand);
+  }
+
+  /* The stage cards: listed under the orbit at rest. */
+  .orb-cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-top: 24px;
   }
 
-  :root[data-scenes] .orb-captions {
-    display: grid;
-    min-height: 7.25rem;
-  }
-
-  :root[data-scenes] .orb-caption {
-    grid-area: 1 / 1;
-  }
-
-  .orb-caption {
+  .orb-card {
+    position: relative;
     display: grid;
     gap: 2px;
-    padding-left: 14px;
-    border-left: 2px solid var(--brand);
+    padding: 12px 16px;
+    border: 1px solid color-mix(in oklab, var(--lane) 40%, var(--border));
+    border-left: 3px solid var(--lane);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    box-shadow: 0 16px 36px -22px
+      color-mix(in oklab, var(--plum-950) 50%, transparent);
   }
 
-  .orb-caption__num {
+  .orb-card__num {
     font-family: var(--font-data);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.16em;
     font-variant-numeric: tabular-nums;
-    color: var(--brand);
+    color: var(--lane);
   }
 
-  .orb-caption__num span {
+  .orb-card__num span {
     font-weight: 500;
     color: var(--ink-muted);
   }
 
-  .orb-caption__title {
+  .orb-card__title {
     font-size: 18px;
-    line-height: 1.3;
+    line-height: 1.25;
     font-weight: 600;
     color: var(--ink);
   }
 
-  .orb-caption__text {
-    max-width: 48ch;
+  .orb-card__text {
     font-size: 15px;
     line-height: 1.5;
     color: var(--ink-muted);
   }
 
+  .orb-stamp {
+    position: absolute;
+    right: -10px;
+    bottom: -12px;
+    rotate: -8deg;
+    padding: 4px 12px;
+    border: 2px solid var(--brand);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-data);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    background: var(--surface-raised);
+    color: var(--brand);
+  }
+
+  /* While the scene plays on phones: one card at a time under the orbit. */
+  :root[data-scenes] .orb-cards {
+    display: grid;
+  }
+
+  :root[data-scenes] .orb-card {
+    grid-area: 1 / 1;
+  }
+
+  /* Desktop with the scene playing: each card opens beside its stage,
+     out over the space the focus leaves around the orbit. */
+  @media (min-width: 64rem) {
+    :root[data-scenes] .orb-cards {
+      position: absolute;
+      inset: 0;
+      display: block;
+      margin: 0;
+      pointer-events: none;
+    }
+
+    :root[data-scenes] .orb-card {
+      position: absolute;
+      width: 44cqw;
+      padding: 2cqw 2.6cqw;
+      translate: 0 -50%;
+    }
+
+    :root[data-scenes] .orb-card__num {
+      font-size: 2.1cqw;
+    }
+
+    :root[data-scenes] .orb-card__title {
+      font-size: 3.4cqw;
+    }
+
+    :root[data-scenes] .orb-card__text {
+      font-size: 2.6cqw;
+    }
+
+    :root[data-scenes] .orb-stamp {
+      font-size: 2.1cqw;
+    }
+
+    /* Stages on the right open to the right of their name, the others to
+       the left (names at radius 158 of the 400 box). */
+    :root[data-scenes] .orb-card--0 {
+      top: 15.8%;
+      left: 69.75%;
+    }
+
+    :root[data-scenes] .orb-card--1 {
+      top: 50%;
+      left: 89.5%;
+    }
+
+    :root[data-scenes] .orb-card--2 {
+      top: 84.2%;
+      left: 69.75%;
+    }
+
+    :root[data-scenes] .orb-card--3 {
+      top: 84.2%;
+      right: 69.75%;
+    }
+
+    :root[data-scenes] .orb-card--4 {
+      top: 50%;
+      right: 89.5%;
+    }
+
+    :root[data-scenes] .orb-card--5 {
+      top: 15.8%;
+      right: 69.75%;
+    }
+  }
+
+  /* Without the focus the orbit is as wide as the column, so it leaves
+     room on both sides for the stage names (they sit outside the ring). */
   @media (max-width: 63.99rem) {
+    .orb-dial {
+      margin-inline: 11%;
+    }
+
     .orb-label {
-      font-size: 18px;
+      font-size: 12px;
     }
   }
 }
