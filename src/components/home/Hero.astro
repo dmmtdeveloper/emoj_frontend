@@ -345,16 +345,16 @@ const secondary = withTarget(copy.secondaryCta);
 
   @media (prefers-reduced-motion: no-preference) {
     .hero__media[data-state="active"] {
-      animation: wipe-right 1300ms var(--ease-in-out) both;
+      animation: wipe-right 1000ms var(--ease-in-out) both;
     }
 
     .hero__media[data-state] :global(.hero__img) {
       transform-origin: var(--zoom-origin, center);
-      animation: hero-zoom var(--hero-zoom-ms, 9000ms) linear both;
+      animation: hero-zoom var(--hero-zoom-ms, 4500ms) linear both;
     }
 
     .hero__frame[data-slideshow] .hero__progress[data-run] {
-      animation: hero-fill var(--hero-slide-ms, 6500ms) linear both;
+      animation: hero-fill var(--hero-slide-ms, 3250ms) linear both;
     }
 
     /*

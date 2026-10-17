@@ -9,7 +9,7 @@
 import { createSlideshow } from "../lib/motion/slideshow";
 
 /** Time each photo stays before the next one wipes in. */
-const SLIDE_MS = 6500;
+const SLIDE_MS = 3250;
 
 function init(): void {
   const frame = document.querySelector<HTMLElement>("[data-hero]");
