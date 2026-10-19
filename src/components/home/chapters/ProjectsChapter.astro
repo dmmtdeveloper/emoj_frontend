@@ -190,7 +190,7 @@ const service = (project: ProjectSummary) => {
       overflow = Math.max(0, end - list.clientWidth);
       track.style.setProperty(
         "--ch-pin",
-        `${Math.round(overflow + window.innerHeight * PAUSE)}px`,
+        `${overflow + window.innerHeight * PAUSE}px`,
       );
       track.style.setProperty("--reel-overflow", String(overflow));
       track.style.setProperty(
