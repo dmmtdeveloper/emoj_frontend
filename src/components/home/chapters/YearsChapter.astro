@@ -1,128 +1,124 @@
 ---
 /**
- * Chapter 06 · Quiénes somos. The team photo leads: large, at its own
- * proportions so no one is cropped, in a signature-shaped frame. The photo
- * fades into a plum band that rises just over its lower edge (below the
- * faces): there the big "30+ años" sits on the photo, the facts sit beside
- * it and a dimension line ("cota") runs from 0 to 30 years. While the chapter
- * is pinned a marker runs along the cota and the photo turns to colour
- * with it, the big figure counts the years up to "30+", and the facts land one
- * by one with their own figures.
+ * Chapter 06 · Quiénes somos, "30 años". A cream sheet with a huge "30"
+ * cut out of it: the team photo shows through the figure. The scroll dives
+ * into the stroke of the "0" until the photo fills the screen, and then who
+ * we are comes in over it: the years, the key facts (counting up with the
+ * scroll), the mission and a link to the team.
  *
- * The photo keeps its alt text; the rest of the scene is decorative.
+ * A full-bleed chapter: the same track and pinned stage as the others
+ * (src/scripts/chapters/scrub.ts), with its own head instead of
+ * Chapter.astro's grid. The cut-out sheet is an SVG mask; the script
+ * measures where the "0" has ink (a canvas probe of the same text) and the
+ * timeline zooms into that point. Only verifiable facts.
+ *
+ * Without the scenes mark (no JavaScript, reduced motion) the chapter is
+ * the finished state: the photo with the facts and the mission on it.
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import team from "../../../assets/photos/equipo-emoj.jpg";
 import { CLIENTS, MISSION } from "../../../lib/site";
-import Chapter from "./Chapter.astro";
 
-const YEARS = 30;
 const FACTS = [
-  { value: 7, label: "especialidades" },
-  { value: 2, label: "regiones" },
+  { value: 7, label: "especialidades coordinadas por un mismo equipo" },
+  { value: 2, label: "regiones: Valparaíso y Coquimbo" },
   { value: CLIENTS.length, label: "clientes de referencia" },
 ] as const;
-/** Ticks of the cota, every ten years. */
-const TICKS = [0, 10, 20, 30];
-const START = 16;
-const END = 464;
-const x = (year: number) => START + (year / YEARS) * (END - START);
 ---
 
-<Chapter
-  id="treinta-anos"
-  number="06"
-  label="Quiénes somos"
-  navSection="/nosotros"
-  class="ch-years"
+<section
+  class="ch-track years-scene"
+  aria-labelledby="treinta-anos"
+  data-track
+  data-nav-section="/nosotros"
+  data-scene-years
 >
-  <Fragment slot="title">
-    Más de 30 años acercando la <em>ingeniería</em>.
-  </Fragment>
+  <div class="years-stage" data-stage>
+    <div class="years-photo">
+      <Image
+        src={team}
+        alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
+        widths={[640, 960, 1280, 1600, 2000]}
+        sizes="100vw"
+        loading="lazy"
+        class="years-photo__img"
+      />
+      <span class="years-photo__veil" aria-hidden="true"></span>
+    </div>
 
-  <div class="yrs" slot="scene" data-scene-years>
-    <div class="yrs-frame">
-      <div class="yrs-photo">
-        <Image
-          src={team}
-          alt="El equipo de EMOJ Consultora: nueve personas de pie, una junto a otra."
-          widths={[480, 800, 1200, 1600, 2000]}
-          sizes="(min-width: 1024px) 60vw, 92vw"
-          loading="lazy"
-          class="yrs-photo__img yrs-photo__img--base"
-        />
-        {/* The same photo in colour, revealed as the cota runs. */}
-        <Image
-          src={team}
-          alt=""
-          widths={[480, 800, 1200, 1600, 2000]}
-          sizes="(min-width: 1024px) 60vw, 92vw"
-          loading="lazy"
-          class="yrs-photo__img yrs-photo__img--colour"
-          data-photo
-        />
-      </div>
+    {/* The cream sheet with the figure cut out (decorative). */}
+    <div class="years-cut" aria-hidden="true">
+      <svg class="years-cut__svg" data-years-svg>
+        <defs>
+          <mask id="years-mask" maskUnits="userSpaceOnUse">
+            <rect class="years-cut__full" fill="white"></rect>
+            <text
+              class="years-cut__text"
+              fill="black"
+              text-anchor="middle"
+              data-years-text
+            >
+              30
+            </text>
+          </mask>
+        </defs>
+        <g data-years-zoom>
+          <rect class="years-cut__sheet" mask="url(#years-mask)"></rect>
+          <text class="years-cut__outline" text-anchor="middle" data-years-text>
+            30
+          </text>
+        </g>
+      </svg>
+    </div>
+    <div class="years-around" aria-hidden="true">
+      <span>Más de</span>
+      <span>años acercando la ingeniería</span>
+    </div>
 
-      {/* The plum band: it rises over the photo's lower edge only (below the
-        faces), with the years, the facts and the cota. */}
-      <div class="yrs-panel">
-        <div class="yrs-data">
-          <p class="yrs-count" aria-hidden="true">
-            <span data-count>{YEARS}</span>
-            <small>+ años</small>
-          </p>
-          <dl class="yrs-facts">
-            {FACTS.map(({ value, label }) => (
-              <div class="yrs-fact" data-fact>
-                <dt>{label}</dt>
-                <dd data-value={value}>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <svg
-          class="yrs-cota"
-          viewBox="0 0 480 64"
-          fill="none"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <line class="yrs-cota__base" x1={START} y1="24" x2={END} y2="24" />
-          <line
-            class="yrs-cota__trail"
-            x1={START}
-            y1="24"
-            x2={END}
-            y2="24"
-            data-trail
-          />
-          {TICKS.map((year) => (
-            <g class="yrs-tick" data-tick>
-              <line x1={x(year) - 6} y1="30" x2={x(year) + 6} y2="18" />
-              <text x={x(year)} y="54" text-anchor="middle">
-                {year}
-              </text>
-            </g>
-          ))}
-          <circle class="yrs-cota__marker" cx={END} cy="24" r="6" data-marker />
-        </svg>
+    <div class="years-content container-site" data-years-content>
+      <div class="years-content__lead">
+        <p class="years-eyebrow">
+          <span>06</span> Quiénes somos
+        </p>
+        <h2 id="treinta-anos" class="years-title">
+          Más de 30 años acercando la <em>ingeniería</em>.
+        </h2>
+        <p class="years-text">
+          Nacimos en Quilpué, en la Región de Valparaíso. Nuestra misión:{" "}
+          {MISSION.charAt(0).toLowerCase() + MISSION.slice(1)}
+        </p>
+        <a href="/nosotros" class="years-link">
+          Conoce al equipo
+          <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+        </a>
       </div>
+      <dl class="years-facts">
+        {FACTS.map(({ value, label }) => (
+          <div class="years-fact">
+            <dt>{label}</dt>
+            <dd>
+              <span aria-hidden="true" data-years-count={value}>
+                {value}
+              </span>
+              <span class="sr-only">{value}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   </div>
-
-  <p class="ch-text">
-    <strong>Nacimos en Quilpué, en la Región de Valparaíso.</strong> Nuestra
-    misión: {MISSION.charAt(0).toLowerCase() + MISSION.slice(1)}
-  </p>
-  <a href="/nosotros" class="ch-more">
-    Conoce al equipo
-    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
-  </a>
-</Chapter>
+</section>
 
 <script>
-  import { stagger, utils } from "animejs";
+  import { utils } from "animejs";
+  import {
+    countShown,
+    diveTarget,
+    diveTransform,
+    inkSpan,
+    zoomScale,
+  } from "../../../lib/motion/chapters";
   import {
     eachScene,
     SCENE_LENGTH,
@@ -131,91 +127,170 @@ const x = (year: number) => START + (year / YEARS) * (END - START);
   } from "../../../scripts/chapters/scrub";
 
   const L = SCENE_LENGTH;
-  const RUN_FROM = L * 0.14;
-  const RUN = L * 0.5;
-  const FACTS_FROM = RUN_FROM + RUN + L * 0.04;
-  const YEARS = 30;
+  const FIGURE = "30";
+  const FONT_WEIGHT = 600;
+  const FONT_FAMILY = '"Space Grotesk"';
+  /** The dive, as shares of the pinned interval. */
+  const ZOOM_FROM = 0.1;
+  const ZOOM_TO = 0.6;
+  /** The content comes in, and the facts count up, over these shares. */
+  const CONTENT = [0.6, 0.8] as const;
+  const COUNT = [0.66, 0.9] as const;
 
-  eachScene("[data-scene-years]", (root, $, $$) => {
-    const photo = $("[data-photo]");
-    const trail = $<SVGLineElement>("[data-trail]");
-    const marker = $<SVGCircleElement>("[data-marker]");
-    const ticks = $$<SVGGElement>("[data-tick]");
-    const count = $("[data-count]");
-    const facts = $$("[data-fact]");
-    const values = facts.map((fact) => fact.querySelector("dd"));
-    const start = trail.x1.baseVal.value;
-    const end = trail.x2.baseVal.value;
+  /** Where `time` is inside [from, to] (shares of L), eased out, 0..1. */
+  const outCubicIn = (time: number, [from, to]: readonly [number, number]) => {
+    const x = Math.min(1, Math.max(0, (time - from * L) / ((to - from) * L)));
+    return 1 - Math.pow(1 - x, 3);
+  };
 
-    if (scenesOn()) {
-      utils.set(photo, { clipPath: "inset(0% 100% 0% 0%)" });
-      utils.set(trail, { x2: start });
-      utils.set(marker, { cx: start });
-      utils.set(ticks, { opacity: 0.35 });
-      utils.set(facts, { opacity: 0, translateY: 12 });
-    }
+  eachScene("[data-scene-years]", (track, $, $$) => {
+    // At rest the chapter is its finished state: nothing to play.
+    if (!scenesOn()) return;
+    const stage = $("[data-stage]");
+    const svg = $<SVGSVGElement>("[data-years-svg]");
+    const zoomGroup = $<SVGGElement>("[data-years-zoom]");
+    const texts = $$<SVGTextElement>("[data-years-text]");
+    const content = $("[data-years-content]");
+    const counts = $$("[data-years-count]");
+    const values = counts.map((el) => Number(el.dataset["yearsCount"]) || 0);
 
-    // Figures follow the timeline's time, so a scrub back counts down.
-    const write = (time: number) => {
-      const run = Math.min(1, Math.max(0, (time - RUN_FROM) / RUN));
-      const years = String(Math.round(run * YEARS)).padStart(2, "0");
-      if (count.textContent !== years) count.textContent = years;
-      values.forEach((dd, i) => {
-        if (!dd) return;
-        const from = FACTS_FROM + i * L * 0.05;
-        const share = Math.min(1, Math.max(0, (time - from) / (L * 0.08)));
-        const value = Number(dd.dataset["value"] ?? 0);
-        const text = String(Math.round(share * value));
-        if (dd.textContent !== text) dd.textContent = text;
-      });
+    let maxScale = 60;
+    let origin = { x: 0, y: 0 };
+    // The dive's own value (0..1), tweened by the timeline.
+    const dive = { zoom: 0 };
+
+    const draw = () => {
+      zoomGroup.setAttribute(
+        "transform",
+        diveTransform(origin, zoomScale(dive.zoom, maxScale)),
+      );
+      const state = dive.zoom >= 1 ? "through" : "sheet";
+      if (stage.dataset["state"] !== state) stage.dataset["state"] = state;
     };
 
-    const timeline = scrubbedScene(root, (tl) => {
+    // Lays out the cut-out "30" to the stage and finds a point with ink
+    // inside the "0" (the same text drawn on a canvas, one row of pixels).
+    const layout = () => {
+      const width = stage.clientWidth;
+      const height = stage.clientHeight;
+      if (width === 0 || height === 0) return;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      for (const rect of svg.querySelectorAll("rect")) {
+        rect.setAttribute("width", String(width));
+        rect.setAttribute("height", String(height));
+      }
+
+      const size = Math.round(Math.min(width * 0.8, height * 0.8));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return;
+      ctx.font = `${FONT_WEIGHT} ${size}px ${FONT_FAMILY}`;
+      const metrics = ctx.measureText(FIGURE);
+      const ascent = metrics.actualBoundingBoxAscent || size * 0.7;
+      const baseline = Math.round(height / 2 + ascent / 2);
+      for (const text of texts) {
+        text.setAttribute("x", String(width / 2));
+        text.setAttribute("y", String(baseline));
+        text.setAttribute("font-size", String(size));
+      }
+
+      // Where the "0" sits, and one row of pixels across its middle.
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(FIGURE, width / 2, baseline);
+      const zeroLeft =
+        width / 2 - metrics.width / 2 + ctx.measureText("3").width;
+      const row = Math.round(baseline - ascent / 2);
+      const left = Math.max(0, Math.round(zeroLeft));
+      const span = Math.max(
+        1,
+        Math.min(width - left, Math.round(ctx.measureText("0").width)),
+      );
+      const pixels = ctx.getImageData(left, row, span, 1).data;
+      ({ origin, maxScale } = diveTarget({
+        width,
+        height,
+        left,
+        row,
+        ink: inkSpan(pixels, span),
+      }));
+      draw();
+    };
+    layout();
+    // The figure is measured with its own font; redo it once loaded.
+    void document.fonts
+      ?.load(`${FONT_WEIGHT} 100px ${FONT_FAMILY}`, FIGURE)
+      .then(layout);
+    let timer = 0;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(layout, 120);
+    });
+
+    utils.set(stage, {
+      "--years-around": 1,
+      "--years-outline": 1,
+      "--years-photo": 1.22,
+      "--years-veil": 0,
+      "--years-content": 0,
+    });
+
+    const timeline = scrubbedScene(track, (tl) => {
       tl.add(
-        trail,
-        { x2: [start, end], duration: RUN, ease: "linear" },
-        RUN_FROM,
+        stage,
+        { "--years-around": [1, 0], duration: L * 0.12, ease: "linear" },
+        L * 0.04,
       )
+        // The outline that draws the figure goes as the dive starts.
         .add(
-          marker,
-          { cx: [start, end], duration: RUN, ease: "linear" },
-          RUN_FROM,
+          stage,
+          { "--years-outline": [1, 0], duration: L * 0.1, ease: "linear" },
+          L * ZOOM_FROM,
         )
         .add(
-          photo,
+          dive,
           {
-            clipPath: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"],
-            duration: RUN,
-            ease: "linear",
+            zoom: [0, 1],
+            duration: L * (ZOOM_TO - ZOOM_FROM),
+            ease: "inOutCubic",
           },
-          RUN_FROM,
-        );
-      ticks.forEach((tick, i) => {
-        const when = RUN_FROM + (i / Math.max(1, ticks.length - 1)) * RUN;
-        tl.add(
-          tick,
+          L * ZOOM_FROM,
+        )
+        .add(
+          stage,
+          { "--years-photo": [1.22, 1], duration: L * 0.65, ease: "outCubic" },
+          L * ZOOM_FROM,
+        )
+        .add(
+          stage,
+          { "--years-veil": [0, 1], duration: L * 0.22, ease: "linear" },
+          L * 0.5,
+        )
+        .add(
+          stage,
           {
-            opacity: [0.35, 1],
-            scale: [
-              { to: 1.3, duration: L * 0.015 },
-              { to: 1, duration: L * 0.03 },
-            ],
+            "--years-content": [0, 1],
+            duration: L * (CONTENT[1] - CONTENT[0]),
+            ease: "outCubic",
           },
-          when,
+          L * CONTENT[0],
         );
-      });
-      tl.add(
-        facts,
-        {
-          opacity: [0, 1],
-          translateY: [12, 0],
-          duration: L * 0.06,
-          delay: stagger(L * 0.05),
-          ease: "outCubic",
-        },
-        FACTS_FROM,
-      );
     });
+
+    // The dive is an SVG transform, not a CSS one: Chrome repaints the mask
+    // correctly when the attribute changes, also on a jump back. Figures
+    // follow the timeline's time, so a scrub back counts down.
+    const write = (time: number) => {
+      draw();
+      content.inert = outCubicIn(time, CONTENT) < 0.5;
+      const counted = outCubicIn(time, COUNT);
+      counts.forEach((el, i) => {
+        const label = countShown(values[i] ?? 0, counted);
+        if (el.textContent !== label) el.textContent = label;
+      });
+    };
     timeline.onUpdate = (self) => write(self.currentTime);
     write(timeline.currentTime);
   });

@@ -1,20 +1,33 @@
 ---
 /**
- * Chapter 05 · Proyectos. A viewer with crop marks, like a photo laid on a
- * drawing sheet: the covers of the published projects (featured first)
- * pass one by one while the chapter is pinned, each one wiping in from the
- * left behind a pen stroke, with its service, place and size under it and
- * a strip of thumbnails marking which one is showing.
+ * Chapter 05 · Proyectos, "Ya son obra.". A plum stage pins and the
+ * vertical scroll drives a horizontal reel of the published projects
+ * (featured first). Each card rises into place from the bottom as it comes
+ * in from the right, like a building going up, while its photo drifts
+ * inside the card (parallax) and its headline figure settles in. Behind the
+ * reel a huge outlined "obra" slides slower, for depth. The last tile leads
+ * to every project.
  *
- * The viewer is decorative; the list under the title holds the links.
+ * A full-bleed chapter: the same track and pinned stage as the others
+ * (src/scripts/chapters/scrub.ts), with its own head (label, counter and
+ * title) instead of Chapter.astro's grid. The track's tail is as long as
+ * the reel is wider than the screen (plus a short pause at each end), so
+ * one pixel of scroll moves the reel about one pixel.
+ *
+ * Every card is one link, always in the page; focusing a card that is off
+ * screen scrolls the page to it. The photo of the card being opened morphs
+ * into the cover of the project page (src/scripts/project-transition.ts).
+ *
+ * Without the scenes mark (no JavaScript, reduced motion) the reel is a
+ * plain horizontal scroller with snap points.
  */
-import { ArrowRight, ArrowUpRight } from "@lucide/astro";
+import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import type { ProjectSummary } from "../../../lib/api/client";
 import { fitWidth } from "../../../lib/content/format";
 import { projectMagnitude } from "../../../lib/content/magnitude";
 import { mediaPath } from "../../../lib/content/media";
-import Chapter from "./Chapter.astro";
+import { projectTransitionName } from "../../../lib/content/transition";
 
 interface Props {
   projects: ProjectSummary[];
@@ -22,12 +35,8 @@ interface Props {
 }
 
 const { projects, serviceTitles } = Astro.props;
-/** At most this many projects pass in the viewer. */
-const SHOWN = 5;
-const shown = projects.filter((project) => project.cover).slice(0, SHOWN);
-const pad = (n: number) => String(n).padStart(2, "0");
-const total = pad(shown.length);
-const place = (project: ProjectSummary) =>
+const total = String(projects.length).padStart(2, "0");
+const facts = (project: ProjectSummary) =>
   [project.location || project.region, project.year]
     .filter(Boolean)
     .join(" · ");
@@ -37,117 +46,114 @@ const service = (project: ProjectSummary) => {
 };
 ---
 
-<Chapter
-  id="proyectos-destacados"
-  number="05"
-  label="Proyectos"
-  navSection="/proyectos"
-  tone="sunken"
-  class="ch-projects"
+<section
+  class="ch-track reel-scene"
+  aria-labelledby="proyectos-destacados"
+  data-track
+  data-nav-section="/proyectos"
+  data-scene-reel
 >
-  <Fragment slot="title">
-    Ya son <em>obra</em>.
-  </Fragment>
+  <div class="reel-stage" data-stage>
+    <p class="reel-ghost" aria-hidden="true" data-reel-ghost>
+      obra
+    </p>
 
-  {shown.length > 0 && (
-    <div class="prj" slot="scene" aria-hidden="true" data-scene-projects>
-      <div class="prj-frame">
-        <span class="prj-mark prj-mark--tl" />
-        <span class="prj-mark prj-mark--tr" />
-        <span class="prj-mark prj-mark--bl" />
-        <span class="prj-mark prj-mark--br" />
-        <div class="prj-view">
-          {shown.map((project, i) =>
-            project.cover ? (
-              <div class="prj-slide" data-slide>
-                <Image
-                  src={mediaPath("proyectos", project.slug, project.cover)}
-                  alt=""
-                  {...fitWidth(project.cover, 1200)}
-                  widths={[480, 800, 1200]}
-                  sizes="(min-width: 1024px) 40vw, 92vw"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  class="prj-slide__img"
-                />
-                <span class="prj-slide__pen" data-pen />
-              </div>
-            ) : null,
-          )}
-        </div>
+    <div class="reel-head container-site">
+      <div class="reel-head__titles">
+        <p class="reel-eyebrow">
+          <span>05</span> Proyectos ·
+          <span class="reel-eyebrow__count" aria-hidden="true">
+            <span data-reel-count>01</span> / {total}
+          </span>
+          <span class="sr-only">{projects.length} proyectos</span>
+        </p>
+        <h2 id="proyectos-destacados" class="reel-title">
+          Ya son <em>obra</em>.
+        </h2>
       </div>
+      <a href="/proyectos" class="reel-all">
+        Ver todos
+        <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+      </a>
+    </div>
 
-      <div class="prj-captions">
-        {shown.map((project, i) => {
+    <div class="reel-window">
+      <ul class="reel-list" data-reel-list>
+        {projects.map((project, i) => {
           const magnitude = projectMagnitude(project.magnitude);
           return (
-            <div class="prj-caption" data-caption>
-              <p class="prj-caption__meta">
-                <span>
-                  {pad(i + 1)} / {total}
+            <li class="reel-card" data-reel-card>
+              <a href={`/proyectos/${project.slug}`} class="reel-card__link">
+                <span class="reel-card__media">
+                  {project.cover && (
+                    <Image
+                      src={mediaPath("proyectos", project.slug, project.cover)}
+                      alt=""
+                      {...fitWidth(project.cover, 1100)}
+                      widths={[360, 540, 720, 1100]}
+                      sizes="(min-width: 1024px) 34vw, 80vw"
+                      loading={i < 2 ? "eager" : "lazy"}
+                      data-vt={projectTransitionName(project.slug)}
+                      class="vt-project reel-card__img"
+                    />
+                  )}
+                  <span class="reel-card__veil" aria-hidden="true" />
                 </span>
-                {service(project)}
-              </p>
-              <p class="prj-caption__title">{project.title}</p>
-              <p class="prj-caption__facts">
-                {place(project)}
-                {magnitude && (
-                  <span>
-                    {magnitude.value}
-                    {magnitude.unit && ` ${magnitude.unit}`}
-                  </span>
+                {service(project) && (
+                  <span class="reel-card__chip">{service(project)}</span>
                 )}
-              </p>
-            </div>
+                <span class="reel-card__body">
+                  {magnitude && (
+                    <span class="reel-card__figure">
+                      {magnitude.label && (
+                        <span class="reel-card__figure-label">
+                          {magnitude.label}
+                        </span>
+                      )}
+                      <span class="reel-card__figure-value">
+                        {magnitude.value}
+                        {magnitude.unit && <small>{magnitude.unit}</small>}
+                      </span>
+                    </span>
+                  )}
+                  <span class="reel-card__title">{project.title}</span>
+                  {facts(project) && (
+                    <span class="reel-card__facts">{facts(project)}</span>
+                  )}
+                </span>
+              </a>
+            </li>
           );
         })}
-      </div>
-
-      <div class="prj-strip">
-        {shown.map((project) =>
-          project.cover ? (
-            <Image
-              src={mediaPath("proyectos", project.slug, project.cover)}
-              alt=""
-              {...fitWidth(project.cover, 240)}
-              widths={[120, 240]}
-              sizes="96px"
-              loading="lazy"
-              class="prj-strip__thumb"
-            />
-          ) : null,
-        )}
-        <span class="prj-strip__marker" data-marker />
-      </div>
+        <li class="reel-card reel-card--more" data-reel-card>
+          <a href="/proyectos" class="reel-card__link">
+            <span class="reel-card__more-title">
+              Todos los proyectos que ya son obra
+            </span>
+            <span class="reel-card__more-go" aria-hidden="true">
+              <ArrowRight size={28} stroke-width={1.75} />
+            </span>
+          </a>
+        </li>
+      </ul>
     </div>
-  )}
 
-  <p class="ch-text">
-    <strong>Obras sanitarias, viales y estructurales</strong> que diseñamos y
-    que hoy están construidas en las regiones de Valparaíso y Coquimbo.
-  </p>
-  <ul class="ch-list">
-    {shown.map((project) => (
-      <li class="ch-row">
-        <a href={`/proyectos/${project.slug}`} class="ch-row__link">
-          <span class="ch-row__num">{project.year ?? "—"}</span>
-          <span class="ch-row__title">{project.title}</span>
-          <ArrowUpRight size={16} stroke-width={1.75} aria-hidden="true" />
-          {service(project) && (
-            <span class="ch-row__meta">{service(project)}</span>
-          )}
-        </a>
-      </li>
-    ))}
-  </ul>
-  <a href="/proyectos" class="ch-more">
-    Ver todos los proyectos
-    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
-  </a>
-</Chapter>
+    <div class="reel-foot container-site" aria-hidden="true">
+      <span class="reel-foot__track">
+        <span></span>
+      </span>
+      <span class="reel-foot__hint">Sigue bajando</span>
+    </div>
+  </div>
+</section>
 
 <script>
-  import { utils } from "animejs";
-  import { stageTimes } from "../../../lib/motion/chapters";
+  import {
+    reelCard,
+    reelCurrent,
+    reelDrift,
+    scrollForProgress,
+  } from "../../../lib/motion/chapters";
   import {
     eachScene,
     SCENE_LENGTH,
@@ -155,78 +161,115 @@ const service = (project: ProjectSummary) => {
     scrubbedScene,
   } from "../../../scripts/chapters/scrub";
 
-  eachScene("[data-scene-projects]", (root, $, $$) => {
-    const slides = $$("[data-slide]");
-    const pens = $$("[data-pen]");
-    const captions = $$("[data-caption]");
-    const marker = $("[data-marker]");
-    const count = slides.length;
-    if (count === 0) return;
-    marker.style.setProperty("width", `${100 / count}%`);
-    const L = SCENE_LENGTH;
-    // The first project is showing at rest; the others come in turn.
-    const starts = stageTimes(Math.max(1, count - 1), 0.16, 0.86);
-    const span = (L * 0.7) / Math.max(1, count - 1);
+  /** Pauses at the start and end of the pin, as shares of the progress. */
+  const LEAD_IN = 0.06;
+  const LEAD_OUT = 0.94;
+  /** Extra pin for those pauses, as a share of the screen's height. */
+  const PAUSE = 0.35;
 
-    if (scenesOn()) {
-      slides.forEach((slide, i) => {
-        if (i > 0) utils.set(slide, { clipPath: "inset(0% 100% 0% 0%)" });
+  eachScene("[data-scene-reel]", (track, $, $$) => {
+    // At rest the reel is a plain scroller: nothing to play.
+    if (!scenesOn()) return;
+    const list = $("[data-reel-list]");
+    const count = $("[data-reel-count]");
+    const cards = $$("[data-reel-card]");
+    let overflow = 0;
+    let viewport = 1;
+    let lefts: number[] = [];
+
+    // The reel's layout: how far it travels and where each card rises in.
+    // The travel itself (`--reel-t`) is the scene's timeline.
+    const measure = () => {
+      viewport = window.innerWidth;
+      lefts = cards.map((card) => card.offsetLeft);
+      // The end of the last card plus the container's right gutter (the
+      // list's scrollWidth leaves that padding out).
+      const gutter = parseFloat(getComputedStyle(list).paddingRight) || 0;
+      const last = cards.at(-1);
+      const end = (last?.offsetLeft ?? 0) + (last?.offsetWidth ?? 0) + gutter;
+      overflow = Math.max(0, end - list.clientWidth);
+      track.style.setProperty(
+        "--ch-pin",
+        `${Math.round(overflow + window.innerHeight * PAUSE)}px`,
+      );
+      track.style.setProperty("--reel-overflow", String(overflow));
+      track.style.setProperty(
+        "--reel-drift",
+        String(reelDrift(overflow, viewport)),
+      );
+      cards.forEach((card, i) => {
+        const at = reelCard({
+          left: lefts[i] ?? 0,
+          width: card.offsetWidth,
+          viewport,
+          overflow,
+        });
+        card.style.setProperty("--reel-at", String(at.at));
+        card.style.setProperty("--reel-span", String(at.span));
+        card.style.setProperty("--reel-c", String(at.center));
       });
-      utils.set(captions.slice(1), { opacity: 0, translateY: 10 });
-    }
+    };
+    measure();
+    let timer = 0;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(measure, 120);
+    });
+    void document.fonts?.ready.then(measure);
 
-    scrubbedScene(root, (tl) => {
-      for (let i = 1; i < count; i++) {
-        const at = starts[i - 1] ?? 0;
-        const wipe = span * 0.55;
-        tl.add(
-          slides[i] ?? [],
-          {
-            clipPath: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"],
-            duration: wipe,
-            ease: "inOutCubic",
-          },
-          at,
-        )
-          .add(
-            slides[i]?.querySelector("img") ?? [],
-            { scale: [1.12, 1], duration: span * 0.8, ease: "outCubic" },
-            at,
-          )
-          .add(
-            pens[i] ?? [],
-            {
-              left: ["0%", "100%"],
-              opacity: [
-                { to: 1, duration: wipe * 0.1 },
-                { to: 1, duration: wipe * 0.8 },
-                { to: 0, duration: wipe * 0.1 },
-              ],
-              duration: wipe,
-              ease: "inOutCubic",
-            },
-            at,
-          )
-          .add(
-            captions[i - 1] ?? [],
-            { opacity: [1, 0], translateY: [0, -8], duration: span * 0.2 },
-            at,
-          )
-          .add(
-            captions[i] ?? [],
-            { opacity: [0, 1], translateY: [10, 0], duration: span * 0.25 },
-            at + span * 0.25,
-          )
-          .add(
-            marker,
-            {
-              translateX: [`${(i - 1) * 100}%`, `${i * 100}%`],
-              duration: wipe,
-              ease: "inOutCubic",
-            },
-            at,
-          );
+    const from = SCENE_LENGTH * LEAD_IN;
+    const timeline = scrubbedScene(track, (tl) => {
+      tl.add(
+        track,
+        {
+          "--reel-t": [0, 1],
+          duration: SCENE_LENGTH * (LEAD_OUT - LEAD_IN),
+          ease: "linear",
+        },
+        from,
+      );
+    });
+
+    let shown = "";
+    const travel = (time: number) =>
+      Math.min(
+        1,
+        Math.max(0, (time - from) / (SCENE_LENGTH * (LEAD_OUT - LEAD_IN))),
+      );
+    const write = (time: number) => {
+      const current = reelCurrent(lefts, -travel(time) * overflow, viewport);
+      const label = String(current).padStart(2, "0");
+      if (label !== shown) {
+        shown = label;
+        count.textContent = label;
       }
+    };
+    timeline.onUpdate = (self) => write(self.currentTime);
+    write(timeline.currentTime);
+
+    // A card reached with the keyboard while off screen: bring it in.
+    list.addEventListener("focusin", (event) => {
+      const card = (event.target as HTMLElement).closest<HTMLElement>(
+        "[data-reel-card]",
+      );
+      const i = card ? cards.indexOf(card) : -1;
+      if (i < 0 || overflow <= 0) return;
+      const share = Math.min(
+        1,
+        Math.max(0, ((lefts[i] ?? 0) - (lefts[0] ?? 0)) / overflow),
+      );
+      const box = track.getBoundingClientRect();
+      window.scrollTo({
+        top: scrollForProgress(
+          {
+            pageTop: box.top + window.scrollY,
+            height: box.height,
+            viewport: window.innerHeight,
+          },
+          LEAD_IN + share * (LEAD_OUT - LEAD_IN),
+        ),
+        behavior: "smooth",
+      });
     });
   });
 </script>
