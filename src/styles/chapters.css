@@ -6,12 +6,13 @@
  * by public/theme.js) the track grows a tail of `--ch-pin` and the stage
  * pins under the header; the scene's anime.js timeline spans exactly that
  * pinned interval. Without the mark (no JavaScript, reduced motion) the
- * chapters read as plain sections with their scenes at rest. Chapters 05
- * (the projects reel) and 06 ("30 años") are full-bleed and 07 (the
- * stacked reasons) has its own two-column stage: the same track and pin,
- * with their own heads instead of the grid.
+ * chapters read as plain sections with their scenes at rest. Chapters 03
+ * (the first stroke, a sage band), 05 (the projects reel) and 06 ("30
+ * años") are full-bleed and 07 (the stacked reasons) has its own
+ * two-column stage: the same track and pin, with their own heads instead
+ * of the grid.
  *
- * Scene variables and classes carry the chapter's prefix (`svc-`, `orb-`,
+ * Scene variables and classes carry the chapter's prefix (`svc-`, `flow-`,
  * `cad-`, `reel-`, `years-`, `stack-`, `msg-`).
  */
 
@@ -593,407 +594,319 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 03 · Cómo trabajamos: the orbit                                      */
+/* 03 · Cómo trabajamos: the first stroke                               */
 /* ------------------------------------------------------------------ */
 
 @layer components {
-  /* Each stage has its own colour (arc, name, icon, card). */
-  .orb-lane-0 {
-    --lane: var(--brand);
+  /* A full-bleed sage band with plum text, the same in both themes. */
+  .flow-scene {
+    --ch-pin: 380svh;
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
-  .orb-lane-1 {
-    --lane: var(--plum-600);
+  .flow-stage {
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: clamp(1.5rem, 4vh, 3rem);
+    padding-block: 96px;
   }
 
-  .orb-lane-2 {
-    --lane: var(--sage-600);
+  .flow-head {
+    display: grid;
+    gap: 1.25rem 4rem;
   }
 
-  .orb-lane-3 {
-    --lane: var(--brick-500);
-  }
-
-  .orb-lane-4 {
-    --lane: var(--plum-800);
-  }
-
-  .orb-lane-5 {
-    --lane: var(--sand-700);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .orb-lane-1 {
-      --lane: var(--plum-300);
-    }
-
-    :root:not([data-theme="light"]) .orb-lane-2 {
-      --lane: var(--sage-300);
-    }
-
-    :root:not([data-theme="light"]) .orb-lane-3 {
-      --lane: var(--brick-300);
-    }
-
-    :root:not([data-theme="light"]) .orb-lane-4 {
-      --lane: var(--plum-200);
-    }
-
-    :root:not([data-theme="light"]) .orb-lane-5 {
-      --lane: var(--sand-300);
+  @media (min-width: 64rem) {
+    .flow-head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: end;
     }
   }
 
-  :root[data-theme="dark"] .orb-lane-1 {
-    --lane: var(--plum-300);
+  .flow-heading,
+  .flow-intro {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
   }
 
-  :root[data-theme="dark"] .orb-lane-2 {
-    --lane: var(--sage-300);
+  .flow-eyebrow {
+    font-family: var(--font-data);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 
-  :root[data-theme="dark"] .orb-lane-3 {
-    --lane: var(--brick-300);
+  .flow-eyebrow span {
+    margin-right: 0.6rem;
+    font-weight: 600;
   }
 
-  :root[data-theme="dark"] .orb-lane-4 {
-    --lane: var(--plum-200);
+  .flow-title {
+    max-width: 16ch;
+    font-size: clamp(2.2rem, 1.4rem + 2.6vw, 3.75rem);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
   }
 
-  :root[data-theme="dark"] .orb-lane-5 {
-    --lane: var(--sand-300);
+  /* `brand` on sage only this large (≥ 24px). */
+  .flow-title em {
+    font-weight: 500;
+    color: var(--brand);
   }
 
-  /* The scene is the orbit alone (square), so in focus it takes the
-     screen; sizes inside follow its width (cqw). */
-  .orb {
+  .flow-lead {
+    max-width: 46ch;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  .flow-lead strong {
+    font-weight: 600;
+  }
+
+  .flow-cta {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-data);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 6px;
+    color: var(--on-accent);
+  }
+
+  .flow-cta svg {
+    transition: translate 300ms var(--ease-out);
+  }
+
+  .flow-cta:hover svg {
+    translate: 4px 0;
+  }
+
+  /* The isotype: a faint, wide pen line and the plum stroke drawn on it. */
+  .flow-band {
     position: relative;
-    container-type: inline-size;
+    width: 100%;
+    aspect-ratio: 660 / 258;
+    margin-inline: auto;
   }
 
-  .orb-dial {
-    position: relative;
-    aspect-ratio: 1;
-  }
-
-  .orb-dial::before {
-    content: "";
-    position: absolute;
-    inset: -4%;
-    border-radius: var(--radius-full);
-    background: radial-gradient(
-      closest-side,
-      color-mix(in oklab, var(--accent) 30%, transparent),
-      transparent
-    );
-    pointer-events: none;
-  }
-
-  .orb-svg {
-    position: relative;
+  .flow-svg {
+    display: block;
     width: 100%;
     height: 100%;
     overflow: visible;
   }
 
-  .orb-outer,
-  .orb-dots,
-  .orb-core {
-    transform-origin: 200px 200px;
-  }
-
-  .orb-outer {
-    stroke: color-mix(in oklab, var(--ink) 18%, transparent);
-    stroke-width: 1.5;
+  .flow-trace,
+  .flow-line {
+    fill: none;
     stroke-linecap: round;
-    stroke-dasharray: 0 9;
+    stroke-miterlimit: 10;
   }
 
-  .orb-ring {
-    stroke: color-mix(in oklab, var(--ink) 25%, transparent);
-    stroke-width: 1.2;
-    stroke-dasharray: 3 6;
+  .flow-trace {
+    stroke: color-mix(in oklab, var(--on-accent) 13%, transparent);
+    stroke-width: 16;
   }
 
-  .orb-arc {
-    stroke: var(--lane);
-    stroke-width: 4;
-    stroke-linecap: round;
-    filter: drop-shadow(
-      0 0 4px color-mix(in oklab, var(--lane) 55%, transparent)
-    );
-  }
-
-  .orb-loop {
-    stroke: none;
-  }
-
-  .orb-label {
-    font-family: var(--font-data);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    fill: var(--lane);
-  }
-
-  .orb-chip {
-    stroke-width: 1;
-    opacity: 0;
-  }
-
-  .orb-chip--message {
-    fill: color-mix(in oklab, var(--brand) 18%, var(--surface-raised));
-    stroke: var(--brand);
-  }
-
-  .orb-chip--data {
-    fill: color-mix(in oklab, var(--sage-600) 22%, var(--surface-raised));
-    stroke: var(--sage-600);
-  }
-
-  .orb-ping {
-    stroke: var(--lane);
-    stroke-width: 1.5;
-    transform-box: fill-box;
-    transform-origin: center;
-    opacity: 0;
-  }
-
-  .orb-tile {
-    color: var(--ink);
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  .orb-tile__box {
-    fill: var(--surface-raised);
-    stroke: var(--border-strong);
-    stroke-width: 0.8;
-  }
-
-  .orb-tile__glow {
-    fill: color-mix(in oklab, var(--lane) 16%, transparent);
-    stroke: var(--lane);
-    stroke-width: 1.2;
-    opacity: 0.4;
-  }
-
-  .orb-pulse {
-    fill: var(--brand);
-    stroke: var(--surface-raised);
-    stroke-width: 1.5;
-    opacity: 0;
-    filter: drop-shadow(
-      0 0 6px color-mix(in oklab, var(--brand) 70%, transparent)
-    );
-  }
-
-  .orb-halo {
-    fill: color-mix(in oklab, var(--brand) 18%, transparent);
-    filter: blur(10px);
-  }
-
-  .orb-dots {
-    stroke: var(--brand);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-dasharray: 0 7;
-  }
-
-  .orb-core__disc {
-    fill: var(--surface-raised);
-    stroke: var(--brand);
+  .flow-line {
+    stroke: var(--on-accent);
     stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
   }
 
-  .orb-mark__stroke {
-    stroke: var(--brand);
-    stroke-width: 26;
-    stroke-linecap: round;
+  .flow-dot {
+    fill: var(--on-accent);
   }
 
-  .orb-mark__dot {
-    fill: var(--ink);
+  .flow-dot--end {
     transform-box: fill-box;
     transform-origin: center;
   }
 
-  .orb-core__label {
-    font-family: var(--font-data);
-    font-size: 7px;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    fill: var(--ink-muted);
+  /* The stages on the stroke, placed by the script (left/top). */
+  .flow-node {
+    display: none;
   }
 
-  .orb-ship {
+  .flow-band[data-placed] .flow-node {
     position: absolute;
-    top: 63%;
-    left: 50%;
-    translate: -50% 0;
-    padding: 1cqw 2.4cqw;
-    border: 1px solid var(--brand);
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    translate: -50% -50%;
+    border: 1.5px solid var(--on-accent);
     border-radius: var(--radius-full);
-    font-family: var(--font-data);
-    font-size: 2.4cqw;
-    font-weight: 600;
-    white-space: nowrap;
-    background: var(--surface-raised);
-    color: var(--brand);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
-  /* The stage cards: listed under the orbit at rest. */
-  .orb-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 24px;
-  }
-
-  .orb-card {
-    position: relative;
+  /* The stages, each under a plum hairline. */
+  .flow-steps {
     display: grid;
-    gap: 2px;
-    padding: 12px 16px;
-    border: 1px solid color-mix(in oklab, var(--lane) 40%, var(--border));
-    border-left: 3px solid var(--lane);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    box-shadow: 0 16px 36px -22px
-      color-mix(in oklab, var(--plum-950) 50%, transparent);
+    gap: 1.5rem;
   }
 
-  .orb-card__num {
-    font-family: var(--font-data);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    font-variant-numeric: tabular-nums;
-    color: var(--lane);
-  }
-
-  .orb-card__num span {
-    font-weight: 500;
-    color: var(--ink-muted);
-  }
-
-  .orb-card__title {
-    font-size: 18px;
-    line-height: 1.25;
-    font-weight: 600;
-    color: var(--ink);
-  }
-
-  .orb-card__text {
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--ink-muted);
-  }
-
-  .orb-stamp {
-    position: absolute;
-    right: -10px;
-    bottom: -12px;
-    rotate: -8deg;
-    padding: 4px 12px;
-    border: 2px solid var(--brand);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-data);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    background: var(--surface-raised);
-    color: var(--brand);
-  }
-
-  /* While the scene plays on phones: one card at a time under the orbit. */
-  :root[data-scenes] .orb-cards {
-    display: grid;
-  }
-
-  :root[data-scenes] .orb-card {
-    grid-area: 1 / 1;
-  }
-
-  /* Desktop with the scene playing: each card opens beside its stage,
-     out over the space the focus leaves around the orbit. */
   @media (min-width: 64rem) {
-    :root[data-scenes] .orb-cards {
-      position: absolute;
-      inset: 0;
-      display: block;
-      margin: 0;
-      pointer-events: none;
-    }
-
-    :root[data-scenes] .orb-card {
-      position: absolute;
-      width: 44cqw;
-      padding: 2cqw 2.6cqw;
-      translate: 0 -50%;
-    }
-
-    :root[data-scenes] .orb-card__num {
-      font-size: 2.1cqw;
-    }
-
-    :root[data-scenes] .orb-card__title {
-      font-size: 3.4cqw;
-    }
-
-    :root[data-scenes] .orb-card__text {
-      font-size: 2.6cqw;
-    }
-
-    :root[data-scenes] .orb-stamp {
-      font-size: 2.1cqw;
-    }
-
-    /* Stages on the right open to the right of their name, the others to
-       the left (names at radius 158 of the 400 box). */
-    :root[data-scenes] .orb-card--0 {
-      top: 15.8%;
-      left: 69.75%;
-    }
-
-    :root[data-scenes] .orb-card--1 {
-      top: 50%;
-      left: 89.5%;
-    }
-
-    :root[data-scenes] .orb-card--2 {
-      top: 84.2%;
-      left: 69.75%;
-    }
-
-    :root[data-scenes] .orb-card--3 {
-      top: 84.2%;
-      right: 69.75%;
-    }
-
-    :root[data-scenes] .orb-card--4 {
-      top: 50%;
-      right: 89.5%;
-    }
-
-    :root[data-scenes] .orb-card--5 {
-      top: 15.8%;
-      right: 69.75%;
+    .flow-steps {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
     }
   }
 
-  /* Without the focus the orbit is as wide as the column, so it leaves
-     room on both sides for the stage names (they sit outside the ring). */
+  .flow-step__rule {
+    display: block;
+    height: 1.5px;
+    margin-bottom: 12px;
+    background: var(--on-accent);
+    transform-origin: 0 50%;
+  }
+
+  .flow-step__num {
+    font-family: var(--font-data);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .flow-step__name {
+    margin-top: 4px;
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .flow-step__line {
+    max-width: 30ch;
+    margin-top: 6px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  /* ---------- Playing: the stage pins and the stroke draws ---------- */
+
+  :root[data-scenes] .flow-scene {
+    overflow-anchor: none;
+  }
+
+  :root[data-scenes] .flow-scene .flow-stage {
+    position: sticky;
+    top: var(--header-h);
+    height: calc(100svh - var(--header-h));
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    /* The bottom stays clear of the floating WhatsApp button. */
+    padding-block: clamp(1.25rem, 5vh, 3.5rem) 88px;
+    overflow: clip;
+  }
+
+  /* The stroke takes the room left between the head and the stages, at
+     its own proportions. */
+  :root[data-scenes] .flow-scene .flow-room {
+    display: grid;
+    place-items: center;
+    container-type: size;
+  }
+
+  :root[data-scenes] .flow-scene .flow-band {
+    width: min(100cqw - 48px, (100cqh - 48px) * 660 / 258);
+  }
+
+  /* Phones and tablets: one stage's line at a time, under the names. */
   @media (max-width: 63.99rem) {
-    .orb-dial {
-      margin-inline: 11%;
+    .flow-scene {
+      --ch-pin: 320svh;
     }
 
-    .orb-label {
-      font-size: 12px;
+    .flow-band[data-placed] .flow-node {
+      width: 34px;
+      height: 34px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-stage {
+      grid-template-rows: auto auto auto;
+      align-content: start;
+      gap: 12px;
+      padding-block: 16px 84px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-room {
+      display: block;
+      padding-block: 18px;
+      container-type: normal;
+    }
+
+    :root[data-scenes] .flow-scene .flow-band {
+      width: calc(100% - 34px);
+    }
+
+    :root[data-scenes] .flow-scene .flow-head {
+      gap: 10px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-heading,
+    :root[data-scenes] .flow-scene .flow-intro {
+      gap: 8px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-lead {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    :root[data-scenes] .flow-scene .flow-cta {
+      min-height: 32px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-steps {
+      position: relative;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 16px;
+      padding-bottom: calc(3 * 1.45 * 16px + 14px);
+    }
+
+    :root[data-scenes] .flow-scene .flow-step {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 8px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-step__rule {
+      flex-basis: 100%;
+      margin-bottom: 8px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-step__name {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    :root[data-scenes] .flow-scene .flow-step__line {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      max-width: 40ch;
+    }
+  }
+
+  @media (min-width: 40rem) and (max-width: 63.99rem) {
+    :root[data-scenes] .flow-scene .flow-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 }

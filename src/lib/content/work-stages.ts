@@ -1,69 +1,36 @@
 /**
  * The six stages of an EMOJ project, told on the home ("Cómo trabajamos",
- * src/components/home/chapters/WorkChapter.astro). Each one has a short text
- * and two facts (label and value). Real practice, no invented figures.
+ * src/components/home/chapters/WorkChapter.astro): its name and one line
+ * on what we do there. Real practice, no invented figures.
  */
 export interface WorkStage {
-  title: string;
-  /** One word for the stage, around the orbit. */
-  short: string;
-  text: string;
-  facts: readonly (readonly [string, string])[];
+  name: string;
+  line: string;
 }
 
 export const WORK_STAGES: readonly WorkStage[] = [
   {
-    title: "Conversamos",
-    short: "Conversación",
-    text: "Escuchamos qué necesitas, revisamos tus antecedentes y definimos contigo el alcance, los plazos y los entregables.",
-    facts: [
-      ["Entregamos", "Propuesta técnica y económica"],
-      ["Contigo", "Un coordinador desde el día uno"],
-    ],
+    name: "Conversación",
+    line: "Entendemos tu proyecto y definimos contigo el alcance, los plazos y los entregables.",
   },
   {
-    title: "Vamos a terreno",
-    short: "Terreno",
-    text: "Visitamos el lugar, levantamos la topografía y tomamos las muestras de suelo que el diseño va a necesitar.",
-    facts: [
-      ["En terreno", "Topografía · calicatas · catastro"],
-      ["Resultado", "Datos reales, no supuestos"],
-    ],
+    name: "Terreno",
+    line: "Visitamos el lugar, levantamos la topografía y tomamos las muestras de suelo.",
   },
   {
-    title: "Estudiamos",
-    short: "Estudios",
-    text: "Hacemos los estudios base de hidráulica, tránsito y mecánica de suelos para diseñar sobre lo que el terreno nos dice.",
-    facts: [
-      ["Estudios", "Hidráulico · tránsito · geotecnia"],
-      ["Entregamos", "Informes y recomendaciones"],
-    ],
+    name: "Estudios",
+    line: "Hacemos los estudios de hidráulica, tránsito y mecánica de suelos que el diseño necesita.",
   },
   {
-    title: "Diseñamos",
-    short: "Diseño",
-    text: "Ingenieros y proyectistas desarrollan el proyecto completo, con cada especialidad coordinada desde el primer plano.",
-    facts: [
-      ["Entregamos", "Planos · memorias de cálculo · presupuesto"],
-      ["Normativa", "NCh 691 · NCh 1105 · NCh 433"],
-    ],
+    name: "Diseño",
+    line: "Desarrollamos planos y memorias con todas las especialidades coordinadas.",
   },
   {
-    title: "Aprobamos",
-    short: "Aprobación",
-    text: "Ingresamos el proyecto a los organismos que corresponda y respondemos sus observaciones hasta que queda aprobado.",
-    facts: [
-      ["Ante", "SERVIU · MOP · DOH · sanitarias · DOM"],
-      ["Resultado", "Proyecto listo para licitar"],
-    ],
+    name: "Aprobación",
+    line: "Ingresamos el proyecto a los organismos y respondemos sus observaciones hasta aprobarlo.",
   },
   {
-    title: "Acompañamos la obra",
-    short: "Obra",
-    text: "Asesoramos durante la construcción para que lo que se construye sea lo que se diseñó.",
-    facts: [
-      ["En obra", "Asesoría técnica e inspección"],
-      ["Ya son obra", "ESVAL · Aguas del Valle · SAAM"],
-    ],
+    name: "Obra",
+    line: "Te acompañamos en la construcción para que se construya lo que se diseñó.",
   },
 ];

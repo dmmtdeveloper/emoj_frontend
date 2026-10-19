@@ -1,20 +1,21 @@
 ---
 /**
- * Chapter 03 · Cómo trabajamos. The loop of a project with EMOJ at its
- * centre (deivid.space's chapter 04 orbit, in EMOJ's identity): six stages
- * on a ring, each one an icon with its name outside, in its own colour.
- * While the chapter is pinned the orbit takes the screen and a pulse runs
- * one lap:
- * - it draws each stage's arc and lights its icon (a ping), and the stage's
- *   card opens beside it with what happens there;
- * - the conversation's messages and the studies' data are pulled into the
- *   centre, the approval card gets its stamp and, at the end, the project
- *   ships as built work;
- * - at the centre the EMOJ stroke draws itself as the lap goes on, beats at
- *   each stage, and the dotted ring keeps turning.
+ * Chapter 03 · Cómo trabajamos, "Del primer trazo a la obra". A full-bleed
+ * sage band (`accent`, plum text, the same in both themes) with the EMOJ
+ * isotype across it: the stroke is the first line of every project. Its
+ * faint, wide pen line runs behind; the six stages sit on it, at even
+ * steps along the stroke (src/lib/motion/stroke-path.ts lays them out from
+ * the official geometry).
  *
- * The orbit is decorative; the cards are the six stages as an ordered list
- * (all listed under the orbit without motion).
+ * While the stage is pinned the scroll draws the stroke in plum from the
+ * left dot, leg by leg (src/scripts/chapters/scrub.ts): the drawing stops
+ * at each stage, its icon draws itself and, in the list under the stroke,
+ * the stage's rule, name and line come in. "Obra" closes the line and the
+ * end dot lands.
+ *
+ * The stroke and its icons are decorative; the list is the content. At
+ * rest (no JavaScript, reduced motion) the stroke is complete and every
+ * stage reads with its line.
  */
 import {
   ArrowRight,
@@ -26,9 +27,14 @@ import {
   Stamp,
 } from "@lucide/astro";
 import { WORK_STAGES } from "../../../lib/content/work-stages";
-import { orbitPoint } from "../../../lib/motion/chapters";
+import {
+  boxShare,
+  parseCubicPath,
+  pointAlong,
+  samplePath,
+} from "../../../lib/motion/stroke-path";
 import { ISOTYPE } from "./isotype";
-import Chapter from "./Chapter.astro";
+import { STATIONS } from "./work-stations";
 
 const ICONS = [
   MessagesSquare,
@@ -39,471 +45,262 @@ const ICONS = [
   HardHat,
 ];
 const pad = (n: number) => String(n).padStart(2, "0");
-const total = pad(WORK_STAGES.length);
+const percent = (share: number) => `${Math.round(share * 1000) / 10}%`;
 
-/** The orbit, in the SVG's units (viewBox 0 0 400 400). */
-const C = { x: 200, y: 200 };
-const R = 120;
-const TILE = 26;
-const step = 360 / WORK_STAGES.length;
-const at = (angle: number, r = R) => orbitPoint(angle, r, C);
-const f = (n: number) => Math.round(n * 10) / 10;
-
+// The stroke runs right to left: a station's share is read from the left.
+const stroke = samplePath(parseCubicPath(ISOTYPE.stroke));
 const stages = WORK_STAGES.map((stage, i) => {
-  // Each stage owns a slice of the ring: its icon sits in the middle of the
-  // slice, its name just outside.
-  const mid = (i + 0.5) * step;
-  const from = at(i * step + 2);
-  const to = at((i + 1) * step - 2);
-  const label = at(mid, R + 38);
+  const at = boxShare(
+    pointAlong(stroke, 1 - (STATIONS[i] ?? 0)),
+    ISOTYPE.viewBox,
+  );
   return {
     ...stage,
     Icon: ICONS[i] ?? MessagesSquare,
-    tile: at(mid),
-    label,
-    anchor:
-      label.x > C.x + 12 ? "start" : label.x < C.x - 12 ? "end" : "middle",
-    arc: `M${f(from.x)} ${f(from.y)}A${R} ${R} 0 0 1 ${f(to.x)} ${f(to.y)}`,
+    x: percent(at.x),
+    y: percent(at.y),
   };
 });
-/** One lap, clockwise from the top, for the pulse to follow. */
-const loop = `M${C.x} ${C.y - R}A${R} ${R} 0 1 1 ${C.x} ${C.y + R}A${R} ${R} 0 1 1 ${C.x} ${C.y - R}`;
-
-/** What gets pulled into the centre: messages and data, from their stage. */
-const pulled = (stage: number, count: number, size: [number, number]) =>
-  Array.from({ length: count }, (_, i) => {
-    const angle = (stage + 0.5) * step + (i % 3) * 9 - 9;
-    const p = at(angle, R + 54 + Math.floor(i / 3) * 16);
-    return {
-      x: f(p.x - size[0] / 2),
-      y: f(p.y - size[1] / 2),
-      w: size[0],
-      h: size[1],
-      dx: f(C.x - p.x),
-      dy: f(C.y - p.y),
-    };
-  });
-const messages = pulled(0, 6, [14, 9]);
-const data = pulled(2, 6, [10, 10]);
 ---
 
-<Chapter
-  id="como-trabajamos"
-  number="03"
-  label="Cómo trabajamos"
-  navSection="/nosotros"
-  tone="sunken"
-  class="ch-work"
+<section
+  class="ch-track flow-scene"
+  aria-labelledby="como-trabajamos"
+  data-track
+  data-nav-section="/nosotros"
+  data-scene-flow
 >
-  <Fragment slot="title">
-    Del primer trazo a la <em>obra</em>.
-  </Fragment>
-
-  <div class="orb" slot="scene" data-scene-orbit>
-    <div class="orb-dial">
-      <svg
-        class="orb-svg"
-        viewBox="0 0 400 400"
-        fill="none"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle class="orb-outer" cx={C.x} cy={C.y} r="182" data-outer />
-        <circle class="orb-ring" cx={C.x} cy={C.y} r={R} />
-        {stages.map((stage, i) => (
-          <path
-            class:list={["orb-arc", `orb-lane-${i}`]}
-            d={stage.arc}
-            data-arc
-          />
-        ))}
-        <path class="orb-loop" d={loop} data-loop />
-
-        {stages.map((stage, i) => (
-          <text
-            class:list={["orb-label", `orb-lane-${i}`]}
-            x={f(stage.label.x)}
-            y={f(stage.label.y)}
-            text-anchor={stage.anchor}
-            dominant-baseline="central"
-            data-label
-          >
-            {stage.short}
-          </text>
-        ))}
-
-        {messages.map((m) => (
-          <rect
-            class="orb-chip orb-chip--message"
-            x={m.x}
-            y={m.y}
-            width={m.w}
-            height={m.h}
-            rx="3"
-            data-message
-            data-dx={m.dx}
-            data-dy={m.dy}
-          />
-        ))}
-        {data.map((d) => (
-          <rect
-            class="orb-chip orb-chip--data"
-            x={d.x}
-            y={d.y}
-            width={d.w}
-            height={d.h}
-            rx="2"
-            data-datum
-            data-dx={d.dx}
-            data-dy={d.dy}
-          />
-        ))}
-
-        {stages.map((stage, i) => (
-          <circle
-            class:list={["orb-ping", `orb-lane-${i}`]}
-            cx={f(stage.tile.x)}
-            cy={f(stage.tile.y)}
-            r={TILE / 2}
-            data-ping
-          />
-        ))}
-        {stages.map((stage, i) => (
-          <g class:list={["orb-tile", `orb-lane-${i}`]} data-tile>
-            <rect
-              class="orb-tile__box"
-              x={f(stage.tile.x - TILE / 2)}
-              y={f(stage.tile.y - TILE / 2)}
-              width={TILE}
-              height={TILE}
-              rx="7"
-            />
-            <rect
-              class="orb-tile__glow"
-              x={f(stage.tile.x - TILE / 2)}
-              y={f(stage.tile.y - TILE / 2)}
-              width={TILE}
-              height={TILE}
-              rx="7"
-              data-glow
-            />
-            <stage.Icon
-              class="orb-tile__icon"
-              x={f(stage.tile.x - 7)}
-              y={f(stage.tile.y - 7)}
-              width={14}
-              height={14}
-              stroke-width={1.75}
-            />
-          </g>
-        ))}
-
-        <circle class="orb-pulse" r="6" data-pulse />
-
-        <circle class="orb-halo" cx={C.x} cy={C.y} r="62" data-halo />
-        <circle class="orb-dots" cx={C.x} cy={C.y} r="52" data-spin />
-        <g class="orb-core" data-core>
-          <circle class="orb-core__disc" cx={C.x} cy={C.y} r="42" />
-          <svg
-            class="orb-mark"
-            x={C.x - 28}
-            y={C.y - 18}
-            width="56"
-            height="22"
-            viewBox={ISOTYPE.viewBox}
-          >
-            <path class="orb-mark__stroke" d={ISOTYPE.stroke} data-mark />
-            <circle
-              class="orb-mark__dot"
-              cx={ISOTYPE.start.x}
-              cy={ISOTYPE.start.y}
-              r={ISOTYPE.dot * 1.6}
-              data-dot
-            />
-            <circle
-              class="orb-mark__dot"
-              cx={ISOTYPE.end.x}
-              cy={ISOTYPE.end.y}
-              r={ISOTYPE.dot * 1.6}
-              data-dot
-            />
-          </svg>
-          <text
-            class="orb-core__label"
-            x={C.x}
-            y={C.y + 18}
-            text-anchor="middle"
-          >
-            Tu obra
-          </text>
-        </g>
-      </svg>
-
-      <span class="orb-ship" aria-hidden="true" data-ship>
-        Proyecto → obra ✓
-      </span>
+  <div class="flow-stage container-wide" data-stage>
+    <div class="flow-head">
+      <div class="flow-heading">
+        <p class="flow-eyebrow">
+          <span>03</span> Cómo trabajamos
+        </p>
+        <h2 id="como-trabajamos" class="flow-title">
+          Del primer trazo a la <em>obra</em>.
+        </h2>
+      </div>
+      <div class="flow-intro">
+        <p class="flow-lead">
+          <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+          coordinadas: te acompañamos desde la primera conversación hasta que lo
+          diseñado está construido.
+        </p>
+        <a href="/contacto" class="flow-cta">
+          Cotizar proyecto
+          <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+        </a>
+      </div>
     </div>
 
-    <ol class="orb-cards">
-      {WORK_STAGES.map((stage, i) => (
-        <li
-          class:list={["orb-card", `orb-card--${i}`, `orb-lane-${i}`]}
-          data-card
+    <div class="flow-room">
+      <div class="flow-band" data-band>
+        <svg
+          class="flow-svg"
+          viewBox={ISOTYPE.viewBox}
+          fill="none"
+          aria-hidden="true"
+          focusable="false"
         >
-          <p class="orb-card__num">
-            {pad(i + 1)} <span>/ {total}</span>
+          <path class="flow-trace" d={ISOTYPE.stroke} />
+          <path class="flow-line" d={ISOTYPE.stroke} data-line />
+          <circle
+            class="flow-dot"
+            cx={ISOTYPE.start.x}
+            cy={ISOTYPE.start.y}
+            r={ISOTYPE.dot}
+          />
+          <circle
+            class="flow-dot flow-dot--end"
+            cx={ISOTYPE.end.x}
+            cy={ISOTYPE.end.y}
+            r={ISOTYPE.dot}
+            data-end
+          />
+        </svg>
+        {stages.map(({ Icon, x, y }) => (
+          <span
+            class="flow-node"
+            aria-hidden="true"
+            data-node
+            data-x={x}
+            data-y={y}
+          >
+            <Icon size={18} stroke-width={1.75} />
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <ol class="flow-steps" data-steps>
+      {stages.map(({ name, line }, i) => (
+        <li class="flow-step" data-step>
+          <span class="flow-step__rule" aria-hidden="true" data-rule />
+          <p class="flow-step__num" aria-hidden="true">
+            {pad(i + 1)}
           </p>
-          <h3 class="orb-card__title">{stage.title}</h3>
-          <p class="orb-card__text">{stage.text}</p>
-          {i === 4 && (
-            <span class="orb-stamp" aria-hidden="true" data-stamp>
-              Aprobado
-            </span>
-          )}
+          <h3 class="flow-step__name">{name}</h3>
+          <p class="flow-step__line" data-says>
+            {line}
+          </p>
         </li>
       ))}
     </ol>
   </div>
-
-  <p class="ch-text">
-    <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
-    coordinadas: te acompañamos desde la primera conversación hasta que lo
-    diseñado está construido.
-  </p>
-  <p class="ch-tags">{WORK_STAGES.map((stage) => stage.short).join(" · ")}</p>
-  <a href="/contacto" class="ch-more">
-    Cotizar proyecto
-    <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
-  </a>
-</Chapter>
+</section>
 
 <script>
-  import { stagger, svg, utils } from "animejs";
-  import { stageTimes } from "../../../lib/motion/chapters";
+  import { svg, stagger, utils } from "animejs";
+  import { drawFromEnd, strokeSchedule } from "../../../lib/motion/stroke-path";
   import {
     eachScene,
-    SCENE_LENGTH,
     scenesOn,
     scrubbedScene,
   } from "../../../scripts/chapters/scrub";
+  import { STATIONS } from "./work-stations";
 
-  const L = SCENE_LENGTH;
-  const FROM = 0.14;
-  const TO = 0.86;
-  const offset = (axis: "dx" | "dy") => (target: unknown) =>
-    Number((target as SVGElement).dataset[axis] ?? 0);
+  /** The drawing spans these shares of the pinned interval. */
+  const FROM = 0.05;
+  const TO = 0.9;
+  /** Share of each stage's slot the drawing holds on it. */
+  const HOLD = 0.45;
+  /** How dim a stage waits before the drawing reaches it. */
+  const WAIT = 0.35;
 
-  eachScene("[data-scene-orbit]", (root, $, $$) => {
-    const arcs = svg.createDrawable($$<SVGPathElement>("[data-arc]"));
-    const mark = svg.createDrawable($<SVGPathElement>("[data-mark]"));
-    const dots = $$<SVGCircleElement>("[data-dot]");
-    const labels = $$<SVGTextElement>("[data-label]");
-    const tiles = $$<SVGGElement>("[data-tile]");
-    const glows = $$<SVGRectElement>("[data-glow]");
-    const pings = $$<SVGCircleElement>("[data-ping]");
-    const cards = $$("[data-card]");
-    const messages = $$<SVGRectElement>("[data-message]");
-    const data = $$<SVGRectElement>("[data-datum]");
-    const loop = $<SVGPathElement>("[data-loop]");
-    const pulse = $<SVGCircleElement>("[data-pulse]");
-    const spin = $<SVGCircleElement>("[data-spin]");
-    const outer = $<SVGCircleElement>("[data-outer]");
-    const halo = $<SVGCircleElement>("[data-halo]");
-    const core = $<SVGGElement>("[data-core]");
-    const stamp = $("[data-stamp]");
-    const ship = $("[data-ship]");
-    const playing = scenesOn();
+  eachScene("[data-scene-flow]", (track, $, $$) => {
+    // The stages sit on the stroke (CSSOM: no inline styles in the markup);
+    // also at rest, where the stroke is complete.
+    const band = $("[data-band]");
+    const nodes = $$("[data-node]");
+    nodes.forEach((node) => {
+      node.style.setProperty("left", node.dataset["x"] ?? "0%");
+      node.style.setProperty("top", node.dataset["y"] ?? "0%");
+    });
+    band.setAttribute("data-placed", "");
+    if (!scenesOn()) return;
 
-    // The script starts the lap from nothing; at rest it reads complete.
-    if (playing) {
-      utils.set(arcs, { draw: "0 0" });
-      // The path starts on the right: an empty draw at its end (the left)
-      // grows back to its start, so the mark is written left to right.
-      utils.set(mark, { draw: "1 1" });
-      utils.set(dots, { scale: 0 });
-      utils.set(labels, { opacity: 0.45 });
-      utils.set([...glows, ...pings, ...messages, ...data, pulse], {
-        opacity: 0,
-      });
-      utils.set(cards, { opacity: 0, scale: 0.92 });
-      utils.set([stamp, ship], { opacity: 0 });
-      utils.set(halo, { opacity: 0.3 });
-    }
+    const line = svg.createDrawable($<SVGPathElement>("[data-line]"));
+    const end = $<SVGCircleElement>("[data-end]");
+    const steps = $$("[data-step]");
+    const parts = steps.map((step, i) => {
+      const node = nodes[i];
+      const icon = node?.querySelector("svg");
+      return {
+        node,
+        strokes: svg.createDrawable(
+          icon
+            ? [...icon.children].filter(
+                (child): child is SVGGeometryElement =>
+                  child instanceof SVGGeometryElement,
+              )
+            : [],
+        ),
+        rule: step.querySelector<HTMLElement>("[data-rule]"),
+        head: [...step.querySelectorAll<HTMLElement>(".flow-step__num, h3")],
+        says: step.querySelector<HTMLElement>("[data-says]"),
+      };
+    });
+    // Phones and tablets show one stage's line at a time, in one place.
+    const oneLine = window.matchMedia("(max-width: 63.99rem)").matches;
+    const legs = strokeSchedule(STATIONS, FROM, TO, HOLD);
 
-    const starts = stageTimes(arcs.length, FROM, TO);
-    const Q = ((TO - FROM) * L) / arcs.length;
-    const lap = (TO - FROM) * L;
+    utils.set(line, { draw: drawFromEnd(0) });
+    utils.set(end, { scale: 0 });
+    parts.forEach((part) => {
+      if (part.node) utils.set(part.node, { opacity: WAIT, scale: 0.85 });
+      utils.set(part.strokes, { draw: "0 0" });
+      if (part.rule) utils.set(part.rule, { scaleX: 0 });
+      utils.set(part.head, { opacity: WAIT });
+      if (part.says) utils.set(part.says, { opacity: 0, translateY: 10 });
+    });
 
-    scrubbedScene(root, (tl) => {
-      // The centre: the dotted ring turns, the outer dots drift, the EMOJ
-      // stroke draws itself over the lap and the glow grows with it.
-      tl.add(spin, { rotate: [0, 300], duration: L, ease: "linear" }, 0)
-        .add(outer, { rotate: [0, -60], duration: L, ease: "linear" }, 0)
-        .add(
-          dots[0] ?? [],
-          { scale: [0, 1], duration: L * 0.03, ease: "outBack" },
-          L * FROM,
-        )
-        .add(
-          mark,
-          { draw: ["1 1", "0 1"], duration: lap, ease: "linear" },
-          L * FROM,
-        )
-        .add(
-          dots[1] ?? [],
-          { scale: [0, 1], duration: L * 0.03, ease: "outBack" },
-          L * TO,
-        )
-        .add(
-          halo,
-          { opacity: [0.3, 1], duration: lap, ease: "linear" },
-          L * FROM,
-        );
-
-      // One lap of the pulse.
-      tl.add(
-        pulse,
-        {
-          ...svg.createMotionPath(loop),
-          opacity: [
-            { to: 1, duration: L * 0.02 },
-            { to: 1, duration: lap - L * 0.04 },
-            { to: 0, duration: L * 0.02 },
-          ],
-          duration: lap,
-          ease: "linear",
-        },
-        L * FROM,
-      );
-
-      arcs.forEach((arc, k) => {
-        const start = starts[k] ?? 0;
-        const reach = start + Q * 0.35;
-        const last = k === arcs.length - 1;
+    scrubbedScene(track, (tl) => {
+      legs.forEach((leg, i) => {
+        const part = parts[i];
+        if (!part) return;
+        const travel = leg.reach - leg.start;
+        // The stroke draws to the stage, then holds there.
         tl.add(
-          arc,
-          { draw: ["0 0", "0 1"], duration: Q, ease: "linear" },
-          start,
-        )
-          .add(
-            labels[k] ?? [],
-            { opacity: [0.45, 1], duration: Q * 0.2 },
-            reach,
-          )
-          // The icon lights with a ping, then stays tinted.
-          .add(
-            tiles[k] ?? [],
+          line,
+          {
+            draw: [drawFromEnd(leg.from), drawFromEnd(leg.to)],
+            duration: travel,
+            ease: "inOutSine",
+          },
+          leg.start,
+        );
+        // The stage lights as the drawing reaches it.
+        const at = leg.reach - travel * 0.15;
+        if (part.node) {
+          tl.add(
+            part.node,
             {
-              scale: [
-                { to: 1.3, duration: Q * 0.15, ease: "outBack" },
-                { to: 1.3, duration: Q * 0.5 },
-                { to: 1, duration: Q * 0.2 },
-              ],
-            },
-            reach,
-          )
-          .add(
-            glows[k] ?? [],
-            {
-              opacity: [
-                { to: 1, duration: Q * 0.15 },
-                { to: 1, duration: Q * 0.5 },
-                { to: 0.4, duration: Q * 0.2 },
-              ],
-            },
-            reach,
-          )
-          .add(
-            pings[k] ?? [],
-            {
-              scale: [1, 2.8],
-              opacity: [0.8, 0],
-              duration: Q * 0.45,
+              opacity: [WAIT, 1],
+              scale: [0.85, 1.2, 1],
+              duration: travel * 0.6,
               ease: "outQuad",
             },
-            reach,
-          )
-          // The centre beats as each stage is reached.
-          .add(
-            core,
-            {
-              scale: [
-                { to: 1.08, duration: Q * 0.08, ease: "outQuad" },
-                { to: 1, duration: Q * 0.2, ease: "inOutQuad" },
-              ],
-            },
-            reach,
-          )
-          // The stage's card opens beside it, then gives way to the next.
-          .add(
-            playing ? (cards[k] ?? []) : [],
-            {
-              // The last one stays until the orbit goes back to its place.
-              opacity: [
-                { to: 1, duration: Q * 0.15 },
-                { to: 1, duration: last ? Q * 0.85 + L * 0.02 : Q * 0.65 },
-                { to: 0, duration: Q * 0.15 },
-              ],
-              scale: last
-                ? [{ to: 1, duration: Q * 0.2, ease: "outBack" }]
-                : [
-                    { to: 1, duration: Q * 0.2, ease: "outBack" },
-                    { to: 1, duration: Q * 0.6 },
-                    { to: 0.96, duration: Q * 0.15 },
-                  ],
-            },
-            reach,
+            at,
           );
-      });
-
-      // Conversación and Estudios: messages and data pulled to the centre.
-      const pull = (targets: SVGElement[], stage: number) =>
+        }
         tl.add(
-          targets,
+          part.strokes,
           {
-            opacity: [
-              { to: 1, duration: Q * 0.12 },
-              { to: 1, duration: Q * 0.45 },
-              { to: 0, duration: Q * 0.12 },
-            ],
-            translateX: [
-              { to: 0, duration: Q * 0.2 },
-              { to: offset("dx"), duration: Q * 0.5, ease: "inQuad" },
-            ],
-            translateY: [
-              { to: 0, duration: Q * 0.2 },
-              { to: offset("dy"), duration: Q * 0.5, ease: "inQuad" },
-            ],
-            delay: stagger(Q * 0.04),
+            draw: ["0 0", "0 1"],
+            duration: travel * 0.6,
+            delay: stagger(travel * 0.08),
+            ease: "inOutSine",
           },
-          (starts[stage] ?? 0) + Q * 0.3,
+          at,
         );
-      pull(messages, 0);
-      pull(data, 2);
-
-      // Aprobación: the stamp lands on its card.
-      tl.add(
-        stamp,
-        {
-          opacity: [0, 1],
-          scale: [2.2, 1],
-          duration: Q * 0.18,
-          ease: "outBack",
-        },
-        (starts[4] ?? 0) + Q * 0.65,
-      );
-      // Obra: the project leaves the centre as built work.
-      tl.add(
-        ship,
-        {
-          opacity: [0, 1],
-          translateY: ["-140%", "0%"],
-          scale: [0.6, 1],
-          duration: Q * 0.4,
-          ease: "outCubic",
-        },
-        (starts[5] ?? 0) + Q * 0.6,
-      );
+        if (part.rule) {
+          tl.add(
+            part.rule,
+            { scaleX: [0, 1], duration: travel * 0.5, ease: "inOutQuad" },
+            at,
+          );
+        }
+        tl.add(
+          part.head,
+          { opacity: [WAIT, 1], duration: travel * 0.3, ease: "linear" },
+          at,
+        );
+        if (part.says) {
+          tl.add(
+            part.says,
+            {
+              opacity: [0, 1],
+              translateY: [10, 0],
+              duration: travel * 0.4,
+              ease: "outQuad",
+            },
+            at + travel * 0.2,
+          );
+          // One line at a time on small screens: it gives way to the next.
+          const next = legs[i + 1];
+          if (oneLine && next) {
+            tl.add(
+              part.says,
+              {
+                opacity: [1, 0],
+                translateY: [0, -10],
+                duration: travel * 0.25,
+                ease: "inQuad",
+              },
+              next.reach - travel * 0.3,
+            );
+          }
+        }
+      });
+      // "Obra" closes the line: the end dot lands.
+      const last = legs.at(-1);
+      if (last) {
+        tl.add(
+          end,
+          { scale: [0, 1.5, 1], duration: 400, ease: "outQuad" },
+          last.reach,
+        );
+      }
     });
   });
 </script>
