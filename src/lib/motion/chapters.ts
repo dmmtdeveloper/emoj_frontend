@@ -211,38 +211,56 @@ export interface DeckTimes {
 }
 
 /**
- * The reasons deck: `count` cards rise in turn, spread evenly over
- * [from, to] (shares); each lands `rise` of the way through its share, so
- * it rests at the front before the next one comes.
+ * The reasons deck: the first `placed` cards are in place from the start;
+ * the other ones rise in turn, spread evenly over [from, to] (shares), and
+ * each lands (is built) `rise` of the way through its share, so it rests
+ * at the front before the next one comes.
  */
 export function deckSchedule(
   count: number,
   from: number,
   to: number,
   rise: number,
+  placed = 0,
 ): DeckTimes[] {
-  const span = ((to - from) / count) * SCENE_LENGTH;
-  return stageTimes(count, from, to).map((start) => ({
-    start,
-    land: Math.round(start + clamp01(rise) * span),
-  }));
+  const ready = Math.min(count, Math.max(0, placed));
+  const moving = count - ready;
+  const span = moving > 0 ? ((to - from) / moving) * SCENE_LENGTH : 0;
+  const starts = moving > 0 ? stageTimes(moving, from, to) : [];
+  return [
+    ...Array.from({ length: ready }, () => ({ start: 0, land: 0 })),
+    ...starts.map((start) => ({
+      start,
+      land: Math.round(start + clamp01(rise) * span),
+    })),
+  ];
 }
 
 /** How deep the deck shows: cards further back keep the last pose. */
 const DECK_DEPTH = 3;
 
+/** How far back a tucked card stays folded on its top edge (degrees). */
+const DECK_FOLD = -10;
+
 /**
  * Pose of a card `depth` cards behind the front of the deck: smaller,
  * raised (`y`, % of its height, so its top edge peeks over the cards in
- * front) and darker (`shade`, the opacity of its shadow layer).
+ * front), darker (`shade`, the opacity of its shadow layer) and folded
+ * back on its top edge like a plan sheet (`fold`, CSS `rotateX`).
  */
 export function deckPose(depth: number): {
   scale: number;
   y: number;
   shade: number;
+  fold: number;
 } {
   const d = Math.min(DECK_DEPTH, Math.max(0, depth));
-  return { scale: 1 - d * 0.06, y: d === 0 ? 0 : -d * 5, shade: d * 0.16 };
+  return {
+    scale: 1 - d * 0.06,
+    y: d === 0 ? 0 : -d * 5,
+    shade: d * 0.16,
+    fold: d === 0 ? 0 : DECK_FOLD,
+  };
 }
 
 /** The card at the front of the deck at `time`: the last landed, or -1. */
@@ -274,4 +292,35 @@ export function cardTilt(
     (pointer.y - box.top - box.height / 2) / (box.height / 2),
   );
   return { rotateX: -ny * max || 0, rotateY: nx * max || 0 };
+}
+
+/**
+ * The signature shape (left corners rounded by `radius`, right ones
+ * square) as an SVG path for a `width` × `height` box.
+ */
+export function signaturePath(
+  width: number,
+  height: number,
+  radius: number,
+): string {
+  if (width <= 0 || height <= 0) return "";
+  const r = Math.max(0, Math.min(radius, height / 2, width));
+  return (
+    `M${r} 0H${width}V${height}H${r}` +
+    `A${r} ${r} 0 0 1 0 ${height - r}V${r}A${r} ${r} 0 0 1 ${r} 0Z`
+  );
+}
+
+/** The step of a reveal shared by `count` cards that card `index` owns. */
+export function revealShare(index: number, count: number): [number, number] {
+  if (count <= 0) return [0, 1];
+  return [clamp01(index / count), clamp01((index + 1) / count)];
+}
+
+/**
+ * An anime.js `draw` value showing the last `share` of a path: for paths
+ * drawn backwards, from their end (the isotype runs right to left).
+ */
+export function drawFromEnd(share: number): string {
+  return `${1 - clamp01(share)} 1`;
 }
