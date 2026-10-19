@@ -61,12 +61,6 @@ export function stageTimes(count: number, from: number, to: number): number[] {
   );
 }
 
-/** Deterministic jitter in 0..1, so a "random" layout is the same every visit. */
-export function noise(seed: number): number {
-  const value = Math.sin(seed * 12.9898) * 43758.5453;
-  return value - Math.floor(value);
-}
-
 /** The part of `text` typed so far (a typed command, address…). */
 export function typedText(text: string, share: number): string {
   return text.slice(0, Math.floor(text.length * clamp01(share) + 1e-9));

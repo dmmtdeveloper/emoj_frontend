@@ -1,244 +1,319 @@
 ---
 /**
- * Chapter 07 · Por qué EMOJ. A road's cross-section ("corte tipo"): four
- * layers, from the subgrade up to the asphalt, each one carrying one of
- * the reasons to work with EMOJ. While the chapter is pinned the aggregate
- * falls and settles layer by layer from the bottom up, each layer naming
- * its reason as it is laid; then a roller passes over the top and the
- * thickness of each layer is dimensioned.
+ * Chapter 07 · Por qué EMOJ. The heading stays on the left while four
+ * cards, one per reason, stack into a deck on the right: each card rises
+ * from below with a slight turn that settles as it lands, and the cards
+ * under it tuck back (smaller, raised, in shadow). As a card reaches the
+ * front its number flips in, its icon draws itself stroke by stroke and
+ * its title arrives word by word; on desktop it leans under the pointer.
+ * Cards keep the signature shape and alternate the brand surfaces.
  *
- * The section is decorative; the list under the title holds the reasons.
+ * Its own layout on the same track and pinned stage as the other chapters
+ * (src/scripts/chapters/scrub.ts): one scrubbedScene() timeline, played
+ * and rewound by the native scroll. The cards are the content (the list of
+ * reasons); without the scenes mark (no JavaScript, reduced motion) they
+ * are a plain list, every reason readable.
  */
 import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
-import { noise } from "../../../lib/motion/chapters";
-import Chapter from "./Chapter.astro";
 
-/** Top to bottom, as the section is drawn. */
 const REASONS = [
   {
     icon: CalendarCheck,
-    layer: "Carpeta asfáltica",
-    thickness: "e = 5 cm",
+    tone: "sage",
     title: "Cumplimiento de plazos",
     text: "Acordamos contigo un calendario de entregas desde el inicio y te mantenemos al tanto del avance en cada etapa.",
   },
   {
     icon: BadgeCheck,
-    layer: "Base granular",
-    thickness: "e = 20 cm",
+    tone: "plum",
     title: "Calidad garantizada",
     text: "Diseñamos según la normativa chilena vigente y revisamos cada memoria y cada plano antes de entregártelo.",
   },
   {
     icon: Users,
-    layer: "Subbase",
-    thickness: "e = 25 cm",
+    tone: "brick",
     title: "Trabajo colaborativo",
     text: "Ingenieros civiles y dibujantes proyectistas trabajan en un mismo equipo, coordinando las especialidades desde el primer día.",
   },
   {
     icon: Handshake,
-    layer: "Subrasante",
-    thickness: "Terreno natural",
+    tone: "paper",
     title: "Confianza y respaldo",
     text: "Más de 30 años trabajando con empresas como ESVAL, Aguas del Valle y SAAM respaldan cada proyecto que firmamos.",
   },
 ] as const;
-
-/** Stones per layer, scattered the same way on every visit. */
-const STONES = 14;
-const stones = (layer: number) =>
-  Array.from({ length: STONES }, (_, i) => {
-    const seed = layer * 100 + i;
-    return {
-      x: Math.round((i / STONES) * 96 + noise(seed) * 4),
-      y: Math.round(18 + noise(seed + 7) * 50),
-      size: 6 + Math.round(noise(seed + 13) * 6),
-      cls: `lay-stone--${Math.floor(noise(seed + 21) * 3)}`,
-    };
-  });
-const pos = (n: number) => `${n}%`;
 ---
 
-<Chapter
-  id="por-que-emoj"
-  number="07"
-  label="Por qué EMOJ"
-  navSection="/nosotros"
-  tone="sunken"
-  class="ch-reasons"
+<section
+  class="ch-track ch-track--sunken stack-scene"
+  aria-labelledby="por-que-emoj"
+  data-track
+  data-nav-section="/nosotros"
+  data-scene-stack
 >
-  <Fragment slot="title">
-    Ingeniería precisa, trato <em>cercano</em>.
-  </Fragment>
-
-  <div class="lay" slot="scene" aria-hidden="true" data-scene-layers>
-    <p class="lay-caption">Corte tipo · Calzada</p>
-    <div class="lay-section">
-      <span class="lay-roller" data-roller></span>
-      {REASONS.map((reason, i) => (
-        <div class:list={["lay-layer", `lay-layer--${i}`]} data-layer>
-          <span class="lay-fill" data-fill />
-          {stones(i).map((stone) => (
-            <span
-              class:list={["lay-stone", stone.cls]}
-              data-stone
-              data-x={pos(stone.x)}
-              data-y={pos(stone.y)}
-              data-size={stone.size}
-            />
-          ))}
-          <span class="lay-name" data-name>
-            <reason.icon size={18} stroke-width={1.75} />
-            {reason.title}
-          </span>
-          <span class="lay-dim" data-dim>
-            <b>{reason.layer}</b>
-            {reason.thickness}
-          </span>
-        </div>
-      ))}
+  <div class="stack-stage container-site" data-stage>
+    <div class="stack-intro">
+      <p class="stack-eyebrow">
+        <span>07</span> Por qué EMOJ
+      </p>
+      <h2 id="por-que-emoj" class="stack-title">
+        Ingeniería precisa, trato <em>cercano</em>.
+      </h2>
+      <p class="stack-lead">
+        Acercar la ingeniería es explicarte cada decisión técnica con claridad,
+        cumplir lo que acordamos y estar disponibles cuando nos necesitas.
+      </p>
+      <ol class="stack-ticks" aria-hidden="true">
+        {REASONS.map(() => (
+          <li>
+            <span data-stack-tick />
+          </li>
+        ))}
+      </ol>
     </div>
+    <ul class="stack-cards" aria-label="Por qué elegirnos" data-stack-deck>
+      {REASONS.map(({ icon: Icon, tone, title, text }, i) => (
+        <li class="stack-card" data-stack-card>
+          <div
+            class:list={["stack-card__face", `stack-card--${tone}`]}
+            data-stack-face
+          >
+            <div class="stack-card__head">
+              <span class="stack-card__num" aria-hidden="true">
+                <span data-stack-num>{String(i + 1).padStart(2, "0")}</span>
+              </span>
+              <Icon size={44} stroke-width={1.5} aria-hidden="true" />
+            </div>
+            <h3 class="stack-card__title" data-stack-title>
+              {title}
+            </h3>
+            <p class="stack-card__text" data-stack-text>
+              {text}
+            </p>
+            <span
+              class="stack-card__shade"
+              aria-hidden="true"
+              data-stack-shade
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
   </div>
-
-  <p class="ch-text">
-    <strong>Acercar la ingeniería</strong> es explicarte cada decisión técnica
-    con claridad, cumplir lo que acordamos y estar disponibles cuando nos
-    necesitas.
-  </p>
-  <ul class="ch-list">
-    {REASONS.map((reason, i) => (
-      <li class="ch-row">
-        <div class="ch-row--static">
-          <span class="ch-row__num">{String(i + 1).padStart(2, "0")}</span>
-          <span class="ch-row__title">{reason.title}</span>
-          <span />
-          <span class="ch-row__meta">{reason.text}</span>
-        </div>
-      </li>
-    ))}
-  </ul>
-</Chapter>
+</section>
 
 <script>
-  import { stagger, utils } from "animejs";
-  import { noise } from "../../../lib/motion/chapters";
+  import { createAnimatable, splitText, stagger, svg, utils } from "animejs";
+  import {
+    cardTilt,
+    deckFront,
+    deckPose,
+    deckSchedule,
+  } from "../../../lib/motion/chapters";
   import {
     eachScene,
-    SCENE_LENGTH,
     scenesOn,
     scrubbedScene,
   } from "../../../scripts/chapters/scrub";
 
-  const L = SCENE_LENGTH;
-  const LAY_FROM = L * 0.14;
-  const PER_LAYER = L * 0.12;
-  const ROLL_FROM = L * 0.66;
-  const ROLL = L * 0.14;
+  /** The cards rise over these shares of the pinned interval. */
+  const DECK_FROM = 0.04;
+  const DECK_TO = 0.86;
+  /** Share of each card's slot spent rising; the rest it rests in front. */
+  const RISE = 0.72;
+  /** Below the deck, as a share of the card's own height. */
+  const BELOW = 120;
+  /** Pointer tilt of the front card, in degrees. */
+  const TILT = 5;
 
-  eachScene("[data-scene-layers]", (root, $, $$) => {
-    const layers = $$("[data-layer]");
-    const roller = $("[data-roller]");
-    const allStones = $$("[data-stone]");
+  const pct = (value: number) => `${value}%`;
 
-    // Place the stones in their layer (CSSOM: no inline styles in markup).
-    allStones.forEach((stone) => {
-      stone.style.setProperty("left", stone.dataset["x"] ?? "0%");
-      stone.style.setProperty("top", stone.dataset["y"] ?? "0%");
-      const size = `${stone.dataset["size"] ?? 8}px`;
-      stone.style.setProperty("width", size);
-      stone.style.setProperty("height", size);
+  eachScene("[data-scene-stack]", (track, $, $$) => {
+    // At rest the reasons are a plain list: nothing to play.
+    if (!scenesOn()) return;
+    const deck = $("[data-stack-deck]");
+    const cards = $$("[data-stack-card]");
+    const faces = $$("[data-stack-face]");
+    const ticks = $$("[data-stack-tick]");
+    const schedule = deckSchedule(cards.length, DECK_FROM, DECK_TO, RISE);
+
+    const parts = cards.map((card, i) => {
+      const lines = card.querySelectorAll<SVGGeometryElement>(
+        ".stack-card__head svg :is(path, circle, rect, line, polyline)",
+      );
+      const title = card.querySelector<HTMLElement>("[data-stack-title]");
+      return {
+        card,
+        // Odd cards lean right, even ones left: the deck looks handled.
+        turn: i % 2 === 0 ? -5 : 4,
+        num: card.querySelector<HTMLElement>("[data-stack-num]"),
+        icon: svg.createDrawable([...lines]),
+        // Words for the reveal; the full title stays readable to screen
+        // readers (anime.js keeps a visually hidden copy, words hidden).
+        words: title ? splitText(title, { words: true }).words : [],
+        text: card.querySelector<HTMLElement>("[data-stack-text]"),
+        shade: card.querySelector<HTMLElement>("[data-stack-shade]"),
+      };
     });
 
-    const fall = (target: unknown) => {
-      const i = allStones.indexOf(target as HTMLElement);
-      return -160 - noise(i + 3) * 220;
-    };
-    const turn = (target: unknown) =>
-      (noise(allStones.indexOf(target as HTMLElement) + 9) - 0.5) * 220;
-
-    if (scenesOn()) {
-      layers.forEach((layer) => {
-        utils.set(layer.querySelectorAll("[data-stone]"), {
-          translateY: fall,
-          rotate: turn,
-          opacity: 0,
-        });
-        utils.set(
-          layer.querySelectorAll("[data-fill], [data-name], [data-dim]"),
-          {
-            opacity: 0,
-          },
-        );
+    // First frame: every card below the deck, its details unrevealed.
+    parts.forEach((part) => {
+      utils.set(part.card, {
+        translateY: pct(BELOW),
+        rotate: part.turn,
+        scale: 1,
+        opacity: 0,
       });
-      utils.set(roller, { opacity: 0 });
-    }
+      utils.set(part.icon, { draw: "0 0" });
+      if (part.num) utils.set(part.num, { rotateX: -90, opacity: 0 });
+      utils.set(part.words, { translateY: 28, rotate: 4, opacity: 0 });
+      if (part.text) utils.set(part.text, { translateY: 12, opacity: 0 });
+      if (part.shade) utils.set(part.shade, { opacity: 0 });
+    });
+    utils.set(ticks, { scaleX: 0 });
 
-    scrubbedScene(root, (tl) => {
-      // Laid from the subgrade up: the bottom layer first.
-      [...layers].reverse().forEach((layer, k) => {
-        const at = LAY_FROM + k * PER_LAYER;
+    const timeline = scrubbedScene(track, (tl) => {
+      parts.forEach((part, i) => {
+        const { start, land } = schedule[i] ?? { start: 0, land: 0 };
+        const rise = land - start;
+
+        // 1. The card rises from below and its turn settles as it lands.
         tl.add(
-          layer.querySelectorAll("[data-stone]"),
+          part.card,
           {
-            translateY: [fall, 0],
-            rotate: [turn, 0],
-            opacity: [
-              { to: 1, duration: PER_LAYER * 0.15 },
-              { to: 1, duration: PER_LAYER * 0.85 },
-            ],
-            duration: PER_LAYER,
-            delay: stagger(PER_LAYER * 0.035),
-            ease: "outBounce",
+            translateY: [pct(BELOW), pct(0)],
+            duration: rise,
+            ease: "outCubic",
           },
-          at,
+          start,
         )
           .add(
-            layer.querySelector("[data-fill]") ?? [],
-            { opacity: [0, 1], duration: PER_LAYER * 0.6 },
-            at + PER_LAYER * 0.5,
+            part.card,
+            { rotate: [part.turn, 0], duration: rise, ease: "outBack(1.8)" },
+            start,
           )
           .add(
-            layer.querySelector("[data-name]") ?? [],
-            {
-              opacity: [0, 1],
-              translateX: [-10, 0],
-              duration: PER_LAYER * 0.4,
-            },
-            at + PER_LAYER * 0.9,
+            part.card,
+            { opacity: [0, 1], duration: rise * 0.25, ease: "linear" },
+            start,
+          )
+          .add(
+            ticks[i] ?? [],
+            { scaleX: [0, 1], duration: rise, ease: "inOutQuad" },
+            start,
           );
-      });
-      // The roller passes over the top; then each thickness is dimensioned.
-      tl.add(
-        roller,
-        {
-          opacity: [
-            { to: 1, duration: ROLL * 0.1 },
-            { to: 1, duration: ROLL * 0.8 },
-            { to: 0, duration: ROLL * 0.1 },
-          ],
-          left: ["-10%", "100%"],
-          rotate: [0, 720],
-          duration: ROLL,
-          ease: "inOutSine",
-        },
-        ROLL_FROM,
-      )
-        .add(
-          layers[0]?.querySelectorAll("[data-stone]") ?? [],
-          { scale: [1, 0.85], duration: ROLL, ease: "linear" },
-          ROLL_FROM,
-        )
-        .add(
-          layers.map((layer) => layer.querySelector("[data-dim]")),
+
+        // 2. Reaching the front: the number flips, the icon draws itself,
+        //    the title comes word by word, then the sentence.
+        const front = land - rise * 0.35;
+        if (part.num) {
+          tl.add(
+            part.num,
+            {
+              rotateX: [-90, 0],
+              opacity: [0, 1],
+              duration: rise * 0.35,
+              ease: "outCubic",
+            },
+            front,
+          );
+        }
+        tl.add(
+          part.icon,
           {
-            opacity: [0, 1],
-            translateX: [12, 0],
-            duration: L * 0.05,
-            delay: stagger(L * 0.025),
+            draw: ["0 0", "0 1"],
+            duration: rise * 0.5,
+            delay: stagger(rise * 0.08),
+            ease: "inOutSine",
           },
-          ROLL_FROM + ROLL,
+          front,
+        ).add(
+          part.words,
+          {
+            translateY: [28, 0],
+            rotate: [4, 0],
+            opacity: [0, 1],
+            duration: rise * 0.3,
+            delay: stagger(rise * 0.07),
+            ease: "outCubic",
+          },
+          front + rise * 0.1,
         );
+        if (part.text) {
+          tl.add(
+            part.text,
+            {
+              translateY: [12, 0],
+              opacity: [0, 1],
+              duration: rise * 0.3,
+              ease: "outQuad",
+            },
+            land,
+          );
+        }
+
+        // 3. Every later card tucks this one one step further back.
+        schedule.slice(i + 1).forEach((next, k) => {
+          const from = deckPose(k);
+          const to = deckPose(k + 1);
+          const at = next.start + (next.land - next.start) * 0.35;
+          const duration = (next.land - next.start) * 0.65;
+          tl.add(
+            part.card,
+            {
+              translateY: [pct(from.y), pct(to.y)],
+              scale: [from.scale, to.scale],
+              duration,
+              ease: "inOutQuad",
+            },
+            at,
+          );
+          if (part.shade) {
+            tl.add(
+              part.shade,
+              {
+                opacity: [from.shade, to.shade],
+                duration,
+                ease: "inOutQuad",
+              },
+              at,
+            );
+          }
+        });
+      });
     });
+
+    // Desktop with a fine pointer: the front card leans under the pointer.
+    const canTilt = window.matchMedia(
+      "(min-width: 64rem) and (hover: hover) and (pointer: fine)",
+    ).matches;
+    if (!canTilt) return;
+    const tilts = faces.map((face) =>
+      createAnimatable(face, {
+        rotateX: 500,
+        rotateY: 500,
+        ease: "out(3)",
+      }),
+    );
+    const lean = (i: number, x: number, y: number) => {
+      tilts[i]?.rotateX?.(x);
+      tilts[i]?.rotateY?.(y);
+    };
+    const settle = (i: number) => lean(i, 0, 0);
+    let front = deckFront(timeline.currentTime, schedule);
+    timeline.onUpdate = (self) => {
+      const now = deckFront(self.currentTime, schedule);
+      if (now === front) return;
+      settle(front);
+      front = now;
+    };
+    deck.addEventListener("pointermove", (event) => {
+      const card = cards[front];
+      if (!card || event.pointerType !== "mouse") return;
+      const box = card.getBoundingClientRect();
+      const tilt = cardTilt({ x: event.clientX, y: event.clientY }, box, TILT);
+      lean(front, tilt.rotateX, tilt.rotateY);
+    });
+    deck.addEventListener("pointerleave", () => settle(front));
   });
 </script>

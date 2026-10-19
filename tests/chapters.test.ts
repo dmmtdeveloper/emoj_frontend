@@ -11,7 +11,6 @@ import {
   enterShare,
   focusFit,
   inkSpan,
-  noise,
   orbitPoint,
   reelCard,
   reelCurrent,
@@ -69,17 +68,6 @@ describe("stageTimes", () => {
   it("spreads the stages evenly over a stretch of the timeline", () => {
     expect(stageTimes(4, 0.2, 0.6)).toEqual([2000, 3000, 4000, 5000]);
     expect(SCENE_LENGTH).toBe(10000);
-  });
-});
-
-describe("noise", () => {
-  it("is deterministic and stays in 0..1", () => {
-    expect(noise(3)).toBe(noise(3));
-    for (let i = 0; i < 50; i++) {
-      expect(noise(i)).toBeGreaterThanOrEqual(0);
-      expect(noise(i)).toBeLessThan(1);
-    }
-    expect(noise(1)).not.toBe(noise(2));
   });
 });
 
