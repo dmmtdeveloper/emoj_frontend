@@ -1911,7 +1911,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 07 · Por qué EMOJ: the stacked reasons, from plan to built work      */
+/* 07 · Por qué EMOJ: the stacked reasons                               */
 /* ------------------------------------------------------------------ */
 
 @layer components {
@@ -1976,19 +1976,6 @@
     color: var(--ink-muted);
   }
 
-  /* Only while the scene plays: the isotype thread, the blueprint grid,
-     the blank sheets and their plan outlines. */
-  .stack-thread,
-  .stack-grid,
-  .stack-card__sheet,
-  .stack-card__plan {
-    display: none;
-  }
-
-  .stack-deck {
-    position: relative;
-  }
-
   .stack-cards {
     position: relative;
     display: flex;
@@ -2001,20 +1988,24 @@
     transform-origin: 50% 0;
   }
 
+  /* --ghost: the numeral's size; the card keeps a band at its bottom for
+     the part of it that shows, under the text and clear of the icon. */
   .stack-card__face {
+    --ghost: 6rem;
     position: relative;
     display: flex;
     min-height: min(52svh, 440px);
     flex-direction: column;
     gap: 16px;
-    padding: 32px;
+    padding: 32px 32px calc(var(--ghost) * 0.62 + 12px);
     overflow: clip;
     border-radius: var(--radius-signature) 0 0 var(--radius-signature);
   }
 
   @media (min-width: 48rem) {
     .stack-card__face {
-      padding: 44px 48px;
+      --ghost: 8.5rem;
+      padding: 44px 48px calc(var(--ghost) * 0.62 + 16px);
     }
   }
 
@@ -2025,21 +2016,22 @@
     z-index: 1;
   }
 
-  /* The number of the card, huge and outlined, behind its content (in
-     the room between the head and the title). */
+  /* The number of the card, huge and outlined, bleeding off its
+     bottom-right corner: only its upper part shows, in the band under
+     the text. */
   .stack-card__ghost {
     position: absolute;
-    top: 12%;
-    right: -0.04em;
+    right: -0.06em;
+    bottom: -0.28em;
     z-index: 0;
     font-family: var(--font-data);
-    font-size: clamp(7rem, 4rem + 7vw, 12rem);
+    font-size: var(--ghost);
     line-height: 1;
     font-weight: 600;
     letter-spacing: -0.04em;
     -webkit-text-fill-color: transparent;
     -webkit-text-stroke: 1.5px
-      color-mix(in oklab, currentColor 20%, transparent);
+      color-mix(in oklab, currentColor 22%, transparent);
     pointer-events: none;
     user-select: none;
   }
@@ -2151,69 +2143,6 @@
     align-self: center;
   }
 
-  /* The isotype, drawn a step per card; its pen travels along it. */
-  :root[data-scenes] .stack-scene .stack-thread {
-    display: block;
-    width: min(100%, 300px);
-    height: auto;
-    margin-top: 4px;
-    overflow: visible;
-  }
-
-  .stack-thread__trace,
-  .stack-thread__line {
-    fill: none;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
-  }
-
-  .stack-thread__trace {
-    stroke: color-mix(in oklab, var(--brand) 28%, transparent);
-    stroke-width: 1;
-    stroke-dasharray: 3 5;
-  }
-
-  .stack-thread__line {
-    stroke: var(--brand);
-    stroke-width: 2;
-  }
-
-  .stack-thread__dot {
-    fill: var(--ink);
-  }
-
-  .stack-thread__end {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  .stack-thread__pen {
-    fill: var(--brand);
-    stroke: var(--surface-sunken);
-    stroke-width: 4;
-  }
-
-  /* A faint blueprint grid behind the deck, fading out at its edges. */
-  :root[data-scenes] .stack-scene .stack-grid {
-    position: absolute;
-    inset: -12% -8% -12% -10%;
-    display: block;
-    background-image:
-      linear-gradient(
-        to right,
-        color-mix(in oklab, var(--ink) 7%, transparent) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--ink) 7%, transparent) 1px,
-        transparent 1px
-      );
-    background-size: 32px 32px;
-    mask-image: radial-gradient(closest-side, black 35%, transparent);
-    pointer-events: none;
-  }
-
   /* Every card in the same cell: the deck is as tall as its tallest card,
      with room above for the edges of the cards tucked behind. Tucked
      cards fold back on their top edge, seen in perspective. */
@@ -2235,50 +2164,6 @@
     height: 100%;
   }
 
-  /* The blank plan sheet, and the dashed outline drawn on it. */
-  :root[data-scenes] .stack-scene .stack-card__sheet {
-    position: absolute;
-    inset: 0;
-    display: block;
-    border-radius: var(--radius-signature) 0 0 var(--radius-signature);
-    background-color: var(--surface);
-    background-image:
-      linear-gradient(
-        to right,
-        color-mix(in oklab, var(--brand) 9%, transparent) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--brand) 9%, transparent) 1px,
-        transparent 1px
-      );
-    background-size: 24px 24px;
-  }
-
-  :root[data-scenes] .stack-scene .stack-card__plan {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
-  }
-
-  .stack-card__outline {
-    fill: none;
-    stroke: var(--brand);
-    stroke-width: 1.5;
-    stroke-dasharray: 8 6;
-  }
-
-  .stack-card__pen {
-    fill: none;
-    stroke: var(--sand-50);
-    stroke-width: 8;
-  }
-
   @media (max-width: 63.99rem) {
     .stack-scene {
       --ch-pin: 260svh;
@@ -2295,22 +2180,15 @@
       gap: 12px;
     }
 
-    :root[data-scenes] .stack-scene .stack-thread {
-      width: 150px;
-    }
-
-    :root[data-scenes] .stack-scene .stack-deck {
-      align-self: start;
-    }
-
     :root[data-scenes] .stack-scene .stack-cards {
+      align-self: start;
       padding-top: 2.25rem;
     }
 
     :root[data-scenes] .stack-scene .stack-card__face {
       min-height: 0;
       gap: 12px;
-      padding: 24px;
+      padding: 24px 24px calc(var(--ghost) * 0.62 + 8px);
     }
   }
 }

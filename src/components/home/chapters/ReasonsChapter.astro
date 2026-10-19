@@ -1,28 +1,23 @@
 ---
 /**
- * Chapter 07 · Por qué EMOJ, "del plano a la obra". The heading stays on
- * the left while four cards, one per reason, stack into a deck on the
- * right. Every card is first a plan: a blank sheet rises from below with a
- * slight turn, the dashed outline of the signature shape draws itself, and
- * the card's colour floods it from the bottom like ink; then its number
+ * Chapter 07 · Por qué EMOJ. The heading stays on the left while four
+ * cards, one per reason, stack into a deck on the right. Each card rises
+ * from below with a slight turn that settles as it lands; then its number
  * flips in, its icon draws itself and tells its small story
  * (src/scripts/chapters/reasons-stories.ts), its title arrives word by
- * word and a giant outline numeral drifts behind. The card in front folds
- * back on its top edge like a plan sheet as the next one comes, and the
- * EMOJ isotype under the lead draws itself one step per card, its pen (a
- * dot) travelling along the stroke. On desktop the front card leans under
- * the pointer.
+ * word and a giant outline numeral drifts up from its bottom-right corner.
+ * The card in front folds back on its top edge like a plan sheet as the
+ * next one comes. On desktop the front card leans under the pointer.
  *
  * Its own layout on the same track and pinned stage as the other chapters
  * (src/scripts/chapters/scrub.ts): one scrubbedScene() timeline, played
- * and rewound by the native scroll. The first card is built while the
- * chapter scrolls in (its own scroll-linked timeline), so it is in place
- * before the stage pins. The cards are the content (the list of reasons);
- * without the scenes mark (no JavaScript, reduced motion) they are a plain
- * list, every reason readable.
+ * and rewound by the native scroll. The first card is in place from the
+ * start; its details play while the chapter scrolls in (its own
+ * scroll-linked timeline), before the stage pins. The cards are the
+ * content (the list of reasons); without the scenes mark (no JavaScript,
+ * reduced motion) they are a plain list, every reason readable.
  */
 import { BadgeCheck, CalendarCheck, Handshake, Users } from "@lucide/astro";
-import { ISOTYPE } from "./isotype";
 
 const REASONS = [
   {
@@ -77,81 +72,41 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
         Acercar la ingeniería es explicarte cada decisión técnica con claridad,
         cumplir lo que acordamos y estar disponibles cuando nos necesitas.
       </p>
-      {/* The isotype thread: drawn one step per card (decorative). */}
-      <svg
-        class="stack-thread"
-        viewBox={ISOTYPE.viewBox}
-        aria-hidden="true"
-        data-stack-thread
-      >
-        <path class="stack-thread__trace" d={ISOTYPE.stroke} data-trace />
-        <path class="stack-thread__line" d={ISOTYPE.stroke} data-line />
-        <circle
-          class="stack-thread__dot"
-          cx={ISOTYPE.start.x}
-          cy={ISOTYPE.start.y}
-          r={ISOTYPE.dot}
-        />
-        <circle
-          class="stack-thread__dot stack-thread__end"
-          cx={ISOTYPE.end.x}
-          cy={ISOTYPE.end.y}
-          r={ISOTYPE.dot}
-          data-end
-        />
-        <circle class="stack-thread__pen" r={ISOTYPE.dot * 1.7} data-pen />
-      </svg>
     </div>
-    <div class="stack-deck">
-      <span class="stack-grid" aria-hidden="true" data-stack-grid></span>
-      <ul class="stack-cards" aria-label="Por qué elegirnos" data-stack-deck>
-        {REASONS.map(({ icon: Icon, tone, story, title, text }, i) => (
-          <li class="stack-card" data-stack-card data-story={story}>
-            <span class="stack-card__sheet" aria-hidden="true" data-sheet />
-            <svg class="stack-card__plan" aria-hidden="true" data-plan>
-              <defs>
-                <mask id={`stack-plan-${i}`} maskUnits="userSpaceOnUse">
-                  <path class="stack-card__pen" data-pen-path />
-                </mask>
-              </defs>
-              <path
-                class="stack-card__outline"
-                mask={`url(#stack-plan-${i})`}
-                data-outline
-              />
-            </svg>
-            <div
-              class:list={["stack-card__face", `stack-card--${tone}`]}
-              data-face
-            >
-              <span class="stack-card__ghost" aria-hidden="true" data-ghost>
-                {number(i)}
+    <ul class="stack-cards" aria-label="Por qué elegirnos" data-stack-deck>
+      {REASONS.map(({ icon: Icon, tone, story, title, text }, i) => (
+        <li class="stack-card" data-stack-card data-story={story}>
+          <div
+            class:list={["stack-card__face", `stack-card--${tone}`]}
+            data-face
+          >
+            <span class="stack-card__ghost" aria-hidden="true" data-ghost>
+              {number(i)}
+            </span>
+            <div class="stack-card__head">
+              <span class="stack-card__num" aria-hidden="true">
+                <span data-num>{number(i)}</span>
               </span>
-              <div class="stack-card__head">
-                <span class="stack-card__num" aria-hidden="true">
-                  <span data-num>{number(i)}</span>
-                </span>
-                <Icon size={44} stroke-width={1.5} aria-hidden="true">
-                  {story === "equipo" && (
-                    <>
-                      <path d="M13 7h3" data-join />
-                      <path d="M2 23h20" data-join />
-                    </>
-                  )}
-                </Icon>
-              </div>
-              <h3 class="stack-card__title" data-title>
-                {title}
-              </h3>
-              <p class="stack-card__text" data-text>
-                {text}
-              </p>
-              <span class="stack-card__shade" aria-hidden="true" data-shade />
+              <Icon size={44} stroke-width={1.5} aria-hidden="true">
+                {story === "equipo" && (
+                  <>
+                    <path d="M13 7h3" data-join />
+                    <path d="M2 23h20" data-join />
+                  </>
+                )}
+              </Icon>
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            <h3 class="stack-card__title" data-title>
+              {title}
+            </h3>
+            <p class="stack-card__text" data-text>
+              {text}
+            </p>
+            <span class="stack-card__shade" aria-hidden="true" data-shade />
+          </div>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
@@ -170,57 +125,39 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
     deckFront,
     deckPose,
     deckSchedule,
-    drawFromEnd,
-    revealShare,
-    signaturePath,
   } from "../../../lib/motion/chapters";
   import { iconStory } from "../../../scripts/chapters/reasons-stories";
   import {
     eachScene,
-    SCENE_LENGTH,
     scenesOn,
     scrubbedScene,
     type SceneTimeline,
   } from "../../../scripts/chapters/scrub";
 
-  const L = SCENE_LENGTH;
   /** Cards 02–04 come over these shares of the pinned interval. */
   const DECK_FROM = 0.05;
   const DECK_TO = 0.92;
-  /** Share of each card's slot spent being built; the rest it rests. */
-  const BUILD = 0.8;
-  /** Length of the first card's build, on its own timeline. */
+  /** Share of each card's slot spent coming in; the rest it rests. */
+  const BUILD = 0.75;
+  /** Length of the first card's details, on its own timeline. */
   const FIRST_BUILD = 1000;
   /** Below the deck, as a share of the card's own height. */
   const BELOW = 120;
   /** How far past its resting fold a card swings as it is tucked. */
   const SWING = -26;
+  /** How far the numeral drifts, in % of its height. */
+  const DRIFT = 30;
   /** Pointer tilt of the front card, in degrees. */
   const TILT = 5;
 
   const pct = (value: number) => `${value}%`;
-  const clip = (top: number, radius: string) =>
-    `inset(${top}% 0% 0% 0% round ${radius} 0px 0px ${radius})`;
-
-  interface Values {
-    from: number;
-    to: number;
-    modifier: (v: number) => number;
-  }
-  type PathValue = (target: unknown) => Values;
 
   eachScene("[data-scene-stack]", (track, $, $$) => {
     // At rest the reasons are a plain list: nothing to play.
     if (!scenesOn()) return;
     const deck = $("[data-stack-deck]");
-    const grid = $("[data-stack-grid]");
     const cards = $$("[data-stack-card]");
-    const line = svg.createDrawable($<SVGPathElement>("[data-line]"));
-    const trace = $<SVGPathElement>("[data-trace]");
-    const pen = $<SVGCircleElement>("[data-pen]");
-    const endDot = $<SVGCircleElement>("[data-end]");
-    const count = cards.length;
-    const schedule = deckSchedule(count, DECK_FROM, DECK_TO, BUILD, 1);
+    const schedule = deckSchedule(cards.length, DECK_FROM, DECK_TO, BUILD, 1);
 
     const parts = cards.map((card, i) => {
       const face = card.querySelector<HTMLElement>("[data-face]") ?? card;
@@ -236,17 +173,9 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
       return {
         card,
         face,
-        icon,
         story,
         // Odd cards lean right, even ones left: the deck looks handled.
         turn: i % 2 === 0 ? -5 : 4,
-        sheet: card.querySelector<HTMLElement>("[data-sheet]"),
-        plan: card.querySelector<SVGSVGElement>("[data-plan]"),
-        outline: card.querySelector<SVGPathElement>("[data-outline]"),
-        penPath: card.querySelector<SVGPathElement>("[data-pen-path]"),
-        pen: svg.createDrawable(
-          card.querySelectorAll<SVGPathElement>("[data-pen-path]"),
-        ),
         ghost: card.querySelector<HTMLElement>("[data-ghost]"),
         num: card.querySelector<HTMLElement>("[data-num]"),
         strokes: svg.createDrawable(lines),
@@ -258,28 +187,9 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
       };
     });
     type Part = (typeof parts)[number];
-    const radius = getComputedStyle(
-      parts[0]?.face ?? track,
-    ).borderTopLeftRadius;
 
-    // The plan outline follows the card's size (all cards share one cell).
-    const fitPlans = () => {
-      const first = cards[0];
-      if (!first) return;
-      const w = first.offsetWidth;
-      const h = first.offsetHeight;
-      const d = signaturePath(w, h, parseFloat(radius) || 0);
-      parts.forEach((part) => {
-        part.plan?.setAttribute("viewBox", `0 0 ${w} ${h}`);
-        part.outline?.setAttribute("d", d);
-        part.penPath?.setAttribute("d", d);
-      });
-    };
-    fitPlans();
-    if (cards[0]) new ResizeObserver(fitPlans).observe(cards[0]);
-
-    // First frame: the first card is a blank plan in place, the other
-    // ones are below the deck; the isotype shows its first step.
+    // First frame: the first card in place with its details unrevealed,
+    // the other ones below the deck.
     parts.forEach((part, i) => {
       utils.set(part.card, {
         translateY: pct(i === 0 ? 0 : BELOW),
@@ -288,43 +198,22 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
         scale: 1,
         opacity: i === 0 ? 1 : 0,
       });
-      if (part.sheet) utils.set(part.sheet, { opacity: 1 });
-      if (part.outline) utils.set(part.outline, { opacity: 1 });
-      utils.set(part.face, { clipPath: clip(100, radius) });
       if (part.ghost) {
         utils.set(part.ghost, {
           opacity: 0,
-          translateY: pct(i === 0 ? 0 : 30),
+          translateY: pct(i === 0 ? 0 : DRIFT),
         });
       }
-      utils.set([...part.strokes, ...part.pen], { draw: "0 0" });
+      utils.set(part.strokes, { draw: "0 0" });
       if (part.num) utils.set(part.num, { rotateX: -90, opacity: 0 });
       utils.set(part.words, { translateY: 28, rotate: 4, opacity: 0 });
       if (part.text) utils.set(part.text, { translateY: 12, opacity: 0 });
       if (part.shade) utils.set(part.shade, { opacity: 0 });
       part.story.reset();
     });
-    utils.set(line, { draw: drawFromEnd(revealShare(0, count)[1]) });
-    utils.set(endDot, { scale: 0 });
-    const penAt = (share: number) =>
-      trace.getPointAtLength(trace.getTotalLength() * (1 - share));
-    const start = penAt(revealShare(0, count)[1]);
-    utils.set(pen, { translateX: start.x, translateY: start.y });
 
-    // The pen travels along the isotype from its left end (the stroke runs
-    // right to left), a segment per card: anime.js motion path values,
-    // reversed and cut to the card's share.
-    const motion = svg.createMotionPath(trace);
-    const segment = (value: unknown, [a, b]: [number, number]) => {
-      const along = value as PathValue;
-      return (target: unknown) => {
-        const v = along(target);
-        return { ...v, from: v.to * (1 - a), to: v.to * (1 - b) };
-      };
-    };
-
-    /** A card turns from plan into built work over [at, at + span]. */
-    const build = (
+    /** A card comes to the front over [at, at + span]. */
+    const arrive = (
       tl: SceneTimeline,
       part: Part,
       at: number,
@@ -338,59 +227,38 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
           part.card,
           {
             translateY: [pct(BELOW), pct(0)],
-            duration: d(0.32),
+            duration: d(0.4),
             ease: "outCubic",
           },
           t(0),
         )
           .add(
             part.card,
-            { rotate: [part.turn, 0], duration: d(0.32), ease: "outBack(1.8)" },
+            { rotate: [part.turn, 0], duration: d(0.4), ease: "outBack(1.8)" },
             t(0),
           )
           .add(
             part.card,
-            { opacity: [0, 1], duration: d(0.06), ease: "linear" },
+            { opacity: [0, 1], duration: d(0.08), ease: "linear" },
             t(0),
           );
         if (part.ghost) {
           tl.add(
             part.ghost,
             {
-              translateY: [pct(30), pct(0)],
+              translateY: [pct(DRIFT), pct(0)],
               duration: d(0.9),
-              ease: "linear",
+              ease: "outQuad",
             },
             t(0.1),
           );
         }
       }
-      // The outline draws itself on the blank sheet (a drawn mask over
-      // the dashed line), then the colour floods it from the bottom.
-      tl.add(
-        part.pen,
-        { draw: ["0 0", "0 1"], duration: d(0.36), ease: "inOutSine" },
-        t(0.04),
-      )
-        .add(
-          part.face,
-          {
-            clipPath: [clip(100, radius), clip(0, radius)],
-            duration: d(0.24),
-            ease: "inOutCubic",
-          },
-          t(0.36),
-        )
-        .add(
-          [part.sheet, part.outline].filter((el) => el !== null),
-          { opacity: [1, 0], duration: d(0.08), ease: "linear" },
-          t(0.58),
-        );
       if (part.ghost) {
         tl.add(
           part.ghost,
-          { opacity: [0, 1], duration: d(0.2), ease: "linear" },
-          t(0.42),
+          { opacity: [0, 1], duration: d(0.25), ease: "linear" },
+          t(0.25),
         );
       }
       if (part.num) {
@@ -399,32 +267,32 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
           {
             rotateX: [-90, 0],
             opacity: [0, 1],
-            duration: d(0.12),
+            duration: d(0.15),
             ease: "outCubic",
           },
-          t(0.5),
+          t(0.3),
         );
       }
       tl.add(
         part.strokes,
         {
           draw: ["0 0", "0 1"],
-          duration: d(0.18),
-          delay: stagger(d(0.03)),
+          duration: d(0.2),
+          delay: stagger(d(0.04)),
           ease: "inOutSine",
         },
-        t(0.54),
+        t(0.35),
       ).add(
         part.words,
         {
           translateY: [28, 0],
           rotate: [4, 0],
           opacity: [0, 1],
-          duration: d(0.12),
-          delay: stagger(d(0.025)),
+          duration: d(0.15),
+          delay: stagger(d(0.03)),
           ease: "outCubic",
         },
-        t(0.6),
+        t(0.4),
       );
       if (part.text) {
         tl.add(
@@ -432,18 +300,18 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
           {
             translateY: [12, 0],
             opacity: [0, 1],
-            duration: d(0.14),
+            duration: d(0.17),
             ease: "outQuad",
           },
-          t(0.72),
+          t(0.55),
         );
       }
-      part.story.play(tl, t(0.78), d(0.22));
+      part.story.play(tl, t(0.7), d(0.3));
     };
 
-    // 1. The first card is built while the chapter scrolls in: its own
-    //    timeline, from the deck entering the screen to it reaching 45%
-    //    of the screen (before the stage pins).
+    // 1. The first card is in place; its details play while the chapter
+    //    scrolls in: its own timeline, from the deck entering the screen to
+    //    it reaching 45% of the screen (before the stage pins).
     const deckTop = () => {
       let top = 0;
       let node: HTMLElement | null = deck;
@@ -453,73 +321,35 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
       }
       return top;
     };
-    const from = (container: string, offset: number) =>
-      `${container}${offset < 0 ? "-=" : "+="}${Math.abs(Math.round(offset))}`;
+    const shifted = (edge: string, offset: number) =>
+      `${edge}${offset < 0 ? "-=" : "+="}${Math.abs(Math.round(offset))}`;
     const first = parts[0];
     if (first) {
       const intro = createTimeline({
         defaults: { ease: "inOutQuad" },
         autoplay: onScroll({
           target: track,
-          enter: () => `${from("bottom", -deckTop())} top`,
-          leave: () => `${from("top", innerHeight * 0.45 - deckTop())} top`,
+          enter: () => `${shifted("bottom", -deckTop())} top`,
+          leave: () => `${shifted("top", innerHeight * 0.45 - deckTop())} top`,
           sync: 0.6,
         }),
       });
-      build(intro, first, 0, FIRST_BUILD, false);
+      arrive(intro, first, 0, FIRST_BUILD, false);
     }
 
-    // 2. While pinned, cards 02–04 come one by one; the cards in front
-    //    fold back into the deck and the isotype draws a step per card.
+    // 2. While pinned, cards 02–04 come one by one and every card in front
+    //    folds back into the deck.
     const timeline = scrubbedScene(track, (tl) => {
-      tl.add(
-        grid,
-        { translateY: ["3%", "-3%"], duration: L, ease: "linear" },
-        0,
-      );
       parts.forEach((part, i) => {
         if (i === 0) return;
         const { start, land } = schedule[i] ?? { start: 0, land: 0 };
         const span = land - start;
-        build(tl, part, start, span, true);
+        arrive(tl, part, start, span, true);
 
-        // The isotype's step for this card, and its pen.
-        const share = revealShare(i, count);
-        tl.add(
-          line,
-          {
-            draw: [drawFromEnd(share[0]), drawFromEnd(share[1])],
-            duration: span * 0.8,
-            ease: "inOutSine",
-          },
-          start + span * 0.1,
-        );
-        if (motion) {
-          tl.add(
-            pen,
-            {
-              translateX: segment(motion.translateX, share),
-              translateY: segment(motion.translateY, share),
-              duration: span * 0.8,
-              ease: "inOutSine",
-            },
-            start + span * 0.1,
-          );
-        }
-        if (i === count - 1) {
-          tl.add(
-            endDot,
-            { scale: [0, 1.4, 1], duration: span * 0.2, ease: "outQuad" },
-            start + span * 0.9,
-          );
-        }
-
-        // Every card already in the deck folds back one step further.
         parts.slice(0, i).forEach((back, j) => {
           const depth = i - 1 - j;
           const was = deckPose(depth);
           const now = deckPose(depth + 1);
-          const at = start;
           const duration = span * 0.4;
           tl.add(
             back.card,
@@ -529,7 +359,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
               duration,
               ease: "inOutQuad",
             },
-            at,
+            start,
           ).add(
             back.card,
             {
@@ -537,7 +367,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
               duration,
               ease: "inOutSine",
             },
-            at,
+            start,
           );
           if (back.shade) {
             tl.add(
@@ -547,18 +377,19 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                 duration,
                 ease: "inOutQuad",
               },
-              at,
+              start,
             );
           }
+          // Depth parallax: the numeral of a tucked card sinks further.
           if (back.ghost) {
             tl.add(
               back.ghost,
               {
-                translateY: [pct(-depth * 10), pct(-(depth + 1) * 10)],
+                translateY: [pct(depth * 8), pct((depth + 1) * 8)],
                 duration,
                 ease: "inOutQuad",
               },
-              at,
+              start,
             );
           }
         });
