@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  cardTilt,
   countShown,
+  deckFront,
+  deckPose,
+  deckSchedule,
   deckSlot,
   diveTarget,
   diveTransform,
@@ -239,5 +243,93 @@ describe("countShown", () => {
     expect(countShown(6, 1)).toBe("6");
     expect(countShown(6, 3)).toBe("6");
     expect(countShown(6, -1)).toBe("0");
+  });
+});
+
+describe("deckSchedule", () => {
+  const schedule = deckSchedule(4, 0.04, 0.84, 0.75);
+
+  it("spreads the cards evenly and lands each within its share", () => {
+    expect(schedule).toEqual([
+      { start: 400, land: 1900 },
+      { start: 2400, land: 3900 },
+      { start: 4400, land: 5900 },
+      { start: 6400, land: 7900 },
+    ]);
+  });
+
+  it("lands every card before the next one starts", () => {
+    schedule.slice(1).forEach((next, i) => {
+      expect(schedule[i]?.land).toBeLessThan(next.start);
+    });
+  });
+
+  it("lands the last card inside the window", () => {
+    expect(schedule.at(-1)?.land).toBeLessThanOrEqual(0.84 * SCENE_LENGTH);
+  });
+});
+
+describe("deckPose", () => {
+  it("leaves the front card as it is", () => {
+    expect(deckPose(0)).toEqual({ scale: 1, y: 0, shade: 0 });
+  });
+
+  it("tucks a card back, up and darker per card in front of it", () => {
+    const pose = deckPose(1);
+    expect(pose.scale).toBeCloseTo(0.94);
+    expect(pose.y).toBeCloseTo(-5);
+    expect(pose.shade).toBeCloseTo(0.16);
+    expect(deckPose(2).scale).toBeLessThan(pose.scale);
+    expect(deckPose(2).y).toBeLessThan(pose.y);
+    expect(deckPose(2).shade).toBeGreaterThan(pose.shade);
+  });
+
+  it("stops tucking three cards deep and never goes past the front", () => {
+    expect(deckPose(7)).toEqual(deckPose(3));
+    expect(deckPose(-2)).toEqual(deckPose(0));
+  });
+});
+
+describe("deckFront", () => {
+  const schedule = deckSchedule(4, 0.04, 0.84, 0.75);
+
+  it("has no front card until the first one lands", () => {
+    expect(deckFront(0, schedule)).toBe(-1);
+    expect(deckFront(1899, schedule)).toBe(-1);
+  });
+
+  it("is the last card that has landed", () => {
+    expect(deckFront(1900, schedule)).toBe(0);
+    expect(deckFront(4000, schedule)).toBe(1);
+    expect(deckFront(SCENE_LENGTH, schedule)).toBe(3);
+  });
+});
+
+describe("cardTilt", () => {
+  const box = { left: 100, top: 50, width: 400, height: 200 };
+
+  it("is flat with the pointer at the centre", () => {
+    const tilt = cardTilt({ x: 300, y: 150 }, box, 6);
+    expect(tilt.rotateX).toBeCloseTo(0);
+    expect(tilt.rotateY).toBeCloseTo(0);
+  });
+
+  it("presses the side under the pointer away", () => {
+    expect(cardTilt({ x: 500, y: 150 }, box, 6).rotateY).toBeCloseTo(6);
+    expect(cardTilt({ x: 100, y: 150 }, box, 6).rotateY).toBeCloseTo(-6);
+    expect(cardTilt({ x: 300, y: 50 }, box, 6).rotateX).toBeCloseTo(6);
+    expect(cardTilt({ x: 300, y: 250 }, box, 6).rotateX).toBeCloseTo(-6);
+  });
+
+  it("never tilts past the maximum", () => {
+    const tilt = cardTilt({ x: 2000, y: -900 }, box, 6);
+    expect(tilt.rotateY).toBeCloseTo(6);
+    expect(tilt.rotateX).toBeCloseTo(6);
+  });
+
+  it("stays flat on an empty box", () => {
+    const tilt = cardTilt({ x: 10, y: 10 }, { ...box, width: 0 }, 6);
+    expect(tilt.rotateX).toBeCloseTo(0);
+    expect(tilt.rotateY).toBeCloseTo(0);
   });
 });

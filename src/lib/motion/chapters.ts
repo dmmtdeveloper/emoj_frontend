@@ -209,3 +209,75 @@ export function diveTransform(
 export function countShown(value: number, share: number): string {
   return String(Math.round(value * clamp01(share)));
 }
+
+/** When a card of the reasons deck starts rising and when it lands (in L). */
+export interface DeckTimes {
+  start: number;
+  land: number;
+}
+
+/**
+ * The reasons deck: `count` cards rise in turn, spread evenly over
+ * [from, to] (shares); each lands `rise` of the way through its share, so
+ * it rests at the front before the next one comes.
+ */
+export function deckSchedule(
+  count: number,
+  from: number,
+  to: number,
+  rise: number,
+): DeckTimes[] {
+  const span = ((to - from) / count) * SCENE_LENGTH;
+  return stageTimes(count, from, to).map((start) => ({
+    start,
+    land: Math.round(start + clamp01(rise) * span),
+  }));
+}
+
+/** How deep the deck shows: cards further back keep the last pose. */
+const DECK_DEPTH = 3;
+
+/**
+ * Pose of a card `depth` cards behind the front of the deck: smaller,
+ * raised (`y`, % of its height, so its top edge peeks over the cards in
+ * front) and darker (`shade`, the opacity of its shadow layer).
+ */
+export function deckPose(depth: number): {
+  scale: number;
+  y: number;
+  shade: number;
+} {
+  const d = Math.min(DECK_DEPTH, Math.max(0, depth));
+  return { scale: 1 - d * 0.06, y: d === 0 ? 0 : -d * 5, shade: d * 0.16 };
+}
+
+/** The card at the front of the deck at `time`: the last landed, or -1. */
+export function deckFront(time: number, schedule: readonly DeckTimes[]) {
+  let front = -1;
+  schedule.forEach(({ land }, i) => {
+    if (land <= time) front = i;
+  });
+  return front;
+}
+
+const clampUnit = (value: number): number =>
+  Number.isNaN(value) ? 0 : Math.min(1, Math.max(-1, value));
+
+/**
+ * A card leaning under the pointer: the side the pointer is on presses
+ * away (CSS `rotateX`/`rotateY` in degrees, at most `max` each way).
+ */
+export function cardTilt(
+  pointer: { x: number; y: number },
+  box: { left: number; top: number; width: number; height: number },
+  max: number,
+): { rotateX: number; rotateY: number } {
+  if (box.width <= 0 || box.height <= 0) return { rotateX: 0, rotateY: 0 };
+  const nx = clampUnit(
+    (pointer.x - box.left - box.width / 2) / (box.width / 2),
+  );
+  const ny = clampUnit(
+    (pointer.y - box.top - box.height / 2) / (box.height / 2),
+  );
+  return { rotateX: -ny * max || 0, rotateY: nx * max || 0 };
+}
