@@ -293,34 +293,3 @@ export function cardTilt(
   );
   return { rotateX: -ny * max || 0, rotateY: nx * max || 0 };
 }
-
-/**
- * The signature shape (left corners rounded by `radius`, right ones
- * square) as an SVG path for a `width` × `height` box.
- */
-export function signaturePath(
-  width: number,
-  height: number,
-  radius: number,
-): string {
-  if (width <= 0 || height <= 0) return "";
-  const r = Math.max(0, Math.min(radius, height / 2, width));
-  return (
-    `M${r} 0H${width}V${height}H${r}` +
-    `A${r} ${r} 0 0 1 0 ${height - r}V${r}A${r} ${r} 0 0 1 ${r} 0Z`
-  );
-}
-
-/** The step of a reveal shared by `count` cards that card `index` owns. */
-export function revealShare(index: number, count: number): [number, number] {
-  if (count <= 0) return [0, 1];
-  return [clamp01(index / count), clamp01((index + 1) / count)];
-}
-
-/**
- * An anime.js `draw` value showing the last `share` of a path: for paths
- * drawn backwards, from their end (the isotype runs right to left).
- */
-export function drawFromEnd(share: number): string {
-  return `${1 - clamp01(share)} 1`;
-}

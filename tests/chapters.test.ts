@@ -6,7 +6,6 @@ import {
   deckPose,
   deckSchedule,
   deckSlot,
-  drawFromEnd,
   diveTarget,
   diveTransform,
   enterShare,
@@ -16,10 +15,8 @@ import {
   reelCard,
   reelCurrent,
   reelDrift,
-  revealShare,
   SCENE_LENGTH,
   scrollForProgress,
-  signaturePath,
   stageTimes,
   typedText,
   zoomScale,
@@ -333,48 +330,5 @@ describe("cardTilt", () => {
     const tilt = cardTilt({ x: 10, y: 10 }, { ...box, width: 0 }, 6);
     expect(tilt.rotateX).toBeCloseTo(0);
     expect(tilt.rotateY).toBeCloseTo(0);
-  });
-});
-
-describe("signaturePath", () => {
-  it("rounds the left corners only", () => {
-    expect(signaturePath(400, 300, 50)).toBe(
-      "M50 0H400V300H50A50 50 0 0 1 0 250V50A50 50 0 0 1 50 0Z",
-    );
-  });
-
-  it("never rounds past half the height or the width", () => {
-    expect(signaturePath(400, 60, 50)).toBe(
-      "M30 0H400V60H30A30 30 0 0 1 0 30V30A30 30 0 0 1 30 0Z",
-    );
-    expect(signaturePath(20, 300, 50)).toBe(
-      "M20 0H20V300H20A20 20 0 0 1 0 280V20A20 20 0 0 1 20 0Z",
-    );
-  });
-
-  it("is empty for an empty box", () => {
-    expect(signaturePath(0, 300, 50)).toBe("");
-  });
-});
-
-describe("revealShare", () => {
-  it("splits a reveal into equal steps, one per card", () => {
-    expect(revealShare(0, 4)).toEqual([0, 0.25]);
-    expect(revealShare(3, 4)).toEqual([0.75, 1]);
-  });
-
-  it("stays inside 0..1", () => {
-    expect(revealShare(9, 4)).toEqual([1, 1]);
-    expect(revealShare(-1, 4)).toEqual([0, 0]);
-    expect(revealShare(0, 0)).toEqual([0, 1]);
-  });
-});
-
-describe("drawFromEnd", () => {
-  it("shows the last share of a path drawn backwards", () => {
-    expect(drawFromEnd(0)).toBe("1 1");
-    expect(drawFromEnd(0.25)).toBe("0.75 1");
-    expect(drawFromEnd(1)).toBe("0 1");
-    expect(drawFromEnd(3)).toBe("0 1");
   });
 });
