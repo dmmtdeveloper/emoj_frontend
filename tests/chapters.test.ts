@@ -11,7 +11,6 @@ import {
   enterShare,
   focusFit,
   inkSpan,
-  orbitPoint,
   reelCard,
   reelCurrent,
   reelDrift,
@@ -77,19 +76,6 @@ describe("typedText", () => {
     expect(typedText("LINEA", 0.4)).toBe("LI");
     expect(typedText("LINEA", 1)).toBe("LINEA");
     expect(typedText("LINEA", 7)).toBe("LINEA");
-  });
-});
-
-describe("orbitPoint", () => {
-  it("places a point on a circle, clockwise from the top", () => {
-    const top = orbitPoint(0, 100, { x: 300, y: 300 });
-    expect(top.x).toBeCloseTo(300);
-    expect(top.y).toBeCloseTo(200);
-    const right = orbitPoint(90, 100, { x: 300, y: 300 });
-    expect(right.x).toBeCloseTo(400);
-    expect(right.y).toBeCloseTo(300);
-    const bottom = orbitPoint(180, 100, { x: 300, y: 300 });
-    expect(bottom.y).toBeCloseTo(400);
   });
 });
 

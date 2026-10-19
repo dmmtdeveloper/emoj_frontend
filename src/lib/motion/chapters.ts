@@ -66,19 +66,6 @@ export function typedText(text: string, share: number): string {
   return text.slice(0, Math.floor(text.length * clamp01(share) + 1e-9));
 }
 
-/** A point on a circle, `angle` in degrees clockwise from the top. */
-export function orbitPoint(
-  angle: number,
-  radius: number,
-  center: { x: number; y: number },
-): { x: number; y: number } {
-  const rad = (angle * Math.PI) / 180;
-  return {
-    x: center.x + radius * Math.sin(rad),
-    y: center.y - radius * Math.cos(rad),
-  };
-}
-
 /** The page scroll position that puts a pinned track at `progress`. */
 export function scrollForProgress(
   track: { pageTop: number; height: number; viewport: number },
