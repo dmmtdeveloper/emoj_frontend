@@ -1492,13 +1492,17 @@
     }
   }
 
+  /* One signature-shaped frame: the photo above, the plum band below. */
+  .yrs-frame {
+    overflow: hidden;
+    border-radius: var(--radius-signature) 0 0 var(--radius-signature);
+    background: var(--plum-950);
+  }
+
   /* The photo's own proportions, so no one is cropped out. */
   .yrs-photo {
     position: relative;
     aspect-ratio: 1600 / 889;
-    overflow: hidden;
-    border-radius: var(--radius-signature) 0 0 var(--radius-signature);
-    background: var(--plum-950);
   }
 
   .yrs-photo__img {
@@ -1514,26 +1518,34 @@
     opacity: 0.6;
   }
 
+  /* The photo fades into the band, so the years can sit on its edge. */
   .yrs-photo::after {
     content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(
       to top,
-      color-mix(in oklab, var(--plum-950) 30%, transparent),
-      transparent 35%
+      var(--plum-950),
+      color-mix(in oklab, var(--plum-950) 70%, transparent) 14%,
+      transparent 40%
     );
     pointer-events: none;
   }
 
-  /* Under the photo: the years and the facts, then the cota. */
+  /* The band rises over the photo's lower edge only (below the faces). */
+  .yrs-panel {
+    position: relative;
+    z-index: 1;
+    margin-top: calc(-1 * clamp(2.75rem, 1.5rem + 3.5vw, 4.75rem));
+    padding: 0 clamp(16px, 2.5vw, 32px) 10px;
+  }
+
   .yrs-data {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     justify-content: space-between;
     gap: 12px 24px;
-    margin-top: 16px;
   }
 
   .yrs-count {
@@ -1541,25 +1553,26 @@
     align-items: baseline;
     gap: 10px;
     font-family: var(--font-data);
-    font-size: clamp(3rem, 2rem + 3vw, 4.75rem);
-    line-height: 0.9;
+    font-size: clamp(3.5rem, 2rem + 5vw, 7.5rem);
+    line-height: 0.85;
     font-weight: 600;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
-    color: var(--brand);
+    color: var(--sand-50);
   }
 
   .yrs-count small {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--ink-muted);
+    color: var(--sage-300);
   }
 
   .yrs-facts {
     display: flex;
     gap: 22px;
+    padding-bottom: 6px;
   }
 
   .yrs-fact {
@@ -1574,38 +1587,38 @@
     line-height: 1;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: var(--ink);
+    color: var(--sand-50);
   }
 
   .yrs-fact dt {
     font-size: 13px;
     line-height: 1.3;
-    color: var(--ink-muted);
+    color: var(--sand-200);
   }
 
   .yrs-cota {
     width: 100%;
-    margin-top: 4px;
+    margin-top: 10px;
     overflow: visible;
   }
 
   .yrs-cota__base {
-    stroke: var(--border-strong);
+    stroke: color-mix(in oklab, var(--sand-50) 35%, transparent);
     stroke-width: 1;
   }
 
   .yrs-cota__trail {
-    stroke: var(--brand);
+    stroke: var(--brick-400);
     stroke-width: 2.5;
     stroke-linecap: round;
   }
 
   .yrs-cota__marker {
-    fill: var(--brand);
+    fill: var(--brick-400);
   }
 
   .yrs-tick {
-    stroke: var(--ink);
+    stroke: var(--sand-50);
     stroke-width: 1.5;
     transform-box: fill-box;
     transform-origin: center;
@@ -1613,7 +1626,7 @@
 
   .yrs-tick text {
     stroke: none;
-    fill: var(--ink-muted);
+    fill: var(--sand-100);
     font-family: var(--font-data);
     font-size: 12px;
     font-variant-numeric: tabular-nums;
