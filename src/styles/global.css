@@ -665,21 +665,3 @@
     transparent 95%
   );
 }
-
-/* Lenis (src/scripts/chapters/scroll-gate.ts), from lenis/dist/lenis.css. */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis:not(.lenis-autoToggle).lenis-stopped {
-  overflow: clip;
-}
-
-.lenis [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
-.lenis.lenis-smooth iframe {
-  pointer-events: none;
-}
