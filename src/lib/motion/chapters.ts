@@ -84,3 +84,128 @@ export function orbitPoint(
     y: center.y - radius * Math.cos(rad),
   };
 }
+
+/** The page scroll position that puts a pinned track at `progress`. */
+export function scrollForProgress(
+  track: { pageTop: number; height: number; viewport: number },
+  progress: number,
+): number {
+  const run = Math.max(0, track.height - track.viewport);
+  return track.pageTop + clamp01(progress) * run;
+}
+
+/**
+ * How far a card has come in from the right edge: 0 while it is beyond the
+ * edge, 1 once the whole card is on screen.
+ */
+export function enterShare(card: {
+  left: number;
+  width: number;
+  viewport: number;
+}): number {
+  if (card.width <= 0) return card.left < card.viewport ? 1 : 0;
+  return clamp01((card.viewport - card.left) / card.width);
+}
+
+/**
+ * A card of the projects reel against the reel's travel `t` (0..1, the
+ * reel slides left by `overflow` px): it rises in as
+ * `clamp((t - at) / span)` goes 0 → 1 (enterShare() along the travel) and
+ * its photo drifts with `center - t * reelDrift()`, its centre's offset
+ * from the middle of the screen in screens.
+ */
+export function reelCard(card: {
+  left: number;
+  width: number;
+  viewport: number;
+  overflow: number;
+}): { at: number; span: number; center: number } {
+  const { left, width, viewport, overflow } = card;
+  const center = (left + width / 2 - viewport / 2) / viewport;
+  if (overflow <= 0 || width <= 0) return { at: -1, span: 1, center };
+  return { at: (left - viewport) / overflow, span: width / overflow, center };
+}
+
+/** How many screens the reel's whole travel moves a card. */
+export function reelDrift(overflow: number, viewport: number): number {
+  return viewport > 0 ? Math.max(0, overflow) / viewport : 0;
+}
+
+/**
+ * The project number the reel's counter shows: the last card whose left
+ * side has passed a third of the screen (0.3), never the closing tile
+ * (the last of `lefts`).
+ */
+export function reelCurrent(
+  lefts: readonly number[],
+  shift: number,
+  viewport: number,
+): number {
+  let current = 0;
+  lefts.forEach((left, i) => {
+    if (left + shift < viewport * 0.3) current = i;
+  });
+  return Math.max(1, Math.min(current + 1, lefts.length - 1));
+}
+
+/**
+ * Scale for zooming into a point: exponential, so each stretch of scroll
+ * feels like the same speed (1 at t = 0, `max` at t = 1).
+ */
+export function zoomScale(t: number, max: number): number {
+  return Math.pow(max, clamp01(t));
+}
+
+/**
+ * The first run of ink across one row of RGBA pixels (`span` wide):
+ * `start` is its first inked pixel, `end` the first blank one after it.
+ * Without ink it guesses the zero's left stroke (8%–20% of the row).
+ */
+export function inkSpan(
+  pixels: ArrayLike<number>,
+  span: number,
+): { start: number; end: number } {
+  let start = -1;
+  for (let x = 0; x < span; x++) {
+    const ink = (pixels[x * 4 + 3] ?? 0) > 128;
+    if (ink && start < 0) start = x;
+    if (!ink && start >= 0) return { start, end: x };
+  }
+  if (start < 0) {
+    return { start: Math.round(span * 0.08), end: Math.round(span * 0.2) };
+  }
+  return { start, end: span };
+}
+
+/**
+ * Where the "30 años" dive goes: the middle of the zero's stroke on the
+ * probed row (`left` is where the probe starts), and a scale at which that
+ * stroke is wider than the whole screen seen from that point.
+ */
+export function diveTarget(probe: {
+  width: number;
+  height: number;
+  left: number;
+  row: number;
+  ink: { start: number; end: number };
+}): { origin: { x: number; y: number }; maxScale: number } {
+  const { width, height, left, row, ink } = probe;
+  const stroke = Math.max(4, ink.end - ink.start);
+  return {
+    origin: { x: left + (ink.start + ink.end) / 2, y: row },
+    maxScale: ((2.4 * Math.hypot(width, height)) / stroke) * 1.05,
+  };
+}
+
+/** The SVG transform that scales the sheet by `scale` about `origin`. */
+export function diveTransform(
+  origin: { x: number; y: number },
+  scale: number,
+): string {
+  return `translate(${origin.x} ${origin.y}) scale(${scale}) translate(${-origin.x} ${-origin.y})`;
+}
+
+/** A figure counting up: the whole part of `value` reached at `share`. */
+export function countShown(value: number, share: number): string {
+  return String(Math.round(value * clamp01(share)));
+}

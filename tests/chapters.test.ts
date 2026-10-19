@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  countShown,
   deckSlot,
+  diveTarget,
+  diveTransform,
+  enterShare,
   focusFit,
+  inkSpan,
   noise,
   orbitPoint,
+  reelCard,
+  reelCurrent,
+  reelDrift,
   SCENE_LENGTH,
+  scrollForProgress,
   stageTimes,
   typedText,
+  zoomScale,
 } from "../src/lib/motion/chapters";
 
 describe("focusFit", () => {
@@ -88,5 +98,146 @@ describe("orbitPoint", () => {
     expect(right.y).toBeCloseTo(300);
     const bottom = orbitPoint(180, 100, { x: 300, y: 300 });
     expect(bottom.y).toBeCloseTo(400);
+  });
+});
+
+describe("enterShare", () => {
+  it("is 0 while a card is beyond the right edge and 1 once fully in", () => {
+    const card = { width: 400, viewport: 1440 };
+    expect(enterShare({ ...card, left: 1500 })).toBe(0);
+    expect(enterShare({ ...card, left: 1440 })).toBe(0);
+    expect(enterShare({ ...card, left: 1240 })).toBeCloseTo(0.5);
+    expect(enterShare({ ...card, left: 1040 })).toBe(1);
+    expect(enterShare({ ...card, left: 100 })).toBe(1);
+  });
+});
+
+describe("reelCard", () => {
+  const viewport = 1440;
+  const overflow = 1800;
+
+  it("enters over the stretch of travel that brings it in from the right", () => {
+    const card = reelCard({ left: 1640, width: 450, viewport, overflow });
+    // e = (t - at) / span: 0 when its left meets the right edge (t = 200 /
+    // 1800), 1 once its right side is in (450 more pixels of travel).
+    expect(card.at).toBeCloseTo(200 / 1800);
+    expect(card.span).toBeCloseTo(450 / 1800);
+  });
+
+  it("drifts with its centre's offset from the middle of the screen", () => {
+    const card = reelCard({ left: 1640, width: 450, viewport, overflow });
+    // At t = 0 the centre is (1865 - 720) / 1440 screens right; the whole
+    // travel moves it 1800 / 1440 screens left.
+    expect(card.center).toBeCloseTo((1640 + 225 - 720) / 1440);
+    expect(reelDrift(overflow, viewport)).toBeCloseTo(1800 / 1440);
+  });
+
+  it("is fully in at any travel when the reel fits the screen", () => {
+    const card = reelCard({ left: 600, width: 400, viewport, overflow: 0 });
+    expect(card.at).toBe(-1);
+    expect(card.span).toBe(1);
+  });
+});
+
+describe("reelCurrent", () => {
+  const lefts = [100, 560, 1020, 1480, 1940];
+
+  it("numbers the last card that has passed a third of the screen", () => {
+    expect(reelCurrent(lefts, 0, 1440)).toBe(1);
+    expect(reelCurrent(lefts, -300, 1440)).toBe(2);
+    expect(reelCurrent(lefts, -1000, 1440)).toBe(3);
+    expect(reelCurrent(lefts, -1100, 1440)).toBe(4);
+  });
+
+  it("never counts the closing tile", () => {
+    expect(reelCurrent(lefts, -5000, 1440)).toBe(4);
+  });
+});
+
+describe("scrollForProgress", () => {
+  it("is the page position that puts a pinned track at a progress", () => {
+    const track = { pageTop: 2000, height: 3000, viewport: 900 };
+    expect(scrollForProgress(track, 0)).toBe(2000);
+    expect(scrollForProgress(track, 0.5)).toBe(3050);
+    expect(scrollForProgress(track, 1)).toBe(4100);
+    expect(scrollForProgress(track, 2)).toBe(4100);
+  });
+});
+
+describe("zoomScale", () => {
+  it("goes from 1 to the maximum, evenly in perceived speed", () => {
+    expect(zoomScale(0, 64)).toBe(1);
+    expect(zoomScale(1, 64)).toBe(64);
+    expect(zoomScale(0.5, 64)).toBeCloseTo(8);
+    expect(zoomScale(2, 64)).toBe(64);
+  });
+});
+
+/** One row of RGBA pixels with ink (alpha 255) where `inked` says so. */
+const row = (inked: boolean[]) =>
+  inked.flatMap((ink) => [0, 0, 0, ink ? 255 : 0]);
+
+describe("inkSpan", () => {
+  it("finds the first run of ink across the row", () => {
+    const pixels = row([false, false, true, true, true, false, true, false]);
+    expect(inkSpan(pixels, 8)).toEqual({ start: 2, end: 5 });
+  });
+
+  it("runs to the end of the row when the ink does", () => {
+    expect(inkSpan(row([false, true, true]), 3)).toEqual({ start: 1, end: 3 });
+  });
+
+  it("guesses the left stroke of the zero when the row has no ink", () => {
+    expect(inkSpan(row(Array(100).fill(false)), 100)).toEqual({
+      start: 8,
+      end: 20,
+    });
+  });
+});
+
+describe("diveTarget", () => {
+  it("dives into the middle of the stroke, deep enough to cover the screen", () => {
+    const dive = diveTarget({
+      width: 1440,
+      height: 900,
+      left: 700,
+      row: 420,
+      ink: { start: 10, end: 50 },
+    });
+    expect(dive.origin).toEqual({ x: 730, y: 420 });
+    expect(dive.maxScale).toBeCloseTo(
+      ((2.4 * Math.hypot(1440, 900)) / 40) * 1.05,
+    );
+  });
+
+  it("never takes a hairline stroke as thinner than 4px", () => {
+    const dive = diveTarget({
+      width: 400,
+      height: 800,
+      left: 0,
+      row: 0,
+      ink: { start: 10, end: 11 },
+    });
+    expect(dive.maxScale).toBeCloseTo(
+      ((2.4 * Math.hypot(400, 800)) / 4) * 1.05,
+    );
+  });
+});
+
+describe("diveTransform", () => {
+  it("scales the sheet about the dive's origin", () => {
+    expect(diveTransform({ x: 730, y: 420 }, 12)).toBe(
+      "translate(730 420) scale(12) translate(-730 -420)",
+    );
+  });
+});
+
+describe("countShown", () => {
+  it("counts a figure up with the share, in whole numbers", () => {
+    expect(countShown(7, 0)).toBe("0");
+    expect(countShown(7, 0.5)).toBe("4");
+    expect(countShown(6, 1)).toBe("6");
+    expect(countShown(6, 3)).toBe("6");
+    expect(countShown(6, -1)).toBe("0");
   });
 });
