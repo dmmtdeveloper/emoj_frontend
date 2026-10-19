@@ -103,6 +103,38 @@ export interface ChapterRange {
   end: number;
 }
 
+/** Whether `position` lies within any chapter's stretch of scroll. */
+function insideChapter(
+  ranges: readonly ChapterRange[],
+  position: number,
+): boolean {
+  return ranges.some(({ start, end }) => position >= start && position <= end);
+}
+
+/**
+ * Who handles a wheel step: the browser ("native": no smoothing, no pacing)
+ * or the smoothed, gated scroll ("gated"). Only the chapters need control,
+ * so a step that neither starts nor lands inside one, nor stops at a
+ * chapter's start, nor continues a held or still-easing scroll, is left to
+ * the browser and the rest of the page keeps its normal speed.
+ */
+export function wheelMode(
+  ranges: readonly ChapterRange[],
+  step: {
+    from: number;
+    to: number;
+    target: number;
+    holding: boolean;
+    smoothing: boolean;
+  },
+): "native" | "gated" {
+  const { from, to, target, holding, smoothing } = step;
+  if (holding || smoothing) return "gated";
+  if (Math.abs(target - to) > EPS) return "gated";
+  if (insideChapter(ranges, from) || insideChapter(ranges, to)) return "gated";
+  return "native";
+}
+
 /**
  * The target for a wheel step of `delta` from target `from`, with the
  * scroll currently at `current`: unchanged outside the chapters, slowed and
@@ -113,8 +145,7 @@ export function chapterPace(
   step: { from: number; delta: number; current: number; viewport: number },
 ): number {
   const { from, delta, current, viewport } = step;
-  const inside = ranges.some(({ start, end }) => from >= start && from <= end);
-  if (!inside) return from + delta;
+  if (!insideChapter(ranges, from)) return from + delta;
   const to = from + delta * INSIDE_MULTIPLIER;
   const lead = viewport * LEAD_SHARE;
   return delta > 0

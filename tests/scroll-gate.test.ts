@@ -8,6 +8,7 @@ import {
   INSIDE_MULTIPLIER,
   LEAD_SHARE,
   type GateState,
+  wheelMode,
 } from "../src/lib/motion/scroll-gate";
 
 /** Pin starts of three chapters. */
@@ -157,5 +158,65 @@ describe("chapterPace", () => {
         viewport: VIEWPORT,
       }),
     ).toBe(2500 - lead);
+  });
+});
+
+describe("wheelMode", () => {
+  const RANGES = [
+    { start: 1000, end: 3000 },
+    { start: 4000, end: 6000 },
+  ];
+  const base = { holding: false, smoothing: false };
+
+  it("scrolls natively outside the chapters", () => {
+    expect(
+      wheelMode(RANGES, { ...base, from: 200, to: 300, target: 300 }),
+    ).toBe("native");
+    expect(
+      wheelMode(RANGES, { ...base, from: 3200, to: 3300, target: 3300 }),
+    ).toBe("native");
+    expect(
+      wheelMode(RANGES, { ...base, from: 6500, to: 6400, target: 6400 }),
+    ).toBe("native");
+  });
+
+  it("gates a step that stops at a chapter start", () => {
+    expect(
+      wheelMode(RANGES, { ...base, from: 950, to: 1050, target: 1000 }),
+    ).toBe("gated");
+  });
+
+  it("gates every step that starts or lands inside a chapter", () => {
+    expect(
+      wheelMode(RANGES, { ...base, from: 1500, to: 1600, target: 1600 }),
+    ).toBe("gated");
+    // Scrolling up from below a chapter into its end.
+    expect(
+      wheelMode(RANGES, { ...base, from: 3050, to: 2950, target: 2950 }),
+    ).toBe("gated");
+  });
+
+  it("stays gated while a burst is held at a gate", () => {
+    expect(
+      wheelMode(RANGES, {
+        ...base,
+        holding: true,
+        from: 200,
+        to: 300,
+        target: 300,
+      }),
+    ).toBe("gated");
+  });
+
+  it("stays gated while a smoothed scroll is still easing", () => {
+    expect(
+      wheelMode(RANGES, {
+        ...base,
+        smoothing: true,
+        from: 3200,
+        to: 3300,
+        target: 3300,
+      }),
+    ).toBe("gated");
   });
 });
