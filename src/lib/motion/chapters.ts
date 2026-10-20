@@ -64,6 +64,80 @@ export function stageTimes(count: number, from: number, to: number): number[] {
   );
 }
 
+/** Share of the way from `from` to `to` that `value` has gone (0..1). */
+const segment = (value: number, from: number, to: number): number =>
+  clamp01((value - from) / (to - from));
+
+const easeInOutCubic = (t: number): number =>
+  t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+
+/**
+ * The services fan: how many cards have turned at `time` (fractional) as
+ * the scroll shuffles `count` cards over [from, to] (shares).
+ */
+export function fanTurn(
+  time: number,
+  count: number,
+  from: number,
+  to: number,
+): number {
+  if (count < 2) return 0;
+  return (count - 1) * segment(time / SCENE_LENGTH, from, to);
+}
+
+/** Where a card of the services fan sits (CSS transform parts and more). */
+export interface FanPlace {
+  /** Offset as shares of the card's width and height. */
+  x: number;
+  y: number;
+  /** Degrees. */
+  rotate: number;
+  scale: number;
+  opacity: number;
+  z: number;
+  /** Opacity of the copy on the card: only the top card shows it. */
+  copy: number;
+  /** How far its sketch is drawn (0..1). */
+  draw: number;
+}
+
+/**
+ * A card `pos` places from the top of the fan (0 the top, 1 the next…,
+ * negative once it has passed). Cards behind fan out to alternate sides
+ * (`side`), smaller and raised, three deep; a passed card is thrown off to
+ * the left over the others and fades. Its sketch draws as it comes up.
+ */
+export function fanPlace(pos: number, side: 1 | -1): FanPlace {
+  const z = Math.round(100 - pos * 10);
+  const copy = clamp01(1 - Math.abs(pos) * 3);
+  const draw = clamp01(1 - pos);
+  if (pos < 0) {
+    const eased = easeInOutCubic(clamp01(-pos));
+    return {
+      x: -0.75 * eased,
+      y: 0.06 * eased,
+      rotate: -12 * eased,
+      scale: 1,
+      opacity: 1 - segment(-pos, 0.55, 1),
+      z,
+      copy,
+      draw,
+    };
+  }
+  const depth = Math.min(pos, 2);
+  // `+ 0` turns -0 into 0 (a square, unmoved top card).
+  return {
+    x: side * 0.07 * depth + 0,
+    y: -0.035 * depth + 0,
+    rotate: side * 4.5 * depth + 0,
+    scale: 1 - 0.06 * depth,
+    opacity: 1 - segment(pos, 2, 3),
+    z,
+    copy,
+    draw,
+  };
+}
+
 /** The part of `text` typed so far (a typed command, address…). */
 export function typedText(text: string, share: number): string {
   return text.slice(0, Math.floor(text.length * clamp01(share) + 1e-9));

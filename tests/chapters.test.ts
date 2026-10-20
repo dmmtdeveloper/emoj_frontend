@@ -8,6 +8,8 @@ import {
   diveTarget,
   diveTransform,
   enterShare,
+  fanPlace,
+  fanTurn,
   focusFit,
   inkSpan,
   reelCard,
@@ -327,5 +329,74 @@ describe("cardTilt", () => {
     const tilt = cardTilt({ x: 10, y: 10 }, { ...box, width: 0 }, 6);
     expect(tilt.rotateX).toBeCloseTo(0);
     expect(tilt.rotateY).toBeCloseTo(0);
+  });
+});
+
+describe("fanTurn", () => {
+  it("rests on the first card before the shuffle starts", () => {
+    expect(fanTurn(0, 7, 0.2, 0.8)).toBe(0);
+    expect(fanTurn(0.2 * SCENE_LENGTH, 7, 0.2, 0.8)).toBe(0);
+  });
+
+  it("turns one card per share of the shuffle", () => {
+    expect(fanTurn(0.5 * SCENE_LENGTH, 7, 0.2, 0.8)).toBeCloseTo(3);
+    expect(fanTurn(0.3 * SCENE_LENGTH, 7, 0.2, 0.8)).toBeCloseTo(1);
+  });
+
+  it("stops on the last card after the shuffle", () => {
+    expect(fanTurn(SCENE_LENGTH, 7, 0.2, 0.8)).toBe(6);
+  });
+
+  it("stays on the only card of a one-card fan", () => {
+    expect(fanTurn(SCENE_LENGTH, 1, 0.2, 0.8)).toBe(0);
+  });
+});
+
+describe("fanPlace", () => {
+  it("keeps the top card square, whole and on top", () => {
+    const top = fanPlace(0, 1);
+    expect(top).toMatchObject({ x: 0, y: 0, rotate: 0, scale: 1 });
+    expect(top.opacity).toBe(1);
+    expect(top.copy).toBe(1);
+    expect(top.draw).toBe(1);
+    expect(top.z).toBeGreaterThan(fanPlace(1, 1).z);
+  });
+
+  it("fans the cards behind to alternate sides, smaller and raised", () => {
+    const right = fanPlace(1, 1);
+    const left = fanPlace(1, -1);
+    expect(right.x).toBeGreaterThan(0);
+    expect(left.x).toBeLessThan(0);
+    expect(right.rotate).toBeGreaterThan(0);
+    expect(right.y).toBeLessThan(0);
+    expect(right.scale).toBeLessThan(1);
+    expect(fanPlace(2, 1).scale).toBeLessThan(right.scale);
+  });
+
+  it("shows only three cards: deeper ones fade out", () => {
+    expect(fanPlace(2, 1).opacity).toBe(1);
+    expect(fanPlace(3, 1).opacity).toBe(0);
+    expect(fanPlace(5, 1).opacity).toBe(0);
+  });
+
+  it("throws a passed card off to the left and fades it", () => {
+    const gone = fanPlace(-1, 1);
+    expect(gone.x).toBeLessThan(-0.5);
+    expect(gone.rotate).toBeLessThan(0);
+    expect(gone.opacity).toBe(0);
+    expect(gone.z).toBeGreaterThan(fanPlace(0, 1).z);
+  });
+
+  it("shows the copy only while the card is on top", () => {
+    expect(fanPlace(0.5, 1).copy).toBe(0);
+    expect(fanPlace(-0.5, 1).copy).toBe(0);
+    expect(fanPlace(0.1, 1).copy).toBeGreaterThan(0);
+    expect(fanPlace(0.1, 1).copy).toBeLessThan(1);
+  });
+
+  it("draws the sketch as the card comes up to the top", () => {
+    expect(fanPlace(1, 1).draw).toBe(0);
+    expect(fanPlace(0.5, 1).draw).toBeCloseTo(0.5);
+    expect(fanPlace(-1, 1).draw).toBe(1);
   });
 });
