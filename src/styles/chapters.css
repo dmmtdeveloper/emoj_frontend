@@ -6,11 +6,12 @@
  * by public/theme.js) the track grows a tail of `--ch-pin` and the stage
  * pins under the header; the scene's anime.js timeline spans exactly that
  * pinned interval. Without the mark (no JavaScript, reduced motion) the
- * chapters read as plain sections with their scenes at rest. Chapters 03
- * (the first stroke, a sage band), 05 (the projects reel) and 06 ("30
- * años") are full-bleed and 07 (the stacked reasons) has its own
- * two-column stage: the same track and pin, with their own heads instead
- * of the grid.
+ * chapters read as plain sections with their scenes at rest. Chapters 05
+ * (the projects reel) and 06 ("30 años") are full-bleed and 07 (the
+ * stacked reasons) has its own two-column stage: the same track and pin,
+ * with their own heads instead of the grid. Chapter 03 (the six stages, a
+ * sage band) is the exception: a plain full-bleed section that scrolls
+ * with the page, no track and no pin.
  *
  * Scene variables and classes carry the chapter's prefix (`svc-`, `flow-`,
  * `cad-`, `reel-`, `years-`, `stack-`, `loc-`).
@@ -688,38 +689,40 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 03 · Cómo trabajamos: the first stroke                               */
+/* 03 · Cómo trabajamos: the six stages, a timeline                     */
 /* ------------------------------------------------------------------ */
 
 @layer components {
-  /* A full-bleed sage band with plum text, the same in both themes. */
+  /* A full-bleed sage band with plum text, the same in both themes. It
+     scrolls with the page: nothing pins. */
   .flow-scene {
-    --ch-pin: 380svh;
     background: var(--accent);
     color: var(--on-accent);
+    overflow-x: clip;
   }
 
-  .flow-stage {
+  .flow-grid {
     display: grid;
-    grid-template-rows: auto auto auto;
-    gap: clamp(1.5rem, 4vh, 3rem);
-    padding-block: 96px;
-  }
-
-  .flow-head {
-    display: grid;
-    gap: 1.25rem 4rem;
+    gap: 3rem;
+    padding-block: 72px 88px;
   }
 
   @media (min-width: 64rem) {
+    .flow-grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 4rem;
+      padding-block: 120px;
+    }
+
+    /* The head stays beside the list while it scrolls (CSS only). */
     .flow-head {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      align-items: end;
+      position: sticky;
+      top: calc(var(--header-h) + 48px);
+      align-self: start;
     }
   }
 
-  .flow-heading,
-  .flow-intro {
+  .flow-head {
     display: grid;
     gap: 1rem;
     justify-items: start;
@@ -788,219 +791,127 @@
     translate: 4px 0;
   }
 
-  /* The isotype: a faint, wide pen line and the plum stroke drawn on it. */
-  .flow-band {
+  /* The timeline: icon nodes on a thin rail, the stage beside each. */
+  .flow-timeline {
+    --node: 44px;
     position: relative;
-    width: 100%;
-    aspect-ratio: 660 / 258;
-    margin-inline: auto;
   }
 
-  .flow-svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-
-  .flow-trace,
-  .flow-line {
-    fill: none;
-    stroke-linecap: round;
-    stroke-miterlimit: 10;
-  }
-
-  .flow-trace {
-    stroke: color-mix(in oklab, var(--on-accent) 13%, transparent);
-    stroke-width: 16;
-  }
-
-  .flow-line {
-    stroke: var(--on-accent);
-    stroke-width: 2.5;
-    vector-effect: non-scaling-stroke;
-  }
-
-  .flow-dot {
-    fill: var(--on-accent);
-  }
-
-  .flow-dot--end {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  /* The stages on the stroke, placed by the script (left/top). */
-  .flow-node {
-    display: none;
-  }
-
-  .flow-band[data-placed] .flow-node {
-    position: absolute;
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    translate: -50% -50%;
-    border: 1.5px solid var(--on-accent);
-    border-radius: var(--radius-full);
-    background: var(--accent);
-    color: var(--on-accent);
-  }
-
-  /* The stages, each under a plum hairline. */
   .flow-steps {
     display: grid;
-    gap: 1.5rem;
   }
 
-  @media (min-width: 64rem) {
-    .flow-steps {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
+  .flow-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--node) minmax(0, 1fr);
+    column-gap: 20px;
+    align-items: start;
+    padding-block: 0 2.5rem;
   }
 
-  .flow-step__rule {
-    display: block;
-    height: 1.5px;
-    margin-bottom: 12px;
+  .flow-step:last-child {
+    padding-bottom: 0;
+  }
+
+  .flow-step__node {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: var(--node);
+    height: var(--node);
+    grid-row: span 2;
+    place-items: center;
+    border: 1.5px solid var(--on-accent);
+    border-radius: var(--radius-full);
     background: var(--on-accent);
-    transform-origin: 0 50%;
+    color: var(--accent);
+    transition:
+      background-color 300ms var(--ease-out),
+      color 300ms var(--ease-out),
+      scale 300ms var(--ease-out);
   }
 
   .flow-step__num {
+    overflow: clip;
     font-family: var(--font-data);
-    font-size: 13px;
-    line-height: 16px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-size: clamp(2.5rem, 1.9rem + 1.6vw, 3.5rem);
+    line-height: 1.05;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+
+  .flow-step__num span {
+    display: block;
+  }
+
+  .flow-step__text {
+    grid-column: 2;
+    max-width: 44ch;
+    margin-top: 6px;
   }
 
   .flow-step__name {
-    margin-top: 4px;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.3;
     font-weight: 600;
     letter-spacing: -0.01em;
   }
 
   .flow-step__line {
-    max-width: 30ch;
     margin-top: 6px;
     font-size: 16px;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
-  /* ---------- Playing: the stage pins and the stroke draws ---------- */
-
-  :root[data-scenes] .flow-scene {
-    overflow-anchor: none;
+  /* The rail, laid from the first node to the last by the script; at rest
+     (or before it runs) it spans the list, full. */
+  .flow-rail {
+    position: absolute;
+    top: calc(var(--node) / 2);
+    bottom: 0;
+    left: calc(var(--node) / 2 - 1px);
+    width: 2px;
+    background: color-mix(in oklab, var(--on-accent) 22%, transparent);
   }
 
-  :root[data-scenes] .flow-scene .flow-stage {
-    position: sticky;
-    top: var(--header-h);
-    height: calc(100svh - var(--header-h));
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    /* The bottom stays clear of the floating WhatsApp button. */
-    padding-block: clamp(1.25rem, 5vh, 3.5rem) 88px;
-    overflow: clip;
+  .flow-rail__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--on-accent);
+    transform-origin: 50% 0;
+    scale: 1 var(--rail, 1);
   }
 
-  /* The stroke takes the room left between the head and the stages, at
-     its own proportions. */
-  :root[data-scenes] .flow-scene .flow-room {
-    display: grid;
-    place-items: center;
-    container-type: size;
+  .flow-rail__dot {
+    position: absolute;
+    top: calc(var(--rail, 1) * 100%);
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    translate: -50% -50%;
+    border-radius: var(--radius-full);
+    background: var(--on-accent);
   }
 
-  :root[data-scenes] .flow-scene .flow-band {
-    width: min(100cqw - 48px, (100cqh - 48px) * 660 / 258);
+  /* Playing: the nodes wait as outlines until the fill reaches them; the
+     current one stands out. */
+  :root[data-scenes] .flow-step:not([data-reached]) .flow-step__node {
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
-  /* Phones and tablets: one stage's line at a time, under the names. */
+  :root[data-scenes] .flow-step[data-current] .flow-step__node {
+    scale: 1.12;
+  }
+
   @media (max-width: 63.99rem) {
-    .flow-scene {
-      --ch-pin: 320svh;
+    .flow-timeline {
+      --node: 40px;
     }
 
-    .flow-band[data-placed] .flow-node {
-      width: 34px;
-      height: 34px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-stage {
-      grid-template-rows: auto auto auto;
-      align-content: start;
-      gap: 12px;
-      padding-block: 16px 84px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-room {
-      display: block;
-      padding-block: 18px;
-      container-type: normal;
-    }
-
-    :root[data-scenes] .flow-scene .flow-band {
-      width: calc(100% - 34px);
-    }
-
-    :root[data-scenes] .flow-scene .flow-head {
-      gap: 10px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-heading,
-    :root[data-scenes] .flow-scene .flow-intro {
-      gap: 8px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-lead {
-      font-size: 16px;
-      line-height: 1.5;
-    }
-
-    :root[data-scenes] .flow-scene .flow-cta {
-      min-height: 32px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-steps {
-      position: relative;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 16px;
-      padding-bottom: calc(3 * 1.45 * 16px + 14px);
-    }
-
-    :root[data-scenes] .flow-scene .flow-step {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      column-gap: 8px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-step__rule {
-      flex-basis: 100%;
-      margin-bottom: 8px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-step__name {
-      margin-top: 0;
-      font-size: 16px;
-    }
-
-    :root[data-scenes] .flow-scene .flow-step__line {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      max-width: 40ch;
-    }
-  }
-
-  @media (min-width: 40rem) and (max-width: 63.99rem) {
-    :root[data-scenes] .flow-scene .flow-steps {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .flow-step {
+      column-gap: 16px;
     }
   }
 }

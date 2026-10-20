@@ -1,21 +1,18 @@
 ---
 /**
  * Chapter 03 · Cómo trabajamos, "Del primer trazo a la obra". A full-bleed
- * sage band (`accent`, plum text, the same in both themes) with the EMOJ
- * isotype across it: the stroke is the first line of every project. Its
- * faint, wide pen line runs behind; the six stages sit on it, at even
- * steps along the stroke (src/lib/motion/stroke-path.ts lays them out from
- * the official geometry).
+ * sage band (`accent`, plum text, the same in both themes) that scrolls
+ * with the page: nothing pins. On wide screens the head stays beside the
+ * list (CSS `position: sticky`) while a vertical timeline of the six stages
+ * runs down the right; on phones the head sits above it.
  *
- * While the stage is pinned the scroll draws the stroke in plum from the
- * left dot, leg by leg (src/scripts/chapters/scrub.ts): the drawing stops
- * at each stage, its icon draws itself and, in the list under the stroke,
- * the stage's rule, name and line come in. "Obra" closes the line and the
- * end dot lands.
- *
- * The stroke and its icons are decorative; the list is the content. At
- * rest (no JavaScript, reduced motion) the stroke is complete and every
- * stage reads with its line.
+ * Each stage is real content (an `<ol>`): its number, icon, name and line.
+ * While the scenes play (`:root[data-scenes]`) a stage comes in as it
+ * enters the viewport (the number slides up, the icon draws itself, the
+ * text rises) and rewinds when scrolled back above it. A thin plum rail
+ * links the stage icons; the scroll fills it in plum and every stage it
+ * reaches lights its icon. At rest (no JavaScript, reduced motion) the
+ * rail is full and every stage reads complete.
  */
 import {
   ArrowRight,
@@ -27,14 +24,6 @@ import {
   Stamp,
 } from "@lucide/astro";
 import { WORK_STAGES } from "../../../lib/content/work-stages";
-import {
-  boxShare,
-  parseCubicPath,
-  pointAlong,
-  samplePath,
-} from "../../../lib/motion/stroke-path";
-import { ISOTYPE } from "./isotype";
-import { STATIONS } from "./work-stations";
 
 const ICONS = [
   MessagesSquare,
@@ -45,262 +34,179 @@ const ICONS = [
   HardHat,
 ];
 const pad = (n: number) => String(n).padStart(2, "0");
-const percent = (share: number) => `${Math.round(share * 1000) / 10}%`;
-
-// The stroke runs right to left: a station's share is read from the left.
-const stroke = samplePath(parseCubicPath(ISOTYPE.stroke));
-const stages = WORK_STAGES.map((stage, i) => {
-  const at = boxShare(
-    pointAlong(stroke, 1 - (STATIONS[i] ?? 0)),
-    ISOTYPE.viewBox,
-  );
-  return {
-    ...stage,
-    Icon: ICONS[i] ?? MessagesSquare,
-    x: percent(at.x),
-    y: percent(at.y),
-  };
-});
+const stages = WORK_STAGES.map((stage, i) => ({
+  ...stage,
+  Icon: ICONS[i] ?? MessagesSquare,
+  number: pad(i + 1),
+}));
 ---
 
 <section
-  class="ch-track flow-scene"
+  class="flow-scene"
   aria-labelledby="como-trabajamos"
-  data-track
   data-nav-section="/nosotros"
   data-scene-flow
 >
-  <div class="flow-stage container-wide" data-stage>
+  <div class="flow-grid container-wide">
     <div class="flow-head">
-      <div class="flow-heading">
-        <p class="flow-eyebrow">
-          <span>03</span> Cómo trabajamos
-        </p>
-        <h2 id="como-trabajamos" class="flow-title">
-          Del primer trazo a la <em>obra</em>.
-        </h2>
-      </div>
-      <div class="flow-intro">
-        <p class="flow-lead">
-          <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
-          coordinadas: te acompañamos desde la primera conversación hasta que lo
-          diseñado está construido.
-        </p>
-        <a href="/contacto" class="flow-cta">
-          Cotizar proyecto
-          <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
-        </a>
-      </div>
+      <p class="flow-eyebrow">
+        <span>03</span> Cómo trabajamos
+      </p>
+      <h2 id="como-trabajamos" class="flow-title">
+        Del primer trazo a la <em>obra</em>.
+      </h2>
+      <p class="flow-lead">
+        <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+        coordinadas: te acompañamos desde la primera conversación hasta que lo
+        diseñado está construido.
+      </p>
+      <a href="/contacto" class="flow-cta">
+        Cotizar proyecto
+        <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+      </a>
     </div>
 
-    <div class="flow-room">
-      <div class="flow-band" data-band>
-        <svg
-          class="flow-svg"
-          viewBox={ISOTYPE.viewBox}
-          fill="none"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path class="flow-trace" d={ISOTYPE.stroke} />
-          <path class="flow-line" d={ISOTYPE.stroke} data-line />
-          <circle
-            class="flow-dot"
-            cx={ISOTYPE.start.x}
-            cy={ISOTYPE.start.y}
-            r={ISOTYPE.dot}
-          />
-          <circle
-            class="flow-dot flow-dot--end"
-            cx={ISOTYPE.end.x}
-            cy={ISOTYPE.end.y}
-            r={ISOTYPE.dot}
-            data-end
-          />
-        </svg>
-        {stages.map(({ Icon, x, y }) => (
-          <span
-            class="flow-node"
-            aria-hidden="true"
-            data-node
-            data-x={x}
-            data-y={y}
-          >
-            <Icon size={18} stroke-width={1.75} />
-          </span>
+    <div class="flow-timeline">
+      <span class="flow-rail" aria-hidden="true" data-rail>
+        <span class="flow-rail__fill"></span>
+        <span class="flow-rail__dot"></span>
+      </span>
+      <ol class="flow-steps">
+        {stages.map(({ Icon, name, line, number }) => (
+          <li class="flow-step" data-step>
+            <span class="flow-step__node" aria-hidden="true" data-node>
+              <Icon size={22} stroke-width={1.75} />
+            </span>
+            <p class="flow-step__num" aria-hidden="true">
+              <span data-num>{number}</span>
+            </p>
+            <div class="flow-step__text">
+              <h3 class="flow-step__name" data-says>
+                {name}
+              </h3>
+              <p class="flow-step__line" data-says>
+                {line}
+              </p>
+            </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
-
-    <ol class="flow-steps" data-steps>
-      {stages.map(({ name, line }, i) => (
-        <li class="flow-step" data-step>
-          <span class="flow-step__rule" aria-hidden="true" data-rule />
-          <p class="flow-step__num" aria-hidden="true">
-            {pad(i + 1)}
-          </p>
-          <h3 class="flow-step__name">{name}</h3>
-          <p class="flow-step__line" data-says>
-            {line}
-          </p>
-        </li>
-      ))}
-    </ol>
   </div>
 </section>
 
 <script>
-  import { svg, stagger, utils } from "animejs";
-  import { drawFromEnd, strokeSchedule } from "../../../lib/motion/stroke-path";
-  import {
-    eachScene,
-    scenesOn,
-    scrubbedScene,
-  } from "../../../scripts/chapters/scrub";
-  import { STATIONS } from "./work-stations";
+  import { animate, onScroll, stagger, svg, utils } from "animejs";
+  import { showingAt } from "../../../lib/motion/chapters";
+  import { eachScene, scenesOn } from "../../../scripts/chapters/scrub";
 
-  /** The drawing spans these shares of the pinned interval. */
-  const FROM = 0.05;
-  const TO = 0.9;
-  /** Share of each stage's slot the drawing holds on it. */
-  const HOLD = 0.45;
-  /** How dim a stage waits before the drawing reaches it. */
-  const WAIT = 0.35;
+  eachScene("[data-scene-flow]", (_scene, $, $$) => {
+    const rail = $("[data-rail]");
+    const steps = $$("[data-step]");
+    const nodes = steps.map((step) =>
+      step.querySelector<HTMLElement>("[data-node]"),
+    );
 
-  eachScene("[data-scene-flow]", (track, $, $$) => {
-    // The stages sit on the stroke (CSSOM: no inline styles in the markup);
-    // also at rest, where the stroke is complete.
-    const band = $("[data-band]");
-    const nodes = $$("[data-node]");
-    nodes.forEach((node) => {
-      node.style.setProperty("left", node.dataset["x"] ?? "0%");
-      node.style.setProperty("top", node.dataset["y"] ?? "0%");
+    // The rail runs from the first stage icon to the last one; where each
+    // icon sits along it, as shares of its length.
+    let marks: number[] = [];
+    const centre = (node: HTMLElement | null) =>
+      node ? node.offsetTop + node.offsetHeight / 2 : 0;
+    const measure = () => {
+      const first = nodes[0] ?? null;
+      const last = nodes.at(-1) ?? null;
+      const offset = (node: HTMLElement | null) =>
+        (node?.closest<HTMLElement>("[data-step]")?.offsetTop ?? 0) +
+        centre(node);
+      const top = offset(first);
+      const length = Math.max(1, offset(last) - top);
+      rail.style.setProperty("top", `${top}px`);
+      rail.style.setProperty("height", `${length}px`);
+      marks = nodes.map((node) => (offset(node) - top) / length);
+    };
+    measure();
+    rail.setAttribute("data-placed", "");
+    void document.fonts?.ready.then(measure);
+    let timer = 0;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(measure, 150);
     });
-    band.setAttribute("data-placed", "");
     if (!scenesOn()) return;
 
-    const line = svg.createDrawable($<SVGPathElement>("[data-line]"));
-    const end = $<SVGCircleElement>("[data-end]");
-    const steps = $$("[data-step]");
-    const parts = steps.map((step, i) => {
-      const node = nodes[i];
-      const icon = node?.querySelector("svg");
-      return {
-        node,
-        strokes: svg.createDrawable(
-          icon
-            ? [...icon.children].filter(
-                (child): child is SVGGeometryElement =>
-                  child instanceof SVGGeometryElement,
-              )
-            : [],
-        ),
-        rule: step.querySelector<HTMLElement>("[data-rule]"),
-        head: [...step.querySelectorAll<HTMLElement>(".flow-step__num, h3")],
-        says: step.querySelector<HTMLElement>("[data-says]"),
-      };
-    });
-    // Phones and tablets show one stage's line at a time, in one place.
-    const oneLine = window.matchMedia("(max-width: 63.99rem)").matches;
-    const legs = strokeSchedule(STATIONS, FROM, TO, HOLD);
-
-    utils.set(line, { draw: drawFromEnd(0) });
-    utils.set(end, { scale: 0 });
-    parts.forEach((part) => {
-      if (part.node) utils.set(part.node, { opacity: WAIT, scale: 0.85 });
-      utils.set(part.strokes, { draw: "0 0" });
-      if (part.rule) utils.set(part.rule, { scaleX: 0 });
-      utils.set(part.head, { opacity: WAIT });
-      if (part.says) utils.set(part.says, { opacity: 0, translateY: 10 });
-    });
-
-    scrubbedScene(track, (tl) => {
-      legs.forEach((leg, i) => {
-        const part = parts[i];
-        if (!part) return;
-        const travel = leg.reach - leg.start;
-        // The stroke draws to the stage, then holds there.
-        tl.add(
-          line,
-          {
-            draw: [drawFromEnd(leg.from), drawFromEnd(leg.to)],
-            duration: travel,
-            ease: "inOutSine",
-          },
-          leg.start,
-        );
-        // The stage lights as the drawing reaches it.
-        const at = leg.reach - travel * 0.15;
-        if (part.node) {
-          tl.add(
-            part.node,
-            {
-              opacity: [WAIT, 1],
-              scale: [0.85, 1.2, 1],
-              duration: travel * 0.6,
-              ease: "outQuad",
-            },
-            at,
-          );
-        }
-        tl.add(
-          part.strokes,
-          {
-            draw: ["0 0", "0 1"],
-            duration: travel * 0.6,
-            delay: stagger(travel * 0.08),
-            ease: "inOutSine",
-          },
-          at,
-        );
-        if (part.rule) {
-          tl.add(
-            part.rule,
-            { scaleX: [0, 1], duration: travel * 0.5, ease: "inOutQuad" },
-            at,
-          );
-        }
-        tl.add(
-          part.head,
-          { opacity: [WAIT, 1], duration: travel * 0.3, ease: "linear" },
-          at,
-        );
-        if (part.says) {
-          tl.add(
-            part.says,
-            {
-              opacity: [0, 1],
-              translateY: [10, 0],
-              duration: travel * 0.4,
-              ease: "outQuad",
-            },
-            at + travel * 0.2,
-          );
-          // One line at a time on small screens: it gives way to the next.
-          const next = legs[i + 1];
-          if (oneLine && next) {
-            tl.add(
-              part.says,
-              {
-                opacity: [1, 0],
-                translateY: [0, -10],
-                duration: travel * 0.25,
-                ease: "inQuad",
-              },
-              next.reach - travel * 0.3,
-            );
-          }
-        }
+    // The rail fills with the scroll: its tip follows the middle of the
+    // viewport, and every stage it has passed lights its icon.
+    const light = (share: number) => {
+      const reached = showingAt(share + 1e-3, marks) - 1;
+      steps.forEach((step, i) => {
+        step.toggleAttribute("data-reached", i <= reached);
+        step.toggleAttribute("data-current", i === reached);
       });
-      // "Obra" closes the line: the end dot lands.
-      const last = legs.at(-1);
-      if (last) {
-        tl.add(
-          end,
-          { scale: [0, 1.5, 1], duration: 400, ease: "outQuad" },
-          last.reach,
-        );
+    };
+    utils.set(rail, { "--rail": 0 });
+    light(0);
+    animate(rail, {
+      "--rail": [0, 1],
+      ease: "linear",
+      duration: 1000,
+      autoplay: onScroll({
+        target: rail,
+        enter: "center top",
+        leave: "center bottom",
+        sync: 0.5,
+      }),
+      onUpdate: (self) => light(self.progress),
+    });
+
+    // Each stage comes in as it enters and rewinds when scrolled back
+    // above it (play on enter forward, reverse on leave backward).
+    steps.forEach((step, i) => {
+      const num = step.querySelector<HTMLElement>("[data-num]");
+      const says = [...step.querySelectorAll<HTMLElement>("[data-says]")];
+      const icon = nodes[i]?.querySelector("svg");
+      const strokes = icon
+        ? [...icon.children].filter(
+            (child): child is SVGGeometryElement =>
+              child instanceof SVGGeometryElement,
+          )
+        : [];
+      const drawable = strokes.length > 0 ? svg.createDrawable(strokes) : null;
+      // Hidden until the stage enters (set here, never in the markup).
+      if (num) utils.set(num, { translateY: "105%" });
+      if (drawable) utils.set(drawable, { draw: "0 0" });
+      utils.set(says, { opacity: 0, translateY: 16 });
+      const trigger = () =>
+        onScroll({
+          target: step,
+          enter: "bottom-=80 top",
+          sync: "play none none reverse",
+        });
+
+      if (num) {
+        animate(num, {
+          translateY: ["105%", "0%"],
+          duration: 650,
+          ease: "outExpo",
+          autoplay: trigger(),
+        });
       }
+      if (drawable) {
+        animate(drawable, {
+          draw: ["0 0", "0 1"],
+          duration: 700,
+          delay: 120,
+          ease: "inOutSine",
+          autoplay: trigger(),
+        });
+      }
+      animate(says, {
+        opacity: [0, 1],
+        translateY: [16, 0],
+        duration: 600,
+        delay: stagger(90, { start: 140 }),
+        ease: "outQuad",
+        autoplay: trigger(),
+      });
     });
   });
 </script>
