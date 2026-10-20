@@ -2143,6 +2143,24 @@
     height: 100%;
   }
 
+  /* The pencil sketch under the streets: dashed and lighter, so the plan
+     reads from the first frame and the scroll inks it. */
+  .loc-sketch {
+    stroke: color-mix(in oklab, var(--ink) 14%, transparent);
+    stroke-width: 1;
+    stroke-dasharray: 4 5;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .loc-sketch--avenue {
+    stroke-width: 2;
+  }
+
+  .loc-sketch--main {
+    stroke-width: 1.5;
+  }
+
   /* Faint plum streets, the avenues heavier; names in the data font. */
   .loc-street {
     stroke: color-mix(in oklab, var(--ink) 22%, transparent);

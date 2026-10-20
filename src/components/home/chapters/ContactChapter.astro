@@ -58,6 +58,13 @@ const phone = CONTACT.phones[0];
         aria-hidden="true"
         focusable="false"
       >
+        {/* The pencil sketch: there from the start, inked by the scroll. */}
+        {streets.map((street) => (
+          <path
+            class:list={["loc-sketch", `loc-sketch--${street.kind}`]}
+            d={street.d}
+          />
+        ))}
         {streets.map((street) => (
           <path
             class:list={["loc-street", `loc-street--${street.kind}`]}
@@ -205,6 +212,8 @@ const phone = CONTACT.phones[0];
   const DROP = [0.44, 0.6] as const;
   const CARD = 0.6;
   const CHANNELS = 0.68;
+  /** How much of a street name shows before its street is inked. */
+  const NAME_SKETCH = 0.35;
 
   eachScene("[data-scene-contact]", (root, $, $$) => {
     const channels = $$<HTMLAnchorElement>("[data-channel]");
@@ -254,7 +263,7 @@ const phone = CONTACT.phones[0];
     const drop = pinDrop(FALL, BOUNCES);
 
     utils.set(lines, { draw: "0 0" });
-    utils.set(names, { opacity: 0 });
+    utils.set(names, { opacity: NAME_SKETCH });
     utils.set(ring, { opacity: 0, scale: 0.3 });
     utils.set(pin, { translateY: -FALL, opacity: 0 });
     utils.set(shadow, { scale: pinShadow(-FALL, FALL), opacity: 0 });
@@ -277,7 +286,11 @@ const phone = CONTACT.phones[0];
           start,
         ).add(
           names[i] ?? [],
-          { opacity: [0, 1], duration: span * 0.5, ease: "linear" },
+          {
+            opacity: [NAME_SKETCH, 1],
+            duration: span * 0.5,
+            ease: "linear",
+          },
           start + span * 0.6,
         );
       });
