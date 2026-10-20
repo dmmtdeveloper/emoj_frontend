@@ -1,42 +1,40 @@
 ---
 /**
- * Chapter 08 · Contacto. A new message to EMOJ composing itself: the
- * address types, threads from four specialties join the message and drop
- * their topic into it, the subject is written, the cursor sends it and the
- * EMOJ stroke signs it; then the channels where the conversation goes on
- * appear. Decorative: the real address and links live in the chapter text.
+ * Chapter 08 · Contacto, "Te esperamos en terreno". Beside the invitation,
+ * a hand-drawn plan of the streets around the office (./office-map.ts):
+ * the avenues draw on with the scroll, then the streets and their names,
+ * the map pin drops onto the office block with a bounce (its shadow
+ * growing on the ground, a ring pulsing out), the address appears next to
+ * it with the way there, and the three channels to reach us line up under
+ * the map. Name placement and the pin's drop: src/lib/motion/survey.ts.
+ *
+ * The plan is decorative; the address and the channels are real content
+ * (links), kept out of reach (`inert`) only while they are not shown yet.
+ * At rest (no JavaScript, reduced motion) everything is in place.
  */
-import {
-  ArrowRight,
-  Building,
-  Droplets,
-  Mail,
-  Mountain,
-  Phone,
-  Route,
-  Send,
-} from "@lucide/astro";
+import { ArrowRight, ArrowUpRight, Mail, MapPin, Phone } from "@lucide/astro";
 import { CONTACT } from "../../../lib/site";
+import { labelAlong } from "../../../lib/motion/survey";
 import { whatsappHref } from "../../../lib/whatsapp";
 import WhatsAppIcon from "../../ui/WhatsAppIcon.astro";
-import { ISOTYPE } from "./isotype";
 import Chapter from "./Chapter.astro";
+import { OFFICE_MAP, STREETS } from "./office-map";
 
-const SUBJECT = "Cotización de proyecto";
-/** The four sides of the work that join the message (left side). */
-const TOPICS = [
-  { icon: Droplets, label: "Obras sanitarias" },
-  { icon: Route, label: "Obras viales" },
-  { icon: Building, label: "Cálculo estructural" },
-  { icon: Mountain, label: "Geotecnia" },
-] as const;
-/** Threads from each topic (left) into the message body (right), in the
- * scene's 100×100 box. */
-const threads = TOPICS.map((_, i) => {
-  const y = 16 + i * 22;
-  const endY = 52 + i * 6;
-  return `M8 ${y}C22 ${y} 22 ${endY} 36 ${endY}`;
+const f = (n: number) => Math.round(n * 10) / 10;
+const streets = STREETS.map((street) => {
+  const name = labelAlong(
+    street.from,
+    street.to,
+    street.label.share,
+    street.label.offset,
+  );
+  return {
+    ...street,
+    d: `M${street.from.x} ${street.from.y}L${street.to.x} ${street.to.y}`,
+    transform: `translate(${f(name.x)} ${f(name.y)}) rotate(${f(name.angle)})`,
+  };
 });
+const phone = CONTACT.phones[0];
 ---
 
 <Chapter
@@ -50,94 +48,112 @@ const threads = TOPICS.map((_, i) => {
     ¿Tienes un proyecto? <em>Conversemos.</em>
   </Fragment>
 
-  <div
-    class="msg"
-    slot="scene"
-    aria-hidden="true"
-    data-scene-contact
-    data-address={CONTACT.email}
-    data-subject={SUBJECT}
-  >
-    <ul class="msg-topics">
-      {TOPICS.map((topic) => (
-        <li class="msg-topic">
-          <topic.icon size={18} stroke-width={1.75} />
-        </li>
-      ))}
-    </ul>
-    <svg
-      class="msg-threads"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      fill="none"
-      focusable="false"
-    >
-      {threads.map((d) => (
-        <path class="msg-thread" d={d} data-thread />
-      ))}
-    </svg>
-
-    <div class="msg-card">
-      <p class="msg-card__bar">
-        <span>Nuevo mensaje</span>
-        <Mail size={14} stroke-width={1.75} />
-      </p>
-      <p class="msg-field">
-        <span class="msg-field__key">Para</span>
-        <span class="msg-field__value" data-address-text>
-          {CONTACT.email}
+  <div class="loc" slot="scene" data-scene-contact>
+    <div class="loc-map">
+      <svg
+        class="loc-plan"
+        viewBox={OFFICE_MAP.viewBox}
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {streets.map((street) => (
+          <path
+            class:list={["loc-street", `loc-street--${street.kind}`]}
+            d={street.d}
+            data-street={street.kind}
+          />
+        ))}
+        {streets.map((street) => (
+          <text
+            class:list={[
+              "loc-street-name",
+              street.label.wide && "loc-street-name--wide",
+            ]}
+            transform={street.transform}
+            text-anchor="middle"
+            dominant-baseline="middle"
+            data-street-name
+          >
+            {street.name}
+          </text>
+        ))}
+      </svg>
+      <span class="loc-ring" aria-hidden="true" data-ring></span>
+      <span class="loc-shadow" aria-hidden="true" data-shadow></span>
+      <span class="loc-pin" aria-hidden="true" data-pin>
+        <MapPin size={44} stroke-width={1.5} />
+      </span>
+      <address class="loc-card" data-card>
+        <span class="loc-card__place">
+          {CONTACT.address.street}, {CONTACT.address.locality}
         </span>
-      </p>
-      <p class="msg-field">
-        <span class="msg-field__key">Asunto</span>
-        <span class="msg-field__value" data-subject-text>
-          {SUBJECT}
-        </span>
-      </p>
-      <div class="msg-body">
-        <p class="msg-body__hello">Hola, EMOJ: necesito apoyo en…</p>
-        <p class="msg-tags">
-          {TOPICS.map((topic) => (
-            <span class="msg-tag" data-tag>
-              {topic.label}
-            </span>
-          ))}
-        </p>
-        <svg
-          class="msg-sign"
-          viewBox={ISOTYPE.viewBox}
-          fill="none"
-          focusable="false"
+        <a
+          href={CONTACT.directionsHref}
+          class="loc-card__link"
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          <path d={ISOTYPE.stroke} data-sign />
-        </svg>
-      </div>
-      <p class="msg-card__foot">
-        <span class="msg-send" data-send>
-          <span class="msg-send__ring" data-ring></span>
-          <Send size={16} stroke-width={1.75} />
-          <span data-send-idle>Enviar</span>
-          <span class="msg-send__done" data-send-done>
-            Enviado
-          </span>
-        </span>
-      </p>
-      <span class="msg-cursor" data-cursor></span>
+          Cómo llegar
+          <ArrowUpRight size={16} stroke-width={2} aria-hidden="true" />
+          <span class="sr-only">(se abre en una pestaña nueva)</span>
+        </a>
+      </address>
     </div>
 
-    <ul class="msg-channels">
-      <li class="msg-channel" data-channel>
-        <WhatsAppIcon />
-        WhatsApp
+    <ul class="loc-channels" aria-label="Canales de contacto" data-channels>
+      <li>
+        <a
+          href={whatsappHref()}
+          class="loc-channel"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-channel
+        >
+          <span class="loc-channel__icon loc-channel__icon--whatsapp">
+            <WhatsAppIcon size={22} />
+          </span>
+          <ArrowRight
+            class="loc-channel__arrow"
+            size={18}
+            stroke-width={1.75}
+            aria-hidden="true"
+          />
+          <span class="loc-channel__name">WhatsApp</span>
+          <span class="sr-only">(se abre en una pestaña nueva)</span>
+        </a>
       </li>
-      <li class="msg-channel" data-channel>
-        <Mail size={16} stroke-width={1.75} />
-        Correo
+      <li>
+        <a href={`mailto:${CONTACT.email}`} class="loc-channel" data-channel>
+          <span class="loc-channel__icon">
+            <Mail size={22} stroke-width={1.75} aria-hidden="true" />
+          </span>
+          <ArrowRight
+            class="loc-channel__arrow"
+            size={18}
+            stroke-width={1.75}
+            aria-hidden="true"
+          />
+          <span class="loc-channel__name">Correo</span>
+        </a>
       </li>
-      <li class="msg-channel" data-channel>
-        <Phone size={16} stroke-width={1.75} />
-        Teléfono
-      </li>
+      {phone && (
+        <li>
+          <a href={phone.href} class="loc-channel" data-channel>
+            <span class="loc-channel__icon">
+              <Phone size={22} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <ArrowRight
+              class="loc-channel__arrow"
+              size={18}
+              stroke-width={1.75}
+              aria-hidden="true"
+            />
+            <span class="loc-channel__name">Teléfono</span>
+          </a>
+        </li>
+      )}
     </ul>
   </div>
 
@@ -166,8 +182,8 @@ const threads = TOPICS.map((_, i) => {
 </Chapter>
 
 <script>
-  import { stagger, svg, utils } from "animejs";
-  import { typedText } from "../../../lib/motion/chapters";
+  import { animate, stagger, svg, utils } from "animejs";
+  import { pinDrop, pinShadow } from "../../../lib/motion/survey";
   import {
     eachScene,
     SCENE_LENGTH,
@@ -176,115 +192,174 @@ const threads = TOPICS.map((_, i) => {
   } from "../../../scripts/chapters/scrub";
 
   const L = SCENE_LENGTH;
-  const ADDRESS = [L * 0.1, L * 0.2] as const;
-  const SUBJECT = [L * 0.5, L * 0.6] as const;
-  const TRAVEL = L * 0.06;
-  const PRESS = L * 0.7;
+  /** When each kind of street starts drawing, and for how long (shares). */
+  const STREETS: Record<string, { at: number; each: number; span: number }> = {
+    avenue: { at: 0.04, each: 0, span: 0.14 },
+    main: { at: 0.08, each: 0, span: 0.14 },
+    street: { at: 0.16, each: 0.03, span: 0.1 },
+    minor: { at: 0.32, each: 0.03, span: 0.08 },
+  };
+  /** The pin falls from this high (px) and bounces to these shares. */
+  const FALL = 120;
+  const BOUNCES = [0.2, 0.06];
+  const DROP = [0.44, 0.6] as const;
+  const CARD = 0.6;
+  const CHANNELS = 0.68;
 
   eachScene("[data-scene-contact]", (root, $, $$) => {
-    const threads = svg.createDrawable($$<SVGPathElement>("[data-thread]"));
-    const tags = $$("[data-tag]");
-    const address = $("[data-address-text]");
-    const subject = $("[data-subject-text]");
-    const sign = svg.createDrawable($<SVGPathElement>("[data-sign]"));
-    const send = $("[data-send]");
-    const idle = $("[data-send-idle]");
-    const done = $("[data-send-done]");
+    const channels = $$<HTMLAnchorElement>("[data-channel]");
+    const list = $("[data-channels]");
+    const card = $("[data-card]");
+
+    // On hover or focus a channel's icon draws itself and the arrow nudges
+    // (CSS). Not with reduced motion.
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    channels.forEach((channel) => {
+      const shapes = [
+        ...channel.querySelectorAll<SVGGeometryElement>(
+          ".loc-channel__icon svg :is(path, rect, circle)",
+        ),
+      ];
+      const lines = svg.createDrawable(shapes);
+      const filled = channel.querySelector(".loc-channel__icon--whatsapp path");
+      const play = () => {
+        if (still.matches) return;
+        animate(lines, {
+          draw: ["0 0", "0 1"],
+          duration: 650,
+          ease: "inOutSine",
+        });
+        if (filled) {
+          animate(filled, {
+            fillOpacity: [0, 1],
+            duration: 300,
+            delay: 450,
+            ease: "linear",
+          });
+        }
+      };
+      channel.addEventListener("pointerenter", play);
+      channel.addEventListener("focus", play);
+    });
+
+    if (!scenesOn()) return;
+    const streets = $$<SVGPathElement>("[data-street]");
+    const lines = svg.createDrawable(streets);
+    const names = $$<SVGTextElement>("[data-street-name]");
     const ring = $("[data-ring]");
-    const cursor = $("[data-cursor]");
-    const channels = $$("[data-channel]");
-    const addressText = root.dataset["address"] ?? "";
-    const subjectText = root.dataset["subject"] ?? "";
+    const pin = $("[data-pin]");
+    const shadow = $("[data-shadow]");
+    const items = [...list.children] as HTMLElement[];
+    const drop = pinDrop(FALL, BOUNCES);
 
-    if (scenesOn()) {
-      utils.set(threads, { draw: "0 0" });
-      utils.set(sign, { draw: "0 0" });
-      utils.set(tags, { opacity: 0, scale: 0.6 });
-      utils.set([...channels, done, cursor], { opacity: 0 });
-      utils.set(idle, { opacity: 1 });
-    }
-
-    const typing = (time: number, [from, to]: readonly [number, number]) =>
-      Math.min(1, Math.max(0, (time - from) / (to - from)));
-    const write = (time: number) => {
-      const a = typedText(addressText, typing(time, ADDRESS));
-      const s = typedText(subjectText, typing(time, SUBJECT));
-      if (address.textContent !== a) address.textContent = a;
-      if (subject.textContent !== s) subject.textContent = s;
-    };
+    utils.set(lines, { draw: "0 0" });
+    utils.set(names, { opacity: 0 });
+    utils.set(ring, { opacity: 0, scale: 0.3 });
+    utils.set(pin, { translateY: -FALL, opacity: 0 });
+    utils.set(shadow, { scale: pinShadow(-FALL, FALL), opacity: 0 });
+    utils.set(card, { opacity: 0, translateX: -10 });
+    utils.set(items, { opacity: 0, translateY: 16 });
 
     const timeline = scrubbedScene(root, (tl) => {
-      // 1. The threads draw from each specialty; then each drops its topic.
+      // 1. The streets draw on: the avenues first, then the streets, then
+      //    the small ones; each name appears once its street is there.
+      const seen: Record<string, number> = {};
+      lines.forEach((line, i) => {
+        const kind = streets[i]?.dataset["street"] ?? "";
+        const plan = STREETS[kind] ?? { at: 0.3, each: 0, span: 0.1 };
+        const k = (seen[kind] = (seen[kind] ?? -1) + 1);
+        const start = (plan.at + k * plan.each) * L;
+        const span = plan.span * L;
+        tl.add(
+          line,
+          { draw: ["0 0", "0 1"], duration: span, ease: "inOutSine" },
+          start,
+        ).add(
+          names[i] ?? [],
+          { opacity: [0, 1], duration: span * 0.5, ease: "linear" },
+          start + span * 0.6,
+        );
+      });
+
+      // 2. The pin drops and bounces; its shadow grows on the ground.
+      const span = (DROP[1] - DROP[0]) * L;
       tl.add(
-        threads,
+        pin,
         {
-          draw: ["0 0", "0 1"],
-          duration: TRAVEL,
-          delay: stagger(L * 0.05),
-          ease: "inOutSine",
+          translateY: drop.map((frame) => ({
+            to: frame.y,
+            duration: frame.share * span,
+            ease: frame.y === 0 ? "inQuad" : "outQuad",
+          })),
+          duration: span,
         },
-        L * 0.22,
-      ).add(
-        tags,
+        DROP[0] * L,
+      )
+        .add(
+          pin,
+          { opacity: [0, 1], duration: span * 0.1, ease: "linear" },
+          DROP[0] * L,
+        )
+        .add(
+          shadow,
+          {
+            scale: drop.map((frame) => ({
+              to: frame.shadow,
+              duration: frame.share * span,
+              ease: frame.y === 0 ? "inQuad" : "outQuad",
+            })),
+            duration: span,
+          },
+          DROP[0] * L,
+        )
+        .add(
+          shadow,
+          { opacity: [0, 1], duration: span * 0.3, ease: "linear" },
+          DROP[0] * L,
+        );
+
+      // A ring pulses out from where the pin lands.
+      tl.add(
+        ring,
         {
-          opacity: [0, 1],
-          scale: [0.6, 1],
-          duration: L * 0.03,
-          delay: stagger(L * 0.05),
-          ease: "outBack",
+          scale: [0.3, 2.6],
+          // From and back to nothing, so a scrub back past it hides it.
+          opacity: [0, 0.7, 0],
+          duration: L * 0.1,
+          ease: "outQuad",
         },
-        L * 0.22 + TRAVEL,
+        DROP[0] * L + span * 0.5,
       );
 
-      // 2. The cursor goes to "Enviar" and presses it.
-      tl.add(cursor, { opacity: [0, 1], duration: L * 0.02 }, L * 0.62)
-        .add(
-          cursor,
-          {
-            left: ["92%", "24%"],
-            top: ["70%", "90%"],
-            duration: L * 0.07,
-            ease: "outCubic",
-          },
-          L * 0.62,
-        )
-        .add(
-          [cursor, send],
-          {
-            scale: [
-              { to: 0.9, duration: L * 0.01 },
-              { to: 1, duration: L * 0.015 },
-            ],
-          },
-          PRESS,
-        )
-        .add(idle, { opacity: [1, 0], duration: L * 0.015 }, PRESS + L * 0.01)
-        .add(done, { opacity: [0, 1], duration: L * 0.02 }, PRESS + L * 0.02)
-        .add(
-          ring,
-          { opacity: [0.9, 0], scale: [1, 1.8], duration: L * 0.08 },
-          PRESS + L * 0.01,
-        )
-        .add(cursor, { opacity: [1, 0], duration: L * 0.03 }, PRESS + L * 0.04)
-        // 3. EMOJ signs it, and the channels appear.
-        .add(
-          sign,
-          { draw: ["0 0", "0 1"], duration: L * 0.08, ease: "inOutSine" },
-          PRESS + L * 0.03,
-        )
-        .add(
-          channels,
-          {
-            opacity: [0, 1],
-            translateY: [10, 0],
-            duration: L * 0.04,
-            delay: stagger(L * 0.015),
-            ease: "outBack",
-          },
-          L * 0.8,
-        );
+      // 3. The address, then the channels.
+      tl.add(
+        card,
+        {
+          opacity: [0, 1],
+          translateX: [-10, 0],
+          duration: L * 0.07,
+          ease: "outQuad",
+        },
+        CARD * L,
+      ).add(
+        items,
+        {
+          opacity: [0, 1],
+          translateY: [16, 0],
+          duration: L * 0.07,
+          delay: stagger(L * 0.025),
+          ease: "outQuad",
+        },
+        CHANNELS * L,
+      );
     });
-    timeline.onUpdate = (self) => write(self.currentTime);
-    write(timeline.currentTime);
+
+    // Links still on their way in stay out of reach.
+    const reach = (time: number) => {
+      card.inert = time < CARD * L + L * 0.035;
+      list.inert = time < CHANNELS * L + L * 0.035;
+    };
+    timeline.onUpdate = (self) => reach(self.currentTime);
+    reach(timeline.currentTime);
   });
 </script>
