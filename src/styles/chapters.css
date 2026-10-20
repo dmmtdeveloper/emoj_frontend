@@ -1806,6 +1806,109 @@
   :root[data-scenes] .years-scene .years-content {
     z-index: 2;
   }
+
+  /* ---------- Phone: the photo settles into a band ---------- */
+
+  /* A landscape photo cannot cover a portrait screen without cropping the
+     team. At rest the photo is a full-width band at its own ratio and the
+     copy reads below it on plum, with no veil. */
+  @media (max-width: 63.99rem) {
+    .years-stage {
+      flex-direction: column;
+    }
+
+    .years-photo {
+      position: relative;
+      inset: auto;
+      z-index: auto;
+    }
+
+    .years-photo__img {
+      height: auto;
+    }
+
+    .years-photo__veil {
+      display: none;
+    }
+
+    .years-content {
+      align-self: stretch;
+      gap: 32px;
+      padding-top: 28px;
+      padding-bottom: 56px;
+    }
+
+    .years-content__lead {
+      gap: 14px;
+    }
+
+    /* Sized to the screen's height too, so a short phone keeps the whole
+       copy under the band. */
+    .years-title {
+      max-width: 18ch;
+      font-size: clamp(1.75rem, 4.4svh, 2.25rem);
+    }
+
+    .years-text {
+      line-height: 1.5;
+    }
+
+    .years-fact {
+      gap: 20px;
+      padding-block: 14px;
+    }
+
+    .years-fact dd {
+      font-size: 3rem;
+    }
+
+    /* Playing: the dive covers the first screen of the stage, then the
+       photo shrinks with the scroll (--years-photo-top/-h, written by the
+       script) into the band under the header, its veil fading as it goes.
+       The copy comes in below the band (--years-lead) and fills that first
+       screen, so the facts sit just past it: they scroll in as the pin
+       ends instead of being clipped by it. */
+    :root[data-scenes] .years-scene .years-stage {
+      height: auto;
+      min-height: 100svh;
+    }
+
+    :root[data-scenes] .years-scene .years-photo {
+      position: absolute;
+      inset: var(--years-photo-top, 0px) 0 auto;
+      z-index: -2;
+      height: var(--years-photo-h, 100svh);
+    }
+
+    :root[data-scenes] .years-scene .years-photo__img {
+      height: 100%;
+    }
+
+    :root[data-scenes] .years-scene .years-photo__veil {
+      display: block;
+      opacity: calc(var(--years-veil, 1) * (1 - var(--years-band, 0)));
+    }
+
+    :root[data-scenes] .years-scene :is(.years-cut, .years-around) {
+      inset: 0 0 auto;
+      height: 100svh;
+    }
+
+    :root[data-scenes] .years-scene .years-content {
+      --years-copy-top: calc(
+        var(--header-h) + var(--years-band-h, 56.25vw) + 16px
+      );
+      padding-top: var(--years-copy-top);
+      opacity: var(--years-lead, 1);
+      translate: 0 calc((1 - var(--years-lead, 1)) * 24px);
+    }
+
+    :root[data-scenes] .years-scene .years-content__lead {
+      justify-content: center;
+      min-height: calc(100svh - var(--years-copy-top));
+      padding-bottom: 16px;
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ */

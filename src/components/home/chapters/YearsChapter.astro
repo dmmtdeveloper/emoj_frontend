@@ -12,8 +12,15 @@
  * measures where the "0" has ink (a canvas probe of the same text) and the
  * timeline zooms into that point. Only verifiable facts.
  *
+ * On a phone (below 64rem) the landscape photo cannot fill a portrait
+ * screen without cropping the team, so after the dive it shrinks, with the
+ * scroll, into a full-width band under the header at its own ratio, and
+ * the copy comes in below it on plum. The facts sit past the first screen
+ * of the stage: they scroll in right after the pin ends.
+ *
  * Without the scenes mark (no JavaScript, reduced motion) the chapter is
- * the finished state: the photo with the facts and the mission on it.
+ * the finished state: the photo with the facts and the mission on it (on a
+ * phone, the photo band with the copy below it).
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
@@ -48,7 +55,7 @@ const FACTS = [
     </div>
 
     {/* The cream sheet with the figure cut out (decorative). */}
-    <div class="years-cut" aria-hidden="true">
+    <div class="years-cut" aria-hidden="true" data-years-cut>
       <svg class="years-cut__svg" data-years-svg>
         <defs>
           <mask id="years-mask" maskUnits="userSpaceOnUse">
@@ -117,6 +124,7 @@ const FACTS = [
     diveTarget,
     diveTransform,
     inkSpan,
+    photoBand,
     zoomScale,
   } from "../../../lib/motion/chapters";
   import {
@@ -136,6 +144,10 @@ const FACTS = [
   /** The content comes in, and the facts count up, over these shares. */
   const CONTENT = [0.6, 0.8] as const;
   const COUNT = [0.66, 0.9] as const;
+  /** On a phone the photo becomes a band, then the copy comes in below. */
+  const BAND = [0.6, 0.76] as const;
+  const LEAD = [0.74, 0.9] as const;
+  const phone = window.matchMedia("(max-width: 63.99rem)");
 
   /** Where `time` is inside [from, to] (shares of L), eased out, 0..1. */
   const outCubicIn = (time: number, [from, to]: readonly [number, number]) => {
@@ -147,7 +159,9 @@ const FACTS = [
     // At rest the chapter is its finished state: nothing to play.
     if (!scenesOn()) return;
     const stage = $("[data-stage]");
+    const cut = $("[data-years-cut]");
     const svg = $<SVGSVGElement>("[data-years-svg]");
+    const photo = $<HTMLImageElement>(".years-photo__img");
     const zoomGroup = $<SVGGElement>("[data-years-zoom]");
     const texts = $$<SVGTextElement>("[data-years-text]");
     const content = $("[data-years-content]");
@@ -156,8 +170,28 @@ const FACTS = [
 
     let maxScale = 60;
     let origin = { x: 0, y: 0 };
-    // The dive's own value (0..1), tweened by the timeline.
+    // The dive's and the band's own values (0..1), tweened by the timeline.
     const dive = { zoom: 0 };
+    const band = { share: 0 };
+    // The screen the photo shrinks in, and the header it settles under.
+    let frame = {
+      width: 0,
+      height: 0,
+      top: 0,
+      natural: { width: 0, height: 0 },
+    };
+
+    const setPx = (name: string, value: number) =>
+      stage.style.setProperty(name, `${Math.round(value * 100) / 100}px`);
+
+    // The phone band: only the phone layout reads these properties.
+    const drawBand = () => {
+      if (!phone.matches || frame.width === 0) return;
+      const box = photoBand(band.share, frame);
+      setPx("--years-photo-top", box.top);
+      setPx("--years-photo-h", box.height);
+      stage.style.setProperty("--years-band", String(band.share));
+    };
 
     const draw = () => {
       zoomGroup.setAttribute(
@@ -166,14 +200,28 @@ const FACTS = [
       );
       const state = dive.zoom >= 1 ? "through" : "sheet";
       if (stage.dataset["state"] !== state) stage.dataset["state"] = state;
+      drawBand();
     };
 
-    // Lays out the cut-out "30" to the stage and finds a point with ink
-    // inside the "0" (the same text drawn on a canvas, one row of pixels).
+    // Lays out the cut-out "30" to its screen (the whole stage, or its
+    // first screen on a phone) and finds a point with ink inside the "0"
+    // (the same text drawn on a canvas, one row of pixels).
     const layout = () => {
-      const width = stage.clientWidth;
-      const height = stage.clientHeight;
+      const width = cut.clientWidth;
+      const height = cut.clientHeight;
       if (width === 0 || height === 0) return;
+      frame = {
+        width,
+        height,
+        top:
+          parseFloat(getComputedStyle(stage).getPropertyValue("--header-h")) ||
+          0,
+        natural: {
+          width: Number(photo.getAttribute("width")) || photo.naturalWidth,
+          height: Number(photo.getAttribute("height")) || photo.naturalHeight,
+        },
+      };
+      setPx("--years-band-h", photoBand(1, frame).height);
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       for (const rect of svg.querySelectorAll("rect")) {
         rect.setAttribute("width", String(width));
@@ -235,6 +283,7 @@ const FACTS = [
       "--years-photo": 1.22,
       "--years-veil": 0,
       "--years-content": 0,
+      "--years-lead": 0,
     });
 
     const timeline = scrubbedScene(track, (tl) => {
@@ -276,6 +325,26 @@ const FACTS = [
             ease: "outCubic",
           },
           L * CONTENT[0],
+        )
+        // On a phone: the photo shrinks into its band, then the copy comes
+        // in below it (the desktop layout ignores both).
+        .add(
+          band,
+          {
+            share: [0, 1],
+            duration: L * (BAND[1] - BAND[0]),
+            ease: "inOutCubic",
+          },
+          L * BAND[0],
+        )
+        .add(
+          stage,
+          {
+            "--years-lead": [0, 1],
+            duration: L * (LEAD[1] - LEAD[0]),
+            ease: "outCubic",
+          },
+          L * LEAD[0],
         );
     });
 
@@ -284,7 +353,7 @@ const FACTS = [
     // follow the timeline's time, so a scrub back counts down.
     const write = (time: number) => {
       draw();
-      content.inert = outCubicIn(time, CONTENT) < 0.5;
+      content.inert = outCubicIn(time, phone.matches ? LEAD : CONTENT) < 0.5;
       const counted = outCubicIn(time, COUNT);
       counts.forEach((el, i) => {
         const label = countShown(values[i] ?? 0, counted);
