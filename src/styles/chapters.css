@@ -399,8 +399,8 @@
   .svc-card__media {
     position: absolute;
     inset: 0;
-    scale: calc(1 + var(--svc-blur) * 0.08);
-    filter: blur(calc(var(--svc-blur) * 6px));
+    scale: calc(1 + var(--svc-blur) * 0.04);
+    filter: blur(calc(var(--svc-blur) * 2.5px));
   }
 
   .svc-card__photo {
