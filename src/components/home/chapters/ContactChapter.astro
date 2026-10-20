@@ -220,7 +220,8 @@ const phone = CONTACT.phones[0];
           ".loc-channel__icon svg :is(path, rect, circle)",
         ),
       ];
-      const lines = svg.createDrawable(shapes);
+      // Fully drawn at rest; a hover redraws it from nothing.
+      const lines = svg.createDrawable(shapes, 0, 1);
       const filled = channel.querySelector(".loc-channel__icon--whatsapp path");
       const play = () => {
         if (still.matches) return;
