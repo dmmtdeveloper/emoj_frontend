@@ -399,7 +399,7 @@
     position: absolute;
     inset: 0;
     scale: calc(1 + var(--svc-blur) * 0.08);
-    filter: blur(calc(var(--svc-blur) * 10px));
+    filter: blur(calc(var(--svc-blur) * 6px));
   }
 
   .svc-card__photo {
@@ -423,16 +423,51 @@
     color: var(--sand-100);
   }
 
-  /* At least 76% plum under the text: cream keeps AA on any photo. */
+  /* The veil is dark only where the text sits: under the title and copy
+     (bottom left) and behind the icon and counter (a thin band on top). The
+     rest of the photo shows through. Under the text the layers add up to
+     ~85% plum, so cream keeps AA on any photo. */
   .svc-card__veil {
     position: absolute;
     inset: 0;
-    opacity: calc(0.35 + var(--svc-blur) * 0.65);
-    background: linear-gradient(
-      to top,
-      color-mix(in oklab, var(--plum-950) 88%, transparent),
-      color-mix(in oklab, var(--plum-950) 76%, transparent)
-    );
+    opacity: calc(0.45 + var(--svc-blur) * 0.55);
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--plum-950) 55%, transparent),
+        transparent 22%
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--plum-950) 70%, transparent) 0%,
+        color-mix(in oklab, var(--plum-950) 45%, transparent) 40%,
+        transparent 70%
+      ),
+      linear-gradient(
+        to top,
+        color-mix(in oklab, var(--plum-950) 80%, transparent),
+        color-mix(in oklab, var(--plum-950) 50%, transparent) 50%,
+        color-mix(in oklab, var(--plum-950) 15%, transparent)
+      );
+  }
+
+  /* On phones the text spans the card: the veil darkens the whole lower
+     part instead of the left side. */
+  @media (max-width: 63.99rem) {
+    .svc-card__veil {
+      background:
+        linear-gradient(
+          to bottom,
+          color-mix(in oklab, var(--plum-950) 55%, transparent),
+          transparent 22%
+        ),
+        linear-gradient(
+          to top,
+          color-mix(in oklab, var(--plum-950) 92%, transparent),
+          color-mix(in oklab, var(--plum-950) 80%, transparent) 55%,
+          color-mix(in oklab, var(--plum-950) 20%, transparent)
+        );
+    }
   }
 
   .svc-card__top {
