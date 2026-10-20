@@ -269,6 +269,32 @@ export function diveTransform(
   return `translate(${origin.x} ${origin.y}) scale(${scale}) translate(${-origin.x} ${-origin.y})`;
 }
 
+/**
+ * The "30 años" team photo on a phone, after the dive: as `share` goes
+ * 0 → 1 it shrinks from the whole screen (`width` × `height`) to a
+ * full-width band right under the header (`top`), as tall as the photo's
+ * own ratio (`natural`) asks, so nobody is cropped. The band never grows
+ * past the room under the header; without a known size it fills it.
+ */
+export function photoBand(
+  share: number,
+  frame: {
+    width: number;
+    height: number;
+    top: number;
+    natural: { width: number; height: number };
+  },
+): { top: number; height: number } {
+  const { width, height, top, natural } = frame;
+  const room = Math.max(0, height - top);
+  const band =
+    natural.width > 0 && natural.height > 0
+      ? Math.min(room, (width * natural.height) / natural.width)
+      : room;
+  const t = clamp01(share);
+  return { top: top * t, height: height + (band - height) * t };
+}
+
 /** A figure counting up: the whole part of `value` reached at `share`. */
 export function countShown(value: number, share: number): string {
   return String(Math.round(value * clamp01(share)));

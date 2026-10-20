@@ -12,6 +12,7 @@ import {
   fanTurn,
   focusFit,
   inkSpan,
+  photoBand,
   reelCard,
   reelCurrent,
   reelDrift,
@@ -407,5 +408,48 @@ describe("fanPlace", () => {
     expect(fanPlace(1, 1).draw).toBe(0);
     expect(fanPlace(0.5, 1).draw).toBeCloseTo(0.5);
     expect(fanPlace(-1, 1).draw).toBe(1);
+  });
+});
+
+describe("photoBand", () => {
+  // A 375x812 phone under a 72px header, with the 1600x889 team photo.
+  const frame = {
+    width: 375,
+    height: 812,
+    top: 72,
+    natural: { width: 1600, height: 889 },
+  };
+
+  it("covers the whole screen before it shrinks", () => {
+    expect(photoBand(0, frame)).toEqual({ top: 0, height: 812 });
+  });
+
+  it("ends as a full-width band under the header, at the photo's ratio", () => {
+    const band = photoBand(1, frame);
+    expect(band.top).toBe(72);
+    expect(band.height).toBeCloseTo((375 * 889) / 1600, 6);
+  });
+
+  it("moves and shrinks linearly in between", () => {
+    const end = (375 * 889) / 1600;
+    const half = photoBand(0.5, frame);
+    expect(half.top).toBe(36);
+    expect(half.height).toBeCloseTo((812 + end) / 2, 6);
+  });
+
+  it("clamps the share", () => {
+    expect(photoBand(-1, frame)).toEqual(photoBand(0, frame));
+    expect(photoBand(2, frame)).toEqual(photoBand(1, frame));
+    expect(photoBand(Number.NaN, frame)).toEqual(photoBand(0, frame));
+  });
+
+  it("never grows the band past the room under the header", () => {
+    const tall = { ...frame, natural: { width: 100, height: 300 } };
+    expect(photoBand(1, tall)).toEqual({ top: 72, height: 812 - 72 });
+  });
+
+  it("keeps the whole screen while the photo has no size yet", () => {
+    const unknown = { ...frame, natural: { width: 0, height: 0 } };
+    expect(photoBand(1, unknown)).toEqual({ top: 72, height: 812 - 72 });
   });
 });
