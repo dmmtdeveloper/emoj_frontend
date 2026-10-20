@@ -153,11 +153,14 @@ function focusStage(stage: HTMLElement, timeline: SceneTimeline) {
 
 /**
  * Builds a chapter scene's timeline and hands it to the scroll. `build`
- * adds the scene's own tweens, positioned in 0..SCENE_LENGTH.
+ * adds the scene's own tweens, positioned in 0..SCENE_LENGTH. `focus:
+ * false` keeps the stage's layout while pinned (no desktop focus), for a
+ * scene whose content has to stay beside the copy.
  */
 export function scrubbedScene(
   root: Element,
   build: (timeline: SceneTimeline) => void,
+  { focus = true }: { focus?: boolean } = {},
 ): SceneTimeline {
   const on = scenesOn();
   const track = root.closest<HTMLElement>("[data-track]");
@@ -178,7 +181,7 @@ export function scrubbedScene(
         : false,
   });
   build(timeline);
-  if (on && stage) focusStage(stage, timeline);
+  if (on && stage && focus) focusStage(stage, timeline);
   // Pin the length so authored positions map to the same scroll share.
   timeline.add(root, { opacity: 1, duration: 1 }, SCENE_LENGTH - 1);
   if (!on) timeline.seek(timeline.duration);
