@@ -48,11 +48,6 @@ export function focusFit(input: FocusInput): {
   };
 }
 
-/** A deck after `step` shuffles: the slot of card `index` (0 is the front). */
-export function deckSlot(index: number, step: number, count: number): number {
-  return (((index - step) % count) + count) % count;
-}
-
 /**
  * The item a one-at-a-time scene shows at `time`: the first one until the
  * first swap, then one more for every swap already passed (`swaps` sorted).

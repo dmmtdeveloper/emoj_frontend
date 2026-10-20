@@ -5,7 +5,6 @@ import {
   deckFront,
   deckPose,
   deckSchedule,
-  deckSlot,
   diveTarget,
   diveTransform,
   enterShare,
@@ -53,14 +52,6 @@ describe("focusFit", () => {
       scene: { left: 0, top: 0, width: 1300, height: 900 },
     });
     expect(big.scale).toBe(1);
-  });
-});
-
-describe("deckSlot", () => {
-  it("puts card `step` in front and the rest behind in order", () => {
-    expect([0, 1, 2, 3].map((i) => deckSlot(i, 0, 4))).toEqual([0, 1, 2, 3]);
-    expect([0, 1, 2, 3].map((i) => deckSlot(i, 1, 4))).toEqual([3, 0, 1, 2]);
-    expect([0, 1, 2, 3].map((i) => deckSlot(i, 3, 4))).toEqual([1, 2, 3, 0]);
   });
 });
 

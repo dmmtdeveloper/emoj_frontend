@@ -1,14 +1,16 @@
 ---
 /**
- * Chapter 02 · Servicios. The seven services as a list under the title,
- * and beside it a deck of "pages", one per service: a photo of a real
- * project of that service (or, without one, its technical sketch on a
- * drawing sheet) under a bar with the service's address. While the chapter
- * is pinned the scroll shuffles the deck: the front page is thrown aside
- * and goes to the back, the next service comes forward (its sketch drawing
- * itself) and is named under the deck.
+ * Chapter 02 · Servicios. The seven specialties, one card at a time: a
+ * photo of a real project of that specialty (or, without one, its
+ * technical sketch) fills the card, blurred under a plum veil, and the
+ * specialty's icon, title, summary and link sit on it. While the chapter
+ * is pinned the scroll brings each card in turn: its photo wipes up sharp
+ * over the last one (chapter 04's motion language), then blurs as the text
+ * settles on it.
  *
- * The list holds the links; the deck is decorative.
+ * The cards are real content: without the scenes mark (no JavaScript,
+ * reduced motion) the scene reads as a plain list of complete cards, and
+ * while it plays only the card on show can be reached (`inert`).
  */
 import { ArrowRight, ArrowUpRight } from "@lucide/astro";
 import type { ImageMetadata } from "astro";
@@ -17,6 +19,7 @@ import { contentSource } from "../../../lib/content";
 import { mediaPath } from "../../../lib/content/media";
 import { coversByService } from "../../../lib/content/service-covers";
 import { getServices } from "../../../lib/get-services";
+import ServiceIcon from "../../services/ServiceIcon.astro";
 import Chapter from "./Chapter.astro";
 import Croquis from "./Croquis.astro";
 
@@ -41,12 +44,13 @@ const photoFor = (service: (typeof services)[number]): Photo | null => {
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const pages = services.map((service, i) => ({
+const items = services.map((service, i) => ({
   service,
   number: pad(i + 1),
   photo: photoFor(service),
 }));
 const total = pad(services.length);
+const sizes = "(min-width: 1024px) 70vw, 92vw";
 ---
 
 <Chapter
@@ -60,186 +64,231 @@ const total = pad(services.length);
     Siete especialidades. Un solo <em>equipo</em>.
   </Fragment>
 
-  <div class="svc" slot="scene" aria-hidden="true" data-scene-services>
-    <div class="svc-deck">
-      {pages.map(({ service, photo }, i) => (
-        <div class="svc-page" data-page>
-          <div class="svc-page__bar">
-            <span class="svc-page__dots">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span class="svc-page__url">
-              emoj.cl/servicios/{service.data.slug}
-            </span>
-          </div>
-          <div class="svc-page__view">
-            {photo ? (
-              "width" in photo ? (
-                <Image
-                  src={photo.src}
-                  alt=""
-                  width={photo.width}
-                  height={photo.height}
-                  widths={[480, 800, 1200]}
-                  sizes="(min-width: 1024px) 40vw, 92vw"
-                  loading={i < 2 ? "eager" : "lazy"}
-                  class="svc-page__photo"
-                />
+  <ol class="svc" slot="scene" data-scene-services>
+    {items.map(({ service, number, photo }, i) => (
+      <li class="svc-item" data-item>
+        <article class="svc-card group" data-card>
+          <div class="svc-card__shot" aria-hidden="true" data-shot>
+            <div class="svc-card__media" data-media>
+              {photo ? (
+                "width" in photo ? (
+                  <Image
+                    src={photo.src}
+                    alt=""
+                    width={photo.width}
+                    height={photo.height}
+                    widths={[480, 800, 1200]}
+                    sizes={sizes}
+                    loading={i < 2 ? "eager" : "lazy"}
+                    class="svc-card__photo"
+                  />
+                ) : (
+                  <Image
+                    src={photo.src}
+                    alt=""
+                    widths={[480, 800, 1200]}
+                    sizes={sizes}
+                    loading={i < 2 ? "eager" : "lazy"}
+                    class="svc-card__photo"
+                  />
+                )
               ) : (
-                <Image
-                  src={photo.src}
-                  alt=""
-                  widths={[480, 800, 1200]}
-                  sizes="(min-width: 1024px) 40vw, 92vw"
-                  loading={i < 2 ? "eager" : "lazy"}
-                  class="svc-page__photo"
-                />
-              )
-            ) : (
-              <div class="svc-page__sheet blueprint">
-                <Croquis slug={service.data.slug} class="svc-page__croquis" />
-              </div>
-            )}
-            <span class="svc-page__title">{service.data.title}</span>
+                <div class="svc-card__sheet blueprint">
+                  <Croquis slug={service.data.slug} class="svc-card__croquis" />
+                </div>
+              )}
+            </div>
+            <div class="svc-card__veil" />
           </div>
-        </div>
-      ))}
-    </div>
-    <p class="svc-names">
-      {pages.map(({ service, number }) => (
-        <span class="svc-name" data-name>
-          <span class="svc-name__dot" />
-          {service.data.title}
-          <span class="svc-name__count">
-            {number} / {total}
+          <div class="svc-card__top" data-part>
+            <span class="svc-card__icon">
+              <ServiceIcon name={service.data.icon} />
+            </span>
+            {i === 0 && (
+              <span class="svc-card__badge">Especialidad principal</span>
+            )}
+            <span class="svc-card__count" aria-hidden="true">
+              {number} / {total}
+            </span>
+          </div>
+          <h3 class="svc-card__title" data-part>
+            <a href={`/servicios/${service.data.slug}`}>{service.data.title}</a>
+          </h3>
+          <p class="svc-card__text" data-part>
+            {service.data.summary}
+          </p>
+          <span class="svc-card__go" aria-hidden="true" data-part>
+            <ArrowUpRight size={24} stroke-width={2} />
           </span>
-        </span>
-      ))}
-    </p>
-  </div>
+        </article>
+      </li>
+    ))}
+  </ol>
 
   <p class="ch-text">
     <strong>Coordinamos todas las especialidades de tu proyecto,</strong> del
     primer croquis a la obra terminada.
   </p>
-  <ol class="ch-list ch-list--compact">
-    {pages.map(({ service, number }) => (
-      <li class="ch-row">
-        <a href={`/servicios/${service.data.slug}`} class="ch-row__link">
-          <span class="ch-row__num">{number}</span>
-          <span class="ch-row__title">{service.data.title}</span>
-          <ArrowUpRight size={16} stroke-width={1.75} aria-hidden="true" />
-        </a>
-      </li>
-    ))}
-  </ol>
   <a href="/servicios" class="ch-more">
-    Ver los servicios
+    Ver todos los servicios
     <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
   </a>
+  <div class="svc-help">
+    <p class="svc-help__question">¿No sabes cuál necesitas?</p>
+    <a href="/contacto" class="ch-button">
+      Cuéntanos tu proyecto
+      <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
+    </a>
+  </div>
 </Chapter>
 
 <script>
-  import { utils } from "animejs";
-  import { deckSlot } from "../../../lib/motion/chapters";
+  import { stagger, utils } from "animejs";
+  import { showingAt, stageTimes } from "../../../lib/motion/chapters";
   import {
     eachScene,
     SCENE_LENGTH,
+    scenesOn,
     scrubbedScene,
-    type SceneTimeline,
   } from "../../../scripts/chapters/scrub";
 
-  // Slot 0 is the front of the deck; the rest wait hidden at the back.
-  const SLOTS = [
-    { x: "0%", y: "0%", rotate: 0, scale: 1, opacity: 1 },
-    { x: "6%", y: "-5%", rotate: 4, scale: 0.94, opacity: 1 },
-    { x: "-6%", y: "-9%", rotate: -5, scale: 0.88, opacity: 0.85 },
-  ];
-  const HIDDEN = { x: "0%", y: "-12%", rotate: 0, scale: 0.82, opacity: 0 };
-  const slot = (k: number) => SLOTS[k] ?? HIDDEN;
+  const L = SCENE_LENGTH;
+  /** The stretch of the pinned scroll where the specialties change. */
+  const SWAPS_FROM = 0.1;
+  const SWAPS_TO = 0.86;
+  /** Share of a swap's slot spent on the change itself; the rest rests. */
+  const CHANGE = 0.6;
+  /** The photo hides while it waits: wiped down to its bottom edge. */
+  const HIDDEN = "inset(100% 0% 0% 0%)";
+  const SHOWN = "inset(0% 0% 0% 0%)";
 
   eachScene("[data-scene-services]", (root, _$, $$) => {
-    const pages = $$("[data-page]");
-    const names = $$("[data-name]");
-    const count = pages.length;
-    const L = SCENE_LENGTH;
-    const FROM = L * 0.16;
-    const STEP = (L * 0.7) / Math.max(1, count - 1);
-
-    const place = (step: number) =>
-      pages.forEach((page, i) => {
-        const k = deckSlot(i, step, count);
-        utils.set(page, { ...slot(k), zIndex: count - k });
-      });
-    place(0);
-
-    // Each step throws the front page aside and sends it to the back while
-    // the others move up one place.
-    const shuffle = (tl: SceneTimeline, step: number, at: number) => {
-      const span = STEP * 0.8;
-      pages.forEach((page, i) => {
-        const from = deckSlot(i, step - 1, count);
-        const to = deckSlot(i, step, count);
-        const leaving = from === 0;
-        const target = slot(to);
-        tl.add(
-          page,
-          {
-            x: leaving
-              ? [
-                  { to: "-58%", duration: span * 0.45 },
-                  { to: target.x, duration: span * 0.55 },
-                ]
-              : target.x,
-            y: target.y,
-            rotate: leaving
-              ? [
-                  { to: -14, duration: span * 0.45 },
-                  { to: target.rotate, duration: span * 0.55 },
-                ]
-              : target.rotate,
-            scale: target.scale,
-            opacity: leaving
-              ? [
-                  { to: 1, duration: span * 0.45 },
-                  { to: target.opacity, duration: span * 0.55 },
-                ]
-              : target.opacity,
-            duration: span,
-            ease: "inOutQuart",
-          },
-          at,
-        ).add(
-          page,
-          { zIndex: count - to, duration: 1 },
-          at + (leaving ? span * 0.45 : span * 0.2),
-        );
-        // The page that comes forward draws its sketch, if it has one.
-        if (to === 0) {
-          tl.add(
-            page,
-            { "--svc-draw": [0, 1], duration: span * 1.2, ease: "linear" },
-            at + span * 0.3,
-          );
-        }
-      });
-      tl.add(
-        names[step - 1] ?? [],
-        { opacity: [1, 0], duration: span * 0.3 },
-        at + span * 0.2,
-      ).add(
-        names[step] ?? [],
-        { opacity: [0, 1], duration: span * 0.3 },
-        at + span * 0.5,
-      );
-    };
-
-    scrubbedScene(root, (tl) => {
-      for (let step = 1; step < count; step++) {
-        shuffle(tl, step, FROM + (step - 1) * STEP);
-      }
+    const items = $$("[data-item]").map((item) => {
+      const media = item.querySelector<HTMLElement>("[data-media]");
+      return {
+        item,
+        media,
+        card: item.querySelector<HTMLElement>("[data-card]"),
+        shot: item.querySelector<HTMLElement>("[data-shot]"),
+        parts: [...item.querySelectorAll<HTMLElement>("[data-part]")],
+        photo: media?.querySelector("img") ?? null,
+        sketch: media?.querySelector(".croquis") ? media : null,
+      };
     });
+    const swaps = stageTimes(
+      Math.max(0, items.length - 1),
+      SWAPS_FROM,
+      SWAPS_TO,
+    );
+    const slot = swaps.length > 1 ? (swaps[1] ?? 0) - (swaps[0] ?? 0) : L;
+    const span = slot * CHANGE;
+
+    // At rest (no scenes) every card stays complete: no swaps to play.
+    const playing = scenesOn();
+    if (playing) {
+      items.slice(1).forEach(({ shot, card, parts, sketch }) => {
+        if (shot) utils.set(shot, { clipPath: HIDDEN });
+        if (card) utils.set(card, { "--svc-blur": 0 });
+        utils.set(parts, { opacity: 0, translateY: 16 });
+        if (sketch) utils.set(sketch, { "--svc-draw": 0 });
+      });
+    }
+
+    const timeline = scrubbedScene(
+      root,
+      (tl) => {
+        if (!playing) return;
+        swaps.forEach((at, k) => {
+          const from = items[k];
+          const to = items[k + 1];
+          if (!from || !to) return;
+
+          // The text on show steps up and out…
+          tl.add(
+            from.parts,
+            {
+              opacity: [1, 0],
+              translateY: [0, -16],
+              duration: span * 0.3,
+              ease: "inQuad",
+            },
+            at,
+          );
+          if (from.photo) {
+            tl.add(
+              from.photo,
+              { scale: [1, 1.06], duration: span * 0.6, ease: "inOutCubic" },
+              at,
+            );
+          }
+          // …while the next photo wipes up sharp over the last one…
+          if (to.shot) {
+            tl.add(
+              to.shot,
+              {
+                clipPath: [HIDDEN, SHOWN],
+                duration: span * 0.6,
+                ease: "inOutCubic",
+              },
+              at,
+            );
+          }
+          if (to.photo) {
+            tl.add(
+              to.photo,
+              { scale: [1.14, 1], duration: span, ease: "outCubic" },
+              at,
+            );
+          }
+          // …(a sketch draws itself on its sheet)…
+          if (to.sketch) {
+            tl.add(
+              to.sketch,
+              { "--svc-draw": [0, 1], duration: span, ease: "linear" },
+              at + span * 0.1,
+            );
+          }
+          // …then blurs under its veil as the new text settles on it.
+          if (to.card) {
+            tl.add(
+              to.card,
+              { "--svc-blur": [0, 1], duration: span * 0.5, ease: "inOutQuad" },
+              at + span * 0.5,
+            );
+          }
+          tl.add(
+            to.parts,
+            {
+              opacity: [0, 1],
+              translateY: [16, 0],
+              duration: span * 0.4,
+              delay: stagger(span * 0.06),
+              ease: "outQuad",
+            },
+            at + span * 0.55,
+          );
+        });
+      },
+      { focus: false },
+    );
+
+    // Only the specialty on show can be reached (the switch falls between
+    // the old text leaving and the new one arriving); its icon plays its
+    // gesture.
+    const marks = swaps.map((at) => at + span * 0.45);
+    let showing = -1;
+    const show = (time: number) => {
+      const now = showingAt(time, marks);
+      if (now === showing) return;
+      showing = now;
+      items.forEach(({ item, card }, i) => {
+        item.inert = i !== now;
+        card?.toggleAttribute("data-icon-play", i === now);
+      });
+    };
+    if (playing) {
+      timeline.onUpdate = (self) => show(self.currentTime);
+      show(timeline.currentTime);
+    }
   });
 </script>

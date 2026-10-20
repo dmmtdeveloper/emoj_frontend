@@ -191,66 +191,7 @@
     scale: 0.97;
   }
 
-  /* A list of rows (services, projects, stages). */
-  .ch-list {
-    width: 100%;
-    max-width: 36rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .ch-row {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .ch-row__link,
-  .ch-row--static {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 4px 14px;
-    padding: 12px 4px;
-    text-decoration: none;
-    color: var(--ink);
-  }
-
-  .ch-row__link {
-    transition: padding 250ms var(--ease-out);
-  }
-
-  .ch-row__link:hover {
-    padding-left: 12px;
-    color: var(--ink);
-  }
-
-  .ch-row__num {
-    font-family: var(--font-data);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    font-variant-numeric: tabular-nums;
-    color: var(--brand);
-  }
-
-  .ch-row__title {
-    font-size: 18px;
-    line-height: 1.3;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-
-  .ch-row__meta {
-    grid-column: 2;
-    font-size: 15px;
-    line-height: 1.45;
-    color: var(--ink-muted);
-  }
-
-  .ch-row svg {
-    align-self: center;
-    color: var(--ink-muted);
-  }
-
-  /* Short laptop windows: tighter type and rows so a chapter fits. */
+  /* Short laptop windows: tighter type so a chapter fits. */
   @media (min-width: 64rem) and (max-height: 820px) {
     .ch-title {
       font-size: clamp(2rem, 1.2rem + 2.2vw, 3.1rem);
@@ -259,19 +200,6 @@
     .ch-text {
       font-size: 16px;
       line-height: 1.55;
-    }
-
-    .ch-row__link,
-    .ch-row--static {
-      padding-block: 8px;
-    }
-
-    .ch-row__title {
-      font-size: 16px;
-    }
-
-    .ch-row__meta {
-      font-size: 14px;
     }
 
     :root[data-scenes] .ch-stage {
@@ -338,193 +266,324 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 02 · Servicios: the deck of service pages                            */
+/* 02 · Servicios: one specialty card at a time                         */
 /* ------------------------------------------------------------------ */
 
 @layer components {
+  /* Desktop: the head and the body share the top row and the card takes
+     the whole width under them. */
+  @media (min-width: 64rem) {
+    .ch-services .ch-stage {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      grid-template-areas:
+        "head body"
+        "scene scene";
+      row-gap: clamp(1.25rem, 3.5vh, 2.5rem);
+    }
+
+    .ch-services .ch-body {
+      align-self: end;
+    }
+
+    .ch-services .ch-scene {
+      width: 100%;
+      justify-self: stretch;
+    }
+
+    /* Pinned, the card fills what the head leaves of the screen. */
+    :root[data-scenes] .ch-services .ch-stage {
+      height: calc(100svh - var(--header-h));
+      grid-template-rows: auto minmax(0, 1fr);
+      align-content: stretch;
+    }
+
+    :root[data-scenes] .ch-services .ch-scene {
+      align-self: stretch;
+      max-height: 42rem;
+    }
+
+    :root[data-scenes] .ch-services .svc {
+      height: 100%;
+      grid-template-rows: minmax(0, 1fr);
+    }
+
+    :root[data-scenes] .ch-services :is(.svc-item, .svc-card) {
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 63.99rem) {
+    .ch-services .ch-scene {
+      width: min(100%, 36rem);
+    }
+  }
+
+  /* At rest: a plain list of complete cards. */
   .svc {
-    position: relative;
+    display: grid;
+    gap: 1.5rem;
   }
 
-  .svc-deck {
-    position: relative;
-    aspect-ratio: 16 / 11.6;
+  /* While the scene plays the cards share one place; the script brings
+     each in turn. Before it runs only the first one shows. */
+  :root[data-scenes] .svc > .svc-item {
+    grid-area: 1 / 1;
   }
 
-  .svc-page {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: var(--surface-raised);
-    box-shadow:
-      0 0 0 1px var(--border),
-      0 24px 60px -20px color-mix(in oklab, var(--plum-950) 45%, transparent);
-    transform-origin: 50% 60%;
+  :root[data-scenes] .svc-item:not(:first-child) .svc-card__shot {
+    clip-path: inset(100% 0% 0% 0%);
   }
 
-  /* At rest (and before the script runs): the first three fanned out. */
-  .svc-page:nth-child(1) {
-    z-index: 7;
-  }
-
-  .svc-page:nth-child(2) {
-    z-index: 6;
-    transform: translate(6%, -5%) rotate(4deg) scale(0.94);
-  }
-
-  .svc-page:nth-child(3) {
-    z-index: 5;
-    transform: translate(-6%, -9%) rotate(-5deg) scale(0.88);
-    opacity: 0.85;
-  }
-
-  .svc-page:nth-child(n + 4) {
+  :root[data-scenes] .svc-item:not(:first-child) [data-part] {
     opacity: 0;
   }
 
-  .svc-page__bar {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 14px;
-    height: 36px;
-    padding: 0 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface-sunken);
+  /* One shadow under the pile, not seven. */
+  :root[data-scenes] .svc-item:not(:first-child) .svc-card {
+    box-shadow: none;
   }
 
-  .svc-page__dots {
-    display: flex;
-    gap: 6px;
+  .svc-item[inert] {
+    pointer-events: none;
   }
 
-  .svc-page__dots i {
-    width: 9px;
-    height: 9px;
-    border-radius: var(--radius-full);
-    background: var(--border-strong);
-    opacity: 0.6;
-  }
-
-  .svc-page__dots i:first-child {
-    background: var(--brand);
-    opacity: 1;
-  }
-
-  .svc-page__url {
-    overflow: hidden;
-    font-family: var(--font-data);
-    font-size: 12px;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    color: var(--ink-muted);
-  }
-
-  .svc-page__view {
+  /* The card: the photo fills it, blurred (--svc-blur, 0 sharp → 1) under
+     a plum veil, with the text on top. The title's link covers the whole
+     card (one tab stop) and the card wears the focus ring. */
+  .svc-card {
+    --svc-blur: 1;
     position: relative;
-    flex: 1;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto auto auto;
+    grid-template-areas:
+      "top"
+      "title"
+      "text"
+      "go";
+    gap: 0.75rem;
+    min-height: 26rem;
+    padding: 1.5rem;
     overflow: hidden;
+    border-radius: var(--radius-lg);
+    color: var(--sand-50);
+    box-shadow: 0 24px 60px -24px
+      color-mix(in oklab, var(--plum-950) 55%, transparent);
   }
 
-  .svc-page__photo {
+  @media (min-width: 64rem) {
+    .svc-card {
+      min-height: clamp(22rem, 60svh, 36rem);
+      gap: 1rem;
+      padding: clamp(1.75rem, 4vh, 3rem);
+    }
+  }
+
+  .svc-card:has(a:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  .svc-card__shot {
     position: absolute;
     inset: 0;
+    z-index: -1;
+    background: var(--plum-950);
+  }
+
+  /* Blurred photo: a moderate radius, scaled up so its soft edge stays
+     outside the card. */
+  .svc-card__media {
+    position: absolute;
+    inset: 0;
+    scale: calc(1 + var(--svc-blur) * 0.08);
+    filter: blur(calc(var(--svc-blur) * 10px));
+  }
+
+  .svc-card__photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .svc-page__view::after {
-    content: "";
+  .svc-card__sheet {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to top,
-      color-mix(in oklab, var(--plum-950) 70%, transparent),
-      transparent 50%
-    );
-    pointer-events: none;
+    color: var(--sand-300);
+    background-color: var(--plum-800);
   }
 
-  .svc-page__view:has(.svc-page__sheet)::after {
-    background: linear-gradient(
-      to top,
-      color-mix(in oklab, var(--plum-950) 62%, transparent),
-      transparent 32%
-    );
-  }
-
-  .svc-page__sheet {
-    position: absolute;
-    inset: 0;
-    color: var(--ink-muted);
-    background-color: var(--surface-raised);
-  }
-
-  .svc-page__croquis {
+  .svc-card__croquis {
     position: absolute;
     inset: 8% 10% 16%;
     width: 80%;
     height: 76%;
-    color: var(--ink);
+    color: var(--sand-100);
   }
 
-  .svc-page__title {
+  /* At least 76% plum under the text: cream keeps AA on any photo. */
+  .svc-card__veil {
     position: absolute;
-    z-index: 1;
-    left: 20px;
-    bottom: 14px;
-    font-size: clamp(1.125rem, 0.9rem + 0.8vw, 1.5rem);
-    line-height: 1.1;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    inset: 0;
+    opacity: calc(0.35 + var(--svc-blur) * 0.65);
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--plum-950) 88%, transparent),
+      color-mix(in oklab, var(--plum-950) 76%, transparent)
+    );
+  }
+
+  .svc-card__top {
+    grid-area: top;
+    align-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .svc-card__icon {
+    display: inline-flex;
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in oklab, var(--sand-50) 30%, transparent);
+    border-radius: var(--radius-full);
+    background: color-mix(in oklab, var(--sand-50) 12%, transparent);
     color: var(--sand-50);
   }
 
-  .svc-names {
-    display: grid;
-    justify-items: center;
-    margin-top: 28px;
+  .svc-card__badge {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    padding: 0 0.85rem;
+    border: 1px solid color-mix(in oklab, var(--sand-50) 30%, transparent);
+    border-radius: var(--radius-full);
+    background: color-mix(in oklab, var(--sand-50) 12%, transparent);
+    font-family: var(--font-data);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .svc-name {
-    grid-area: 1 / 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
+  .svc-card__count {
+    margin-left: auto;
     font-family: var(--font-data);
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: var(--sand-100);
+  }
+
+  .svc-card__title {
+    grid-area: title;
+    max-width: 18ch;
+    font-size: clamp(1.75rem, 1.2rem + 1.8vw, 3rem);
+    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    hyphens: auto;
+  }
+
+  .svc-card__title a {
+    text-decoration: none;
+    color: var(--sand-50);
+  }
+
+  .svc-card__title a:hover {
+    color: var(--sand-50);
+  }
+
+  .svc-card__title a:focus-visible {
+    outline: none;
+  }
+
+  .svc-card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+  }
+
+  .svc-card__text {
+    grid-area: text;
+    max-width: 44ch;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--sand-100);
+  }
+
+  .svc-card__go {
+    grid-area: go;
+    justify-self: start;
+    margin-top: 0.25rem;
+    display: inline-flex;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--sand-50);
+    color: var(--plum-950);
+  }
+
+  .svc-card__go svg {
+    transition: translate 300ms var(--ease-out);
+  }
+
+  .svc-card:is(:hover, :has(a:focus-visible)) .svc-card__go svg {
+    translate: 2px -2px;
+  }
+
+  @media (max-width: 39.99rem) {
+    .svc-card {
+      padding: 1.25rem;
+    }
+
+    .svc-card__text {
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .svc-card__go {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+
+  /* The way out for visitors who know their problem but not the
+     specialty. */
+  .svc-help {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+  }
+
+  .svc-help__question {
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--ink);
   }
 
-  .svc-name:not(:first-child) {
-    opacity: 0;
-  }
-
-  .svc-name__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--radius-full);
-    background: var(--brand);
-  }
-
-  .svc-name__count {
-    color: var(--ink-muted);
-  }
-
-  .ch-list--compact .ch-row__link {
-    padding-block: 9px;
-  }
-
-  .ch-list--compact .ch-row__title {
-    font-size: 17px;
+  /* Short laptop windows: a tighter card so the scene fits. */
+  @media (min-width: 64rem) and (max-height: 820px) {
+    .svc-card__text {
+      font-size: 16px;
+      line-height: 1.55;
+    }
   }
 
   /* The sketches (Croquis.astro) draw with --svc-draw, line by line. */
