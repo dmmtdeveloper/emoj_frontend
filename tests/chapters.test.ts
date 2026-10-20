@@ -347,6 +347,15 @@ describe("fanTurn", () => {
     expect(fanTurn(SCENE_LENGTH, 7, 0.2, 0.8)).toBe(6);
   });
 
+  it("rests on each card for the held share of its turn", () => {
+    // 6 turns over 0.2..0.8: one turn every 0.1 of the scene.
+    const at = (raw: number) => (0.2 + raw * 0.1) * SCENE_LENGTH;
+    expect(fanTurn(at(1.2), 7, 0.2, 0.8, 0.5)).toBeCloseTo(1);
+    expect(fanTurn(at(0.8), 7, 0.2, 0.8, 0.5)).toBeCloseTo(1);
+    expect(fanTurn(at(1.5), 7, 0.2, 0.8, 0.5)).toBeCloseTo(1.5);
+    expect(fanTurn(at(1.6), 7, 0.2, 0.8, 0.5)).toBeCloseTo(1.7);
+  });
+
   it("stays on the only card of a one-card fan", () => {
     expect(fanTurn(SCENE_LENGTH, 1, 0.2, 0.8)).toBe(0);
   });

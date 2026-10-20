@@ -73,16 +73,22 @@ const easeInOutCubic = (t: number): number =>
 
 /**
  * The services fan: how many cards have turned at `time` (fractional) as
- * the scroll shuffles `count` cards over [from, to] (shares).
+ * the scroll shuffles `count` cards over [from, to] (shares). Around each
+ * card the turn rests for a `hold` share of a turn (half before, half
+ * after), so the card on top stays still long enough to be read.
  */
 export function fanTurn(
   time: number,
   count: number,
   from: number,
   to: number,
+  hold = 0,
 ): number {
   if (count < 2) return 0;
-  return (count - 1) * segment(time / SCENE_LENGTH, from, to);
+  const raw = (count - 1) * segment(time / SCENE_LENGTH, from, to);
+  const turned = Math.floor(raw);
+  const rest = Math.min(0.99, Math.max(0, hold)) / 2;
+  return turned + segment(raw - turned, rest, 1 - rest);
 }
 
 /** Where a card of the services fan sits (CSS transform parts and more). */
