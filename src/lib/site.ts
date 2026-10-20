@@ -30,6 +30,9 @@ export const CONTACT = {
   },
   mapsHref:
     "https://www.google.com/maps/search/?api=1&query=Federico+Err%C3%A1zuriz+843%2C+Quilpu%C3%A9%2C+Chile",
+  /** The office as a place on Google Maps (the home's "Cómo llegar"). */
+  directionsHref:
+    "https://www.google.com/maps/place/Federico+Err%C3%A1zuriz+843,+2421587+Quilpu%C3%A9,+Valpara%C3%ADso/@-33.0472389,-71.4379218,18z",
 } as const;
 
 export const SOCIAL = [
