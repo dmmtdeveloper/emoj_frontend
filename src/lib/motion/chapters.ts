@@ -53,6 +53,14 @@ export function deckSlot(index: number, step: number, count: number): number {
   return (((index - step) % count) + count) % count;
 }
 
+/**
+ * The item a one-at-a-time scene shows at `time`: the first one until the
+ * first swap, then one more for every swap already passed (`swaps` sorted).
+ */
+export function showingAt(time: number, swaps: readonly number[]): number {
+  return swaps.filter((swap) => swap <= time).length;
+}
+
 /** Start times of `count` stages spread evenly over [from, to] (shares). */
 export function stageTimes(count: number, from: number, to: number): number[] {
   const span = (to - from) / count;

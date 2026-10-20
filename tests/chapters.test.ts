@@ -16,6 +16,7 @@ import {
   reelDrift,
   SCENE_LENGTH,
   scrollForProgress,
+  showingAt,
   stageTimes,
   typedText,
   zoomScale,
@@ -60,6 +61,25 @@ describe("deckSlot", () => {
     expect([0, 1, 2, 3].map((i) => deckSlot(i, 0, 4))).toEqual([0, 1, 2, 3]);
     expect([0, 1, 2, 3].map((i) => deckSlot(i, 1, 4))).toEqual([3, 0, 1, 2]);
     expect([0, 1, 2, 3].map((i) => deckSlot(i, 3, 4))).toEqual([1, 2, 3, 0]);
+  });
+});
+
+describe("showingAt", () => {
+  const swaps = [2000, 4000, 6000];
+
+  it("shows the first item until the first swap", () => {
+    expect(showingAt(0, swaps)).toBe(0);
+    expect(showingAt(1999, swaps)).toBe(0);
+  });
+
+  it("counts the swaps already passed", () => {
+    expect(showingAt(2000, swaps)).toBe(1);
+    expect(showingAt(5000, swaps)).toBe(2);
+    expect(showingAt(10000, swaps)).toBe(3);
+  });
+
+  it("shows the only item when nothing swaps", () => {
+    expect(showingAt(5000, [])).toBe(0);
   });
 });
 
