@@ -267,305 +267,281 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* 02 · Servicios: one specialty card at a time                         */
+/* 02 · Servicios: a fanned deck of browser windows                     */
 /* ------------------------------------------------------------------ */
 
 @layer components {
-  /* Desktop: the head and the body share the top row and the card takes
-     the whole width under them. */
-  @media (min-width: 64rem) {
-    .ch-services .ch-stage {
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      grid-template-areas:
-        "head body"
-        "scene scene";
-      row-gap: clamp(1.25rem, 3.5vh, 2.5rem);
-    }
-
-    .ch-services .ch-body {
-      align-self: end;
-    }
-
-    .ch-services .ch-scene {
-      width: 100%;
-      justify-self: stretch;
-    }
-
-    /* Pinned, the card fills what the head leaves of the screen. */
-    :root[data-scenes] .ch-services .ch-stage {
-      height: calc(100svh - var(--header-h));
-      grid-template-rows: auto minmax(0, 1fr);
-      align-content: stretch;
-    }
-
-    :root[data-scenes] .ch-services .ch-scene {
-      align-self: stretch;
-      max-height: 42rem;
-    }
-
-    :root[data-scenes] .ch-services .svc {
-      height: 100%;
-      grid-template-rows: minmax(0, 1fr);
-    }
-
-    :root[data-scenes] .ch-services :is(.svc-item, .svc-card) {
-      height: 100%;
-      min-height: 0;
-    }
+  /* A longer pin: seven cards, each resting long enough to be read. */
+  .ch-services {
+    --ch-pin: 420svh;
   }
 
-  @media (max-width: 63.99rem) {
-    .ch-services .ch-scene {
-      width: min(100%, 36rem);
-    }
-  }
-
-  /* At rest: a plain list of complete cards. */
+  /* At rest: a plain list of complete cards, each with its caption. */
   .svc {
     display: grid;
-    gap: 1.5rem;
+    gap: 2.5rem;
   }
 
-  /* While the scene plays the cards share one place; the script brings
-     each in turn. Before it runs only the first one shows. */
-  :root[data-scenes] .svc > .svc-item {
-    grid-area: 1 / 1;
-  }
-
-  :root[data-scenes] .svc-item:not(:first-child) .svc-card__shot {
-    clip-path: inset(100% 0% 0% 0%);
-  }
-
-  :root[data-scenes] .svc-item:not(:first-child) [data-part] {
-    opacity: 0;
-  }
-
-  /* One shadow under the pile, not seven. */
-  :root[data-scenes] .svc-item:not(:first-child) .svc-card {
-    box-shadow: none;
+  .svc-item {
+    display: grid;
+    gap: 1.25rem;
   }
 
   .svc-item[inert] {
     pointer-events: none;
   }
 
-  /* The card: the photo fills it, blurred (--svc-blur, 0 sharp → 1) under
-     a plum veil, with the text on top. The title's link covers the whole
-     card (one tab stop) and the card wears the focus ring. */
-  .svc-card {
-    --svc-blur: 1;
-    position: relative;
-    isolation: isolate;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 1fr auto auto auto;
-    grid-template-areas:
-      "top"
-      "title"
-      "text"
-      "go";
-    gap: 0.75rem;
-    min-height: 26rem;
-    padding: 1.5rem;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    color: var(--sand-50);
-    box-shadow: 0 24px 60px -24px
-      color-mix(in oklab, var(--plum-950) 55%, transparent);
+  /* While the scene plays the cards share one place, fanned the first one
+     on top; the script shuffles them. Before it runs the first three fan
+     out and only the first one shows its copy. */
+  :root[data-scenes] .svc {
+    padding-top: 1.5rem;
   }
 
-  @media (min-width: 64rem) {
-    .svc-card {
-      min-height: clamp(22rem, 60svh, 36rem);
-      gap: 1rem;
-      padding: clamp(1.75rem, 4vh, 3rem);
+  :root[data-scenes] .svc > .svc-item {
+    grid-area: 1 / 1;
+  }
+
+  :root[data-scenes] .svc-item:nth-child(1) {
+    z-index: 3;
+  }
+
+  :root[data-scenes] .svc-item:nth-child(2) {
+    z-index: 2;
+  }
+
+  :root[data-scenes] .svc-item:nth-child(3) {
+    z-index: 1;
+  }
+
+  :root[data-scenes] .svc-item:nth-child(2) .svc-page {
+    transform: translate(-7%, -3.5%) rotate(-4.5deg) scale(0.94);
+  }
+
+  :root[data-scenes] .svc-item:nth-child(3) .svc-page {
+    transform: translate(14%, -7%) rotate(9deg) scale(0.88);
+  }
+
+  :root[data-scenes] .svc-item:nth-child(n + 4) .svc-page {
+    opacity: 0;
+  }
+
+  :root[data-scenes] .svc-item:not(:first-child) {
+    --svc-copy: 0;
+  }
+
+  :root[data-scenes] .svc-item:not(:first-child) .svc-caption {
+    opacity: 0;
+  }
+
+  :root[data-scenes] .svc-page {
+    transform-origin: 50% 60%;
+    will-change: transform, opacity;
+  }
+
+  /* A browser window: a bar with the address over the view. The title's
+     link covers the whole card (one tab stop) and the card wears the
+     focus ring. */
+  .svc-page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 24px 60px -20px color-mix(in oklab, var(--plum-950) 45%, transparent);
+  }
+
+  @media (min-width: 40rem) {
+    .svc-page {
+      aspect-ratio: 16 / 13;
     }
   }
 
-  .svc-card:has(a:focus-visible) {
+  @media (min-width: 64rem) {
+    .svc-page {
+      aspect-ratio: 16 / 11.5;
+    }
+  }
+
+  .svc-page:has(a:focus-visible) {
     outline: 2px solid var(--focus-ring);
     outline-offset: 3px;
   }
 
-  .svc-card__shot {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--plum-950);
+  .svc-page__bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 14px;
+    height: 36px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-sunken);
   }
 
-  /* Blurred photo: a moderate radius, scaled up so its soft edge stays
-     outside the card. */
-  .svc-card__media {
-    position: absolute;
-    inset: 0;
-    scale: calc(1 + var(--svc-blur) * 0.04);
-    filter: blur(calc(var(--svc-blur) * 2.5px));
+  .svc-page__dots {
+    display: flex;
+    gap: 6px;
   }
 
-  .svc-card__photo {
+  .svc-page__dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-full);
+    background: var(--border-strong);
+    opacity: 0.6;
+  }
+
+  .svc-page__dots i:first-child {
+    background: var(--brand);
+    opacity: 1;
+  }
+
+  .svc-page__url {
+    overflow: hidden;
+    font-family: var(--font-data);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--ink-muted);
+  }
+
+  .svc-page__view {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .svc-page__media {
+    position: absolute;
+    inset: 0;
+  }
+
+  .svc-page__photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .svc-card__sheet {
+  .svc-page__sheet {
     position: absolute;
     inset: 0;
-    color: var(--sand-300);
-    background-color: var(--plum-800);
+    color: var(--ink-muted);
+    background-color: var(--surface-raised);
   }
 
-  .svc-card__croquis {
+  .svc-page__croquis {
     position: absolute;
-    inset: 8% 10% 16%;
+    inset: 6% 10% 30%;
     width: 80%;
-    height: 76%;
-    color: var(--sand-100);
+    height: 64%;
+    color: var(--ink);
   }
 
-  /* The veil is dark only where the text sits: under the title and copy
-     (bottom left) and behind the icon and counter (a thin band on top). The
-     rest of the photo shows through. Under the text the layers add up to
-     ~85% plum, so cream keeps AA on any photo. */
-  .svc-card__veil {
-    position: absolute;
-    inset: 0;
-    opacity: calc(0.45 + var(--svc-blur) * 0.55);
-    background:
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--plum-950) 55%, transparent),
-        transparent 22%
-      ),
-      linear-gradient(
-        to right,
-        color-mix(in oklab, var(--plum-950) 70%, transparent) 0%,
-        color-mix(in oklab, var(--plum-950) 45%, transparent) 40%,
-        transparent 70%
-      ),
-      linear-gradient(
-        to top,
-        color-mix(in oklab, var(--plum-950) 80%, transparent),
-        color-mix(in oklab, var(--plum-950) 50%, transparent) 50%,
-        color-mix(in oklab, var(--plum-950) 15%, transparent)
-      );
+  /* The copy sits on a soft plum gradient that fades in over its first
+     2.5rem and holds at least 68% plum under the text: cream keeps AA
+     (5.1:1 for the summary) even over a white sheet. */
+  .svc-page__copy {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title title"
+      "text go";
+    align-items: end;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
+    padding: 3rem 1.25rem 1.25rem;
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--plum-950) 80%, transparent),
+      color-mix(in oklab, var(--plum-950) 68%, transparent) calc(100% - 2.5rem),
+      transparent
+    );
+    color: var(--sand-50);
   }
 
-  /* On phones the text spans the card: the veil darkens the whole lower
-     part instead of the left side. */
-  @media (max-width: 63.99rem) {
-    .svc-card__veil {
-      background:
-        linear-gradient(
-          to bottom,
-          color-mix(in oklab, var(--plum-950) 55%, transparent),
-          transparent 22%
-        ),
-        linear-gradient(
-          to top,
-          color-mix(in oklab, var(--plum-950) 92%, transparent),
-          color-mix(in oklab, var(--plum-950) 80%, transparent) 55%,
-          color-mix(in oklab, var(--plum-950) 20%, transparent)
-        );
+  .svc-page__copy > * {
+    opacity: var(--svc-copy, 1);
+  }
+
+  @media (min-width: 64rem) {
+    .svc-page__copy {
+      padding: 3rem 1.5rem 1.4rem;
     }
   }
 
-  .svc-card__top {
-    grid-area: top;
-    align-self: start;
+  .svc-page__title {
+    grid-area: title;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
+    font-size: clamp(1.375rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
-  .svc-card__icon {
+  .svc-page__title a {
+    text-decoration: none;
+    color: var(--sand-50);
+  }
+
+  .svc-page__title a:hover {
+    color: var(--sand-50);
+  }
+
+  .svc-page__title a:focus-visible {
+    outline: none;
+  }
+
+  /* The copy is the link's containing block, so the cover overshoots
+     and the card's rounded overflow trims it to the whole window. */
+  .svc-page__title a::after {
+    content: "";
+    position: absolute;
+    inset: -100vmax;
+    z-index: 1;
+  }
+
+  .svc-page__icon {
     display: inline-flex;
     flex: none;
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     align-items: center;
     justify-content: center;
     border: 1px solid color-mix(in oklab, var(--sand-50) 30%, transparent);
     border-radius: var(--radius-full);
     background: color-mix(in oklab, var(--sand-50) 12%, transparent);
-    color: var(--sand-50);
   }
 
-  .svc-card__badge {
-    display: inline-flex;
-    min-height: 2rem;
-    align-items: center;
-    padding: 0 0.85rem;
-    border: 1px solid color-mix(in oklab, var(--sand-50) 30%, transparent);
-    border-radius: var(--radius-full);
-    background: color-mix(in oklab, var(--sand-50) 12%, transparent);
-    font-family: var(--font-data);
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  .svc-page__icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
-  .svc-card__count {
-    margin-left: auto;
-    font-family: var(--font-data);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    font-variant-numeric: tabular-nums;
-    color: var(--sand-100);
-  }
-
-  .svc-card__title {
-    grid-area: title;
-    max-width: 18ch;
-    font-size: clamp(1.75rem, 1.2rem + 1.8vw, 3rem);
-    line-height: 1.05;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    text-wrap: balance;
-    hyphens: auto;
-  }
-
-  .svc-card__title a {
-    text-decoration: none;
-    color: var(--sand-50);
-  }
-
-  .svc-card__title a:hover {
-    color: var(--sand-50);
-  }
-
-  .svc-card__title a:focus-visible {
-    outline: none;
-  }
-
-  .svc-card__title a::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    border-radius: inherit;
-  }
-
-  .svc-card__text {
+  .svc-page__text {
     grid-area: text;
-    max-width: 44ch;
-    font-size: 17px;
-    line-height: 1.6;
+    max-width: 46ch;
+    font-size: 16px;
+    line-height: 1.5;
     color: var(--sand-100);
   }
 
-  .svc-card__go {
+  .svc-page__go {
     grid-area: go;
-    justify-self: start;
-    margin-top: 0.25rem;
     display: inline-flex;
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-full);
@@ -573,28 +549,40 @@
     color: var(--plum-950);
   }
 
-  .svc-card__go svg {
+  .svc-page__go svg {
     transition: translate 300ms var(--ease-out);
   }
 
-  .svc-card:is(:hover, :has(a:focus-visible)) .svc-card__go svg {
+  .svc-page:is(:hover, :has(a:focus-visible)) .svc-page__go svg {
     translate: 2px -2px;
   }
 
-  @media (max-width: 39.99rem) {
-    .svc-card {
-      padding: 1.25rem;
-    }
+  /* The caption under the card: a dot, the name and the counter. */
+  .svc-caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    font-family: var(--font-data);
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
 
-    .svc-card__text {
-      font-size: 16px;
-      line-height: 1.55;
-    }
+  .svc-caption__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--brand);
+  }
 
-    .svc-card__go {
-      width: 3rem;
-      height: 3rem;
-    }
+  .svc-caption__count {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
   }
 
   /* The way out for visitors who know their problem but not the
@@ -612,14 +600,6 @@
     font-weight: 600;
     letter-spacing: -0.01em;
     color: var(--ink);
-  }
-
-  /* Short laptop windows: a tighter card so the scene fits. */
-  @media (min-width: 64rem) and (max-height: 820px) {
-    .svc-card__text {
-      font-size: 16px;
-      line-height: 1.55;
-    }
   }
 
   /* The sketches (Croquis.astro) draw with --svc-draw, line by line. */
