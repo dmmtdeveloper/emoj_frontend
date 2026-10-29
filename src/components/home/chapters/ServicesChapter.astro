@@ -17,8 +17,7 @@
 import { ArrowRight, ArrowUpRight } from "@lucide/astro";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
-import { contentSource } from "../../../lib/content";
-import { mediaPath } from "../../../lib/content/media";
+import { getProjects } from "../../../lib/content";
 import { coversByService } from "../../../lib/content/service-covers";
 import { getServices } from "../../../lib/get-services";
 import ServiceIcon from "../../services/ServiceIcon.astro";
@@ -28,7 +27,7 @@ import Croquis from "./Croquis.astro";
 const services = await getServices();
 const covers = coversByService(
   services.map((s) => s.data.slug),
-  await contentSource().getProjects(),
+  await getProjects(),
 );
 
 type Photo =
@@ -38,7 +37,7 @@ const photoFor = (service: (typeof services)[number]): Photo | null => {
   const found = covers.get(service.data.slug);
   if (found)
     return {
-      src: mediaPath("proyectos", found.slug, found.cover),
+      src: found.cover.src,
       width: found.cover.width,
       height: found.cover.height,
     };

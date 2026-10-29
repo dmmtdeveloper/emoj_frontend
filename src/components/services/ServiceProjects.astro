@@ -13,9 +13,8 @@
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
-import type { ProjectSummary } from "../../lib/api/client";
+import type { ProjectSummary } from "../../lib/content/types";
 import { fitWidth } from "../../lib/content/format";
-import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 import { lastItemSpan } from "../../lib/layout/grid-span";
 import DisplayHeading from "../ui/DisplayHeading.astro";
@@ -68,7 +67,7 @@ const span = lastItemSpan(shown.length);
         <div class="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-[440px]">
           {only.cover && (
             <Image
-              src={mediaPath("proyectos", only.slug, only.cover)}
+              src={only.cover.src}
               alt=""
               {...fitWidth(only.cover, 1200)}
               widths={[480, 800, 1200]}
@@ -124,7 +123,7 @@ const span = lastItemSpan(shown.length);
             >
               {project.cover && (
                 <Image
-                  src={mediaPath("proyectos", project.slug, project.cover)}
+                  src={project.cover.src}
                   alt=""
                   {...fitWidth(project.cover, 1200)}
                   widths={[480, 800, 1200]}

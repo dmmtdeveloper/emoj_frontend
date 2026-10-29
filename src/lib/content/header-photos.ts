@@ -1,10 +1,10 @@
-import type { MediaRef } from "../api/client";
+import type { ContentImage } from "./types";
 
 interface WithCover {
   slug: string;
   title: string;
   featured: boolean;
-  cover?: MediaRef | undefined;
+  cover?: ContentImage | undefined;
 }
 
 /**
@@ -15,9 +15,9 @@ interface WithCover {
 export function headerPhotos<T extends WithCover>(
   projects: readonly T[],
   limit: number,
-): (T & { cover: MediaRef })[] {
+): (T & { cover: ContentImage })[] {
   const withCover = projects.filter(
-    (p): p is T & { cover: MediaRef } => p.cover !== undefined,
+    (p): p is T & { cover: ContentImage } => p.cover !== undefined,
   );
   return [
     ...withCover.filter((p) => p.featured),

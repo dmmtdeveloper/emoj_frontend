@@ -7,10 +7,9 @@
  * src/scripts/project-transition.ts).
  */
 import { Image } from "astro:assets";
-import type { NewsSummary } from "../../lib/api/client";
+import type { NewsSummary } from "../../lib/content/types";
 import { CARD_IMAGE } from "../../lib/content/card-image";
 import { fitWidth, formatDate } from "../../lib/content/format";
-import { mediaPath } from "../../lib/content/media";
 import { newsTransitionName } from "../../lib/content/transition";
 
 interface Props {
@@ -27,7 +26,7 @@ const Heading = headingLevel;
   {article.cover ? (
     <div class="aspect-square h-full w-full overflow-hidden rounded-md sm:aspect-[16/10] sm:h-auto sm:rounded-none">
       <Image
-        src={mediaPath("noticias", article.slug, article.cover)}
+        src={article.cover.src}
         alt={article.cover.alt}
         {...fitWidth(article.cover, CARD_IMAGE.max)}
         widths={[...CARD_IMAGE.widths]}

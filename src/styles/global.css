@@ -221,9 +221,8 @@
 }
 
 /*
- * Select (src/components/ui/Select.astro on the site, `Select` in
- * src/admin/ui.tsx in the panel): a real <select>, so keyboard, screen
- * readers, phones' own pickers and form posts all keep working.
+ * Select (src/components/ui/Select.astro): a real <select>, so keyboard,
+ * screen readers, phones' own pickers and form posts all keep working.
  *
  * - Closed field: same look in every browser. `appearance: none` drops the
  *   native arrow; the wrapper draws a Lucide chevron in `currentColor`.
@@ -231,7 +230,7 @@
  *   Chrome and Edge 135+), the picker gets the EMOJ look: raised card,
  *   soft hover, the chosen option in brand with a check. Elsewhere the
  *   browser's own list shows, which is fine.
- * - `.select--compact`: the panel's denser size on a raised ground.
+ * - `.select--compact`: a denser size on a raised ground.
  */
 @layer components {
   .select-field {
@@ -414,7 +413,7 @@
 }
 
 /*
- * Rich text rendered from the API (TipTap JSON, see lib/content/tiptap.ts).
+ * Article bodies (Markdown in src/content/noticias, rendered by Astro).
  * Plain elements only, so styles live here instead of on each tag.
  */
 @layer components {
@@ -536,26 +535,6 @@
   @media (min-width: 64rem) {
     padding-inline: 3rem;
   }
-}
-
-/*
- * Focal point of a photo edited in the panel (home hero), in 5% steps:
- * `focus-x-30 focus-y-70` crops around 30% from the left, 70% from the top
- * (src/lib/content/home-hero.ts). Classes, because style="" is not allowed
- * by the CSP; they are built at runtime, so they are listed for Tailwind.
- */
-@utility focus-x-* {
-  --focus-x: calc(--value(integer) * 1%);
-}
-
-@utility focus-y-* {
-  --focus-y: calc(--value(integer) * 1%);
-}
-
-@source inline("focus-x-{0..100..5} focus-y-{0..100..5}");
-
-@utility object-focus {
-  object-position: var(--focus-x, 50%) var(--focus-y, 50%);
 }
 
 /* Faint blueprint grid (lines + dots) from the current text color. */

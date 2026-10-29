@@ -1,5 +1,5 @@
-import type { ProjectSummary, ServiceSlug } from "../api/client";
-import { SERVICE_SLUGS } from "../services";
+import { SERVICE_SLUGS, type ServiceSlug } from "../services";
+import type { ProjectSummary } from "./types";
 
 const dateFormat = new Intl.DateTimeFormat("es-CL", {
   day: "numeric",

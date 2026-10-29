@@ -1,17 +1,14 @@
-/** Sitemap of the pages rendered on demand (src/lib/content/sitemap.ts). */
+/**
+ * Sitemap of the content pages, with each project's and article's date
+ * (src/lib/content/sitemap.ts). Built with the site, like every page.
+ */
 import type { APIRoute } from "astro";
-import { contentSource } from "../lib/content";
+import { getNews, getProjects } from "../lib/content";
 import { NEWS_PER_PAGE } from "../lib/content/format";
 import { contentSitemap } from "../lib/content/sitemap";
 
-export const prerender = false;
-
 export const GET: APIRoute = async ({ site }) => {
-  const content = contentSource();
-  const [projects, news] = await Promise.all([
-    content.getProjects(),
-    content.getNews(),
-  ]);
+  const [projects, news] = await Promise.all([getProjects(), getNews()]);
   const xml = contentSitemap(site ?? new URL("https://emoj.cl"), {
     projects,
     news,

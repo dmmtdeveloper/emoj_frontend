@@ -1,30 +1,11 @@
 import { routes } from "@vercel/config/v1";
 import type { VercelConfig } from "@vercel/config/v1";
 
-// Typed Vercel project configuration. The build output comes from
-// @astrojs/vercel (.vercel/output), so no outputDirectory is set. The Vercel CLI compiles this file to
-// vercel.json at build time. Redirects from the legacy site land in Phase 14.
-// `/api/*` is rewritten to the API so the admin panel calls it same-origin
-// and the session cookie is first-party (see emoj_backend README, Admin API).
-
-/** Staging API, allowed when PUBLIC_API_URL is not available at config time. */
-const STAGING_API_ORIGIN = "https://api-staging-25e9.up.railway.app";
-/** Railway buckets (virtual-hosted style), as in astro.config.mjs. */
-const MEDIA_ORIGIN = "https://*.t3.storageapi.dev";
-
-function apiOrigin(): string {
-  const raw = process.env["PUBLIC_API_URL"];
-  if (!raw) return STAGING_API_ORIGIN;
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return STAGING_API_ORIGIN;
-  }
-}
-
-const connectSources = [
-  ...new Set(["'self'", apiOrigin(), STAGING_API_ORIGIN]),
-];
+// Typed Vercel project configuration. The site is fully static
+// (astro.config.mjs `output: "static"`, no adapter), so Vercel serves the
+// files Astro writes to dist/. The Vercel CLI compiles this file to
+// vercel.json at build time. The Caddyfile (Railway) sends the same
+// headers and redirects (tests/caddyfile.test.ts).
 
 /**
  * Content Security Policy for the static Astro build.
@@ -35,21 +16,17 @@ const connectSources = [
  *   enough. JSON-LD blocks are data, not executed, so CSP does not apply to
  *   them. No 'unsafe-inline', no 'unsafe-eval', no third-party scripts.
  * - Styles: same-origin stylesheets only.
- * - connect-src: the API origin (from PUBLIC_API_URL when Vercel exposes it
- *   while compiling this file) plus the staging API as a fallback.
+ * - img-src / connect-src: the site's own origin. Photos are optimised at
+ *   build time (astro:assets) and the site calls no API.
  * - Frames: none. The site embeds no third-party content.
- * - img-src: the admin panel shows media straight from the Railway bucket
- *   (presigned URLs, <bucket>.t3.storageapi.dev); the public site only
- *   serves images from its own origin (built ahead of time, or resized on
- *   demand through /_image and /media/..., see src/lib/content/media.ts).
  */
 const csp = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  `img-src 'self' data: ${MEDIA_ORIGIN}`,
+  "img-src 'self' data:",
   "font-src 'self'",
-  `connect-src ${connectSources.join(" ")}`,
+  "connect-src 'self'",
   "frame-src 'none'",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -63,9 +40,10 @@ const csp = [
  * Old WordPress addresses (emoj.cl before the redesign) and where they live
  * now. Permanent (301) so search engines move their ranking to the new page.
  * The four real articles keep their content under a new slug; placeholder
- * posts, categories, tags and the author archive go to the news index. Exact
- * paths first: Vercel uses the first match. The Caddyfile (Railway) has the
- * same rules (tests/caddyfile.test.ts).
+ * posts, categories, tags and the author archive go to the news index; the
+ * old admin entry points go home (the site has no panel). Exact paths
+ * first: Vercel uses the first match. The Caddyfile (Railway) has the same
+ * rules (tests/caddyfile.test.ts).
  */
 const legacyRedirects: [source: string, destination: string][] = [
   ["/archivo/2939", "/noticias/visita-tecnica-canal-la-petaca"],
@@ -76,20 +54,20 @@ const legacyRedirects: [source: string, destination: string][] = [
   ["/jobs/:path*", "/contacto"],
   ["/feed/:path*", "/noticias"],
   ["/comments/feed", "/noticias"],
-  ["/wp-admin/:path*", "/admin/login"],
-  ["/wp-login.php", "/admin/login"],
+  ["/wp-admin/:path*", "/"],
+  ["/wp-login.php", "/"],
 ];
 
 const config: VercelConfig = {
   framework: "astro",
   installCommand: "pnpm install --frozen-lockfile",
   buildCommand: "pnpm build",
+  outputDirectory: "dist",
   redirects: legacyRedirects.map(([source, destination]) => ({
     source,
     destination,
     statusCode: 301,
   })),
-  rewrites: [routes.rewrite("/api/(.*)", `${apiOrigin()}/$1`)],
   headers: [
     routes.header("/(.*)", [
       { key: "Content-Security-Policy", value: csp },
@@ -111,11 +89,6 @@ const config: VercelConfig = {
     // Browsers only read speculation rules sent with their own type.
     routes.header("/speculationrules.json", [
       { key: "Content-Type", value: "application/speculationrules+json" },
-    ]),
-    // The admin panel is private: never indexed, never cached by proxies.
-    routes.header("/admin(.*)", [
-      { key: "X-Robots-Tag", value: "noindex, nofollow" },
-      { key: "Cache-Control", value: "no-store" },
     ]),
     // Hashed build assets never change, so they can be cached forever.
     routes.cacheControl("/_astro/(.*)", {

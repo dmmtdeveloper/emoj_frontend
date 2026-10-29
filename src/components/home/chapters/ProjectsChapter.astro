@@ -23,10 +23,9 @@
  */
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
-import type { ProjectSummary } from "../../../lib/api/client";
+import type { ProjectSummary } from "../../../lib/content/types";
 import { fitWidth } from "../../../lib/content/format";
 import { projectMagnitude } from "../../../lib/content/magnitude";
-import { mediaPath } from "../../../lib/content/media";
 import { projectTransitionName } from "../../../lib/content/transition";
 
 interface Props {
@@ -87,7 +86,7 @@ const service = (project: ProjectSummary) => {
                 <span class="reel-card__media">
                   {project.cover && (
                     <Image
-                      src={mediaPath("proyectos", project.slug, project.cover)}
+                      src={project.cover.src}
                       alt=""
                       {...fitWidth(project.cover, 1100)}
                       widths={[360, 540, 720, 1100]}

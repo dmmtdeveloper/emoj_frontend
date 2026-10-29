@@ -1,16 +1,7 @@
 {
   "prerender": [
     {
-      "where": {
-        "and": [
-          { "href_matches": "/*" },
-          {
-            "not": {
-              "href_matches": ["/admin*", "/api/*", "/preview*"]
-            }
-          }
-        ]
-      },
+      "where": { "href_matches": "/*" },
       "eagerness": "moderate"
     }
   ]

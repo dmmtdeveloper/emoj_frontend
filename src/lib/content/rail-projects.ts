@@ -1,6 +1,6 @@
 /**
  * The projects of the home rail ("Ya son obra."): every published project,
- * the featured ones first, each group in the order the API gives (newest
+ * the featured ones first, each group in the order given (newest
  * first), up to `limit`.
  */
 export function railProjects<T extends { featured: boolean }>(
