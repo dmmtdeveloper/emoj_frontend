@@ -151,6 +151,15 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     );
   });
 
+  it("loads no third-party scripts and no frames (there is no captcha)", () => {
+    for (const headers of [caddyHeaders(), vercelHeaders()]) {
+      const csp = headers.get("*")?.get("content-security-policy") ?? "";
+      expect(csp).toContain("script-src 'self';");
+      expect(csp).toContain("frame-src 'none';");
+      expect(csp).not.toContain("challenges.cloudflare.com");
+    }
+  });
+
   it("allows the API origin in connect-src", () => {
     const csp = caddyHeaders().get("*")?.get("content-security-policy") ?? "";
     expect(apiOrigin).toMatch(/^https:\/\//);

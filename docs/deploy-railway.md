@@ -37,15 +37,14 @@ visitor -> Railway edge (TLS) -> Caddy :$PORT -+-> built pages and assets, from 
 
 ## Service variables
 
-| Variable                    | When    | Value                                                                                                                                                  |
-| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PUBLIC_API_URL`            | build   | Public API URL. Compiled into the server; the pages call it on every request.                                                                          |
-| `PUBLIC_SITE_URL`           | build   | The public address, e.g. `https://www.emoj.cl`. Keep it on test deployments too, so canonical URLs never point at the test domain.                     |
-| `PUBLIC_TURNSTILE_SITE_KEY` | build   | Turnstile site key (the test key is used when unset).                                                                                                  |
-| `API_ORIGIN`                | runtime | Origin of the API for the CSP `connect-src` (the contact form calls it directly), e.g. `https://api.emoj.cl`.                                          |
-| `API_UPSTREAM`              | runtime | Where `/api/*` is proxied. The public origin works; the private network is better: `http://${{<backend>.RAILWAY_PRIVATE_DOMAIN}}:${{<backend>.PORT}}`. |
-| `PORT`                      | runtime | Caddy listens on it; 8080 when unset. The domain's target port must match.                                                                             |
-| `IMAGE_CACHE_MAX_MB`        | runtime | Optional. Disk for resized images, 512 by default.                                                                                                     |
+| Variable             | When    | Value                                                                                                                                                  |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PUBLIC_API_URL`     | build   | Public API URL. Compiled into the server; the pages call it on every request.                                                                          |
+| `PUBLIC_SITE_URL`    | build   | The public address, e.g. `https://www.emoj.cl`. Keep it on test deployments too, so canonical URLs never point at the test domain.                     |
+| `API_ORIGIN`         | runtime | Origin of the API for the CSP `connect-src` e.g. `https://api.emoj.cl`.                                                                                |
+| `API_UPSTREAM`       | runtime | Where `/api/*` is proxied. The public origin works; the private network is better: `http://${{<backend>.RAILWAY_PRIVATE_DOMAIN}}:${{<backend>.PORT}}`. |
+| `PORT`               | runtime | Caddy listens on it; 8080 when unset. The domain's target port must match.                                                                             |
+| `IMAGE_CACHE_MAX_MB` | runtime | Optional. Disk for resized images, 512 by default.                                                                                                     |
 
 Railway passes service variables to the Dockerfile as build arguments, so the
 `PUBLIC_*` values only need to be defined once on the service.
@@ -95,8 +94,8 @@ refresh), so the editor sees "Ya está en el sitio" right away.
      (`/_image` answers in milliseconds).
    - `/nosotros` and `/nosotros/` both load; an unknown path returns the 404
      page with status 404; `/archivo/2939` redirects (301).
-   - The contact form submits (Turnstile loads) and admin sign-in survives a
-     reload (the cookie is first-party through `/api`).
+   - `/contacto` shows the WhatsApp, email and phone links, and admin sign-in
+     survives a reload (the cookie is first-party through `/api`).
 
 ## Switching the public address (only once the migration is approved)
 

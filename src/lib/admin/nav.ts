@@ -8,17 +8,10 @@ export interface AdminNavItem {
   label: string;
   href: string;
   icon:
-    | "dashboard"
-    | "home"
-    | "projects"
-    | "news"
-    | "media"
-    | "messages"
-    | "users"
-    | "account";
+    "dashboard" | "home" | "projects" | "news" | "media" | "users" | "account";
   /** Short line shown under the page title in the navbar. */
   description: string;
-  /** Hidden from editors: personal data and user management. */
+  /** Hidden from editors: user management. */
   adminOnly?: boolean;
 }
 
@@ -52,13 +45,6 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: "/admin/medios",
     icon: "media",
     description: "Fotos e imágenes",
-  },
-  {
-    label: "Mensajes",
-    href: "/admin/mensajes",
-    icon: "messages",
-    description: "Consultas del formulario de contacto",
-    adminOnly: true,
   },
   {
     label: "Usuarios",

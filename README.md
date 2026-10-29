@@ -4,7 +4,7 @@ Public website of **EMOJ Consultora** ([emoj.cl](https://emoj.cl)), a Chilean ci
 
 The site is built with Astro and deployed on Vercel: most pages are static, and the pages that show projects and news are rendered on demand and cached, so a change made in the admin panel is on the site in seconds. Content comes from a separate Go API, [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
 
-> Status: Phase 12 "Public site", slice 2. Layout, home, services (content collection), contact form wired to the API, projects and news read from the API at build time, the Nosotros page, SEO and security headers.
+> Status: Phase 12 "Public site", slice 2. Layout, home, services (content collection), a contact page with direct channels (WhatsApp, email, phone; there is no contact form), projects and news read from the API at build time, the Nosotros page, SEO and security headers.
 
 ## Stack
 
@@ -66,12 +66,11 @@ Global styles live in `src/styles/global.css` (Tailwind, tokens, fonts, base sty
 
 Copy `.env.example` to `.env`. Only `PUBLIC_*` variables are exposed to the client.
 
-| Variable                    | Example                    | Purpose                                                                                                                                                 |
-| --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_SITE_URL`           | `https://emoj.cl`          | Canonical origin for URLs, Open Graph, sitemap.                                                                                                         |
-| `PUBLIC_API_URL`            | `http://localhost:8080`    | Base URL of the EMOJ Go API, read by the pages rendered on demand (projects and news).                                                                  |
-| `REVALIDATE_TOKEN`          | 32+ random characters      | Secret (server only, set it in Vercel). Lets `/admin/revalidar` refresh cached pages after a change in the panel. Without it, pages refresh every hour. |
-| `PUBLIC_TURNSTILE_SITE_KEY` | `1x00000000000000000000AA` | Cloudflare Turnstile site key for the contact form. Defaults to Cloudflare's always-passing test key.                                                   |
+| Variable           | Example                 | Purpose                                                                                                                                                 |
+| ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_SITE_URL`  | `https://emoj.cl`       | Canonical origin for URLs, Open Graph, sitemap.                                                                                                         |
+| `PUBLIC_API_URL`   | `http://localhost:8080` | Base URL of the EMOJ Go API, read by the pages rendered on demand (projects and news).                                                                  |
+| `REVALIDATE_TOKEN` | 32+ random characters   | Secret (server only, set it in Vercel). Lets `/admin/revalidar` refresh cached pages after a change in the panel. Without it, pages refresh every hour. |
 
 ## Content from the API (rendered on demand)
 
@@ -105,7 +104,7 @@ The generated file **is committed**, because Vercel and CI only check out this r
 
 ## Security headers
 
-`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `connect-src` allows the origin of `PUBLIC_API_URL` when Vercel exposes it while compiling `vercel.ts`, plus the staging API as a fallback; add the production API origin there if it differs. Turnstile needs `https://challenges.cloudflare.com` in `script-src` and `frame-src`. Run `npx @vercel/config validate` after editing. The `Caddyfile` (Railway) must send the same headers; `tests/caddyfile.test.ts` checks it.
+`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `connect-src` allows the origin of `PUBLIC_API_URL` when Vercel exposes it while compiling `vercel.ts`, plus the staging API as a fallback; add the production API origin there if it differs. The site loads no third-party scripts (`script-src 'self'`) and no frames (`frame-src 'none'`). Run `npx @vercel/config validate` after editing. The `Caddyfile` (Railway) must send the same headers; `tests/caddyfile.test.ts` checks it.
 
 ## Project layout
 
@@ -115,9 +114,9 @@ public/          favicons, web manifest, robots.txt
 scripts/         build scripts (token generator)
 src/assets/      brand SVGs, optimized photos and team portraits (rendered with astro:assets)
 src/content/     services content collection (one Markdown file per API service slug)
-src/components/  UI components (layout, home, services, projects, news, about, contact, ui)
+src/components/  UI components (layout, home, services, projects, news, about, ui)
 src/lib/         API client and types, build-time content fetchers, TipTap renderer, team data,
-                 site facts, contact form rules, structured data
+                 site facts, privacy policy data, structured data
 src/layouts/     page layouts (BaseLayout: SEO, social, favicons, skip link)
 src/pages/       routes (home, servicios, proyectos, noticias, nosotros, contacto, 404)
 src/scripts/     small browser modules (project filter, copy link)

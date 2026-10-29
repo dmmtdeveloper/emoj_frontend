@@ -119,10 +119,7 @@ const more = relatedProjects(portfolio, project, 8);
 const { prev, next } = adjacentProjects(portfolio, project.slug);
 const serviceTitles = await getServiceTitles();
 
-const firstService = project.services[0];
-const ctaHref = firstService
-  ? `/contacto?servicio=${firstService}`
-  : "/contacto";
+const ctaHref = "/contacto";
 ---
 
 <BaseLayout

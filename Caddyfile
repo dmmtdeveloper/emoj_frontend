@@ -11,7 +11,7 @@
 #   PORT          set by Railway (8080 by default here).
 #   NODE_PORT     where the Astro server listens on localhost (4321).
 #   API_ORIGIN    public API origin for the CSP connect-src, e.g.
-#                 https://api.emoj.cl (the contact form calls it directly).
+#                 https://api.emoj.cl.
 #   API_UPSTREAM  where /api/* is proxied: the public origin, or the
 #                 backend's private address (http://<service>.railway.internal:<port>).
 {
@@ -34,7 +34,7 @@
 	@speculation path /speculationrules.json
 
 	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self'; img-src 'self' data: https://*.t3.storageapi.dev; font-src 'self'; connect-src 'self' {$API_ORIGIN} https://api-staging-25e9.up.railway.app; frame-src https://challenges.cloudflare.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.t3.storageapi.dev; font-src 'self'; connect-src 'self' {$API_ORIGIN} https://api-staging-25e9.up.railway.app; frame-src 'none'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"

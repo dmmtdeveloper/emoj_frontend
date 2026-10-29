@@ -27,10 +27,8 @@ COPY . .
 # are compiled into the server, so they are set here.
 ARG PUBLIC_SITE_URL=https://emoj.cl
 ARG PUBLIC_API_URL
-ARG PUBLIC_TURNSTILE_SITE_KEY
 ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL \
-    PUBLIC_API_URL=$PUBLIC_API_URL \
-    PUBLIC_TURNSTILE_SITE_KEY=$PUBLIC_TURNSTILE_SITE_KEY
+    PUBLIC_API_URL=$PUBLIC_API_URL
 
 RUN test -n "$PUBLIC_API_URL" || (echo "PUBLIC_API_URL is required" >&2 && exit 1)
 RUN pnpm build

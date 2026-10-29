@@ -29,10 +29,15 @@ describe("speculation rules", () => {
     expect(rule?.where.and[0].href_matches).toBe("/*");
   });
 
-  it("never prerenders the panel, the API, previews or the contact form", () => {
+  it("never prerenders the panel, the API or previews", () => {
     const excluded = rule?.where.and[1].not.href_matches ?? [];
-    for (const path of ["/admin*", "/api/*", "/preview*", "/contacto*"]) {
+    for (const path of ["/admin*", "/api/*", "/preview*"]) {
       expect(excluded).toContain(path);
     }
+  });
+
+  it("prerenders the contact page, which has no form anymore", () => {
+    const excluded = rule?.where.and[1].not.href_matches ?? [];
+    expect(excluded).not.toContain("/contacto*");
   });
 });

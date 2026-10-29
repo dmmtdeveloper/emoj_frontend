@@ -9,7 +9,6 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/noticias/")).toBe("news");
     expect(pageForPath("/admin/medios")).toBe("media");
     expect(pageForPath("/admin/portada")).toBe("home");
-    expect(pageForPath("/admin/mensajes")).toBe("messages");
     expect(pageForPath("/admin/cuenta")).toBe("account");
     expect(pageForPath("/admin/usuarios")).toBe("users");
   });
@@ -28,6 +27,7 @@ describe("pageForPath", () => {
     expect(pageForPath("/admin/login")).toBeNull();
     expect(pageForPath("/admin/restablecer")).toBeNull();
     expect(pageForPath("/admin/desconocido")).toBeNull();
+    expect(pageForPath("/admin/mensajes")).toBeNull();
     expect(pageForPath("/servicios")).toBeNull();
   });
 });
@@ -47,7 +47,7 @@ describe("isInAppClick", () => {
     expect(
       isInAppClick(
         plain,
-        { href: `${origin}/admin/mensajes`, target: "" },
+        { href: `${origin}/admin/medios`, target: "" },
         origin,
       ),
     ).toBe(true);

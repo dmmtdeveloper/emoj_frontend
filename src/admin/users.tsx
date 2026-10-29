@@ -23,7 +23,7 @@ import {
 import { adminApi } from "./api";
 import { ErrorNotice, unwrap } from "./common";
 import { useUser } from "./session";
-import { MessagesSkeleton } from "./skeletons";
+import { PeopleSkeleton } from "./skeletons";
 import { Button, Card, cx, Dialog, Field, Notice } from "./ui";
 
 const ROLES: readonly Role[] = ["admin", "editor"];
@@ -447,9 +447,9 @@ export function UsersPage() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-[60ch] text-ink-muted">
-          Los administradores ven todo el panel, incluidos los mensajes del
-          formulario y esta sección. Los editores gestionan la portada, los
-          proyectos, las noticias y los medios.
+          Los administradores ven todo el panel, incluida esta sección. Los
+          editores gestionan la portada, los proyectos, las noticias y los
+          medios.
         </p>
         <Button
           onClick={() => {
@@ -469,7 +469,7 @@ export function UsersPage() {
 
       <Card>
         {query.isPending ? (
-          <MessagesSkeleton />
+          <PeopleSkeleton />
         ) : query.data ? (
           <>
             <h2 className="sr-only">Usuarios del panel</h2>

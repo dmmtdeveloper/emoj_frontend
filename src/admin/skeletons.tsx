@@ -118,9 +118,10 @@ export function ListSkeleton({
   );
 }
 
-export function MessagesSkeleton() {
+/** A list of people (the users page). */
+export function PeopleSkeleton() {
   return (
-    <Loading label="Cargando mensajes…" className="flex flex-col gap-8 py-2">
+    <Loading label="Cargando usuarios…" className="flex flex-col gap-8 py-2">
       {[0, 1, 2].map((i) => (
         <div key={i} className="flex flex-col gap-3">
           <Skeleton className="h-6 w-56" />

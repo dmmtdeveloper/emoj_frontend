@@ -3,23 +3,20 @@
  * Contact, in the home's voice:
  * - A photo-led header under the transparent header with the team photo,
  *   the promise and the two fastest ways to reach us (WhatsApp and phone).
- * - The form (ContactForm) beside the other channels as large tappable
- *   rows, the office with its map link, and how we follow up.
- * The form logic (validation, Turnstile, ?servicio=) is unchanged.
+ * - The direct channels as large tappable rows (WhatsApp, email, phones and
+ *   the office with its directions link), beside how we follow up.
+ * There is no contact form: visitors write or call EMOJ directly.
  */
 import { ArrowUpRight, Mail, MapPin, Phone } from "@lucide/astro";
 import { Image } from "astro:assets";
 import teamPhoto from "../assets/photos/equipo-emoj.jpg";
-import ContactForm from "../components/contact/ContactForm.astro";
 import Breadcrumb from "../components/ui/Breadcrumb.astro";
 import ButtonLink from "../components/ui/ButtonLink.astro";
 import WhatsAppIcon from "../components/ui/WhatsAppIcon.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getServices } from "../lib/get-services";
 import { CONTACT } from "../lib/site";
 import { organizationJsonLd } from "../lib/structured-data";
 
-const services = await getServices();
 const [mainPhone] = CONTACT.phones;
 const steps = [
   {
@@ -129,103 +126,110 @@ const arrow =
 
   <section class="bg-surface">
     <div class="container-site grid gap-12 py-16 md:py-24 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16 lg:py-28">
-      <div data-reveal>
-        <ContactForm services={services} />
-      </div>
+      <section
+        aria-labelledby="canales"
+        class="flex flex-col gap-8"
+        data-reveal
+      >
+        <div class="flex flex-col gap-3">
+          <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
+            Canales directos
+          </p>
+          <h2 id="canales" class="text-h2 text-ink">
+            Escríbenos o llámanos
+          </h2>
+          <p class="max-w-[60ch] text-ink-muted">
+            Para cotizar un proyecto, cuéntanos qué necesitas por WhatsApp o por
+            correo, o llámanos. Te responde un ingeniero del equipo.
+          </p>
+        </div>
+        <ul class="flex flex-col">
+          <li class={row}>
+            <span class={icon}>
+              <WhatsAppIcon size={22} />
+            </span>
+            <div class="flex min-w-0 flex-col gap-1">
+              <span class={label}>WhatsApp</span>
+              <a
+                class="text-lg font-medium text-ink no-underline after:absolute after:inset-0 hover:text-ink"
+                href={CONTACT.whatsapp.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {CONTACT.whatsapp.display}
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+            </div>
+            <span class={arrow} aria-hidden="true">
+              <ArrowUpRight size={16} stroke-width={2} />
+            </span>
+          </li>
+          <li class={row}>
+            <span class={icon}>
+              <Mail size={22} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex min-w-0 flex-col gap-1">
+              <span class={label}>Correo</span>
+              <a
+                class="text-lg font-medium break-all text-ink no-underline after:absolute after:inset-0 hover:text-ink"
+                href={`mailto:${CONTACT.email}`}
+              >
+                {CONTACT.email}
+              </a>
+            </div>
+            <span class={arrow} aria-hidden="true">
+              <ArrowUpRight size={16} stroke-width={2} />
+            </span>
+          </li>
+          <li class="flex items-center gap-4 border-t border-border py-5">
+            <span class={iconStatic}>
+              <Phone size={22} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex min-w-0 flex-col gap-1">
+              <span class={label}>Teléfonos</span>
+              <span class="flex flex-wrap gap-x-4 gap-y-1">
+                {CONTACT.phones.map((phone) => (
+                  <a class="text-lg font-medium text-ink" href={phone.href}>
+                    {phone.display}
+                  </a>
+                ))}
+              </span>
+            </div>
+          </li>
+          <li class={row}>
+            <span class={icon}>
+              <MapPin size={22} stroke-width={1.75} aria-hidden="true" />
+            </span>
+            <div class="flex min-w-0 flex-col gap-1">
+              <span class={label}>Oficina</span>
+              <address class="not-italic text-ink">
+                <span class="block text-lg font-medium">
+                  {CONTACT.address.street}
+                </span>
+                <span class="block text-sm text-ink-muted">
+                  {CONTACT.address.locality}, {CONTACT.address.region}
+                </span>
+              </address>
+              <a
+                class="font-medium text-brand no-underline after:absolute after:inset-0 hover:text-brand"
+                href={CONTACT.mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Cómo llegar
+                <span class="sr-only">
+                  (Google Maps, se abre en una pestaña nueva)
+                </span>
+              </a>
+            </div>
+            <span class={arrow} aria-hidden="true">
+              <ArrowUpRight size={16} stroke-width={2} />
+            </span>
+          </li>
+        </ul>
+      </section>
 
       <div class="flex flex-col gap-12 lg:sticky lg:top-28 lg:self-start">
-        <aside aria-labelledby="otros-canales" class="flex flex-col gap-6">
-          <div class="flex flex-col gap-3">
-            <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">
-              Otros canales
-            </p>
-            <h2 id="otros-canales" class="text-h3 text-ink">
-              Prefieres hablar directo
-            </h2>
-          </div>
-          <ul class="flex flex-col">
-            <li class={row}>
-              <span class={icon}>
-                <WhatsAppIcon size={22} />
-              </span>
-              <div class="flex min-w-0 flex-col gap-1">
-                <span class={label}>WhatsApp</span>
-                <a
-                  class="font-medium text-ink no-underline after:absolute after:inset-0 hover:text-ink"
-                  href={CONTACT.whatsapp.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {CONTACT.whatsapp.display}
-                  <span class="sr-only">(se abre en una pestaña nueva)</span>
-                </a>
-              </div>
-              <span class={arrow} aria-hidden="true">
-                <ArrowUpRight size={16} stroke-width={2} />
-              </span>
-            </li>
-            <li class={row}>
-              <span class={icon}>
-                <Mail size={22} stroke-width={1.75} aria-hidden="true" />
-              </span>
-              <div class="flex min-w-0 flex-col gap-1">
-                <span class={label}>Correo</span>
-                <a
-                  class="font-medium break-all text-ink no-underline after:absolute after:inset-0 hover:text-ink"
-                  href={`mailto:${CONTACT.email}`}
-                >
-                  {CONTACT.email}
-                </a>
-              </div>
-              <span class={arrow} aria-hidden="true">
-                <ArrowUpRight size={16} stroke-width={2} />
-              </span>
-            </li>
-            <li class="flex items-center gap-4 border-t border-border py-5">
-              <span class={iconStatic}>
-                <Phone size={22} stroke-width={1.75} aria-hidden="true" />
-              </span>
-              <div class="flex min-w-0 flex-col gap-1">
-                <span class={label}>Teléfonos</span>
-                <span class="flex flex-wrap gap-x-4 gap-y-1">
-                  {CONTACT.phones.map((phone) => (
-                    <a class="font-medium text-ink" href={phone.href}>
-                      {phone.display}
-                    </a>
-                  ))}
-                </span>
-              </div>
-            </li>
-            <li class={row}>
-              <span class={icon}>
-                <MapPin size={22} stroke-width={1.75} aria-hidden="true" />
-              </span>
-              <div class="flex min-w-0 flex-col gap-1">
-                <span class={label}>Oficina</span>
-                <address class="not-italic text-ink">
-                  <a
-                    class="font-medium text-ink no-underline after:absolute after:inset-0 hover:text-ink"
-                    href={CONTACT.mapsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {CONTACT.address.street}
-                    <span class="sr-only">
-                      (ver en Google Maps, se abre en una pestaña nueva)
-                    </span>
-                  </a>
-                  <span class="block text-sm text-ink-muted">
-                    {CONTACT.address.locality}, {CONTACT.address.region}
-                  </span>
-                </address>
-              </div>
-              <span class={arrow} aria-hidden="true">
-                <ArrowUpRight size={16} stroke-width={2} />
-              </span>
-            </li>
-          </ul>
-        </aside>
-
         <section aria-labelledby="como-seguimos" class="flex flex-col gap-6">
           <div class="flex flex-col gap-3">
             <p class="font-data text-[12px] leading-4 font-medium tracking-[0.1em] text-brand uppercase">

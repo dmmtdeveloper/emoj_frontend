@@ -6,7 +6,7 @@
           { "href_matches": "/*" },
           {
             "not": {
-              "href_matches": ["/admin*", "/api/*", "/preview*", "/contacto*"]
+              "href_matches": ["/admin*", "/api/*", "/preview*"]
             }
           }
         ]

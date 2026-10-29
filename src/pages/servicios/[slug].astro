@@ -59,7 +59,7 @@ const {
 } = service.data;
 const { Content } = await render(service);
 const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
-const ctaHref = `/contacto?servicio=${slug}`;
+const ctaHref = "/contacto";
 const whatsapp = { kind: "service", title } as const;
 const number = String(position + 1).padStart(2, "0");
 

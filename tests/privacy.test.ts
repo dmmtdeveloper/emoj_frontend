@@ -93,7 +93,6 @@ describe("PRIVACY", () => {
     expect(PRIVACY.processors.map((p) => p.name)).toEqual([
       "Railway",
       "Resend",
-      "Cloudflare",
       "Chilecom Datacenter",
     ]);
     for (const p of PRIVACY.processors) {
@@ -105,6 +104,24 @@ describe("PRIVACY", () => {
   it("names Railway as the host of the site itself, not only the API", () => {
     const railway = PRIVACY.processors.find((p) => p.name === "Railway");
     expect(railway?.role).toMatch(/sitio web/);
+  });
+
+  it("says the site has no contact form and how to reach EMOJ instead", () => {
+    expect(PRIVACY.sources).toMatch(/no tiene formulario de contacto/);
+    expect(PRIVACY.sources).toMatch(/WhatsApp/);
+    expect(PRIVACY.sources).toMatch(/correo/);
+    expect(PRIVACY.sources).toMatch(/teléfono/);
+  });
+
+  it("describes no form or captcha processing anymore", () => {
+    const text = JSON.stringify({ ...PRIVACY, sources: "" });
+    expect(text).not.toMatch(/formulario/i);
+    expect(text).not.toMatch(/turnstile|cloudflare/i);
+    expect(PRIVACY.activities.map((a) => a.id)).toEqual([
+      "security",
+      "admin",
+      "requests",
+    ]);
   });
 
   it("says whether there are automated decisions or profiling (art. 14 ter l)", () => {
