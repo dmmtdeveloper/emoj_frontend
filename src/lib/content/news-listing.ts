@@ -1,9 +1,9 @@
-import type { NewsSummary } from "../api/client";
+import type { NewsSummary } from "./types";
 
 /**
  * How one page of the news index is laid out: the first page leads with the
  * newest article as a large tile and lists the rest in the grid; later
- * pages are grid only. Articles arrive newest first from the API.
+ * pages are grid only. Articles arrive newest first (src/lib/content).
  */
 export function newsListing(
   articles: readonly NewsSummary[],

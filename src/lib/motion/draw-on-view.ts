@@ -38,8 +38,24 @@ export function drawStateFor(entry: EntryLike): DrawState {
   return "armed";
 }
 
+/**
+ * Scroll fallback for an armed element: a jump past it (a fast fling, an
+ * anchor link) crosses no observer threshold, so it would stay hidden.
+ * Fully above the bottom of the viewport → play; above the top → done;
+ * otherwise the observer still decides (null).
+ */
+export function drawStateOnScroll(
+  rect: { top: number; bottom: number },
+  viewportHeight: number,
+): DrawState | null {
+  if (rect.bottom < 0) return "done";
+  if (rect.bottom <= viewportHeight) return "play";
+  return null;
+}
+
 export interface DrawTarget {
   setAttribute(name: string, value: string): void;
+  getAttribute?(name: string): string | null;
 }
 
 export interface DrawObserver<T> {
@@ -61,6 +77,12 @@ export function initDrawOnView<T extends DrawTarget>(options: {
   if (elements.length === 0) return;
   const observer = factory((entries) => {
     for (const entry of entries) {
+      // Already settled by the scroll fallback: keep it.
+      const current = entry.target.getAttribute?.(DRAW_STATE_ATTRIBUTE);
+      if (current && current !== "armed") {
+        observer.unobserve(entry.target);
+        continue;
+      }
       const state = drawStateFor(entry);
       entry.target.setAttribute(DRAW_STATE_ATTRIBUTE, state);
       if (state !== "armed") observer.unobserve(entry.target);

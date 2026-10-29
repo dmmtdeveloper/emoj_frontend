@@ -3,6 +3,7 @@ import {
   HEADER_SOLID_AT,
   headerMode,
   headerSolidAt,
+  solidStartFor,
 } from "../src/lib/motion/header-state";
 
 describe("headerMode", () => {
@@ -43,5 +44,17 @@ describe("headerSolidAt", () => {
 
   it("treats overscroll above the top as transparent", () => {
     expect(headerSolidAt(-40)).toBe(0);
+  });
+});
+
+describe("solidStartFor", () => {
+  it("keeps the bar clear until the hero's foot reaches it", () => {
+    expect(solidStartFor({ heroBottom: 2610, headerHeight: 72 })).toBe(
+      2610 - 72 - HEADER_SOLID_AT,
+    );
+  });
+
+  it("never starts above the top of the page", () => {
+    expect(solidStartFor({ heroBottom: 40, headerHeight: 72 })).toBe(0);
   });
 });

@@ -18,8 +18,16 @@ import {
   parseCount,
   type CountSpec,
 } from "../lib/motion/count-up";
-import { drawOnViewMode, initDrawOnView } from "../lib/motion/draw-on-view";
-import { headerMode, headerSolidAt } from "../lib/motion/header-state";
+import {
+  drawOnViewMode,
+  drawStateOnScroll,
+  initDrawOnView,
+} from "../lib/motion/draw-on-view";
+import {
+  headerMode,
+  headerSolidAt,
+  solidStartFor,
+} from "../lib/motion/header-state";
 import { initRevealFallback, revealMode } from "../lib/motion/reveal";
 import { signatureFramePath } from "../lib/motion/signature-frame";
 
@@ -37,17 +45,28 @@ function initHeader(): void {
   if (!header) return;
   const mode = headerMode({ hasOverlay: header.hasAttribute("data-overlay") });
   if (mode !== "scroll") return;
-  // A page can raise where the bar starts to turn solid (taller hero).
-  const start =
+  // A page can raise where the bar starts to turn solid (taller hero), or
+  // name the hero it stays clear over (`data-header-clear`: the home's
+  // pinned hero, whose height changes with the screen).
+  const fixedStart =
     parseFloat(
       getComputedStyle(header).getPropertyValue("--header-solid-start"),
     ) || 0;
+  const clearOver = document.querySelector<HTMLElement>("[data-header-clear]");
+  const startFor = (): number => {
+    if (!clearOver) return fixedStart;
+    const box = clearOver.getBoundingClientRect();
+    return solidStartFor({
+      heroBottom: box.bottom + window.scrollY,
+      headerHeight: header.offsetHeight,
+    });
+  };
   let queued = false;
   const update = () => {
     queued = false;
     header.style.setProperty(
       "--header-solid",
-      String(headerSolidAt(window.scrollY, start)),
+      String(headerSolidAt(window.scrollY, startFor())),
     );
   };
   header.setAttribute("data-header-js", "");
@@ -63,6 +82,7 @@ function initHeader(): void {
   );
   // Restored scroll positions (back/forward cache, reload) land after load.
   window.addEventListener("pageshow", update);
+  window.addEventListener("resize", update);
 }
 
 function initReveal(): void {
@@ -162,6 +182,30 @@ function initDrawOnViewElements(): void {
         { rootMargin: "0px 0px -10% 0px", threshold: 0.6 },
       ),
   });
+  // A jump past an armed element crosses no threshold: settle it from the
+  // scroll position instead.
+  const settle = () => {
+    const armed = document.querySelectorAll<Element>(
+      '[data-draw-on-view][data-draw-state="armed"]',
+    );
+    if (armed.length === 0) {
+      window.removeEventListener("scroll", onScroll);
+      return;
+    }
+    for (const element of armed) {
+      const state = drawStateOnScroll(
+        element.getBoundingClientRect(),
+        window.innerHeight,
+      );
+      if (state) element.setAttribute("data-draw-state", state);
+    }
+  };
+  let frame = 0;
+  const onScroll = () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(settle);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
 }
 
 /** Space between each line end of a signature frame and its dot, in px. */

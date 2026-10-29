@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contentSitemap } from "../src/lib/content/sitemap";
+import { contentSitemap, inContentSitemap } from "../src/lib/content/sitemap";
 
 const site = new URL("https://emoj.cl");
 
@@ -37,5 +37,33 @@ describe("contentSitemap", () => {
       perPage: 12,
     });
     expect(xml).toContain("/proyectos/a&amp;b");
+  });
+});
+
+describe("inContentSitemap", () => {
+  it("covers the home, the listings, projects and articles", () => {
+    for (const path of [
+      "/",
+      "/proyectos",
+      "/proyectos/",
+      "/proyectos/puente-llollito",
+      "/noticias/",
+      "/noticias/pagina/2",
+      "/noticias/visita-tecnica-canal-la-petaca",
+    ]) {
+      expect(inContentSitemap(path), path).toBe(true);
+    }
+  });
+
+  it("leaves every other page to the main sitemap", () => {
+    for (const path of [
+      "/servicios/",
+      "/servicios/geotecnia",
+      "/nosotros/",
+      "/contacto/",
+      "/proyectos-viejos",
+    ]) {
+      expect(inContentSitemap(path), path).toBe(false);
+    }
   });
 });

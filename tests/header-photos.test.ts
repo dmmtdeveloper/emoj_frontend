@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { headerPhotos } from "../src/lib/content/header-photos";
 
 const cover = (name: string) => ({
-  url: `https://bucket.test/${name}.jpg`,
+  src: {
+    src: `/_astro/${name}.jpg`,
+    width: 1800,
+    height: 1200,
+    format: "jpg" as const,
+  },
   alt: name,
   width: 1800,
   height: 1200,

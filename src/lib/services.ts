@@ -1,8 +1,6 @@
-import type { ServiceSlug } from "./api/client";
-
 /**
- * Service slugs, in the API's order. Must match `ServiceSlug` in the
- * generated OpenAPI types; `tests/services.test.ts` fails if they drift.
+ * Service slugs, in display order. Each one names a file in
+ * src/content/servicios and is what projects list in `services`.
  */
 export const SERVICE_SLUGS = [
   "obras-sanitarias",
@@ -12,7 +10,9 @@ export const SERVICE_SLUGS = [
   "proyectos-arquitectonicos",
   "geotecnia",
   "aguas-lluvias",
-] as const satisfies readonly ServiceSlug[];
+] as const;
+
+export type ServiceSlug = (typeof SERVICE_SLUGS)[number];
 
 /** Lucide icons allowed for services (kept explicit to stay tree-shakable). */
 export const SERVICE_ICONS = [

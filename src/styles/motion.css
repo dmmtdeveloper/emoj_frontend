@@ -184,73 +184,23 @@
   transform-origin: center;
 }
 
-.wordmark {
+/* Header lockup (HeaderLockup.astro): static, colored like the official
+   version through the header's mark properties. */
+.header-lockup {
   overflow: visible;
 }
 
-/*
- * Fill and pen are separate paths: `.wordmark__fill` (all contours, holes
- * kept) and `.wordmark__stroke` (one per contour). The same keyframes run on
- * both; each only has the property it paints.
- */
-.wordmark__fill {
-  fill: currentColor;
+.header-lockup__stroke {
+  stroke: var(--mark-stroke, var(--brand));
 }
 
-.wordmark__stroke {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3.5;
-  stroke-linejoin: round;
-  stroke-opacity: 0;
+.header-lockup__emoj {
+  fill: var(--mark-stroke, var(--brand));
 }
 
-/* The written-then-erased name only exists with motion (motion block). */
-.wordmark--draw {
-  visibility: hidden;
-}
-
-@keyframes wordmark-unwrite {
-  0% {
-    stroke-dashoffset: 0;
-    stroke-opacity: 0;
-    fill-opacity: 1;
-  }
-  35% {
-    stroke-dashoffset: 0;
-    stroke-opacity: 1;
-    fill-opacity: 0;
-  }
-  100% {
-    stroke-dashoffset: 1;
-    stroke-opacity: 1;
-    fill-opacity: 0;
-  }
-}
-
-@keyframes wordmark-gone {
-  to {
-    visibility: hidden;
-  }
-}
-
-/* Each contour traced (pathLength 1), then filled. */
-@keyframes wordmark-write {
-  0% {
-    stroke-dashoffset: 1;
-    stroke-opacity: 1;
-    fill-opacity: 0;
-  }
-  65% {
-    stroke-dashoffset: 0;
-    stroke-opacity: 1;
-    fill-opacity: 0;
-  }
-  100% {
-    stroke-dashoffset: 0;
-    stroke-opacity: 0;
-    fill-opacity: 1;
-  }
+.header-lockup__dot,
+.header-lockup__consultora {
+  fill: var(--mark-dot, var(--ink));
 }
 
 .isotipo-mark--mono {
@@ -271,47 +221,6 @@
 
   .isotipo-mark--draw .isotipo-mark__dot--end {
     animation: pop 420ms var(--ease-spring) 1300ms both;
-  }
-
-  /*
-   * Wordmark (Wordmark.astro): once the isotype stroke ends (~1350ms) the pen
-   * traces each letter's contours, left to right, and the letter fills in.
-   * `--i` (letter index) is set per letter group below and inherited. It is
-   * not a `style` attribute: the production CSP (`style-src 'self'`) blocks
-   * inline style attributes.
-   */
-  .wordmark__letter:nth-child(2) {
-    --i: 1;
-  }
-
-  .wordmark__letter:nth-child(3) {
-    --i: 2;
-  }
-
-  .wordmark__letter:nth-child(4) {
-    --i: 3;
-  }
-
-  .wordmark--draw .wordmark__stroke {
-    stroke-dasharray: 1;
-  }
-
-  .wordmark--draw .wordmark__letter path {
-    animation:
-      wordmark-write 1100ms var(--ease-in-out)
-        calc(1300ms + var(--i, 0) * 130ms) both,
-      wordmark-unwrite 900ms var(--ease-in-out)
-        calc(3900ms + (3 - var(--i, 0)) * 110ms) forwards;
-  }
-
-  /*
-   * After a short hold the pen erases the name, last letter first, and only
-   * the isotype stays. `forwards` (not `both`) so the erase does not apply
-   * during its delay.
-   */
-  .wordmark--draw {
-    visibility: visible;
-    animation: wordmark-gone 1ms linear 5200ms forwards;
   }
 
   /* Hover: a pen glint runs along the stroke, left to right. */
@@ -367,6 +276,69 @@
 
 [data-draw-state="play"] .logo-lockup__words {
   animation: wipe-right 900ms var(--ease-in-out) 1550ms both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Footer lockup with tagline (TaglineLockup.astro)                     */
+/* ------------------------------------------------------------------ */
+
+/* Official colours: stroke and "Emoj" in brand, the rest in ink. */
+.tagline-lockup {
+  overflow: visible;
+}
+
+.tagline-lockup__stroke {
+  stroke: var(--brand);
+  stroke-dasharray: 1;
+}
+
+.tagline-lockup__emoj {
+  fill: var(--brand);
+}
+
+.tagline-lockup__dot,
+.tagline-lockup__consultora,
+.tagline-lockup__tagline {
+  fill: var(--ink);
+}
+
+.tagline-lockup__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Same drawing as the lockup above, then the tagline is written last. */
+[data-draw-state="armed"] .tagline-lockup__stroke {
+  stroke-dashoffset: -1;
+}
+
+[data-draw-state="armed"] .tagline-lockup__dot {
+  transform: scale(0);
+}
+
+[data-draw-state="armed"] .tagline-lockup__name,
+[data-draw-state="armed"] .tagline-lockup__tagline {
+  clip-path: inset(0 100% 0 0);
+}
+
+[data-draw-state="play"] .tagline-lockup__dot--start {
+  animation: pop 420ms var(--ease-spring) 80ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__stroke {
+  animation: draw-back 1300ms var(--ease-in-out) 250ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__dot--end {
+  animation: pop 420ms var(--ease-spring) 1500ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__name {
+  animation: wipe-right 900ms var(--ease-in-out) 1550ms both;
+}
+
+[data-draw-state="play"] .tagline-lockup__tagline {
+  animation: wipe-right 1000ms var(--ease-in-out) 2300ms both;
 }
 
 /* ------------------------------------------------------------------ */

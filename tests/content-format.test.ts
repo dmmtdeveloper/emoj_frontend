@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectSummary } from "../src/lib/api/client";
+import type { ProjectSummary } from "../src/lib/content/types";
 import {
   fitWidth,
   formatDate,

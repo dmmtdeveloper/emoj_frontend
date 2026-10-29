@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./motion.css";
+@import "./chapters.css";
 
 /*
  * `dark:` follows the theme the page shows: the visitor's choice
@@ -220,9 +221,8 @@
 }
 
 /*
- * Select (src/components/ui/Select.astro on the site, `Select` in
- * src/admin/ui.tsx in the panel): a real <select>, so keyboard, screen
- * readers, phones' own pickers and form posts all keep working.
+ * Select (src/components/ui/Select.astro): a real <select>, so keyboard,
+ * screen readers, phones' own pickers and form posts all keep working.
  *
  * - Closed field: same look in every browser. `appearance: none` drops the
  *   native arrow; the wrapper draws a Lucide chevron in `currentColor`.
@@ -230,7 +230,7 @@
  *   Chrome and Edge 135+), the picker gets the EMOJ look: raised card,
  *   soft hover, the chosen option in brand with a check. Elsewhere the
  *   browser's own list shows, which is fine.
- * - `.select--compact`: the panel's denser size on a raised ground.
+ * - `.select--compact`: a denser size on a raised ground.
  */
 @layer components {
   .select-field {
@@ -413,7 +413,7 @@
 }
 
 /*
- * Rich text rendered from the API (TipTap JSON, see lib/content/tiptap.ts).
+ * Article bodies (Markdown in src/content/noticias, rendered by Astro).
  * Plain elements only, so styles live here instead of on each tag.
  */
 @layer components {
@@ -518,23 +518,23 @@
 }
 
 /*
- * Focal point of a photo edited in the panel (home hero), in 5% steps:
- * `focus-x-30 focus-y-70` crops around 30% from the left, 70% from the top
- * (src/lib/content/home-hero.ts). Classes, because style="" is not allowed
- * by the CSP; they are built at runtime, so they are listed for Tailwind.
+ * Wide container (the home, the header and the footer): 92rem max with
+ * 1.5rem gutters, 2rem from sm and 3rem from lg, the same width as
+ * deivid.space.
  */
-@utility focus-x-* {
-  --focus-x: calc(--value(integer) * 1%);
-}
+@utility container-wide {
+  width: 100%;
+  max-width: calc(92rem + 6rem);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
 
-@utility focus-y-* {
-  --focus-y: calc(--value(integer) * 1%);
-}
+  @media (min-width: 40rem) {
+    padding-inline: 2rem;
+  }
 
-@source inline("focus-x-{0..100..5} focus-y-{0..100..5}");
-
-@utility object-focus {
-  object-position: var(--focus-x, 50%) var(--focus-y, 50%);
+  @media (min-width: 64rem) {
+    padding-inline: 3rem;
+  }
 }
 
 /* Faint blueprint grid (lines + dots) from the current text color. */
@@ -625,4 +625,22 @@
   --logo: url("/logos/clientes/codelco.svg");
   --ratio: 4.565;
   --h: 32px;
+}
+
+/* Footer (SiteFooter.astro): the WhatsApp mark at the size of the other
+   contact icons, and a brand hairline along the bottom edge. */
+.footer-wa svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+}
+
+.footer-glint {
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    var(--brand) 50%,
+    transparent 95%
+  );
 }

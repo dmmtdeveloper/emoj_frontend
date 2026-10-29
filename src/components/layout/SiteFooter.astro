@@ -1,38 +1,35 @@
 ---
 /**
- * Site footer on `surface-inverse` (the second inverse section of a page).
+ * Site footer, laid out like deivid.space's: on the sunken surface with a
+ * hairline on top, the same width as the home (`container-wide`).
  *
- * - Top: logo, a short description of the firm and the email as the main
- *   way to start a conversation.
- * - Columns: every service (internal links that also help SEO), company
- *   pages, direct contact and social profiles with their names.
- * - Bottom bar: legal line, location, the Ley 21.719 notice with links to
- *   the privacy policy and to exercising rights, "back to top" and the
- *   credit to the studio that built the site (deivid.space).
+ * - Columns: the official lockup with the tagline ("acercamos la
+ *   ingeniería"), drawn once when it comes into view, and a short
+ *   description of the firm; then the services (internal links that also help SEO), the company pages,
+ *   legal (privacy policy and rights under Ley 21.719), social profiles
+ *   and direct contact.
+ * - Bottom bar: the isotype, the legal line (name, RUT, place) and the
+ *   credit to the studio that built the site, "back to top" and the social
+ *   icons. It leaves room for the floating WhatsApp button on phones.
  *
- * Only inverse tokens (with opacity) are used, so it works in both themes;
- * `brand` on plum is a forbidden pair. A faint isotype stroke signs the
- * corner. The bottom bar leaves room for the floating WhatsApp button on
- * mobile.
+ * Semantic tokens only, so it works in both themes.
  */
-import { ArrowUp, ArrowUpRight, ShieldCheck } from "@lucide/astro";
-import { getServices } from "../../lib/get-services";
 import {
-  CONTACT,
-  LEGAL_NAME,
-  RUT,
-  SITE_NAME,
-  SOCIAL,
-  TAGLINE,
-} from "../../lib/site";
-import LogoLockup from "../LogoLockup.astro";
+  ArrowUp,
+  ArrowUpRight,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+} from "@lucide/astro";
+import { getServices } from "../../lib/get-services";
+import { CONTACT, LEGAL_NAME, RUT, SITE_NAME, SOCIAL } from "../../lib/site";
+import IsotipoMark from "../IsotipoMark.astro";
+import TaglineLockup from "../TaglineLockup.astro";
 import SocialIcon from "../ui/SocialIcon.astro";
-import StrokeLine from "../ui/StrokeLine.astro";
+import WhatsAppIcon from "../ui/WhatsAppIcon.astro";
 
 const year = new Date().getFullYear();
-const legalLink =
-  "inline-flex min-h-11 items-center self-start font-medium text-ink-inverse/80 underline-offset-4 hover:text-ink-inverse hover:underline sm:self-auto md:min-h-9";
-const legalLine = `© ${year} ${LEGAL_NAME} · RUT ${RUT} · Quilpué, Región de Valparaíso, Chile`;
 const services = await getServices();
 
 const COMPANY = [
@@ -42,68 +39,55 @@ const COMPANY = [
   { label: "Contacto", href: "/contacto" },
 ] as const;
 
-const heading = "eyebrow eyebrow-inverse text-ink-inverse/70";
+const LEGAL = [
+  { label: "Política de privacidad", href: "/privacidad" },
+  { label: "Ejercer tus derechos", href: "/privacidad#derechos" },
+] as const;
+
+const heading =
+  "font-data text-[11px] leading-4 font-semibold tracking-[0.16em] text-ink uppercase";
+const list = "mt-4 grid gap-2.5";
 const link =
-  "text-ink-inverse/80 underline-offset-4 transition-colors duration-200 hover:text-ink-inverse hover:underline";
+  "text-sm leading-5 text-ink-muted no-underline transition-colors duration-200 hover:text-ink";
+const meta =
+  "font-data text-[11px] leading-4 tracking-[0.1em] text-ink-muted uppercase";
 ---
 
-<footer class="relative isolate overflow-clip bg-surface-inverse text-ink-inverse">
-  <StrokeLine class="absolute -right-40 -bottom-24 -z-10 w-[720px] text-ink-inverse opacity-[0.07] md:-right-24 md:w-[980px]" />
-
-  <div class="container-site">
-    {/* Brand and main contact */}
-    <div class="grid gap-10 py-16 md:pt-20 md:pb-16 lg:grid-cols-12 lg:items-end lg:gap-8">
-      <div class="flex flex-col gap-6 lg:col-span-6">
-        <LogoLockup
-          draw="view"
-          label={SITE_NAME}
-          width="200"
-          height="101"
-          class="h-auto w-[200px]"
-        />
-        <p class="max-w-[46ch] text-base leading-7 text-ink-inverse/80">
-          Consultora de ingeniería civil con base en Quilpué. Diseñamos agua
-          potable, caminos, estructuras y fundaciones para las regiones de
-          Valparaíso y Coquimbo. {TAGLINE}.
-        </p>
-      </div>
-      <div class="flex flex-col gap-3 lg:col-span-6 lg:items-end lg:text-right">
-        <p class="text-sm leading-5 font-medium text-ink-inverse/70">
-          ¿Tienes un proyecto en mente? Escríbenos
-        </p>
+<footer
+  class="relative border-t border-border bg-surface-sunken text-ink"
+  aria-label="Pie de página"
+>
+  <div class="container-wide pt-12 pb-5 md:pt-16">
+    <div class="grid grid-cols-2 gap-x-6 gap-y-10 border-b border-border pb-10 sm:gap-10 md:pb-12 lg:grid-cols-3 lg:gap-8 xl:grid-cols-[minmax(14rem,1.3fr)_minmax(11rem,0.8fr)_repeat(3,minmax(7rem,0.5fr))_minmax(14rem,0.9fr)] xl:gap-10">
+      <div class="col-span-2 max-w-[25rem] sm:col-span-1">
         <a
-          href={`mailto:${CONTACT.email}`}
-          class="group inline-flex items-center gap-3 text-[clamp(1.5rem,1.1rem+1.6vw,2.25rem)] leading-tight font-semibold tracking-[-0.01em] text-ink-inverse no-underline hover:text-ink-inverse"
+          href="/"
+          class="inline-flex no-underline"
+          aria-label={`${SITE_NAME} — Inicio`}
         >
-          <span class="bg-linear-to-r from-current to-current bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-300 group-hover:bg-[length:100%_2px] group-focus-visible:bg-[length:100%_2px]">
-            {CONTACT.email}
-          </span>
-          <ArrowUpRight
-            size={28}
-            stroke-width={1.75}
-            aria-hidden="true"
-            class="shrink-0 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+          <TaglineLockup
+            draw="view"
+            label=""
+            width="208"
+            height="132"
+            class="h-auto w-52"
           />
         </a>
+        <p class="mt-5 max-w-[34ch] text-sm leading-6 text-ink-muted">
+          Consultora de ingeniería civil con base en Quilpué. Diseñamos agua
+          potable, caminos, estructuras y fundaciones para las regiones de
+          Valparaíso y Coquimbo.
+        </p>
       </div>
-    </div>
 
-    {/* Link columns */}
-    <div class="grid grid-cols-2 gap-x-6 gap-y-10 border-t border-ink-inverse/15 py-12 md:gap-y-12 md:py-16 lg:grid-cols-12 lg:gap-x-8">
-      <nav
-        aria-labelledby="footer-servicios"
-        class="flex flex-col gap-4 md:gap-5 lg:col-span-4"
-      >
+      <nav aria-labelledby="footer-servicios">
         <h2 id="footer-servicios" class={heading}>
           Servicios
         </h2>
-        <ul class="flex flex-col">
+        <ul class={list}>
           {services.map(({ data }) => (
             <li>
-              <a
-                class={`${link} inline-flex min-h-11 items-center py-1 leading-5 md:min-h-9`}
-                href={`/servicios/${data.slug}`}
-              >
+              <a class={link} href={`/servicios/${data.slug}`}>
                 {data.title}
               </a>
             </li>
@@ -111,20 +95,14 @@ const link =
         </ul>
       </nav>
 
-      <nav
-        aria-labelledby="footer-empresa"
-        class="flex flex-col gap-4 md:gap-5 lg:col-span-2"
-      >
+      <nav aria-labelledby="footer-empresa">
         <h2 id="footer-empresa" class={heading}>
           Empresa
         </h2>
-        <ul class="flex flex-col">
+        <ul class={list}>
           {COMPANY.map(({ label, href }) => (
             <li>
-              <a
-                class={`${link} inline-flex min-h-11 items-center py-1 leading-5 md:min-h-9`}
-                href={href}
-              >
+              <a class={link} href={href}>
                 {label}
               </a>
             </li>
@@ -132,68 +110,168 @@ const link =
         </ul>
       </nav>
 
-      <div class="order-first col-span-2 flex flex-col gap-4 md:gap-5 lg:order-none lg:col-span-3">
-        <h2 class={heading}>Contacto</h2>
-        <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-base leading-6 lg:flex lg:flex-col">
-          <div class="flex flex-col gap-1">
-            <dt class="text-sm leading-5 text-ink-inverse/60">Teléfonos</dt>
-            {CONTACT.phones.map((phone) => (
-              <dd>
-                <a class={link} href={phone.href}>
-                  {phone.display}
-                </a>
-              </dd>
-            ))}
-          </div>
-          <div class="flex flex-col gap-1">
-            <dt class="text-sm leading-5 text-ink-inverse/60">WhatsApp</dt>
-            <dd>
+      <nav aria-labelledby="footer-legal">
+        <h2 id="footer-legal" class={heading}>
+          Legal
+        </h2>
+        <ul class={list}>
+          {LEGAL.map(({ label, href }) => (
+            <li>
+              <a class={link} href={href}>
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        {/* Ley 21.719 (in force from 2026-12-01). */}
+        <p class="mt-4 flex max-w-[22ch] items-start gap-2 text-xs leading-5 text-ink-muted">
+          <ShieldCheck
+            size={14}
+            stroke-width={1.75}
+            aria-hidden="true"
+            class="mt-0.5 shrink-0"
+          />
+          Tratamos tus datos personales conforme a la Ley 21.719.
+        </p>
+      </nav>
+
+      <div>
+        <h2 class={heading}>Redes</h2>
+        <ul class={list}>
+          {SOCIAL.map(({ name, href }) => (
+            <li>
               <a
-                class={link}
-                href={CONTACT.whatsapp.href}
+                class={`${link} group inline-flex items-center gap-2`}
+                href={href}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {CONTACT.whatsapp.display}
+                {name}
+                <ArrowUpRight
+                  size={14}
+                  aria-hidden="true"
+                  class="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                />
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
               </a>
-            </dd>
-          </div>
-          <div class="col-span-2 flex flex-col gap-1">
-            <dt class="text-sm leading-5 text-ink-inverse/60">Oficina</dt>
-            <dd>
-              <a
-                class={link}
-                href={CONTACT.mapsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <address class="not-italic">
-                  {CONTACT.address.street}
-                  <br />
-                  {CONTACT.address.locality}, {CONTACT.address.region}
-                </address>
-              </a>
-            </dd>
-          </div>
-        </dl>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div class="col-span-2 flex flex-col gap-4 md:gap-5 lg:col-span-3">
-        <h2 class={heading}>Síguenos</h2>
-        <ul class="flex gap-3 lg:flex-col lg:gap-1">
+      <address class="col-span-2 not-italic sm:col-span-1">
+        <h2 class={heading}>Contacto</h2>
+        <ul class="mt-4 grid gap-3">
+          {CONTACT.phones.map((phone) => (
+            <li>
+              <a
+                class={`${link} inline-flex items-start gap-2.5`}
+                href={phone.href}
+              >
+                <Phone size={15} aria-hidden="true" class="mt-0.5 shrink-0" />
+                {phone.display}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a
+              class={`${link} footer-wa inline-flex items-start gap-2.5`}
+              href={CONTACT.whatsapp.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <WhatsAppIcon />
+              {CONTACT.whatsapp.display}
+              <span class="sr-only">
+                (WhatsApp, se abre en una pestaña nueva)
+              </span>
+            </a>
+          </li>
+          <li>
+            <a
+              class={`${link} inline-flex min-w-0 items-start gap-2.5`}
+              href={`mailto:${CONTACT.email}`}
+            >
+              <Mail size={15} aria-hidden="true" class="mt-0.5 shrink-0" />
+              <span class="min-w-0 break-all">{CONTACT.email}</span>
+            </a>
+          </li>
+          <li>
+            <a
+              class={`${link} inline-flex items-start gap-2.5`}
+              href={CONTACT.mapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MapPin size={15} aria-hidden="true" class="mt-0.5 shrink-0" />
+              <span>
+                {CONTACT.address.street}
+                <br />
+                {CONTACT.address.locality}, {CONTACT.address.region}
+              </span>
+            </a>
+          </li>
+        </ul>
+      </address>
+    </div>
+
+    <div class="flex flex-col gap-5 pt-5 pb-24 sm:flex-row sm:items-center sm:justify-between lg:pb-0 lg:max-[1640px]:pr-20">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <a
+          href="/"
+          class="inline-flex no-underline motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-0.5"
+          aria-label={`${SITE_NAME} — Inicio`}
+        >
+          <IsotipoMark width="52" height="20" class="h-5 w-auto" />
+        </a>
+        <span
+          class="hidden h-4 w-px bg-border sm:block"
+          aria-hidden="true"
+        ></span>
+        <p class={meta}>
+          © {year} {LEGAL_NAME} · RUT {RUT}
+        </p>
+        <p class={meta}>Quilpué, Chile</p>
+        <p class={meta}>
+          Realizado por{" "}
+          <a
+            href="https://deivid.space"
+            target="_blank"
+            rel="noopener"
+            class="text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+          >
+            deivid.space
+            <span class="sr-only"> (se abre en una pestaña nueva)</span>
+          </a>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="#top"
+          class="group mr-2 inline-flex min-h-10 items-center gap-1.5 text-sm text-ink-muted no-underline hover:text-ink"
+        >
+          Volver arriba
+          <ArrowUp
+            size={15}
+            stroke-width={2}
+            aria-hidden="true"
+            class="transition-transform duration-200 group-hover:-translate-y-0.5"
+          />
+        </a>
+        <ul class="flex items-center gap-1" aria-label="Redes sociales">
           {SOCIAL.map(({ name, href }) => (
             <li>
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                class={`${link} group inline-flex min-h-11 items-center gap-3 md:min-h-9`}
+                class="inline-flex size-10 items-center justify-center rounded-full border border-transparent text-ink no-underline transition-colors duration-200 hover:border-border hover:text-ink"
               >
-                <span class="inline-flex size-11 items-center justify-center rounded-full border border-ink-inverse/25 transition-colors duration-200 group-hover:border-ink-inverse group-hover:bg-ink-inverse group-hover:text-surface-inverse lg:size-9">
-                  <SocialIcon name={name} size={20} />
+                <SocialIcon name={name} size={20} />
+                <span class="sr-only">
+                  {name} (se abre en una pestaña nueva)
                 </span>
-                <span class="sr-only lg:not-sr-only">{name}</span>
-                <span class="sr-only">(se abre en una pestaña nueva)</span>
               </a>
             </li>
           ))}
@@ -201,61 +279,8 @@ const link =
       </div>
     </div>
   </div>
-
-  {/* Legal bar */}
-  <div class="border-t border-ink-inverse/15">
-    <div class="container-site flex flex-col gap-4 py-6 pb-28 text-sm leading-5 text-ink-inverse/70 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:pb-6 lg:max-[1319px]:pr-24">
-      <div class="flex flex-col gap-2">
-        <p>{legalLine}</p>
-        {/* Ley 21.719 (in force from 2026-12-01): the policy and the rights. */}
-        <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
-          <p class="flex items-start gap-2">
-            <ShieldCheck
-              size={16}
-              stroke-width={1.75}
-              aria-hidden="true"
-              class="mt-0.5 shrink-0"
-            />
-            Tratamos tus datos personales conforme a la Ley&nbsp;21.719.
-          </p>
-          <div class="flex flex-wrap gap-x-5">
-            <a href="/privacidad" class={legalLink}>
-              Política de privacidad
-            </a>
-            <a href="/privacidad#derechos" class={legalLink}>
-              Ejercer tus derechos
-            </a>
-          </div>
-        </div>
-      </div>
-      {/* Phones: credit on the left, "back to top" on the right. */}
-      <div class="flex flex-row-reverse items-center justify-between gap-4 border-t border-ink-inverse/10 pt-2 sm:flex-col sm:items-end sm:gap-1 sm:border-0 sm:pt-0">
-        <a
-          href="#top"
-          class="group inline-flex min-h-11 items-center gap-2 font-medium text-ink-inverse/80 no-underline hover:text-ink-inverse md:min-h-9"
-        >
-          Volver arriba
-          <ArrowUp
-            size={16}
-            stroke-width={2}
-            aria-hidden="true"
-            class="transition-transform duration-200 group-hover:-translate-y-0.5"
-          />
-        </a>
-        {/* Credit to the studio that built the site. */}
-        <p>
-          Realizado por{" "}
-          <a
-            href="https://deivid.space"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex min-h-11 items-center font-medium text-ink-inverse/80 underline-offset-4 hover:text-ink-inverse hover:underline md:min-h-9"
-          >
-            deivid.space
-            <span class="sr-only"> (se abre en una pestaña nueva)</span>
-          </a>
-        </p>
-      </div>
-    </div>
-  </div>
+  <span
+    class="footer-glint pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-60"
+    aria-hidden="true"
+  ></span>
 </footer>

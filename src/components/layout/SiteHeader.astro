@@ -1,8 +1,8 @@
 ---
 /**
  * Sticky site header: a full-width rectangular bar, its content aligned
- * with the page container: the isotype (+ "EMOJ" wordmark on the home
- * page), the primary navigation as pill links and a compact quote CTA. Over
+ * with the page container: the EMOJ lockup (isotype over "Emoj
+ * Consultora", HeaderLockup.astro), the primary navigation as pill links and a compact quote CTA. Over
  * the hero photo the quote CTA is an outlined cream pill (motion.css
  * `.header-cta`).
  *
@@ -22,8 +22,8 @@
  */
 import { Menu, Moon, Sun, X } from "@lucide/astro";
 import { CONTACT, NAV, isCurrent } from "../../lib/site";
+import HeaderLockup from "../HeaderLockup.astro";
 import IsotipoMark from "../IsotipoMark.astro";
-import Wordmark from "../Wordmark.astro";
 import ButtonLink from "../ui/ButtonLink.astro";
 
 interface Props {
@@ -33,7 +33,6 @@ interface Props {
 const { overlay = false } = Astro.props;
 const pathname = Astro.url.pathname;
 // The mark draws itself on the home page, where the story starts.
-const drawMark = pathname === "/";
 ---
 
 <header
@@ -49,26 +48,17 @@ const drawMark = pathname === "/";
     class="site-header__glass absolute inset-0 -z-10"
     aria-hidden="true"
   ></div>
-  <div class="site-header__bar container-site flex h-full items-center justify-between gap-4">
+  <div class="site-header__bar container-wide flex h-full items-center justify-between gap-4">
     <a
       href="/"
       class="mark-link relative -m-2 inline-flex shrink-0 items-center p-2 text-current no-underline hover:text-current"
     >
-      <IsotipoMark
+      <HeaderLockup
         label="EMOJ Consultora — Inicio"
-        draw={drawMark}
-        width="85"
-        height="32"
-        class="h-7 w-auto lg:h-8"
+        width="94"
+        height="52"
+        class="h-12 w-auto lg:h-[52px]"
       />
-      {/* Home only: the name is written after the mark, then erased. It is
-          out of the flow, so the header layout is the mark alone. */}
-      {drawMark && (
-        <Wordmark
-          draw
-          class="pointer-events-none absolute top-1/2 left-full ml-1 h-[21px] w-auto -translate-y-1/2 lg:h-6"
-        />
-      )}
     </a>
 
     <nav aria-label="Principal" class="hidden lg:block" data-nav-spy>

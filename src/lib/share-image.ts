@@ -1,3 +1,5 @@
+import { canonicalPath } from "./canonical";
+
 /**
  * The absolute address of a page's share image (og:image, twitter:image).
  *
@@ -25,11 +27,12 @@ export function shareImageUrl(
  * The page address for og:url, from the same host as the share image.
  * WhatsApp falls back to its small preview when og:url names another site
  * than the shared link (before launch: emoj.cl, still the old WordPress).
- * The canonical link keeps the site; after launch both are the same.
+ * The path is the canonical one (no trailing slash); the canonical link
+ * keeps the site. After launch both are the same.
  */
 export function sharePageUrl(
   pathname: string,
   options: { site: URL; origin: string; prerendered: boolean },
 ): string {
-  return shareImageUrl(pathname, options);
+  return shareImageUrl(canonicalPath(pathname), options);
 }

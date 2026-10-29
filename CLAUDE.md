@@ -1,6 +1,6 @@
 # emoj_frontend — agent guide
 
-Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React island under `/admin`, later phases). The API lives in [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
+Astro site for emoj.cl: fully static (`output: "static"`, no adapter, no server), deployed on Vercel or Railway (Caddy). There is no backend, API or admin panel. Projects and news are content collections: content is edited in `src/content/*` (photos in `src/assets/...`) and published by a git push, which rebuilds the site. See README, "Content: editing and publishing".
 
 ## Precedence
 
@@ -15,9 +15,15 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Font: Urbanist 400/500/600. Body ≥ 16px, left-aligned, max ~65ch; never justified.
 - Data font: Space Grotesk 400/500/600 (`font-data`), only for figures and data labels (hero facts, project sheets, numbers); never for headings, body copy or buttons.
 - Signature shape: `rounded-l-signature` (50px on the left corners only).
-- Icons: `@lucide/astro` in the site; `lucide-react` only inside the admin island.
+- Icons: `@lucide/astro`.
 - Tagline: "Acercamos la ingeniería" (the one in the official `vertical-tagline-*` files).
 - Logos: the official files are in `design/brand/oficial/` (see its README). Build marks from their geometry, never redraw them; fine stroke (`recorte`) for large sizes, `bold` for small ones. The `vertical-tagline-*` files carry the tagline and may be used. Brand pattern tile: `public/brand/patron.svg` (`.brand-pattern`).
+
+## Home chapters
+
+- The home (below the hero) is a sequence of pinned chapters built with `src/components/home/chapters/Chapter.astro` (head, scene, body) and animated with anime.js, the same pattern as the deividportfolio site: each scene builds one timeline authored against `SCENE_LENGTH` (10000) through `scrubbedScene()` in `src/scripts/chapters/scrub.ts`, which scrubs it with the scroll, reveals the copy and adds the desktop focus. Chapters 05 (projects reel) and 06 ("30 años" dive) are full-bleed: same `[data-track]`/`[data-stage]` pin and `scrubbedScene()` timeline, but a whole-screen stage with their own heads instead of the `Chapter.astro` grid. Chapter 07 (stacked reasons) is likewise its own two-column stage: the reasons are real content (cards in a list), so they read as a plain list without the `data-scenes` mark. Chapter 03 ("Cómo trabajamos", a full-bleed sage band) does not pin: it is a normal-height section with a CSS-sticky head beside a vertical timeline of the six stages (a real `<ol>`); each stage reveals as it enters and the rail fills with the scroll (anime.js `onScroll`), and it reads complete at rest.
+- The scroll is native everywhere, chapters included: no smooth-scroll library (Lenis was removed), no wheel pacing and no scroll-snap stops. The scenes scrub with the native scroll (anime.js `onScroll`). Do not reintroduce scroll hijacking.
+- Scenes are decorative (`aria-hidden`) unless they hold content (stage captions, the team photo); the chapter body carries the real text and links. Without the `data-scenes` mark (no JS, reduced motion) every scene must read complete at rest.
 
 ## Code rules
 
@@ -25,4 +31,4 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Strict TDD for logic: write the failing test first.
 - Before committing: `pnpm format:check && pnpm lint && pnpm check && pnpm test && pnpm tokens:check && pnpm build`.
 - Conventional commits, no AI attribution lines.
-- Regenerate API types with `pnpm api:types` after the backend `openapi.yaml` changes; never hand-edit them.
+- Keep the site static: no on-demand routes (`prerender = false`), no adapter, no runtime fetches. Data lives in `src/content/*` or `src/lib/*`.

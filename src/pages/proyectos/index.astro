@@ -20,21 +20,17 @@ import HeaderSlideshow, {
   type HeaderPhoto,
 } from "../../components/ui/HeaderSlideshow.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { contentSource } from "../../lib/content";
+import { getProjects } from "../../lib/content";
 import { projectFacets } from "../../lib/content/format";
 import { headerPhotos } from "../../lib/content/header-photos";
-import { mediaPath } from "../../lib/content/media";
 import { projectItemName } from "../../lib/content/transition";
 import { getServiceTitles } from "../../lib/get-services";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
-
-const projects = await contentSource().getProjects();
+const projects = await getProjects();
 const serviceTitles = await getServiceTitles();
 const facets = projectFacets(projects);
 const covers: HeaderPhoto[] = headerPhotos(projects, 8).map((p) => ({
-  src: mediaPath("proyectos", p.slug, p.cover),
+  src: p.cover.src,
   width: p.cover.width,
   height: p.cover.height,
 }));

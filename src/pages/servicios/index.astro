@@ -12,8 +12,7 @@
  *   short rows only.
  * - "¿No sabes cuál necesitas?" and the closing call to action.
  *
- * Rendered on demand like the home: the counts and photos follow the
- * published projects (refreshed on publish, src/lib/content/revalidation.ts).
+ * The counts and photos follow the projects in src/content/proyectos.
  */
 import { ArrowRight, ArrowUpRight } from "@lucide/astro";
 import headerPhoto from "../../assets/photos/puente-llollito-excavacion.jpg";
@@ -29,9 +28,8 @@ import HeaderSlideshow, {
   type HeaderPhoto,
 } from "../../components/ui/HeaderSlideshow.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { contentSource } from "../../lib/content";
+import { getProjects } from "../../lib/content";
 import { headerPhotos } from "../../lib/content/header-photos";
-import { mediaPath } from "../../lib/content/media";
 import { coversByService } from "../../lib/content/service-covers";
 import {
   projectCountByService,
@@ -39,11 +37,8 @@ import {
 } from "../../lib/content/service-stats";
 import { getServices, type Service } from "../../lib/get-services";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
-
 const services = await getServices();
-const projects = await contentSource().getProjects();
+const projects = await getProjects();
 const counts = projectCountByService(projects);
 const covers = coversByService(
   services.map((s) => s.data.slug),
@@ -51,7 +46,7 @@ const covers = coversByService(
 );
 const titleOf = new Map(projects.map((p) => [p.slug, p.title]));
 const slideCovers: HeaderPhoto[] = headerPhotos(projects, 8).map((p) => ({
-  src: mediaPath("proyectos", p.slug, p.cover),
+  src: p.cover.src,
   width: p.cover.width,
   height: p.cover.height,
 }));
@@ -72,7 +67,7 @@ const entries: Entry[] = services.map((service, i) => {
   const cover = covers.get(slug);
   const photo: ServicePhotoSource | undefined = cover
     ? {
-        src: mediaPath("proyectos", cover.slug, cover.cover),
+        src: cover.cover.src,
         width: cover.cover.width,
         height: cover.cover.height,
       }

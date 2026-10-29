@@ -32,3 +32,15 @@ export function headerMode(env: HeaderEnv): HeaderMode {
 export function headerSolidAt(scrollY: number, start = 0): 0 | 1 {
   return scrollY - start > HEADER_SOLID_AT ? 1 : 0;
 }
+
+/**
+ * Where the bar turns solid on a page whose hero is taller than the screen
+ * (the home's pinned hero): once the hero's foot reaches the bar.
+ * `heroBottom` is the hero's bottom edge in page coordinates.
+ */
+export function solidStartFor(hero: {
+  heroBottom: number;
+  headerHeight: number;
+}): number {
+  return Math.max(0, hero.heroBottom - hero.headerHeight - HEADER_SOLID_AT);
+}

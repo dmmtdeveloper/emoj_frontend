@@ -1,0 +1,212 @@
+---
+/**
+ * Chapter 03 · Cómo trabajamos, "Del primer trazo a la obra". A full-bleed
+ * sage band (`accent`, plum text, the same in both themes) that scrolls
+ * with the page: nothing pins. On wide screens the head stays beside the
+ * list (CSS `position: sticky`) while a vertical timeline of the six stages
+ * runs down the right; on phones the head sits above it.
+ *
+ * Each stage is real content (an `<ol>`): its number, icon, name and line.
+ * While the scenes play (`:root[data-scenes]`) a stage comes in as it
+ * enters the viewport (the number slides up, the icon draws itself, the
+ * text rises) and rewinds when scrolled back above it. A thin plum rail
+ * links the stage icons; the scroll fills it in plum and every stage it
+ * reaches lights its icon. At rest (no JavaScript, reduced motion) the
+ * rail is full and every stage reads complete.
+ */
+import {
+  ArrowRight,
+  FlaskConical,
+  HardHat,
+  MapPin,
+  MessagesSquare,
+  PencilRuler,
+  Stamp,
+} from "@lucide/astro";
+import { WORK_STAGES } from "../../../lib/content/work-stages";
+
+const ICONS = [
+  MessagesSquare,
+  MapPin,
+  FlaskConical,
+  PencilRuler,
+  Stamp,
+  HardHat,
+];
+const pad = (n: number) => String(n).padStart(2, "0");
+const stages = WORK_STAGES.map((stage, i) => ({
+  ...stage,
+  Icon: ICONS[i] ?? MessagesSquare,
+  number: pad(i + 1),
+}));
+---
+
+<section
+  class="flow-scene"
+  aria-labelledby="como-trabajamos"
+  data-nav-section="/nosotros"
+  data-scene-flow
+>
+  <div class="flow-grid container-wide">
+    <div class="flow-head">
+      <p class="flow-eyebrow">
+        <span>03</span> Cómo trabajamos
+      </p>
+      <h2 id="como-trabajamos" class="flow-title">
+        Del primer trazo a la <em>obra</em>.
+      </h2>
+      <p class="flow-lead">
+        <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+        coordinadas: te acompañamos desde la primera conversación hasta que lo
+        diseñado está construido.
+      </p>
+      <a href="/contacto" class="flow-cta">
+        Cotizar proyecto
+        <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+      </a>
+    </div>
+
+    <div class="flow-timeline">
+      <span class="flow-rail" aria-hidden="true" data-rail>
+        <span class="flow-rail__fill"></span>
+        <span class="flow-rail__dot"></span>
+      </span>
+      <ol class="flow-steps">
+        {stages.map(({ Icon, name, line, number }) => (
+          <li class="flow-step" data-step>
+            <span class="flow-step__node" aria-hidden="true" data-node>
+              <Icon size={22} stroke-width={1.75} />
+            </span>
+            <p class="flow-step__num" aria-hidden="true">
+              <span data-num>{number}</span>
+            </p>
+            <div class="flow-step__text">
+              <h3 class="flow-step__name" data-says>
+                {name}
+              </h3>
+              <p class="flow-step__line" data-says>
+                {line}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { animate, onScroll, stagger, svg, utils } from "animejs";
+  import { showingAt } from "../../../lib/motion/chapters";
+  import { eachScene, scenesOn } from "../../../scripts/chapters/scrub";
+
+  eachScene("[data-scene-flow]", (_scene, $, $$) => {
+    const rail = $("[data-rail]");
+    const steps = $$("[data-step]");
+    const nodes = steps.map((step) =>
+      step.querySelector<HTMLElement>("[data-node]"),
+    );
+
+    // The rail runs from the first stage icon to the last one; where each
+    // icon sits along it, as shares of its length.
+    let marks: number[] = [];
+    const centre = (node: HTMLElement | null) =>
+      node ? node.offsetTop + node.offsetHeight / 2 : 0;
+    const measure = () => {
+      const first = nodes[0] ?? null;
+      const last = nodes.at(-1) ?? null;
+      const offset = (node: HTMLElement | null) =>
+        (node?.closest<HTMLElement>("[data-step]")?.offsetTop ?? 0) +
+        centre(node);
+      const top = offset(first);
+      const length = Math.max(1, offset(last) - top);
+      rail.style.setProperty("top", `${top}px`);
+      rail.style.setProperty("height", `${length}px`);
+      marks = nodes.map((node) => (offset(node) - top) / length);
+    };
+    measure();
+    rail.setAttribute("data-placed", "");
+    void document.fonts?.ready.then(measure);
+    let timer = 0;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(measure, 150);
+    });
+    if (!scenesOn()) return;
+
+    // The rail fills with the scroll: its tip follows the middle of the
+    // viewport, and every stage it has passed lights its icon.
+    const light = (share: number) => {
+      const reached = showingAt(share + 1e-3, marks) - 1;
+      steps.forEach((step, i) => {
+        step.toggleAttribute("data-reached", i <= reached);
+        step.toggleAttribute("data-current", i === reached);
+      });
+    };
+    utils.set(rail, { "--rail": 0 });
+    light(0);
+    animate(rail, {
+      "--rail": [0, 1],
+      ease: "linear",
+      duration: 1000,
+      autoplay: onScroll({
+        target: rail,
+        enter: "center top",
+        leave: "center bottom",
+        sync: 0.5,
+      }),
+      onUpdate: (self) => light(self.progress),
+    });
+
+    // Each stage comes in as it enters and rewinds when scrolled back
+    // above it (play on enter forward, reverse on leave backward).
+    steps.forEach((step, i) => {
+      const num = step.querySelector<HTMLElement>("[data-num]");
+      const says = [...step.querySelectorAll<HTMLElement>("[data-says]")];
+      const icon = nodes[i]?.querySelector("svg");
+      const strokes = icon
+        ? [...icon.children].filter(
+            (child): child is SVGGeometryElement =>
+              child instanceof SVGGeometryElement,
+          )
+        : [];
+      const drawable = strokes.length > 0 ? svg.createDrawable(strokes) : null;
+      // Hidden until the stage enters (set here, never in the markup).
+      if (num) utils.set(num, { translateY: "105%" });
+      if (drawable) utils.set(drawable, { draw: "0 0" });
+      utils.set(says, { opacity: 0, translateY: 16 });
+      const trigger = () =>
+        onScroll({
+          target: step,
+          enter: "bottom-=80 top",
+          sync: "play none none reverse",
+        });
+
+      if (num) {
+        animate(num, {
+          translateY: ["105%", "0%"],
+          duration: 650,
+          ease: "outExpo",
+          autoplay: trigger(),
+        });
+      }
+      if (drawable) {
+        animate(drawable, {
+          draw: ["0 0", "0 1"],
+          duration: 700,
+          delay: 120,
+          ease: "inOutSine",
+          autoplay: trigger(),
+        });
+      }
+      animate(says, {
+        opacity: [0, 1],
+        translateY: [16, 0],
+        duration: 600,
+        delay: stagger(90, { start: 140 }),
+        ease: "outQuad",
+        autoplay: trigger(),
+      });
+    });
+  });
+</script>

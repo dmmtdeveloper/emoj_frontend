@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectSummary } from "../src/lib/api/client";
+import type { ProjectSummary } from "../src/lib/content/types";
 import { coversByService } from "../src/lib/content/service-covers";
 
 function project(
@@ -21,7 +21,7 @@ function project(
     ...(cover
       ? {
           cover: {
-            url: cover,
+            src: { src: cover, width: 2048, height: 1365, format: "jpg" },
             alt: `Foto de ${slug}`,
             width: 2048,
             height: 1365,
@@ -36,15 +36,15 @@ describe("coversByService", () => {
     const covers = coversByService(
       ["obras-sanitarias", "geotecnia"],
       [
-        project("nuevo", ["obras-sanitarias"], "https://cdn/nuevo.jpg"),
-        project("viejo", ["obras-sanitarias"], "https://cdn/viejo.jpg"),
-        project("saam", ["geotecnia"], "https://cdn/saam.jpg"),
+        project("nuevo", ["obras-sanitarias"], "/_astro/nuevo.jpg"),
+        project("viejo", ["obras-sanitarias"], "/_astro/viejo.jpg"),
+        project("saam", ["geotecnia"], "/_astro/saam.jpg"),
       ],
     );
-    expect(covers.get("obras-sanitarias")?.cover.url).toBe(
-      "https://cdn/nuevo.jpg",
+    expect(covers.get("obras-sanitarias")?.cover.src.src).toBe(
+      "/_astro/nuevo.jpg",
     );
-    expect(covers.get("geotecnia")?.cover.url).toBe("https://cdn/saam.jpg");
+    expect(covers.get("geotecnia")?.cover.src.src).toBe("/_astro/saam.jpg");
     expect(covers.get("geotecnia")?.slug).toBe("saam");
   });
 
@@ -53,10 +53,10 @@ describe("coversByService", () => {
       ["obras-viales", "aguas-lluvias"],
       [
         project("sin-foto", ["obras-viales"]),
-        project("con-foto", ["obras-viales"], "https://cdn/via.jpg"),
+        project("con-foto", ["obras-viales"], "/_astro/via.jpg"),
       ],
     );
-    expect(covers.get("obras-viales")?.cover.url).toBe("https://cdn/via.jpg");
+    expect(covers.get("obras-viales")?.cover.src.src).toBe("/_astro/via.jpg");
     expect(covers.has("aguas-lluvias")).toBe(false);
   });
 
@@ -67,22 +67,22 @@ describe("coversByService", () => {
         project(
           "pedro-montt",
           ["obras-viales", "estudios-de-transito"],
-          "https://cdn/pm.jpg",
+          "/_astro/pm.jpg",
         ),
-        project("rotonda", ["estudios-de-transito"], "https://cdn/rotonda.jpg"),
+        project("rotonda", ["estudios-de-transito"], "/_astro/rotonda.jpg"),
         project(
           "puente",
           ["calculo-estructural", "obras-viales"],
-          "https://cdn/puente.jpg",
+          "/_astro/puente.jpg",
         ),
       ],
     );
-    expect(covers.get("obras-viales")?.cover.url).toBe("https://cdn/pm.jpg");
-    expect(covers.get("estudios-de-transito")?.cover.url).toBe(
-      "https://cdn/rotonda.jpg",
+    expect(covers.get("obras-viales")?.cover.src.src).toBe("/_astro/pm.jpg");
+    expect(covers.get("estudios-de-transito")?.cover.src.src).toBe(
+      "/_astro/rotonda.jpg",
     );
-    expect(covers.get("calculo-estructural")?.cover.url).toBe(
-      "https://cdn/puente.jpg",
+    expect(covers.get("calculo-estructural")?.cover.src.src).toBe(
+      "/_astro/puente.jpg",
     );
 
     const only = coversByService(
@@ -91,12 +91,12 @@ describe("coversByService", () => {
         project(
           "pedro-montt",
           ["obras-viales", "estudios-de-transito"],
-          "https://cdn/pm.jpg",
+          "/_astro/pm.jpg",
         ),
       ],
     );
-    expect(only.get("estudios-de-transito")?.cover.url).toBe(
-      "https://cdn/pm.jpg",
+    expect(only.get("estudios-de-transito")?.cover.src.src).toBe(
+      "/_astro/pm.jpg",
     );
   });
 });

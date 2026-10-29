@@ -5,8 +5,8 @@ import vercel from "../vercel";
 
 /**
  * The Caddyfile serves the site on Railway; vercel.ts configures Vercel.
- * Both must send the same headers and rewrite /api the same way, so a
- * header added to one and forgotten in the other fails here.
+ * Both must send the same headers and redirects, so a header added to one
+ * and forgotten in the other fails here.
  */
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -92,23 +92,14 @@ function normalizeCsp(csp: string): string {
     .join("; ");
 }
 
-const rewrite = vercel.rewrites?.[0];
-const apiOrigin = rewrite ? new URL(rewrite.destination).origin : "";
-
-/** Caddy reads `{$API_ORIGIN}` from the environment at startup. */
-function resolveEnv(value: string): string {
-  return value.replaceAll("{$API_ORIGIN}", apiOrigin);
-}
-
 function caddyHeaders(): Map<string, Map<string, string>> {
   const byPath = new Map<string, Map<string, string>>();
   for (const block of parseHeaderBlocks(caddyfile)) {
     const merged = byPath.get(block.path) ?? new Map<string, string>();
     for (const [key, value] of block.headers) {
-      const resolved = resolveEnv(value);
       merged.set(
         key,
-        key === "content-security-policy" ? normalizeCsp(resolved) : resolved,
+        key === "content-security-policy" ? normalizeCsp(value) : value,
       );
     }
     byPath.set(block.path, merged);
@@ -151,31 +142,48 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     );
   });
 
-  it("allows the API origin in connect-src", () => {
-    const csp = caddyHeaders().get("*")?.get("content-security-policy") ?? "";
-    expect(apiOrigin).toMatch(/^https:\/\//);
-    expect(csp).toContain(`connect-src 'self' ${apiOrigin}`);
+  it("loads no third-party scripts and no frames (there is no captcha)", () => {
+    for (const headers of [caddyHeaders(), vercelHeaders()]) {
+      const csp = headers.get("*")?.get("content-security-policy") ?? "";
+      expect(csp).toContain("script-src 'self';");
+      expect(csp).toContain("frame-src 'none';");
+      expect(csp).not.toContain("challenges.cloudflare.com");
+    }
   });
 
-  it("proxies /api/* to the API without the /api prefix, like the rewrite", () => {
-    expect(rewrite?.source).toBe("/api/(.*)");
-    expect(rewrite?.destination).toMatch(/\/\$1$/);
-    const lines = stripComments(caddyfile);
-    const start = lines.indexOf("handle_path /api/* {");
-    expect(start).toBeGreaterThan(-1);
-    expect(lines[start + 1]).toMatch(/^reverse_proxy \{\$API_UPSTREAM\}/);
+  it("connects to its own origin only (there is no API)", () => {
+    for (const headers of [caddyHeaders(), vercelHeaders()]) {
+      const csp = headers.get("*")?.get("content-security-policy") ?? "";
+      expect(csp).toContain("connect-src 'self';");
+      expect(csp).toContain("img-src 'self' data:;");
+    }
+    expect(vercel.rewrites ?? []).toEqual([]);
   });
 
-  it("serves the built pages from disk and the rest from the Astro server", () => {
+  it("serves the built site from disk, with no server behind it", () => {
     const lines = stripComments(caddyfile);
-    expect(lines).toContain("root * /app/dist/client");
+    expect(lines).toContain("root * /app/dist");
     expect(lines).toContain("try_files {path} {path}/index.html");
-    expect(lines).toContain("reverse_proxy 127.0.0.1:{$NODE_PORT:4321}");
-    // The built files win over the server; the server gets everything else.
-    expect(lines.indexOf("handle @built {")).toBeGreaterThan(-1);
-    expect(lines.indexOf("handle @built {")).toBeLessThan(
-      lines.indexOf("reverse_proxy 127.0.0.1:{$NODE_PORT:4321}"),
-    );
+    expect(lines).toContain("file_server");
+    expect(lines.some((line) => line.startsWith("reverse_proxy"))).toBe(false);
+  });
+
+  it("answers unknown paths with the 404 page and status 404", () => {
+    const lines = stripComments(caddyfile);
+    const start = lines.indexOf("handle_errors 404 {");
+    expect(start).toBeGreaterThan(-1);
+    expect(lines.slice(start, start + 6)).toEqual([
+      "handle_errors 404 {",
+      "rewrite * /404.html",
+      "file_server {",
+      "status 404",
+      "}",
+      "}",
+    ]);
+  });
+
+  it("answers the Railway healthcheck from Caddy itself", () => {
+    expect(stripComments(caddyfile)).toContain("respond /healthz 200");
   });
 
   it("redirects the same legacy URLs to the same pages", () => {
@@ -242,9 +250,10 @@ describe("legacy WordPress URLs (emoj.cl before the redesign)", () => {
     "/jobs/dibujante-proyectista": "/contacto",
     "/feed": "/noticias",
     "/comments/feed": "/noticias",
-    "/wp-admin": "/admin/login",
-    "/wp-admin/post.php": "/admin/login",
-    "/wp-login.php": "/admin/login",
+    // There is no panel anymore: the old admin entry points go home.
+    "/wp-admin": "/",
+    "/wp-admin/post.php": "/",
+    "/wp-login.php": "/",
   };
 
   it.each(Object.entries(expected))("%s -> %s", (from, to) => {

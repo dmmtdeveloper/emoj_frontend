@@ -12,8 +12,7 @@
  * - The other six specialties as the home's quiet blocks, and the closing
  *   call to action.
  *
- * Rendered on demand like the home: the rail and the photos follow the
- * published projects (refreshed on publish, src/lib/content/revalidation.ts).
+ * The rail and the photos follow the projects in src/content/proyectos.
  */
 import { ArrowRight, MapPin } from "@lucide/astro";
 import { render } from "astro:content";
@@ -29,21 +28,22 @@ import ButtonLink from "../../components/ui/ButtonLink.astro";
 import CtaBlock from "../../components/ui/CtaBlock.astro";
 import DisplayHeading from "../../components/ui/DisplayHeading.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { contentSource } from "../../lib/content";
-import { mediaPath } from "../../lib/content/media";
+import { getProjects } from "../../lib/content";
 import { headerPhotos } from "../../lib/content/header-photos";
 import { coversByService } from "../../lib/content/service-covers";
 import { projectsOfService } from "../../lib/content/service-stats";
 import { lastItemSpan } from "../../lib/layout/grid-span";
 import { getServices } from "../../lib/get-services";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
+export async function getStaticPaths() {
+  const services = await getServices();
+  return services.map((service) => ({ params: { slug: service.data.slug } }));
+}
 
 const services = await getServices();
 const position = services.findIndex((s) => s.data.slug === Astro.params.slug);
 const service = services[position];
-if (!service) return Astro.rewrite("/no-encontrada");
+if (!service) throw new Error(`Unknown service "${Astro.params.slug}".`);
 
 const {
   title,
@@ -59,11 +59,11 @@ const {
 } = service.data;
 const { Content } = await render(service);
 const ctaLabel = cta ?? `Cotiza tu proyecto de ${title.toLowerCase()}`;
-const ctaHref = `/contacto?servicio=${slug}`;
+const ctaHref = "/contacto";
 const whatsapp = { kind: "service", title } as const;
 const number = String(position + 1).padStart(2, "0");
 
-const portfolio = await contentSource().getProjects();
+const portfolio = await getProjects();
 const projects = projectsOfService(portfolio, slug);
 
 /**
@@ -78,7 +78,7 @@ const serviceCovers = [
 const headerSlides: HeaderPhoto[] =
   serviceCovers.length > 0
     ? serviceCovers.map((p) => ({
-        src: mediaPath("proyectos", p.slug, p.cover),
+        src: p.cover.src,
         width: p.cover.width,
         height: p.cover.height,
       }))
@@ -97,7 +97,7 @@ const photoFor = (other: (typeof others)[number]) => {
   const found = otherCovers.get(other.data.slug);
   if (found)
     return {
-      src: mediaPath("proyectos", found.slug, found.cover),
+      src: found.cover.src,
       width: found.cover.width,
       height: found.cover.height,
     };

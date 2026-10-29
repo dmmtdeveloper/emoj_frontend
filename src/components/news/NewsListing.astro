@@ -11,9 +11,8 @@
 import { ArrowLeft, ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import headerPhoto from "../../assets/photos/mecanica-suelos-saam-placilla.jpg";
-import type { NewsSummary } from "../../lib/api/client";
+import type { NewsSummary } from "../../lib/content/types";
 import { fitWidth, formatDate } from "../../lib/content/format";
-import { mediaPath } from "../../lib/content/media";
 import { newsListing } from "../../lib/content/news-listing";
 import { newsTransitionName } from "../../lib/content/transition";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -128,7 +127,7 @@ const pageLink =
               {featured.cover && (
                 <div class="relative aspect-[16/10] overflow-hidden lg:aspect-auto lg:min-h-[460px]">
                   <Image
-                    src={mediaPath("noticias", featured.slug, featured.cover)}
+                    src={featured.cover.src}
                     alt={featured.cover.alt}
                     {...fitWidth(featured.cover, 1600)}
                     widths={[640, 960, 1280, 1600]}
