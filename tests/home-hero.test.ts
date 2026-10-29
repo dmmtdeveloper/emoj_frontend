@@ -72,8 +72,11 @@ describe("focusClasses", () => {
 });
 
 describe("isExternalHref", () => {
-  it("is true only for https links", () => {
+  it("is true only for http and https links", () => {
     expect(isExternalHref("https://wa.me/56912345678")).toBe(true);
+    expect(isExternalHref("http://example.cl/obra")).toBe(true);
+    expect(isExternalHref("HTTP://EXAMPLE.CL")).toBe(true);
+    expect(isExternalHref("//example.cl")).toBe(false);
     expect(isExternalHref("/contacto")).toBe(false);
     expect(isExternalHref("mailto:coordinacion@emoj.cl")).toBe(false);
     expect(isExternalHref("tel:+56322123456")).toBe(false);
