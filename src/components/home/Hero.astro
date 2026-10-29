@@ -1,11 +1,8 @@
 ---
 /**
- * Home hero: the copy and photos come from the panel (Portada, GET
- * /v1/home/hero). Without a hero in the API, or with no photos chosen, it
- * shows the copy and the three photos the site shipped with (water, a
- * pumping station and an aerial industrial view), each with its own crop on
- * phones. Panel photos are cropped around the focal point picked in the
- * panel, on every screen size, and zoom in towards it.
+ * Home hero: the copy (src/lib/content/home-hero.ts) over three photos
+ * (water, a pumping station and an aerial industrial view), each with its
+ * own crop on phones.
  *
  * The photos sit under light plum veils (the photos lead, with a calmer
  * headline up to 72px) and a faint four-column grid, like a drawing sheet.
@@ -24,54 +21,32 @@
  */
 import { ArrowRight, Pause, Play } from "@lucide/astro";
 import type { ImageMetadata } from "astro";
-import { Image, Picture } from "astro:assets";
+import { Picture } from "astro:assets";
 import water from "../../assets/photos/agua-manos.jpg";
 import pumping from "../../assets/photos/estacion-bombeo-tuberias.jpg";
 import aerial from "../../assets/photos/vista-aerea-industrial.jpg";
-import type { CallToAction, HomeHero } from "../../lib/api/client";
-import { fitWidth } from "../../lib/content/format";
 import {
   BUILT_IN_PHOTOS,
-  focusClasses,
-  heroCopy,
+  HERO_COPY,
   isExternalHref,
   keepNumbersTogether,
   titleParts,
+  type CallToAction,
 } from "../../lib/content/home-hero";
-import { HERO_MEDIA_SLUG, mediaPath } from "../../lib/content/media";
 import { TAGLINE } from "../../lib/site";
 import ButtonLink from "../ui/ButtonLink.astro";
 
-interface Props {
-  /** From the API; null shows the built-in copy and photos. */
-  hero: HomeHero | null;
+interface Slide {
+  src: ImageMetadata;
+  alt: string;
+  /** Crop per screen size, and the zoom origin (hero__media--N). */
+  position: string;
+  media: string;
+  widths: number[];
 }
 
-const { hero } = Astro.props;
-
-type Slide =
-  | {
-      kind: "local";
-      src: ImageMetadata;
-      alt: string;
-      /** Crop per screen size, and the zoom origin (hero__media--N). */
-      position: string;
-      media: string;
-      widths: number[];
-    }
-  | {
-      kind: "remote";
-      src: string;
-      alt: string;
-      width: number;
-      height: number;
-      /** focus-x-* / focus-y-* (crop and zoom origin). */
-      focus: string;
-    };
-
-const builtIn: Slide[] = [
+const photos: Slide[] = [
   {
-    kind: "local",
     src: water,
     alt: BUILT_IN_PHOTOS[0].alt,
     position: "object-[60%_center] md:object-[58%_center]",
@@ -79,7 +54,6 @@ const builtIn: Slide[] = [
     widths: [640, 960, 1280, 1600, 2130],
   },
   {
-    kind: "local",
     src: pumping,
     alt: BUILT_IN_PHOTOS[1].alt,
     position: "object-[48%_center] md:object-center",
@@ -87,7 +61,6 @@ const builtIn: Slide[] = [
     widths: [640, 960, 1280, 1600, 2000],
   },
   {
-    kind: "local",
     src: aerial,
     alt: BUILT_IN_PHOTOS[2].alt,
     position: "object-[38%_center] md:object-center",
@@ -96,16 +69,7 @@ const builtIn: Slide[] = [
   },
 ];
 
-const remote: Slide[] = (hero?.photos ?? []).map((photo) => ({
-  kind: "remote",
-  src: mediaPath("portada", HERO_MEDIA_SLUG, photo),
-  alt: photo.alt,
-  ...fitWidth(photo, 2000),
-  focus: focusClasses(photo.focusX, photo.focusY),
-}));
-
-const photos = remote.length > 0 ? remote : builtIn;
-const copy = heroCopy(hero);
+const copy = HERO_COPY;
 const title = titleParts(copy.title, copy.highlight);
 /** Links that leave the site open in a new tab. */
 const withTarget = (cta: CallToAction | null) =>
@@ -122,41 +86,25 @@ const secondary = withTarget(copy.secondaryCta);
         <div
           class:list={[
             "hero__media absolute inset-0 -z-10 overflow-hidden",
-            photo.kind === "local"
-              ? photo.media
-              : ["hero__media--focus", photo.focus],
+            photo.media,
           ]}
           data-hero-slide
           data-state={i === 0 ? "active" : undefined}
         >
-          {photo.kind === "local" ? (
-            <Picture
-              src={photo.src}
-              alt={photo.alt}
-              formats={["avif", "webp"]}
-              widths={photo.widths}
-              sizes="100vw"
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchpriority={i === 0 ? "high" : "low"}
-              class:list={[
-                "hero__img h-full w-full object-cover",
-                photo.position,
-              ]}
-              pictureAttributes={{ class: "contents" }}
-            />
-          ) : (
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              width={photo.width}
-              height={photo.height}
-              widths={[640, 960, 1280, 1600, 2000]}
-              sizes="100vw"
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchpriority={i === 0 ? "high" : "low"}
-              class="hero__img object-focus h-full w-full object-cover"
-            />
-          )}
+          <Picture
+            src={photo.src}
+            alt={photo.alt}
+            formats={["avif", "webp"]}
+            widths={photo.widths}
+            sizes="100vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchpriority={i === 0 ? "high" : "low"}
+            class:list={[
+              "hero__img h-full w-full object-cover",
+              photo.position,
+            ]}
+            pictureAttributes={{ class: "contents" }}
+          />
         </div>
       ))}
     </div>
@@ -335,11 +283,6 @@ const secondary = withTarget(copy.secondaryCta);
 
   .hero__media--3 {
     --zoom-origin: 55% 65%;
-  }
-
-  /* Panel photos zoom in towards their focal point. */
-  .hero__media--focus {
-    --zoom-origin: var(--focus-x, 50%) var(--focus-y, 50%);
   }
 
   @media (prefers-reduced-motion: no-preference) {

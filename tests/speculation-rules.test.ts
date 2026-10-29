@@ -13,9 +13,7 @@ const rules = JSON.parse(
   readFileSync(`${root}public/speculationrules.json`, "utf8"),
 ) as {
   prerender: {
-    where: {
-      and: [{ href_matches: string }, { not: { href_matches: string[] } }];
-    };
+    where: { href_matches: string };
     eagerness: string;
   }[];
 };
@@ -26,18 +24,6 @@ describe("speculation rules", () => {
   it("prerenders same-site pages on hover or press, not eagerly", () => {
     expect(rules.prerender).toHaveLength(1);
     expect(rule?.eagerness).toBe("moderate");
-    expect(rule?.where.and[0].href_matches).toBe("/*");
-  });
-
-  it("never prerenders the panel, the API or previews", () => {
-    const excluded = rule?.where.and[1].not.href_matches ?? [];
-    for (const path of ["/admin*", "/api/*", "/preview*"]) {
-      expect(excluded).toContain(path);
-    }
-  });
-
-  it("prerenders the contact page, which has no form anymore", () => {
-    const excluded = rule?.where.and[1].not.href_matches ?? [];
-    expect(excluded).not.toContain("/contacto*");
+    expect(rule?.where).toEqual({ href_matches: "/*" });
   });
 });

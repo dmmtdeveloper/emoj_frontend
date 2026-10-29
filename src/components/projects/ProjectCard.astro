@@ -5,15 +5,14 @@
  * a data label, the title (the card's single link) and the place; at the
  * foot the headline figure and the year, with a round arrow.
  * Compact row on phones, stacked card from `sm` up.
- * The photo comes from its stable address and is resized on demand.
+ * The photo is resized at build time (astro:assets).
  */
 import { ArrowUpRight, MapPin } from "@lucide/astro";
 import { Image } from "astro:assets";
-import type { ProjectSummary } from "../../lib/api/client";
+import type { ProjectSummary } from "../../lib/content/types";
 import { CARD_IMAGE } from "../../lib/content/card-image";
 import { fitWidth } from "../../lib/content/format";
 import { projectMagnitude } from "../../lib/content/magnitude";
-import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 
 interface Props {
@@ -43,7 +42,7 @@ const figure = magnitude
   <div class="relative aspect-square h-full w-full overflow-hidden rounded-md bg-surface-sunken sm:aspect-[4/3] sm:h-auto sm:rounded-none">
     {project.cover && (
       <Image
-        src={mediaPath("proyectos", project.slug, project.cover)}
+        src={project.cover.src}
         alt={project.cover.alt}
         {...fitWidth(project.cover, CARD_IMAGE.max)}
         widths={[...CARD_IMAGE.widths]}

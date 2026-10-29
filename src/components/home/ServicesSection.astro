@@ -7,8 +7,7 @@
  * compact block reveals a photo of a real project of that service (the
  * newest published one with a cover), or the service's own photo.
  */
-import { contentSource } from "../../lib/content";
-import { mediaPath } from "../../lib/content/media";
+import { getProjects } from "../../lib/content";
 import { coversByService } from "../../lib/content/service-covers";
 import { getServices } from "../../lib/get-services";
 import ServiceCard from "../services/ServiceCard.astro";
@@ -21,13 +20,13 @@ const [first, ...rest] = services;
 const count = String(services.length).padStart(2, "0");
 const covers = coversByService(
   rest.map((s) => s.data.slug),
-  await contentSource().getProjects(),
+  await getProjects(),
 );
 const photoFor = (service: (typeof rest)[number]) => {
   const found = covers.get(service.data.slug);
   if (found)
     return {
-      src: mediaPath("proyectos", found.slug, found.cover),
+      src: found.cover.src,
       width: found.cover.width,
       height: found.cover.height,
     };

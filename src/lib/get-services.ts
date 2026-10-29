@@ -15,7 +15,7 @@ export async function getServices(): Promise<Service[]> {
   return services.sort((a, b) => a.data.order - b.data.order);
 }
 
-/** Display title of every service, by API slug. */
+/** Display title of every service, by service slug. */
 export async function getServiceTitles(): Promise<Record<string, string>> {
   const services = await getServices();
   return Object.fromEntries(services.map((s) => [s.data.slug, s.data.title]));

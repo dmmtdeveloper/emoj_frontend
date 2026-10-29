@@ -1,10 +1,8 @@
 /**
- * A project's headline figure ("Caudal 1.200 l/s", API `magnitude`), ready
+ * A project's headline figure ("Caudal 1.200 l/s", `magnitude`), ready
  * to show on its page: trimmed, or null when the project has none.
  */
-import type { components } from "../api/schema";
-
-type Magnitude = components["schemas"]["Magnitude"];
+import type { Magnitude } from "./types";
 
 export interface MagnitudeView {
   label: string;

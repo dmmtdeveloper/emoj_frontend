@@ -8,24 +8,15 @@
  *
  * - `layout="wide"`: a section of its own (the project page).
  * - `layout="narrow"`: inside an article's text column (news).
- *
- * `photos[].src` is the address to load: a published photo's stable /media
- * path, or a draft's URL in preview.
  */
 import { ChevronLeft, ChevronRight, X } from "@lucide/astro";
 import { getImage, Image } from "astro:assets";
 import { fitWidth } from "../../lib/content/format";
 import { galleryTile, type GalleryLayout } from "../../lib/content/gallery";
-
-interface Photo {
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-}
+import type { ContentImage } from "../../lib/content/types";
 
 interface Props {
-  photos: Photo[];
+  photos: ContentImage[];
   layout?: GalleryLayout;
 }
 

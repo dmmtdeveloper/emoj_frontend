@@ -1,8 +1,9 @@
 /**
- * Sitemap of the pages rendered on demand (src/pages/sitemap-content.xml.ts).
- * @astrojs/sitemap only lists pages built ahead of time, so the home, the
- * listings and every project and article are listed here, and the sitemap
- * index points at this file (customSitemaps in astro.config.mjs).
+ * Sitemap of the content pages (src/pages/sitemap-content.xml.ts): the home,
+ * the listings and every project and article, each with its publication
+ * date as `lastmod`. The sitemap index points at this file (customSitemaps
+ * in astro.config.mjs), and @astrojs/sitemap leaves these pages out
+ * (inContentSitemap) so none is listed twice.
  */
 interface Item {
   slug: string;
@@ -53,4 +54,16 @@ export function contentSitemap(
     "</urlset>",
     "",
   ].join("\n");
+}
+
+/** Whether a path is listed by the content sitemap (see above). */
+export function inContentSitemap(path: string): boolean {
+  const clean = path.replace(/\/+$/, "") || "/";
+  return (
+    clean === "/" ||
+    clean === "/proyectos" ||
+    clean.startsWith("/proyectos/") ||
+    clean === "/noticias" ||
+    clean.startsWith("/noticias/")
+  );
 }

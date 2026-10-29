@@ -23,11 +23,8 @@ import DisplayHeading from "../../components/ui/DisplayHeading.astro";
 import PhotoGallery from "../../components/ui/PhotoGallery.astro";
 import CoverImage from "../../components/ui/CoverImage.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import type { MediaRef } from "../../lib/api/client";
-import { contentSource } from "../../lib/content";
-
-import { mediaPath } from "../../lib/content/media";
-import { setPreviewHeaders } from "../../lib/content/preview";
+import { getProjects } from "../../lib/content";
+import type { ProjectDetail } from "../../lib/content/types";
 import { projectTransitionName } from "../../lib/content/transition";
 import { projectMagnitude } from "../../lib/content/magnitude";
 import {
@@ -37,22 +34,20 @@ import {
 import { getServices, getServiceTitles } from "../../lib/get-services";
 import { projectJsonLd } from "../../lib/structured-data";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
 
-// /preview rewrites here with the draft in locals (src/pages/preview.astro).
-const draft = Astro.locals.preview;
-const isPreview = draft?.kind === "project";
-const project = isPreview
-  ? draft.project
-  : await contentSource().findProject(Astro.params.slug ?? "");
-if (!project) return Astro.rewrite("/no-encontrada");
+interface Props {
+  project: ProjectDetail;
+}
+
+const { project } = Astro.props;
 const whatsapp = { kind: "project", title: project.title } as const;
-if (isPreview) setPreviewHeaders(Astro.response.headers);
-
-/** Published photos come from /media; a draft's are not there yet. */
-const photo = (image: MediaRef) =>
-  isPreview ? image.url : mediaPath("proyectos", project.slug, image);
 const allServices = await getServices();
 const services = project.services
   .map((slug) => allServices.find((s) => s.data.slug === slug))
@@ -63,16 +58,15 @@ const pageUrl = new URL(`/proyectos/${project.slug}`, site).href;
 const place = [project.location, project.region].filter(Boolean).join(", ");
 
 const ogSource = project.seo.ogImage ?? project.cover;
-const ogImage =
-  ogSource && !isPreview
-    ? await getImage({
-        src: mediaPath("proyectos", project.slug, ogSource),
-        width: 1200,
-        height: 630,
-        fit: "cover",
-        format: "jpeg",
-      })
-    : undefined;
+const ogImage = ogSource
+  ? await getImage({
+      src: ogSource.src,
+      width: 1200,
+      height: 630,
+      fit: "cover",
+      format: "jpeg",
+    })
+  : undefined;
 
 /** Plain-text long fields: blank lines separate paragraphs. */
 function paragraphs(text: string): string[] {
@@ -106,15 +100,9 @@ const eyebrow = [services[0]?.data.title, project.location]
   .filter(Boolean)
   .join(" · ");
 
-/** Gallery photos with the address to load (draft URLs in preview). */
-const galleryPhotos = project.gallery.map((image) => ({
-  src: photo(image),
-  alt: image.alt,
-  width: image.width,
-  height: image.height,
-}));
+const galleryPhotos = project.gallery;
 
-const portfolio = await contentSource().getProjects();
+const portfolio = await getProjects();
 const more = relatedProjects(portfolio, project, 8);
 const { prev, next } = adjacentProjects(portfolio, project.slug);
 const serviceTitles = await getServiceTitles();
@@ -124,7 +112,6 @@ const ctaHref = "/contacto";
 
 <BaseLayout
   whatsapp={whatsapp}
-  preview={isPreview}
   headerOverlay={Boolean(project.cover)}
   title={project.seo.title}
   description={project.seo.description}
@@ -161,9 +148,7 @@ const ctaHref = "/contacto";
         <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
           <CoverImage
             image={project.cover}
-            src={photo(project.cover)}
             name={projectTransitionName(project.slug)}
-            preview={isPreview}
           />
         </div>
         {/* Light veils, as on the home hero: the photo leads. */}

@@ -1,6 +1,6 @@
 # emoj_frontend — agent guide
 
-Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React island under `/admin`, later phases). The API lives in [emoj_backend](https://github.com/dmmtdeveloper/emoj_backend).
+Astro site for emoj.cl: fully static (`output: "static"`, no adapter, no server), deployed on Vercel or Railway (Caddy). There is no backend, API or admin panel. Projects and news are content collections: content is edited in `src/content/*` (photos in `src/assets/...`) and published by a git push, which rebuilds the site. See README, "Content: editing and publishing".
 
 ## Precedence
 
@@ -15,7 +15,7 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Font: Urbanist 400/500/600. Body ≥ 16px, left-aligned, max ~65ch; never justified.
 - Data font: Space Grotesk 400/500/600 (`font-data`), only for figures and data labels (hero facts, project sheets, numbers); never for headings, body copy or buttons.
 - Signature shape: `rounded-l-signature` (50px on the left corners only).
-- Icons: `@lucide/astro` in the site; `lucide-react` only inside the admin island.
+- Icons: `@lucide/astro`.
 - Tagline: "Humanizamos la ingeniería".
 - Logos: the official files are in `design/brand/oficial/` (see its README). Build marks from their geometry, never redraw them; fine stroke (`recorte`) for large sizes, `bold` for small ones. The `vertical-tagline-*` files carry an outdated tagline: do not use them. Brand pattern tile: `public/brand/patron.svg` (`.brand-pattern`).
 
@@ -25,4 +25,4 @@ Astro site for emoj.cl (static, deployed on Vercel) plus the admin panel (React 
 - Strict TDD for logic: write the failing test first.
 - Before committing: `pnpm format:check && pnpm lint && pnpm check && pnpm test && pnpm tokens:check && pnpm build`.
 - Conventional commits, no AI attribution lines.
-- Regenerate API types with `pnpm api:types` after the backend `openapi.yaml` changes; never hand-edit them.
+- Keep the site static: no on-demand routes (`prerender = false`), no adapter, no runtime fetches. Data lives in `src/content/*` or `src/lib/*`.

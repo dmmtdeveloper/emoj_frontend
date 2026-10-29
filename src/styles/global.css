@@ -174,7 +174,7 @@
 }
 
 /*
- * Rich text rendered from the API (TipTap JSON, see lib/content/tiptap.ts).
+ * Article bodies (Markdown in src/content/noticias, rendered by Astro).
  * Plain elements only, so styles live here instead of on each tag.
  */
 @layer components {
@@ -276,26 +276,6 @@
   @media (min-width: 48rem) {
     padding-inline: var(--space-6);
   }
-}
-
-/*
- * Focal point of a photo edited in the panel (home hero), in 5% steps:
- * `focus-x-30 focus-y-70` crops around 30% from the left, 70% from the top
- * (src/lib/content/home-hero.ts). Classes, because style="" is not allowed
- * by the CSP; they are built at runtime, so they are listed for Tailwind.
- */
-@utility focus-x-* {
-  --focus-x: calc(--value(integer) * 1%);
-}
-
-@utility focus-y-* {
-  --focus-y: calc(--value(integer) * 1%);
-}
-
-@source inline("focus-x-{0..100..5} focus-y-{0..100..5}");
-
-@utility object-focus {
-  object-position: var(--focus-x, 50%) var(--focus-y, 50%);
 }
 
 /* Faint blueprint grid (lines + dots) from the current text color. */

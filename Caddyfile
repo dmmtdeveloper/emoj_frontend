@@ -1,40 +1,27 @@
-# Front door of the site on Railway: Caddy serves the pages built ahead of
-# time from disk and passes everything else to the Astro Node server
-# (pages with API content, images, /admin/revalidar), which listens only on
-# localhost inside the same container (scripts/start.sh).
+# Front door of the site on Railway: Caddy serves the static build
+# (`pnpm build` writes it to dist/) straight from disk. There is no server
+# behind it: every page, image and sitemap is a file.
 #
-# Mirrors vercel.ts: the same security headers, redirects, the /api rewrite
-# to the backend and the cache rules. tests/caddyfile.test.ts fails when the
-# two drift, so change both together. See docs/deploy-railway.md.
+# Mirrors vercel.ts: the same security headers, redirects and cache rules.
+# tests/caddyfile.test.ts fails when the two drift, so change both
+# together. See docs/deploy-railway.md.
 #
 # Environment (Railway service variables):
-#   PORT          set by Railway (8080 by default here).
-#   NODE_PORT     where the Astro server listens on localhost (4321).
-#   API_ORIGIN    public API origin for the CSP connect-src, e.g.
-#                 https://api.emoj.cl.
-#   API_UPSTREAM  where /api/* is proxied: the public origin, or the
-#                 backend's private address (http://<service>.railway.internal:<port>).
+#   PORT  set by Railway (8080 by default here).
 {
 	admin off
 	auto_https off
-	servers {
-		# Railway's edge terminates TLS and sets X-Forwarded-*. The container
-		# is only reachable through it, so keep those headers as they arrive:
-		# the API rate-limits by the first X-Forwarded-For entry.
-		trusted_proxies static 0.0.0.0/0 ::/0
-	}
 }
 
 :{$PORT:8080} {
-	root * /app/dist/client
+	root * /app/dist
 	encode zstd gzip
 
-	@admin path /admin*
 	@assets path /_astro/*
 	@speculation path /speculationrules.json
 
 	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://*.t3.storageapi.dev; font-src 'self'; connect-src 'self' {$API_ORIGIN} https://api-staging-25e9.up.railway.app; frame-src 'none'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
@@ -49,12 +36,6 @@
 	# Browsers only read speculation rules sent with their own type.
 	header @speculation {
 		Content-Type "application/speculationrules+json"
-	}
-
-	# The admin panel is private: never indexed, never cached by proxies.
-	header @admin {
-		X-Robots-Tag "noindex, nofollow"
-		Cache-Control "no-store"
 	}
 
 	# Hashed build assets never change, so they can be cached forever.
@@ -72,35 +53,22 @@
 	redir /jobs* /contacto 301
 	redir /feed* /noticias 301
 	redir /comments/feed /noticias 301
-	redir /wp-admin* /admin/login 301
-	redir /wp-login.php /admin/login 301
+	redir /wp-admin* / 301
+	redir /wp-login.php / 301
 
-	# Same-origin API for the admin (first-party session cookie). The prefix
-	# is stripped: /api/v1/auth/me -> <API_UPSTREAM>/v1/auth/me.
-	handle_path /api/* {
-		reverse_proxy {$API_UPSTREAM} {
-			header_up Host {upstream_hostport}
-		}
-	}
+	# Railway healthcheck (Deploy -> Healthcheck Path) and the image's
+	# HEALTHCHECK: Caddy answers it itself.
+	respond /healthz 200
 
-	# Pages built ahead of time and the build's assets, straight from disk.
 	# trailingSlash "ignore": /nosotros and /nosotros/ both serve the page.
-	@built file {
-		try_files {path} {path}/index.html
-	}
-	handle @built {
-		rewrite * {file_match.relative}
-		file_server
-	}
+	try_files {path} {path}/index.html
+	file_server
 
-	# Everything else is rendered by the Astro server: the home, projects,
-	# news, their images, the 404 page and the panel's refresh endpoint.
-	handle {
-		reverse_proxy 127.0.0.1:{$NODE_PORT:4321}
-	}
-
-	# Only when the Astro server does not answer (starting or crashed).
-	handle_errors {
-		respond "{err.status_code} {err.status_text}"
+	# Any other path: the 404 page, with status 404.
+	handle_errors 404 {
+		rewrite * /404.html
+		file_server {
+			status 404
+		}
 	}
 }

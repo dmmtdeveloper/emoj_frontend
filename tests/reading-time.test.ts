@@ -6,46 +6,40 @@ import {
 
 const words = (n: number) =>
   Array.from({ length: n }, () => "palabra").join(" ");
-const paragraph = (text: string) => ({
-  type: "paragraph",
-  content: [{ type: "text", text }],
-});
 
 describe("readingMinutes", () => {
-  it("counts the words of every text node, nested lists included", () => {
-    const doc = {
-      type: "doc",
-      content: [
-        paragraph(words(150)),
-        {
-          type: "bulletList",
-          content: [{ type: "listItem", content: [paragraph(words(250))] }],
-        },
-      ],
-    };
+  it("counts the words of the Markdown body, lists and quotes included", () => {
+    const body = [
+      words(100),
+      `## ${words(50)}`,
+      `- ${words(125)}`,
+      `- ${words(125)}`,
+    ].join("\n\n");
     // 400 words at 200 per minute.
-    expect(readingMinutes(doc)).toBe(2);
+    expect(readingMinutes(body)).toBe(2);
+  });
+
+  it("does not count Markdown syntax as words", () => {
+    const body = [
+      "## Título",
+      "- **Uno**",
+      "1. Dos",
+      "> “Tres”",
+      "---",
+      "* _cuatro_",
+    ].join("\n\n");
+    expect(readingMinutes(body, "", 5)).toBe(1);
+    expect(readingMinutes(body, "", 4)).toBe(2);
   });
 
   it("rounds up and never says less than one minute", () => {
-    expect(
-      readingMinutes({ type: "doc", content: [paragraph(words(201))] }),
-    ).toBe(2);
-    expect(readingMinutes({ type: "doc", content: [paragraph("Hola")] })).toBe(
-      1,
-    );
-    expect(readingMinutes({ type: "doc" })).toBe(1);
+    expect(readingMinutes(words(201))).toBe(2);
+    expect(readingMinutes("Hola")).toBe(1);
+    expect(readingMinutes("")).toBe(1);
   });
 
   it("adds the words of extra text, such as the excerpt", () => {
-    const doc = { type: "doc", content: [paragraph(words(190))] };
-    expect(readingMinutes(doc, words(20))).toBe(2);
-  });
-
-  it("ignores malformed nodes", () => {
-    expect(
-      readingMinutes({ type: "doc", content: [null, 3, { text: 5 }] }),
-    ).toBe(1);
+    expect(readingMinutes(words(190), words(20))).toBe(2);
   });
 });
 
