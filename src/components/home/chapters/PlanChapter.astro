@@ -17,6 +17,12 @@ import { PLAN } from "./cad-plan";
 import { ISOTYPE } from "./isotype";
 import Chapter from "./Chapter.astro";
 
+interface Props {
+  /** Chapter number in the label ("04"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
 const year = new Date().getFullYear();
 
 /**
@@ -77,7 +83,7 @@ const windowInset = [
 
 <Chapter
   id="ingenieria"
-  number="04"
+  number={chapterNumber}
   label="Ingeniería"
   navSection="/proyectos"
   class="ch-plan"

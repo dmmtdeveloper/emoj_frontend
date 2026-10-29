@@ -25,10 +25,22 @@
 import { ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
 import team from "../../../assets/photos/equipo-emoj.jpg";
+import { getServices } from "../../../lib/get-services";
 import { CLIENTS, MISSION } from "../../../lib/site";
 
+interface Props {
+  /** Chapter number in the label ("06"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
+const services = await getServices();
+
 const FACTS = [
-  { value: 7, label: "especialidades coordinadas por un mismo equipo" },
+  {
+    value: services.length,
+    label: "especialidades coordinadas por un mismo equipo",
+  },
   { value: 2, label: "regiones: Valparaíso y Coquimbo" },
   { value: CLIENTS.length, label: "clientes de referencia" },
 ] as const;
@@ -85,8 +97,8 @@ const FACTS = [
 
     <div class="years-content container-site" data-years-content>
       <div class="years-content__lead">
-        <p class="years-eyebrow">
-          <span>06</span> Quiénes somos
+        <p class="ch-label ch-label--on-dark">
+          <span class="ch-label__num">{chapterNumber}</span> Quiénes somos
         </p>
         <h2 id="treinta-anos" class="years-title">
           Más de 30 años acercando la <em>ingeniería</em>.
@@ -95,9 +107,9 @@ const FACTS = [
           Nacimos en Quilpué, en la Región de Valparaíso. Nuestra misión:{" "}
           {MISSION.charAt(0).toLowerCase() + MISSION.slice(1)}
         </p>
-        <a href="/nosotros" class="years-link">
+        <a href="/nosotros" class="ch-more ch-more--on-dark">
           Conoce al equipo
-          <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+          <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
         </a>
       </div>
       <dl class="years-facts">

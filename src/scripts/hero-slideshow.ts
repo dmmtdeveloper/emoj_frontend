@@ -45,6 +45,8 @@ function init(): void {
     interval: SLIDE_MS,
     onChange: (index, previous) => {
       slides.forEach((slide, i) => {
+        // The first photo skipped its wipe on load; from now on it wipes too.
+        delete slide.dataset["first"];
         if (i === index) slide.dataset["state"] = "active";
         else if (i === previous) slide.dataset["state"] = "prev";
         else delete slide.dataset["state"];

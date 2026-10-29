@@ -24,6 +24,14 @@ import {
   Stamp,
 } from "@lucide/astro";
 import { WORK_STAGES } from "../../../lib/content/work-stages";
+import { spanishNumberWord } from "../../../lib/number-words";
+
+interface Props {
+  /** Chapter number in the label ("03"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
 
 const ICONS = [
   MessagesSquare,
@@ -39,30 +47,31 @@ const stages = WORK_STAGES.map((stage, i) => ({
   Icon: ICONS[i] ?? MessagesSquare,
   number: pad(i + 1),
 }));
+const stageCount = spanishNumberWord(stages.length, { capitalize: true });
 ---
 
 <section
   class="flow-scene"
   aria-labelledby="como-trabajamos"
-  data-nav-section="/nosotros"
+  data-nav-section="/servicios"
   data-scene-flow
 >
   <div class="flow-grid container-wide">
     <div class="flow-head">
-      <p class="flow-eyebrow">
-        <span>03</span> Cómo trabajamos
+      <p class="ch-label ch-label--on-accent">
+        <span class="ch-label__num">{chapterNumber}</span> Cómo trabajamos
       </p>
       <h2 id="como-trabajamos" class="flow-title">
         Del primer trazo a la <em>obra</em>.
       </h2>
       <p class="flow-lead">
-        <strong>Un solo equipo, de principio a fin.</strong> Seis etapas
+        <strong>Un solo equipo, de principio a fin.</strong> {stageCount} etapas
         coordinadas: te acompañamos desde la primera conversación hasta que lo
         diseñado está construido.
       </p>
-      <a href="/contacto" class="flow-cta">
+      <a href="/contacto" class="btn-primary">
         Cotizar proyecto
-        <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
+        <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
       </a>
     </div>
 

@@ -9,12 +9,14 @@
  *
  * The photos sit under light plum veils (the photos lead, with a calmer
  * headline up to 72px) and a faint four-column grid, like a drawing sheet.
- * The hero carries no data strip: the figures live in the facts band
- * (FactsBand), next to the client logos (ClientsStrip `tone="accent"`).
+ * The hero carries no data strip: the figures live in the "30 años"
+ * chapter (YearsChapter), and the client logos in ClientsStrip.
  *
  * The photos play on their own (src/scripts/hero-slideshow.ts): each one
  * zooms in slowly and the next enters with a left-to-right wipe, like a
- * stroke being drawn. A counter with a progress line shows the current
+ * stroke being drawn. The first photo is on screen from the first paint
+ * (`data-first`: it never wipes in on load), so the hero never opens on an
+ * empty plum block while the image loads. A counter with a progress line shows the current
  * photo, and one plain pause icon beside it stops the change (WCAG 2.2.2).
  * The slideshow holds while the hero is off screen or the tab is hidden.
  *
@@ -40,7 +42,6 @@ import {
 } from "../../lib/content/home-hero";
 import { HERO_MEDIA_SLUG, mediaPath } from "../../lib/content/media";
 import { TAGLINE } from "../../lib/site";
-import ButtonLink from "../ui/ButtonLink.astro";
 
 interface Props {
   /** From the API; null shows the built-in copy and photos. */
@@ -128,6 +129,7 @@ const secondary = withTarget(copy.secondaryCta);
           ]}
           data-hero-slide
           data-state={i === 0 ? "active" : undefined}
+          data-first={i === 0 ? "" : undefined}
         >
           {photo.kind === "local" ? (
             <Picture
@@ -209,36 +211,30 @@ const secondary = withTarget(copy.secondaryCta);
         </p>
         <div class="hero-in hero-in--4 flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:gap-7">
           {primary && (
-            <ButtonLink
+            <a
               href={primary.href}
               target={primary.external ? "_blank" : undefined}
               rel={primary.external ? "noopener noreferrer" : undefined}
-              variant="on-photo-solid"
-              class="min-h-12 px-6 text-base"
+              class="btn-primary btn-primary--on-dark"
             >
               {primary.label}
               {primary.external && (
                 <span class="sr-only">(se abre en una pestaña nueva)</span>
               )}
-            </ButtonLink>
+            </a>
           )}
           {secondary && (
             <a
               href={secondary.href}
               target={secondary.external ? "_blank" : undefined}
               rel={secondary.external ? "noopener noreferrer" : undefined}
-              class="group inline-flex min-h-12 items-center gap-2 self-start text-base font-semibold text-sand-50 no-underline hover:text-sand-50 sm:self-auto"
+              class="ch-more ch-more--on-dark self-start sm:self-auto"
             >
               {secondary.label}
               {secondary.external && (
                 <span class="sr-only">(se abre en una pestaña nueva)</span>
               )}
-              <ArrowRight
-                size={20}
-                stroke-width={1.75}
-                aria-hidden="true"
-                class="transition-transform duration-300 ease-(--ease-out) group-hover:translate-x-1"
-              />
+              <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
             </a>
           )}
         </div>
@@ -344,7 +340,9 @@ const secondary = withTarget(copy.secondaryCta);
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .hero__media[data-state="active"] {
+    /* The first photo is already in place on load; it wipes in only when
+       the slideshow comes back to it (the script drops `data-first`). */
+    .hero__media[data-state="active"]:not([data-first]) {
       animation: wipe-right 1000ms var(--ease-in-out) both;
     }
 

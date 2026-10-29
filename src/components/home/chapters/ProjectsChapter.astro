@@ -30,11 +30,13 @@ import { mediaPath } from "../../../lib/content/media";
 import { projectTransitionName } from "../../../lib/content/transition";
 
 interface Props {
+  /** Chapter number in the label ("05"), from the home's chapter order. */
+  number: string;
   projects: ProjectSummary[];
   serviceTitles: Record<string, string>;
 }
 
-const { projects, serviceTitles } = Astro.props;
+const { number: chapterNumber, projects, serviceTitles } = Astro.props;
 const total = String(projects.length).padStart(2, "0");
 const facts = (project: ProjectSummary) =>
   [project.location || project.region, project.year]
@@ -60,8 +62,8 @@ const service = (project: ProjectSummary) => {
 
     <div class="reel-head container-site">
       <div class="reel-head__titles">
-        <p class="reel-eyebrow">
-          <span>05</span> Proyectos ·
+        <p class="ch-label ch-label--on-dark">
+          <span class="ch-label__num">{chapterNumber}</span> Proyectos ·
           <span class="reel-eyebrow__count" aria-hidden="true">
             <span data-reel-count>01</span> / {total}
           </span>
@@ -71,9 +73,9 @@ const service = (project: ProjectSummary) => {
           Ya son <em>obra</em>.
         </h2>
       </div>
-      <a href="/proyectos" class="reel-all">
+      <a href="/proyectos" class="ch-more ch-more--on-dark">
         Ver todos
-        <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
+        <ArrowRight size={16} stroke-width={2} aria-hidden="true" />
       </a>
     </div>
 

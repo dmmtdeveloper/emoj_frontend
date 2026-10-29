@@ -197,6 +197,69 @@
     --eyebrow-rule: currentColor;
     color: inherit;
   }
+
+  /*
+   * The primary action ("Cotizar proyecto" and its kin): one solid pill.
+   * - `.btn-primary`: brand fill, on light surfaces and the sage band.
+   * - `--on-dark`: cream fill with plum text, over plum or a dark photo
+   *   (`brand` on plum is a forbidden pair); the same in both themes.
+   * - `--sm`: the compact size of the header bar.
+   * The trailing arrow, when there is one, nudges on hover.
+   */
+  .btn-primary {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    font-size: 16px;
+    line-height: 1.25;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: var(--brand);
+    color: var(--on-brand);
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms var(--ease-out),
+      scale 200ms var(--ease-out);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--brand-hover);
+    color: var(--on-brand);
+  }
+
+  .btn-primary:active {
+    scale: 0.97;
+  }
+
+  .btn-primary svg {
+    transition: translate 300ms var(--ease-out);
+  }
+
+  .btn-primary:hover svg {
+    translate: 4px 0;
+  }
+
+  .btn-primary--on-dark {
+    background-color: var(--sand-50);
+    color: var(--plum-950);
+  }
+
+  .btn-primary--on-dark:hover {
+    background-color: var(--sand-100);
+    color: var(--plum-950);
+  }
+
+  .btn-primary--sm {
+    min-height: 40px;
+    padding: 10px 20px;
+    font-size: 15px;
+    line-height: 20px;
+  }
 }
 
 @layer components {
