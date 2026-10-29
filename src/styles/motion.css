@@ -122,15 +122,6 @@
   }
 }
 
-@keyframes settle {
-  from {
-    transform: scale(1.14);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
 @keyframes glint {
   from {
     stroke-dashoffset: -1;
@@ -668,25 +659,20 @@
 }
 
 /*
- * Quote button: brand fill on the solid bar; over the hero photo, an
- * outlined cream pill (brand on plum is a forbidden pair).
+ * Quote button (`.btn-primary` pill): brand fill on the solid bar; over
+ * the hero photo, the on-dark tone, a cream fill with plum text (brand on
+ * plum is a forbidden pair), like the hero's own primary button.
  */
 .header-cta {
-  border: 1px solid
-    color-mix(
-      in oklab,
-      var(--brand) calc(var(--header-solid) * 100%),
-      color-mix(in oklab, var(--sand-50) 60%, transparent)
-    );
   background-color: color-mix(
     in oklab,
     var(--brand) calc(var(--header-solid) * 100%),
-    transparent
+    var(--sand-50)
   );
   color: color-mix(
     in oklab,
     var(--on-brand) calc(var(--header-solid) * 100%),
-    var(--sand-50)
+    var(--plum-950)
   );
 }
 
@@ -694,12 +680,12 @@
   background-color: color-mix(
     in oklab,
     var(--brand-hover) calc(var(--header-solid) * 100%),
-    color-mix(in oklab, var(--sand-50) 12%, transparent)
+    var(--sand-100)
   );
   color: color-mix(
     in oklab,
     var(--on-brand) calc(var(--header-solid) * 100%),
-    var(--sand-50)
+    var(--plum-950)
   );
 }
 
@@ -1025,50 +1011,6 @@
   }
 }
 
-@keyframes icon-turn {
-  from {
-    rotate: -90deg;
-  }
-  to {
-    rotate: 0deg;
-  }
-}
-
-@keyframes icon-step-in {
-  from {
-    translate: -5px 0;
-    opacity: 0;
-  }
-  to {
-    translate: 0 0;
-    opacity: 1;
-  }
-}
-
-@keyframes icon-shake {
-  0%,
-  100% {
-    rotate: 0deg;
-    translate: 0 0;
-  }
-  20% {
-    rotate: -8deg;
-    translate: 0 1px;
-  }
-  40% {
-    rotate: 6deg;
-    translate: 0 -1px;
-  }
-  60% {
-    rotate: -4deg;
-    translate: 0 1px;
-  }
-  80% {
-    rotate: 2deg;
-    translate: 0 0;
-  }
-}
-
 .svc-icon > * {
   transform-box: fill-box;
   transform-origin: center;
@@ -1176,56 +1118,6 @@
       animation-delay: 60ms;
     }
 
-    /* Calendar: the rings hop, the check is ticked. */
-    &.svc-icon--calendar-check {
-      & > :is(:nth-child(1), :nth-child(2)) {
-        --lift: -3px;
-        animation: icon-lift 420ms var(--ease-out) both;
-      }
-      & > :nth-child(2) {
-        animation-delay: 80ms;
-      }
-      & > :nth-child(5) {
-        --len: 10;
-        stroke-dasharray: var(--len);
-        animation: var(--trace);
-        animation-duration: 450ms;
-        animation-delay: 240ms;
-      }
-    }
-
-    /* Badge: the seal turns, the check is ticked. */
-    &.svc-icon--badge-check {
-      & > :nth-child(1) {
-        animation: icon-turn 700ms var(--ease-out) both;
-      }
-      & > :nth-child(2) {
-        --len: 13;
-        stroke-dasharray: var(--len);
-        animation: var(--trace);
-        animation-duration: 450ms;
-        animation-delay: 260ms;
-      }
-    }
-
-    /* Team: the second person steps in beside the first. */
-    &.svc-icon--users {
-      & > :is(:nth-child(2), :nth-child(3)) {
-        animation: icon-step-in 520ms var(--ease-out) both;
-      }
-      & > :nth-child(3) {
-        animation-delay: 60ms;
-      }
-      & > :nth-child(4) {
-        animation: icon-pop 420ms var(--ease-out) both;
-      }
-    }
-
-    /* Handshake: a firm shake. */
-    &.svc-icon--handshake {
-      animation: icon-shake 650ms var(--ease-in-out) both;
-    }
-
     /* Cloud rain: the drops fall in turn. */
     &.svc-icon--cloud-rain > :not(:first-child) {
       animation: icon-rain 520ms var(--ease-out) both;
@@ -1287,15 +1179,6 @@
   }
 }
 
-@keyframes settle {
-  from {
-    scale: 1.14;
-  }
-  to {
-    scale: 1;
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
   @supports (animation-timeline: view()) {
     [data-reveal]:not([data-reveal="fade"], [data-reveal="wipe"]),
@@ -1343,12 +1226,6 @@
     [data-rail-list] > li:nth-child(n + 3) > a {
       animation-range: entry 40% cover 60%;
     }
-
-    .about__photo {
-      animation: settle linear both;
-      animation-timeline: var(--timeline-view, view());
-      animation-range: entry 0% exit 20%;
-    }
   }
 }
 
@@ -1380,19 +1257,11 @@
   }
 }
 
-/* The big stroke behind the facts draws itself as the band scrolls in. */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .brand-pattern {
       animation: pattern-flow linear both;
       animation-timeline: var(--timeline-view, view());
-    }
-
-    .facts-mark .isotipo-mark__stroke {
-      stroke-dasharray: 1;
-      animation: draw-back linear both;
-      animation-timeline: var(--timeline-view, view());
-      animation-range: entry 0% cover 55%;
     }
   }
 }

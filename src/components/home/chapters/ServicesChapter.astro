@@ -1,7 +1,7 @@
 ---
 /**
- * Chapter 02 · Servicios. The seven specialties as a fanned deck of
- * browser windows, one per specialty: a bar with its address over a photo
+ * Chapter 02 · Servicios. The specialties as a fanned deck of browser
+ * windows, one per specialty: a bar with its address over a photo
  * of a real project of that specialty (or, without one, its technical
  * sketch on a drawing sheet), and at the bottom a plum gradient carrying
  * its icon, title, summary and link. A caption under the deck names it.
@@ -20,11 +20,19 @@ import { Image } from "astro:assets";
 import { getProjects } from "../../../lib/content";
 import { coversByService } from "../../../lib/content/service-covers";
 import { getServices } from "../../../lib/get-services";
+import { spanishNumberWord } from "../../../lib/number-words";
 import ServiceIcon from "../../services/ServiceIcon.astro";
 import Chapter from "./Chapter.astro";
 import Croquis from "./Croquis.astro";
 
+interface Props {
+  /** Chapter number in the label ("02"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
 const services = await getServices();
+const specialties = spanishNumberWord(services.length, { capitalize: true });
 const covers = coversByService(
   services.map((s) => s.data.slug),
   await getProjects(),
@@ -57,13 +65,13 @@ const sizes = "(min-width: 1024px) 66vw, 92vw";
 
 <Chapter
   id="servicios-titulo"
-  number="02"
+  number={chapterNumber}
   label="Servicios"
   navSection="/servicios"
   class="ch-services"
 >
   <Fragment slot="title">
-    Siete especialidades. Un solo <em>equipo</em>.
+    {specialties} especialidades. Un solo <em>equipo</em>.
   </Fragment>
 
   <ol class="svc" slot="scene" data-scene-services>
@@ -147,7 +155,7 @@ const sizes = "(min-width: 1024px) 66vw, 92vw";
   </a>
   <div class="svc-help">
     <p class="svc-help__question">¿No sabes cuál necesitas?</p>
-    <a href="/contacto" class="ch-button">
+    <a href="/contacto" class="btn-primary">
       Cuéntanos tu proyecto
       <ArrowRight size={20} stroke-width={1.75} aria-hidden="true" />
     </a>

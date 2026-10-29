@@ -14,15 +14,27 @@ import { SITE_NAME } from "../lib/site";
 import { getProjects } from "../lib/content";
 import { railProjects } from "../lib/content/rail-projects";
 import { getServiceTitles } from "../lib/get-services";
+import { chapterNumbers } from "../lib/home-chapters";
 
 const projects = await getProjects();
 /** The home reel shows every published project, the featured ones first. */
 const featured = railProjects(projects, 12);
 const serviceTitles = await getServiceTitles();
+const showProjects = featured.length > 0;
+/** Numbered from the chapters actually rendered (the hero is 01). */
+const n = chapterNumbers([
+  "services",
+  "work",
+  "plan",
+  ...(showProjects ? (["projects"] as const) : []),
+  "years",
+  "reasons",
+  "contact",
+]);
 ---
 
 {/*
-  The home: the hero (the photo slideshow), then seven scroll chapters
+  The home: the hero (the photo slideshow), then the scroll chapters
   ("del primer trazo a la obra"): most chapters pin and their scene plays
   with the scroll (src/scripts/chapters/scrub.ts); chapter 03 flows with the
   page. `data-nav-section` on each
@@ -35,14 +47,18 @@ const serviceTitles = await getServiceTitles();
   headerOverlay
 >
   <Hero />
-  <ServicesChapter />
-  <WorkChapter />
-  <PlanChapter />
-  {featured.length > 0 && (
-    <ProjectsChapter projects={featured} serviceTitles={serviceTitles} />
+  <ServicesChapter number={n.services} />
+  <WorkChapter number={n.work} />
+  <PlanChapter number={n.plan} />
+  {showProjects && n.projects && (
+    <ProjectsChapter
+      number={n.projects}
+      projects={featured}
+      serviceTitles={serviceTitles}
+    />
   )}
-  <YearsChapter />
+  <YearsChapter number={n.years} />
   <ClientsStrip />
-  <ReasonsChapter />
-  <ContactChapter />
+  <ReasonsChapter number={n.reasons} />
+  <ContactChapter number={n.contact} />
 </BaseLayout>

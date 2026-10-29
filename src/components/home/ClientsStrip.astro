@@ -17,66 +17,30 @@
  * JavaScript; WCAG 2.2.2). Under reduced motion it is a static, wrapping
  * list.
  *
- * `tone="accent"` sits at the foot of the home's sage facts band ("EMOJ en
- * cifras"), next to the client count: plum logos on sage, under a plum
- * rule like the facts (same tones in both themes).
+ * On the home it sits between "30 años" and "Por qué EMOJ" and counts as
+ * part of Nosotros for the header's scroll spy (`data-nav-section`).
  */
 import { Pause, Play } from "@lucide/astro";
 import { CLIENT_LOGOS } from "../../lib/clients";
 import { CLIENTS } from "../../lib/site";
 
-interface Props {
-  tone?: "surface" | "accent";
-}
-
-const { tone = "surface" } = Astro.props;
-
-const TONES = {
-  surface: {
-    section:
-      "border-b border-border bg-surface [--marquee-fade:var(--surface)]",
-    container: "gap-5 py-10 md:py-12",
-    heading: "eyebrow",
-    control:
-      "rounded-md text-ink-muted hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-focus-ring",
-    item: "text-ink-muted hover:text-ink",
-  },
-  accent: {
-    section: "text-on-accent [--marquee-fade:var(--accent)]",
-    // The rule spans the content width, like the facts rows above it.
-    container:
-      "gap-5 py-8 before:absolute before:inset-x-4 before:top-0 before:h-0.5 before:bg-plum-950 md:py-10 md:before:inset-x-6",
-    heading:
-      "font-data text-[13px] leading-4 font-medium tracking-[0.1em] uppercase",
-    control:
-      "rounded-full border border-plum-950/30 text-plum-950 hover:bg-plum-950/10 has-focus-visible:outline-plum-950",
-    item: "text-plum-950/80 hover:text-plum-950",
-  },
-} as const;
-const t = TONES[tone];
-
-const item = `flex items-center transition-colors duration-200 ${t.item}`;
+const item =
+  "flex items-center text-ink-muted transition-colors duration-200 hover:text-ink";
 const wordmark =
   "text-[22px] leading-8 font-semibold tracking-[0.01em] whitespace-nowrap md:text-[26px]";
 ---
 
-<section aria-labelledby="clientes" class:list={["marquee-wrap", t.section]}>
-  <div
-    class:list={[
-      "container-wide relative z-[2] flex flex-col lg:flex-row lg:items-center lg:gap-12",
-      t.container,
-    ]}
-  >
+<section
+  aria-labelledby="clientes"
+  class="marquee-wrap border-b border-border bg-surface [--marquee-fade:var(--surface)]"
+  data-nav-section="/nosotros"
+>
+  <div class="container-wide relative z-[2] flex flex-col gap-5 py-10 md:py-12 lg:flex-row lg:items-center lg:gap-12">
     <div class="flex items-center justify-between gap-4 lg:shrink-0">
-      <h2 id="clientes" class={t.heading}>
+      <h2 id="clientes" class="eyebrow">
         Han confiado en nosotros
       </h2>
-      <label
-        class:list={[
-          "marquee__control inline-flex size-11 cursor-pointer items-center justify-center transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 lg:order-first",
-          t.control,
-        ]}
-      >
+      <label class="marquee__control inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus-ring lg:order-first">
         <input type="checkbox" class="marquee__toggle peer sr-only" />
         <Pause
           size={20}

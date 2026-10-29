@@ -65,7 +65,7 @@ export function keepNumbersTogether(text: string): string {
   return text.replace(/(\d)[ \t]+(?=\p{L})/gu, "$1 ");
 }
 
-/** Links that leave the site open in a new tab. */
+/** Links that leave the site (http or https) open in a new tab. */
 export function isExternalHref(href: string): boolean {
-  return href.startsWith("https://");
+  return /^https?:\/\//i.test(href);
 }
