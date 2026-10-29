@@ -21,7 +21,6 @@ import { isInAppClick, pageForPath, type ShellPage } from "../lib/admin/router";
 import { canOpen } from "../lib/admin/users";
 import { AppProvider, useApp } from "./app-context";
 import { ForgotScreen, LoginScreen, ResetScreen } from "./AuthScreens";
-import { MessagesPage } from "./messages";
 import { AccountPage, DashboardPage } from "./pages";
 import { HomeHeroEditor } from "./HomeHeroEditor";
 import { MediaLibraryPage } from "./media-library";
@@ -90,7 +89,6 @@ export const ADMIN_PAGES = [
   "news-new",
   "news-edit",
   "media",
-  "messages",
   "users",
   "account",
 ] as const;
@@ -119,8 +117,6 @@ function Content({
       return <DashboardPage />;
     case "home":
       return <HomeHeroEditor serviceTitles={serviceTitles} />;
-    case "messages":
-      return <MessagesPage serviceTitles={serviceTitles} />;
     case "users":
       return <UsersPage />;
     case "account":

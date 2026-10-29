@@ -1,13 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createApiClient, type ContactRequest } from "../src/lib/api/client";
-
-const body: ContactRequest = {
-  name: "Ana Pérez",
-  email: "ana@example.com",
-  message: "Necesito cotizar un estudio de suelos.",
-  service: "geotecnia",
-  turnstileToken: "token",
-};
+import { createApiClient } from "../src/lib/api/client";
 
 function jsonResponse(
   status: number,
@@ -20,46 +12,20 @@ function jsonResponse(
   });
 }
 
-describe("createApiClient().submitContact", () => {
-  it("POSTs the JSON body to /v1/contact on the configured origin", async () => {
-    const fetchMock = vi.fn<typeof fetch>(async () =>
-      jsonResponse(201, { id: "0b6f6f0e-1111-4c1e-8f2a-1b2c3d4e5f60" }),
-    );
-    const client = createApiClient({
-      baseUrl: "https://api.example.com/",
-      fetch: fetchMock,
-    });
-
-    const result = await client.submitContact(body);
-
-    expect(result).toEqual({
-      ok: true,
-      status: 201,
-      data: { id: "0b6f6f0e-1111-4c1e-8f2a-1b2c3d4e5f60" },
-    });
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0] ?? [];
-    expect(url).toBe("https://api.example.com/v1/contact");
-    expect(init?.method).toBe("POST");
-    expect(new Headers(init?.headers).get("Content-Type")).toBe(
-      "application/json",
-    );
-    expect(JSON.parse(String(init?.body))).toEqual(body);
-  });
-
+describe("createApiClient() error handling", () => {
   it("returns 422 field errors as a typed problem", async () => {
     const problem = {
       type: "about:blank",
       title: "Unprocessable Entity",
       status: 422,
-      errors: [{ field: "email", message: "must be a valid email address" }],
+      errors: [{ field: "page", message: "must be a positive integer" }],
     };
     const client = createApiClient({
       baseUrl: "https://api.example.com",
       fetch: async () => jsonResponse(422, problem),
     });
 
-    const result = await client.submitContact(body);
+    const result = await client.listProjects({ page: 1 });
 
     expect(result.ok).toBe(false);
     if (result.ok || result.kind !== "problem")
@@ -79,7 +45,7 @@ describe("createApiClient().submitContact", () => {
         ),
     });
 
-    const result = await client.submitContact(body);
+    const result = await client.listNews();
 
     expect(result).toMatchObject({
       ok: false,
@@ -99,7 +65,7 @@ describe("createApiClient().submitContact", () => {
         }),
     });
 
-    const result = await client.submitContact(body);
+    const result = await client.getHomeHero();
 
     expect(result).toEqual({
       ok: false,
@@ -112,15 +78,27 @@ describe("createApiClient().submitContact", () => {
   it("returns a network error instead of throwing when fetch rejects", async () => {
     const failure = new TypeError("Failed to fetch");
     const client = createApiClient({
-      baseUrl: "https://api.example.com",
+      baseUrl: "https://api.example.com/",
       fetch: async () => {
         throw failure;
       },
     });
 
-    const result = await client.submitContact(body);
+    const result = await client.getProject("puente");
 
     expect(result).toEqual({ ok: false, kind: "network", error: failure });
+  });
+
+  it("only reads: it has no way to send visitor data to the API", () => {
+    const client = createApiClient({ baseUrl: "https://api.example.com" });
+    expect(Object.keys(client).sort()).toEqual([
+      "getHomeHero",
+      "getNews",
+      "getPreview",
+      "getProject",
+      "listNews",
+      "listProjects",
+    ]);
   });
 });
 

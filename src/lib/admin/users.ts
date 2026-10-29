@@ -1,7 +1,7 @@
 /**
  * Roles in the admin panel and the helpers of the Usuarios section. Admins
- * see everything; editors manage content only, so contact messages (personal
- * data) and user management are hidden from them. The API enforces the same
+ * see everything; editors manage content only, so user management is
+ * hidden from them. The API enforces the same
  * rule; the panel just avoids showing what an editor cannot open.
  */
 import type { ApiNetworkError, ApiProblem } from "../api/client";
@@ -10,7 +10,6 @@ import { problemMessage } from "./errors";
 import { tooLong } from "./form-errors";
 import { ADMIN_NAV, type AdminNavItem } from "./nav";
 import type { ShellPage } from "./router";
-import { subjectEmailError } from "./privacy-requests";
 
 export const ROLE_LABEL: Readonly<Record<Role, string>> = {
   admin: "Administrador",
@@ -25,11 +24,21 @@ export const STATUS_LABEL: Readonly<Record<UserStatus, string>> = {
 
 /** What each role can do, shown next to the role picker. */
 export const ROLE_HINT: Readonly<Record<Role, string>> = {
-  admin: "Todo el panel, incluidos mensajes y usuarios.",
+  admin: "Todo el panel, incluidos los usuarios.",
   editor: "Portada, proyectos, noticias y medios.",
 };
 
-const ADMIN_PAGES: ReadonlySet<ShellPage> = new Set(["messages", "users"]);
+const ADMIN_PAGES: ReadonlySet<ShellPage> = new Set(["users"]);
+
+/** Up to two initials of a name, for avatars ("?" when empty). */
+export function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+  return letters || "?";
+}
 
 /** Sidebar sections the role may open. */
 export function navFor(role: Role): AdminNavItem[] {
@@ -85,6 +94,20 @@ export function usersWithStatus<T extends Pick<ManagedUser, "status">>(
 /** Same limit as the API. */
 const MAX_NAME = 120;
 
+/** Same limit as the API (RFC 5321 path length). */
+const MAX_EMAIL = 254;
+
+/** Spanish error for an email field, or null when it can be sent. */
+export function emailError(input: string): string | null {
+  const email = input.trim();
+  if (email === "") return "Escribe el correo de la persona.";
+  if (email.length > MAX_EMAIL) return "El correo es demasiado largo.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "Revisa el correo: debe tener la forma nombre@dominio.cl.";
+  }
+  return null;
+}
+
 export interface InviteFields {
   name: string;
   email: string;
@@ -98,7 +121,7 @@ export function inviteErrors(
   const name = input.name.trim();
   if (name === "") errors.name = "Escribe el nombre de la persona.";
   else if ([...name].length > MAX_NAME) errors.name = tooLong(MAX_NAME);
-  const email = subjectEmailError(input.email);
+  const email = emailError(input.email);
   if (email) errors.email = email;
   return errors;
 }

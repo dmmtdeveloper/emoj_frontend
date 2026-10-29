@@ -1,7 +1,8 @@
 /**
  * Privacy policy content (Ley 21.719, in force from 2026-12-01), rendered by
- * src/pages/privacidad.astro. Plain data so the page, the contact form, the
- * admin's access export and tests share one source.
+ * src/pages/privacidad.astro. Plain data so the page and tests share one
+ * source. The site has no contact form: visitors reach EMOJ by WhatsApp,
+ * email or phone.
  *
  * Built from what the site and the API really do, and checked item by item
  * against art. 14 ter (duty to inform), art. 11 (request procedure) and the
@@ -13,7 +14,7 @@ import { CONTACT, LEGAL_NAME, RUT } from "./site";
 
 export interface ProcessingActivity {
   /** Stable key, used by the access export to pick its activities. */
-  id: "contact" | "spam" | "security" | "admin" | "requests";
+  id: "security" | "admin" | "requests";
   /** Where the data comes from, in the visitor's words. */
   source: string;
   data: string;
@@ -78,8 +79,8 @@ const dpa =
   "Acuerdo de tratamiento de datos del proveedor, con cláusulas contractuales tipo de protección.";
 
 export const PRIVACY: PrivacyPolicy = {
-  version: "1.1",
-  updated: "2026-10-12",
+  version: "1.2",
+  updated: "2026-10-29",
   controller: {
     name: LEGAL_NAME,
     rut: RUT,
@@ -88,41 +89,18 @@ export const PRIVACY: PrivacyPolicy = {
   },
   requestsEmail: CONTACT.email,
   audience: [
-    "Personas que nos escriben por el formulario de contacto: clientes, posibles clientes y quienes los representan.",
     "Personas que nos piden ejercer sus derechos sobre sus datos.",
     "Personal de EMOJ con acceso al panel de administración del sitio.",
     "Visitantes del sitio, solo por las señales técnicas que se describen abajo, que no guardamos.",
   ],
   sources:
-    "Todos los datos los entregas tú al escribirnos, o los genera tu navegador al usar el sitio. No compramos datos ni los obtenemos de fuentes de acceso público.",
+    "El sitio no tiene formulario de contacto: para escribirnos o cotizar un proyecto, usa WhatsApp, el correo o el teléfono. Todos los datos los entregas tú al escribirnos, o los genera tu navegador al usar el sitio. No compramos datos ni los obtenemos de fuentes de acceso público.",
   activities: [
-    {
-      id: "contact",
-      source: "Formulario de contacto",
-      data: "Nombre, correo, teléfono, empresa, servicio de interés, ubicación del proyecto y tu mensaje.",
-      purpose:
-        "Responder tu consulta, preparar una cotización y hacer seguimiento.",
-      basis:
-        "Tu solicitud: tratamos los datos para tomar las medidas previas a un contrato que tú pides.",
-      retention:
-        "24 meses desde nuestro último intercambio; después se borran, también de nuestro correo.",
-    },
-    {
-      id: "spam",
-      source: "Protección contra spam",
-      data: "Señales técnicas de tu navegador (dirección IP, navegador y huella de la conexión), analizadas por Cloudflare Turnstile al enviar el formulario.",
-      purpose:
-        "Comprobar que el formulario lo envía una persona y no un robot.",
-      basis:
-        "Interés legítimo: proteger el sitio y nuestro correo contra envíos automáticos.",
-      retention:
-        "No las guardamos: Cloudflare las trata según su propia política.",
-    },
     {
       id: "security",
       source: "Seguridad del sitio",
-      data: "Tu dirección IP, usada en el momento para limitar envíos repetidos.",
-      purpose: "Evitar abusos y ataques al formulario y a la API.",
+      data: "Tu dirección IP, usada en el momento para limitar intentos repetidos.",
+      purpose: "Evitar abusos y ataques a la API y al panel.",
       basis: "Interés legítimo: mantener el sitio seguro y disponible.",
       retention:
         "Solo en memoria mientras dura el límite; no la guardamos en registros.",
@@ -140,7 +118,7 @@ export const PRIVACY: PrivacyPolicy = {
     {
       id: "requests",
       source: "Solicitudes sobre tus datos",
-      data: "Tu correo, qué pediste, cuántos mensajes abarcó, la fecha y quién de EMOJ la atendió.",
+      data: "Tu correo, qué pediste, la fecha y quién de EMOJ la atendió.",
       purpose: "Acreditar que respondimos tu solicitud dentro del plazo legal.",
       basis:
         "Obligación legal: la Ley 21.719 nos pide poder demostrar nuestras respuestas.",
@@ -158,15 +136,8 @@ export const PRIVACY: PrivacyPolicy = {
     },
     {
       name: "Resend",
-      role: "Envía a nuestro correo los mensajes del formulario.",
+      role: "Envía los correos del panel de administración: invitaciones y cambios de contraseña.",
       country: "Estados Unidos",
-      safeguard: dpa,
-      agreement: true,
-    },
-    {
-      name: "Cloudflare",
-      role: "Protege el formulario contra spam. También usa esas señales, por su cuenta, para mejorar su detección de robots.",
-      country: "Estados Unidos y su red de servidores en el mundo",
       safeguard: dpa,
       agreement: true,
     },
@@ -181,7 +152,7 @@ export const PRIVACY: PrivacyPolicy = {
   transfers:
     "La Agencia de Protección de Datos Personales todavía no declara a Estados Unidos como país con un nivel adecuado de protección. Por eso los datos que viajan allá se protegen con el acuerdo de tratamiento de datos que tenemos con cada proveedor, que lo obliga a usarlos solo para prestarnos su servicio, mantenerlos seguros y borrarlos al terminar.",
   automatedDecisions:
-    "No tomamos decisiones automatizadas sobre ti ni elaboramos perfiles. La única evaluación automática es la de Cloudflare Turnstile, que solo comprueba que el formulario no lo envíe un robot.",
+    "No tomamos decisiones automatizadas sobre ti ni elaboramos perfiles.",
   rights: [
     {
       name: "Acceso",
@@ -220,8 +191,6 @@ export const PRIVACY: PrivacyPolicy = {
   security: [
     "Todo el sitio y la API funcionan con conexión cifrada (HTTPS).",
     "Solo el personal autorizado de EMOJ entra al panel, con un usuario propio; las contraseñas se guardan cifradas con argon2id y las sesiones expiran.",
-    "El formulario tiene protección contra spam y un límite de envíos repetidos.",
-    "Los mensajes se borran solos al cumplir su plazo, y cada solicitud sobre datos personales queda registrada.",
     "Revisamos estas medidas al menos una vez al año.",
   ],
 };

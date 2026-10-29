@@ -5,7 +5,7 @@ import { loginUrl, safeNext } from "../src/lib/admin/redirect";
 
 describe("safeNext", () => {
   it("keeps admin paths with their query", () => {
-    expect(safeNext("/admin/mensajes?page=2")).toBe("/admin/mensajes?page=2");
+    expect(safeNext("/admin/proyectos?page=2")).toBe("/admin/proyectos?page=2");
   });
 
   it("falls back to the dashboard for anything outside the panel", () => {
@@ -26,8 +26,8 @@ describe("safeNext", () => {
 
 describe("loginUrl", () => {
   it("carries the current page so login can return to it", () => {
-    expect(loginUrl("/admin/mensajes", "?page=2")).toBe(
-      "/admin/login?next=%2Fadmin%2Fmensajes%3Fpage%3D2",
+    expect(loginUrl("/admin/proyectos", "?page=2")).toBe(
+      "/admin/login?next=%2Fadmin%2Fproyectos%3Fpage%3D2",
     );
   });
 
@@ -43,7 +43,8 @@ describe("activeNavItem", () => {
     expect(activeNavItem("/admin/proyectos/editar")?.href).toBe(
       "/admin/proyectos",
     );
-    expect(activeNavItem("/admin/mensajes/")?.href).toBe("/admin/mensajes");
+    expect(activeNavItem("/admin/medios/")?.href).toBe("/admin/medios");
+    expect(activeNavItem("/admin/mensajes")).toBeUndefined();
   });
 
   it("matches the dashboard only exactly", () => {
@@ -53,14 +54,13 @@ describe("activeNavItem", () => {
     expect(activeNavItem("/admin/portada")?.label).toBe("Portada");
   });
 
-  it("lists the eight sections in order", () => {
+  it("lists the seven sections in order", () => {
     expect(ADMIN_NAV.map((item) => item.label)).toEqual([
       "Resumen",
       "Portada",
       "Proyectos",
       "Noticias",
       "Medios",
-      "Mensajes",
       "Usuarios",
       "Cuenta",
     ]);

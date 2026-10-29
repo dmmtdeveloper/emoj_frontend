@@ -1,5 +1,5 @@
 /**
- * Small typed client for the EMOJ API (emoj_backend).
+ * Small typed client for the public, read-only EMOJ API (emoj_backend).
  *
  * Types come from `schema.d.ts`, generated from the backend `openapi.yaml`
  * with `pnpm api:types`. Requests never throw: every call resolves to an
@@ -11,8 +11,6 @@ import type { components, operations } from "./schema";
 type Schemas = components["schemas"];
 
 export type ServiceSlug = Schemas["ServiceSlug"];
-export type ContactRequest = Schemas["ContactRequest"];
-export type ContactCreated = Schemas["ContactCreated"];
 export type Problem = Schemas["Problem"];
 export type FieldError = Schemas["FieldError"];
 export type ValidationProblem = Schemas["ValidationProblem"];
@@ -70,7 +68,6 @@ export interface ApiClientOptions {
 }
 
 export interface ApiClient {
-  submitContact(body: ContactRequest): Promise<ApiResult<ContactCreated>>;
   listProjects(query?: ProjectQuery): Promise<ApiResult<ProjectPage>>;
   getProject(slug: string): Promise<ApiResult<ProjectDetail>>;
   listNews(query?: NewsQuery): Promise<ApiResult<NewsPage>>;
@@ -120,20 +117,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   const baseUrl = options.baseUrl.replace(/\/+$/, "");
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
 
-  async function request<T>(
-    method: "GET" | "POST",
-    path: string,
-    body?: unknown,
-  ): Promise<ApiResult<T>> {
+  async function request<T>(path: string): Promise<ApiResult<T>> {
     let response: Response;
     try {
       response = await doFetch(`${baseUrl}${path}`, {
-        method,
-        headers: {
-          Accept: "application/json, application/problem+json",
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-        },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        method: "GET",
+        headers: { Accept: "application/json, application/problem+json" },
       });
     } catch (error) {
       return { ok: false, kind: "network", error };
@@ -164,18 +153,15 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   }
 
   return {
-    submitContact: (body) =>
-      request<ContactCreated>("POST", "/v1/contact", body),
     listProjects: (query) =>
-      request<ProjectPage>("GET", `/v1/projects${queryString(query)}`),
+      request<ProjectPage>(`/v1/projects${queryString(query)}`),
     getProject: (slug) =>
-      request<ProjectDetail>("GET", `/v1/projects/${encodeURIComponent(slug)}`),
-    listNews: (query) =>
-      request<NewsPage>("GET", `/v1/news${queryString(query)}`),
+      request<ProjectDetail>(`/v1/projects/${encodeURIComponent(slug)}`),
+    listNews: (query) => request<NewsPage>(`/v1/news${queryString(query)}`),
     getNews: (slug) =>
-      request<NewsDetail>("GET", `/v1/news/${encodeURIComponent(slug)}`),
+      request<NewsDetail>(`/v1/news/${encodeURIComponent(slug)}`),
     getPreview: (token) =>
-      request<Preview>("GET", `/v1/preview/${encodeURIComponent(token)}`),
-    getHomeHero: () => request<HomeHero>("GET", "/v1/home/hero"),
+      request<Preview>(`/v1/preview/${encodeURIComponent(token)}`),
+    getHomeHero: () => request<HomeHero>("/v1/home/hero"),
   };
 }

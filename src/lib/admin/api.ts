@@ -31,12 +31,6 @@ export type AdminNews = Schemas["AdminNews"];
 export type NewsInput = Schemas["NewsInput"];
 export type AdminMedia = Schemas["AdminMedia"];
 export type AdminMediaPage = Schemas["AdminMediaPage"];
-export type ContactMessage = Schemas["ContactMessage"];
-export type ContactMessagePage = Schemas["ContactMessagePage"];
-export type DataRequest = Schemas["DataRequest"];
-export type DataRequestPage = Schemas["DataRequestPage"];
-export type PersonDataExport = Schemas["PersonDataExport"];
-export type PersonDataErasure = Schemas["PersonDataErasure"];
 export type PreviewToken = Schemas["PreviewToken"];
 export type PreviewKind = Schemas["PreviewKind"];
 export type AdminHomeHero = Schemas["AdminHomeHero"];
@@ -54,12 +48,6 @@ export type AdminListQuery = NonNullable<
 >;
 export type MediaQuery = NonNullable<
   operations["adminListMedia"]["parameters"]["query"]
->;
-export type MessagesQuery = NonNullable<
-  operations["adminListContactMessages"]["parameters"]["query"]
->;
-export type DataRequestsQuery = NonNullable<
-  operations["adminListDataRequests"]["parameters"]["query"]
 >;
 
 export const ADMIN_API_BASE = "/api";
@@ -114,15 +102,6 @@ export interface AdminClient {
   updateMedia(id: string, alt: string): Promise<ApiResult<AdminMedia>>;
   /** Deletes an image; covers using it are cleared and galleries drop it. */
   deleteMedia(id: string): Promise<ApiResult<null>>;
-  listMessages(query?: MessagesQuery): Promise<ApiResult<ContactMessagePage>>;
-  /** Everything stored about one email address (right of access). */
-  exportPersonData(email: string): Promise<ApiResult<PersonDataExport>>;
-  /** Deletes everything stored about one email address (cannot be undone). */
-  erasePersonData(email: string): Promise<ApiResult<PersonDataErasure>>;
-  /** Audit trail of exports and erasures, newest first. */
-  listDataRequests(
-    query?: DataRequestsQuery,
-  ): Promise<ApiResult<DataRequestPage>>;
   /** A 15-minute token for the site's /preview page (drafts included). */
   createPreviewToken(
     type: PreviewKind,
@@ -345,26 +324,8 @@ export function createAdminClient(options: AdminClientOptions): AdminClient {
     unpublishNews: (id) =>
       request<AdminNews>("POST", `/v1/admin/news/${seg(id)}/unpublish`),
     deleteNews: (id) => request<null>("DELETE", `/v1/admin/news/${seg(id)}`),
-    listMessages: (query) =>
-      request<ContactMessagePage>(
-        "GET",
-        `/v1/admin/contact-messages${queryString(query)}`,
-      ),
-    exportPersonData: (email) =>
-      request<PersonDataExport>("POST", "/v1/admin/data-requests/export", {
-        email,
-      }),
-    erasePersonData: (email) =>
-      request<PersonDataErasure>("POST", "/v1/admin/data-requests/erase", {
-        email,
-      }),
     createPreviewToken: (type, id) =>
       request<PreviewToken>("POST", "/v1/admin/preview-tokens", { type, id }),
-    listDataRequests: (query) =>
-      request<DataRequestPage>(
-        "GET",
-        `/v1/admin/data-requests${queryString(query)}`,
-      ),
     getHomeHero: () => request<AdminHomeHero>("GET", "/v1/admin/home/hero"),
     updateHomeHero: (body) =>
       request<AdminHomeHero>("PUT", "/v1/admin/home/hero", body),

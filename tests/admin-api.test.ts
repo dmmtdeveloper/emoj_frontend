@@ -48,9 +48,9 @@ describe("createAdminClient", () => {
     );
     const client = createAdminClient({ baseUrl: "/api", fetch });
     client.setCsrfToken("tok");
-    await client.listMessages({ page: 1 });
+    await client.listMedia({ page: 1 });
     const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe("/api/v1/admin/contact-messages?page=1");
+    expect(url).toBe("/api/v1/admin/media?page=1");
     expect(new Headers(init.headers).has("X-CSRF-Token")).toBe(false);
   });
 
@@ -323,27 +323,16 @@ describe("createAdminClient", () => {
     ).toBe(true);
   });
 
-  it("handles data subject requests: export, erase and the audit list", async () => {
-    const fetch = vi.fn(async () => jsonResponse(200, {}));
-    const client = createAdminClient({ baseUrl: "/api", fetch });
-    client.setCsrfToken("tok");
-    await client.exportPersonData("Ana@Empresa.cl");
-    await client.erasePersonData("ana@empresa.cl");
-    await client.listDataRequests({ page: 2 });
-    const calls = fetch.mock.calls as unknown as [string, RequestInit][];
-    expect(calls.map(([u, i]) => `${i.method} ${u}`)).toEqual([
-      "POST /api/v1/admin/data-requests/export",
-      "POST /api/v1/admin/data-requests/erase",
-      "GET /api/v1/admin/data-requests?page=2",
-    ]);
-    expect(JSON.parse(String(calls[0]?.[1].body))).toEqual({
-      email: "Ana@Empresa.cl",
-    });
-    expect(
-      calls
-        .slice(0, 2)
-        .every(([, i]) => new Headers(i.headers).get("X-CSRF-Token") === "tok"),
-    ).toBe(true);
+  it("has no contact messages or data subject requests (the site has no form)", () => {
+    const client = createAdminClient({ baseUrl: "/api" });
+    for (const name of [
+      "listMessages",
+      "exportPersonData",
+      "erasePersonData",
+      "listDataRequests",
+    ]) {
+      expect(client).not.toHaveProperty(name);
+    }
   });
 });
 

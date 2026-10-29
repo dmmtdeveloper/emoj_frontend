@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { ManagedUser } from "../src/lib/admin/api";
 import {
   canOpen,
+  emailError,
+  initials,
   inviteErrors,
   isInvitation,
   lastAccessLabel,
@@ -40,10 +42,13 @@ function user(over: Partial<ManagedUser> = {}): ManagedUser {
 describe("navFor", () => {
   it("shows every section to an admin", () => {
     expect(navFor("admin").map((item) => item.label)).toContain("Usuarios");
-    expect(navFor("admin").map((item) => item.label)).toContain("Mensajes");
   });
 
-  it("hides personal data and user management from an editor", () => {
+  it("has no contact messages section (the site has no form)", () => {
+    expect(navFor("admin").map((item) => item.label)).not.toContain("Mensajes");
+  });
+
+  it("hides user management from an editor", () => {
     expect(navFor("editor").map((item) => item.label)).toEqual([
       "Resumen",
       "Portada",
@@ -55,15 +60,46 @@ describe("navFor", () => {
   });
 });
 
+describe("initials", () => {
+  it("takes the first letters of the first two words", () => {
+    expect(initials("Carolina Vergara")).toBe("CV");
+    expect(initials("  rodrigo  ")).toBe("R");
+    expect(initials("")).toBe("?");
+  });
+});
+
+describe("emailError", () => {
+  it.each([
+    ["", "Escribe el correo de la persona."],
+    ["   ", "Escribe el correo de la persona."],
+    ["ana", "Revisa el correo: debe tener la forma nombre@dominio.cl."],
+    ["ana@", "Revisa el correo: debe tener la forma nombre@dominio.cl."],
+    [
+      "ana @empresa.cl",
+      "Revisa el correo: debe tener la forma nombre@dominio.cl.",
+    ],
+  ])("rejects %j", (input, message) => {
+    expect(emailError(input)).toBe(message);
+  });
+
+  it("accepts an address with surrounding spaces", () => {
+    expect(emailError("  Ana@Empresa.cl ")).toBeNull();
+  });
+
+  it("rejects addresses longer than the API accepts", () => {
+    expect(emailError(`${"a".repeat(250)}@b.cl`)).toBe(
+      "El correo es demasiado largo.",
+    );
+  });
+});
+
 describe("canOpen", () => {
   it("lets admins open every page", () => {
     expect(canOpen("users", "admin")).toBe(true);
-    expect(canOpen("messages", "admin")).toBe(true);
   });
 
-  it("keeps editors out of messages and users only", () => {
+  it("keeps editors out of users only", () => {
     expect(canOpen("users", "editor")).toBe(false);
-    expect(canOpen("messages", "editor")).toBe(false);
     expect(canOpen("projects", "editor")).toBe(true);
     expect(canOpen("account", "editor")).toBe(true);
   });

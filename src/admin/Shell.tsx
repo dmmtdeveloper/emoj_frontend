@@ -21,7 +21,6 @@ import {
   Image,
   LayoutDashboard,
   LogOut,
-  Mail,
   Menu,
   Moon,
   PanelLeftClose,
@@ -55,7 +54,6 @@ const ICONS: Record<AdminNavItem["icon"], LucideIcon> = {
   projects: FolderKanban,
   news: FileText,
   media: Image,
-  messages: Mail,
   users: Users,
   account: UserRound,
 };

@@ -21,9 +21,9 @@ import { useState, type SyntheticEvent } from "react";
 import type { ManagedUser, Role, UserStatus } from "../lib/admin/api";
 import { fieldErrors } from "../lib/admin/form-errors";
 import { relativeTime } from "../lib/admin/dashboard";
-import { initials } from "../lib/admin/messages";
 import {
   inviteErrors,
+  initials,
   lastAccessLabel,
   ROLE_HINT,
   ROLE_LABEL,

@@ -1,6 +1,5 @@
 /**
- * Panel pages inside the shell: Resumen (dashboard) and Cuenta. Mensajes
- * lives in messages.tsx.
+ * Panel pages inside the shell: Resumen (dashboard) and Cuenta.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -19,12 +18,11 @@ import {
 import { useState, type ReactNode, type SyntheticEvent } from "react";
 import type { AdminNews, AdminProject } from "../lib/admin/api";
 import { mergeRecent, relativeTime } from "../lib/admin/dashboard";
-import { initials } from "../lib/admin/messages";
 import { problemMessage } from "../lib/admin/errors";
 import { LOGIN_PATH } from "../lib/admin/redirect";
-import { ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
+import { initials, ROLE_HINT, ROLE_LABEL } from "../lib/admin/users";
 import { adminApi } from "./api";
-import { ErrorNotice, formatDateTime as formatDate, unwrap } from "./common";
+import { ErrorNotice, unwrap } from "./common";
 import { useUser } from "./session";
 import { DashboardSkeleton } from "./skeletons";
 import { editNewsHref } from "./news";
@@ -44,14 +42,10 @@ import {
 /* Resumen                                                             */
 /* ------------------------------------------------------------------ */
 
-/**
- * Counts per status, the most recently edited projects and news, and (for
- * admins) the latest contact messages. Editors do not see messages, so
- * theirs skips that request.
- */
-function useDashboard(withMessages: boolean) {
+/** Counts per status and the most recently edited projects and news. */
+function useDashboard() {
   return useQuery({
-    queryKey: ["dashboard", withMessages],
+    queryKey: ["dashboard"],
     queryFn: async () => {
       const [
         projectsDraft,
@@ -60,7 +54,6 @@ function useDashboard(withMessages: boolean) {
         newsPublished,
         recentProjects,
         recentNews,
-        messages,
       ] = await Promise.all([
         adminApi.listProjects({ status: "draft", pageSize: 1 }),
         adminApi.listProjects({ status: "published", pageSize: 1 }),
@@ -68,7 +61,6 @@ function useDashboard(withMessages: boolean) {
         adminApi.listNews({ status: "published", pageSize: 1 }),
         adminApi.listProjects({ pageSize: RECENT_LIMIT }),
         adminApi.listNews({ pageSize: RECENT_LIMIT }),
-        withMessages ? adminApi.listMessages({ pageSize: 4 }) : null,
       ]);
       return {
         projects: {
@@ -84,7 +76,6 @@ function useDashboard(withMessages: boolean) {
           unwrap(recentNews).items,
           RECENT_LIMIT,
         ),
-        messages: messages ? unwrap(messages) : null,
       };
     },
   });
@@ -246,73 +237,9 @@ function RecentActivity({ recent }: { recent: RecentItem[] }) {
   );
 }
 
-function LatestMessages({
-  messages,
-}: {
-  messages: NonNullable<ReturnType<typeof useDashboard>["data"]>["messages"];
-}) {
-  if (!messages) return null;
-  return (
-    <Card className="flex flex-col overflow-hidden p-0! md:p-0!">
-      <SectionHead
-        title="Últimos mensajes"
-        href="/admin/mensajes"
-        linkLabel="Ver todos"
-      />
-      {messages.items.length === 0 ? (
-        <p className="px-5 pt-3 pb-6 text-ink-muted md:px-6">
-          Todavía no llegan consultas por el formulario.
-        </p>
-      ) : (
-        <ul className="mt-2 flex flex-col pb-2">
-          {messages.items.map((m) => (
-            <li key={m.id}>
-              <a
-                href={`/admin/mensajes?id=${encodeURIComponent(m.id)}`}
-                className="flex gap-3 px-5 py-3 text-ink no-underline transition-colors hover:bg-surface-sunken hover:text-ink md:px-6"
-              >
-                <span
-                  aria-hidden="true"
-                  className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-sm font-semibold text-ink"
-                >
-                  {(m.name.trim()[0] ?? "?").toUpperCase()}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="flex items-baseline justify-between gap-3">
-                    <span className="truncate font-semibold">
-                      {m.name}
-                      {m.company && (
-                        <span className="font-medium text-ink-muted">
-                          {" "}
-                          · {m.company}
-                        </span>
-                      )}
-                    </span>
-                    <time
-                      dateTime={m.createdAt}
-                      title={formatDate(m.createdAt)}
-                      className="shrink-0 text-xs text-ink-muted"
-                    >
-                      {relativeTime(m.createdAt)}
-                    </time>
-                  </span>
-                  <span className="line-clamp-2 text-sm leading-5 text-ink-muted">
-                    {m.message}
-                  </span>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
 export function DashboardPage() {
   const user = useUser();
-  const isAdmin = user.role === "admin";
-  const dashboard = useDashboard(isAdmin);
+  const dashboard = useDashboard();
   const firstName = (user.name || "").split(/\s+/)[0];
   const data = dashboard.data;
   const drafts = data ? data.projects.draft + data.news.draft : 0;
@@ -348,7 +275,7 @@ export function DashboardPage() {
       )}
 
       {dashboard.isPending ? (
-        <DashboardSkeleton withMessages={isAdmin} />
+        <DashboardSkeleton />
       ) : data ? (
         <>
           <Card className="overflow-hidden p-0! md:p-0!">
@@ -356,7 +283,7 @@ export function DashboardPage() {
             <div
               className={cx(
                 "grid grid-cols-2 divide-border lg:divide-x max-lg:[&>*:nth-child(-n+2)]:border-b max-lg:[&>*:nth-child(odd)]:border-r",
-                isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3",
+                "lg:grid-cols-3",
               )}
             >
               <Stat
@@ -391,36 +318,10 @@ export function DashboardPage() {
                   <Chip tone="todo">Por terminar</Chip>
                 )}
               </Stat>
-              {data.messages && (
-                <Stat
-                  label="Mensajes"
-                  value={data.messages.total}
-                  href="/admin/mensajes"
-                  icon={Mail}
-                >
-                  {data.messages.items[0]
-                    ? `el último ${relativeTime(data.messages.items[0].createdAt)}`
-                    : "sin consultas aún"}
-                </Stat>
-              )}
             </div>
           </Card>
 
-          <div
-            className={cx(
-              "grid items-start gap-6",
-              data.messages && "lg:grid-cols-5",
-            )}
-          >
-            <div className={cx("min-w-0", data.messages && "lg:col-span-3")}>
-              <RecentActivity recent={data.recent} />
-            </div>
-            {data.messages && (
-              <div className="min-w-0 lg:col-span-2">
-                <LatestMessages messages={data.messages} />
-              </div>
-            )}
-          </div>
+          <RecentActivity recent={data.recent} />
         </>
       ) : null}
     </div>

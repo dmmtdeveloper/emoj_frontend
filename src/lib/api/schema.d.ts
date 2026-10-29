@@ -123,32 +123,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/contact": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Submit the contact form
-         * @description Stores the message and emails it to EMOJ (Reply-To set to the sender).
-         *     The form must carry a Cloudflare Turnstile token. Fields are validated
-         *     before the captcha, so an invalid form does not consume the token.
-         *
-         *     Rate limit: 5 requests per 10 minutes per client IP, with bursts of
-         *     up to 3; over the limit the API answers 429 with `Retry-After`.
-         *     The request body is limited to 64 KB.
-         */
-        post: operations["submitContact"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/auth/login": {
         parameters: {
             query?: never;
@@ -532,93 +506,6 @@ export interface paths {
         head?: never;
         /** Change the alternative text of an image */
         patch: operations["adminUpdateMedia"];
-        trace?: never;
-    };
-    "/v1/admin/contact-messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List contact form messages
-         * @description Read-only inbox, newest first. Each message carries `deleteAfter`, the
-         *     date it is erased automatically: 24 months after it was received
-         *     (the retention period stated in the site's privacy policy).
-         *     Administrators only: the messages are personal data.
-         */
-        get: operations["adminListContactMessages"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/admin/data-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List data subject requests
-         * @description Audit trail of exports and erasures, newest first. Administrators only.
-         */
-        get: operations["adminListDataRequests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/admin/data-requests/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Export a person's data
-         * @description Returns every contact message sent from the given email address
-         *     (case-insensitive) and records the request in the audit trail, even
-         *     when nothing is found. Right of access and portability.
-         */
-        post: operations["adminExportPersonData"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/admin/data-requests/erase": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Erase a person's data
-         * @description Deletes every contact message sent from the given email address
-         *     (case-insensitive) and records the request in the audit trail with
-         *     the number of messages deleted. Right to erasure. Cannot be undone.
-         */
-        post: operations["adminErasePersonData"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/v1/admin/home/hero": {
@@ -1008,23 +895,6 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        ContactRequest: {
-            name: string;
-            /** Format: email */
-            email: string;
-            phone?: string;
-            company?: string;
-            /** @description Optional service of interest. */
-            service?: components["schemas"]["ServiceSlug"] | "";
-            location?: string;
-            message: string;
-            /** @description Cloudflare Turnstile response token from the widget. */
-            turnstileToken: string;
-        };
-        ContactCreated: {
-            /** Format: uuid */
-            id: string;
-        };
         /** @description RFC 9457 problem details, extended with `request_id`. */
         Problem: {
             /**
@@ -1081,8 +951,7 @@ export interface components {
         /** @enum {string} */
         Status: "draft" | "published";
         /**
-         * @description `admin` manages users and sees personal data (contact messages and
-         *     data subject requests); `editor` edits projects, news and photos.
+         * @description `admin` manages users; `editor` edits projects, news and photos.
          * @enum {string}
          */
         Role: "admin" | "editor";
@@ -1336,66 +1205,6 @@ export interface components {
             photos: components["schemas"]["AdminHeroPhoto"][];
             /** Format: date-time */
             updatedAt: string;
-        };
-        ContactMessage: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            email: string;
-            phone: string;
-            company: string;
-            service: components["schemas"]["ServiceSlug"] | null;
-            location: string;
-            message: string;
-            /** Format: date-time */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the message is erased automatically (retention period).
-             */
-            deleteAfter: string;
-        };
-        ContactMessagePage: {
-            items: components["schemas"]["ContactMessage"][];
-            page: number;
-            pageSize: number;
-            total: number;
-        };
-        /** @enum {string} */
-        DataRequestKind: "export" | "erasure";
-        DataRequestInput: {
-            /** @description The person's email address, as they wrote it in the form. */
-            email: string;
-        };
-        DataRequest: {
-            /** Format: uuid */
-            id: string;
-            kind: components["schemas"]["DataRequestKind"];
-            /** @description The data subject's email address. */
-            email: string;
-            /** @description Messages exported or erased. */
-            messages: number;
-            /** @description Name (or email) of the admin who handled the request. */
-            performedBy: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        DataRequestPage: {
-            items: components["schemas"]["DataRequest"][];
-            page: number;
-            pageSize: number;
-            total: number;
-        };
-        PersonDataExport: {
-            request: components["schemas"]["DataRequest"];
-            email: string;
-            /** Format: date-time */
-            generatedAt: string;
-            messages: components["schemas"]["ContactMessage"][];
-        };
-        PersonDataErasure: {
-            request: components["schemas"]["DataRequest"];
-            deleted: number;
         };
         /** @enum {string} */
         PreviewKind: "project" | "news";
@@ -1664,7 +1473,7 @@ export interface components {
                  *       "title": "Unprocessable Entity",
                  *       "status": 422,
                  *       "detail": "The request contains invalid fields.",
-                 *       "instance": "/v1/contact",
+                 *       "instance": "/v1/admin/users",
                  *       "request_id": "3f1c2a8e9b7d4c1e8f2a1b2c3d4e5f60",
                  *       "errors": [
                  *         {
@@ -1672,8 +1481,8 @@ export interface components {
                  *           "message": "must be a valid email address"
                  *         },
                  *         {
-                 *           "field": "message",
-                 *           "message": "must be at least 10 characters"
+                 *           "field": "name",
+                 *           "message": "is required"
                  *         }
                  *       ]
                  *     }
@@ -1692,7 +1501,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description A required dependency (such as captcha verification) is temporarily unavailable. */
+        /** @description A required dependency (such as media storage) is unavailable. */
         ServiceUnavailable: {
             headers: {
                 "X-Request-ID": components["headers"]["X-Request-ID"];
@@ -1959,38 +1768,6 @@ export interface operations {
             };
             404: components["responses"]["NotFound"];
             405: components["responses"]["MethodNotAllowed"];
-            default: components["responses"]["Error"];
-        };
-    };
-    submitContact: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ContactRequest"];
-            };
-        };
-        responses: {
-            /** @description The message was accepted. */
-            201: {
-                headers: {
-                    "X-Request-ID": components["headers"]["X-Request-ID"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContactCreated"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            405: components["responses"]["MethodNotAllowed"];
-            413: components["responses"]["PayloadTooLarge"];
-            422: components["responses"]["ValidationFailed"];
-            429: components["responses"]["TooManyRequests"];
-            503: components["responses"]["ServiceUnavailable"];
             default: components["responses"]["Error"];
         };
     };
@@ -2722,136 +2499,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["ValidationFailed"];
-            default: components["responses"]["Error"];
-        };
-    };
-    adminListContactMessages: {
-        parameters: {
-            query?: {
-                /** @description 1-based page number. */
-                page?: components["parameters"]["Page"];
-                /** @description Items per page. */
-                pageSize?: components["parameters"]["PageSize"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description One page of messages. */
-            200: {
-                headers: {
-                    "Cache-Control": components["headers"]["NoStore"];
-                    "X-Request-ID": components["headers"]["X-Request-ID"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ContactMessagePage"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            default: components["responses"]["Error"];
-        };
-    };
-    adminListDataRequests: {
-        parameters: {
-            query?: {
-                /** @description 1-based page number. */
-                page?: components["parameters"]["Page"];
-                /** @description Items per page. */
-                pageSize?: components["parameters"]["PageSize"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description One page of requests. */
-            200: {
-                headers: {
-                    "Cache-Control": components["headers"]["NoStore"];
-                    "X-Request-ID": components["headers"]["X-Request-ID"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DataRequestPage"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            default: components["responses"]["Error"];
-        };
-    };
-    adminExportPersonData: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
-                "X-CSRF-Token": components["parameters"]["CSRFToken"];
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DataRequestInput"];
-            };
-        };
-        responses: {
-            /** @description The person's data. */
-            200: {
-                headers: {
-                    "Cache-Control": components["headers"]["NoStore"];
-                    "X-Request-ID": components["headers"]["X-Request-ID"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PersonDataExport"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            422: components["responses"]["ValidationFailed"];
-            default: components["responses"]["Error"];
-        };
-    };
-    adminErasePersonData: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description The session's CSRF token (`csrfToken` from login or `/v1/auth/me`). */
-                "X-CSRF-Token": components["parameters"]["CSRFToken"];
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DataRequestInput"];
-            };
-        };
-        responses: {
-            /** @description The data was erased. */
-            200: {
-                headers: {
-                    "Cache-Control": components["headers"]["NoStore"];
-                    "X-Request-ID": components["headers"]["X-Request-ID"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PersonDataErasure"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
             422: components["responses"]["ValidationFailed"];
             default: components["responses"]["Error"];
         };

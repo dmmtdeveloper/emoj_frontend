@@ -66,11 +66,7 @@ export function ShellSkeleton() {
   );
 }
 
-export function DashboardSkeleton({
-  withMessages = true,
-}: {
-  withMessages?: boolean;
-}) {
+export function DashboardSkeleton() {
   const rows = (n: number) =>
     Array.from({ length: n }, (_, i) => (
       <div key={i} className="flex items-center gap-4 px-5 py-3 md:px-6">
@@ -83,14 +79,8 @@ export function DashboardSkeleton({
     ));
   return (
     <Loading label="Cargando el resumen…" className="flex flex-col gap-6">
-      <div
-        className={cx(
-          card,
-          "grid grid-cols-2 gap-6",
-          withMessages ? "lg:grid-cols-4" : "lg:grid-cols-3",
-        )}
-      >
-        {Array.from({ length: withMessages ? 4 : 3 }, (_, i) => (
+      <div className={cx(card, "grid grid-cols-2 gap-6 lg:grid-cols-3")}>
+        {Array.from({ length: 3 }, (_, i) => (
           <div key={i} className="flex flex-col gap-3">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-16" />
@@ -98,20 +88,8 @@ export function DashboardSkeleton({
           </div>
         ))}
       </div>
-      <div className={cx("grid gap-6", withMessages && "lg:grid-cols-5")}>
-        <div
-          className={cx(
-            "rounded-lg border border-border bg-surface-raised py-5 shadow-(--shadow-sm)",
-            withMessages && "lg:col-span-3",
-          )}
-        >
-          {rows(4)}
-        </div>
-        {withMessages && (
-          <div className="rounded-lg border border-border bg-surface-raised py-5 shadow-(--shadow-sm) lg:col-span-2">
-            {rows(3)}
-          </div>
-        )}
+      <div className="rounded-lg border border-border bg-surface-raised py-5 shadow-(--shadow-sm)">
+        {rows(4)}
       </div>
     </Loading>
   );
@@ -141,21 +119,6 @@ export function ListSkeleton({
           <Skeleton className="hidden h-6 w-24 rounded-full lg:block" />
           <Skeleton className="hidden h-4 w-20 lg:block" />
           <span className="hidden w-11 lg:block" />
-        </div>
-      ))}
-    </Loading>
-  );
-}
-
-export function MessagesSkeleton() {
-  return (
-    <Loading label="Cargando mensajes…" className="flex flex-col gap-8 py-2">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="flex flex-col gap-3">
-          <Skeleton className="h-6 w-56" />
-          <Skeleton className="h-4" />
-          <Skeleton className="h-4 w-4/5" />
-          <Skeleton className="h-4 w-64" />
         </div>
       ))}
     </Loading>
