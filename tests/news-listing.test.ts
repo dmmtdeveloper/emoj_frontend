@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { NewsSummary } from "../src/lib/api/client";
+import type { NewsSummary } from "../src/lib/content/types";
 import { moreNews, newsListing } from "../src/lib/content/news-listing";
 
 function article(slug: string): NewsSummary {

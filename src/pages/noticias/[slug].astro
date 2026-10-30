@@ -13,6 +13,7 @@
  */
 import { Link as LinkIcon, MapPin } from "@lucide/astro";
 import { getImage } from "astro:assets";
+import { render } from "astro:content";
 import NewsCard from "../../components/news/NewsCard.astro";
 import PhotoGallery from "../../components/ui/PhotoGallery.astro";
 import ArrowLink from "../../components/ui/ArrowLink.astro";
@@ -22,57 +23,51 @@ import SocialIcon from "../../components/ui/SocialIcon.astro";
 import WhatsAppIcon from "../../components/ui/WhatsAppIcon.astro";
 import CoverImage from "../../components/ui/CoverImage.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { contentSource } from "../../lib/content";
+import { getArticleEntry, getNews } from "../../lib/content";
 import { formatDate, shareLinks } from "../../lib/content/format";
-import { mediaPath } from "../../lib/content/media";
 import { moreNews } from "../../lib/content/news-listing";
-import { setPreviewHeaders } from "../../lib/content/preview";
 import {
   readingMinutes,
   readingTimeLabel,
 } from "../../lib/content/reading-time";
-import { renderTipTap } from "../../lib/content/tiptap";
 import { newsTransitionName } from "../../lib/content/transition";
+import type { NewsDetail } from "../../lib/content/types";
 import { articleJsonLd } from "../../lib/structured-data";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
+export async function getStaticPaths() {
+  const news = await getNews();
+  return news.map((article) => ({
+    params: { slug: article.slug },
+    props: { article, news },
+  }));
+}
 
-// /preview rewrites here with the draft in locals (src/pages/preview.astro).
-const draft = Astro.locals.preview;
-const isPreview = draft?.kind === "news";
-const source = contentSource();
-const article = isPreview
-  ? draft.news
-  : await source.findArticle(Astro.params.slug ?? "");
-if (!article) return Astro.rewrite("/no-encontrada");
+interface Props {
+  article: NewsDetail;
+  /** Every article, newest first (for "Más noticias"). */
+  news: NewsDetail[];
+}
+
+const { article, news } = Astro.props;
+const { Content } = await render(await getArticleEntry(article.slug));
 const whatsapp = { kind: "article", title: article.title } as const;
-if (isPreview) setPreviewHeaders(Astro.response.headers);
 const site = Astro.site ?? new URL("https://emoj.cl");
 const pageUrl = new URL(`/noticias/${article.slug}`, site).href;
-const bodyHtml = renderTipTap(article.body, { siteHost: site.hostname });
 const share = shareLinks(pageUrl, article.title);
 const reading = readingTimeLabel(readingMinutes(article.body, article.excerpt));
-const others = moreNews(await source.getNews(), article.slug, 3);
-/** Gallery photos with the address to load (draft URLs in preview). */
-const gallery = (article.gallery ?? []).map((image) => ({
-  src: isPreview ? image.url : mediaPath("noticias", article.slug, image),
-  alt: image.alt,
-  width: image.width,
-  height: image.height,
-}));
+const others = moreNews(news, article.slug, 3);
+const gallery = article.gallery;
 
 const ogSource = article.seo.ogImage ?? article.cover;
-const ogImage =
-  ogSource && !isPreview
-    ? await getImage({
-        src: mediaPath("noticias", article.slug, ogSource),
-        width: 1200,
-        height: 630,
-        fit: "cover",
-        format: "jpeg",
-      })
-    : undefined;
+const ogImage = ogSource
+  ? await getImage({
+      src: ogSource.src,
+      width: 1200,
+      height: 630,
+      fit: "cover",
+      format: "jpeg",
+    })
+  : undefined;
 
 const shareLink =
   "inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface-raised px-4 py-2 text-sm leading-5 font-medium text-ink no-underline transition-colors duration-200 hover:border-brand hover:text-brand";
@@ -80,7 +75,6 @@ const shareLink =
 
 <BaseLayout
   whatsapp={whatsapp}
-  preview={isPreview}
   headerOverlay={Boolean(article.cover)}
   title={article.seo.title}
   description={article.seo.description}
@@ -116,13 +110,7 @@ const shareLink =
           <div class="hero__parallax absolute inset-0 -z-10 overflow-hidden">
             <CoverImage
               image={article.cover}
-              src={
-                isPreview
-                  ? article.cover.url
-                  : mediaPath("noticias", article.slug, article.cover)
-              }
               name={newsTransitionName(article.slug)}
-              preview={isPreview}
             />
           </div>
           {/* Veils as on the project page: the photo leads. */}
@@ -207,7 +195,9 @@ const shareLink =
               {article.excerpt}
             </p>
           )}
-          <div class="article-body" set:html={bodyHtml} />
+          <div class="article-body">
+            <Content />
+          </div>
           {gallery.length > 0 && (
             <section
               aria-labelledby="fotos"

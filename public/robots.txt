@@ -1,7 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /api/
-Disallow: /preview
 
 Sitemap: https://emoj.cl/sitemap-index.xml

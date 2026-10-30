@@ -1,23 +1,27 @@
 ---
 import NewsListing from "../../../components/news/NewsListing.astro";
-import { contentSource } from "../../../lib/content";
+import { getNews } from "../../../lib/content";
 import { NEWS_PER_PAGE, paginate } from "../../../lib/content/format";
+import type { NewsSummary } from "../../../lib/content/types";
 
-/** Pages 2..n, rendered on demand; page 1 is /noticias. */
-export const prerender = false;
+/** Pages 2..n of the news index; page 1 is /noticias. */
+export async function getStaticPaths() {
+  const news = await getNews();
+  const pages = paginate(news, NEWS_PER_PAGE);
+  return pages.slice(1).map((articles, i) => ({
+    params: { page: String(i + 2) },
+    props: { articles, page: i + 2, pages: pages.length, total: news.length },
+  }));
+}
 
-const page = /^[2-9]$|^[1-9][0-9]+$/.test(Astro.params.page ?? "")
-  ? Number(Astro.params.page)
-  : NaN;
-const news = Number.isNaN(page) ? [] : await contentSource().getNews();
-const pages = news.length > 0 ? paginate(news, NEWS_PER_PAGE) : [];
-const articles = pages[page - 1];
-if (!articles) return Astro.rewrite("/no-encontrada");
+interface Props {
+  articles: NewsSummary[];
+  page: number;
+  pages: number;
+  total: number;
+}
+
+const { articles, page, pages, total } = Astro.props;
 ---
 
-<NewsListing
-  articles={articles}
-  page={page}
-  pages={pages.length}
-  total={news.length}
-/>
+<NewsListing articles={articles} page={page} pages={pages} total={total} />

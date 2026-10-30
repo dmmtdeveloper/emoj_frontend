@@ -18,9 +18,8 @@
  */
 import { ArrowLeft, ArrowRight } from "@lucide/astro";
 import { Image } from "astro:assets";
-import type { ProjectSummary } from "../../lib/api/client";
+import type { ProjectSummary } from "../../lib/content/types";
 import { fitWidth } from "../../lib/content/format";
-import { mediaPath } from "../../lib/content/media";
 import { projectTransitionName } from "../../lib/content/transition";
 import { splitEmphasis } from "../../lib/emphasis";
 import ButtonLink from "../ui/ButtonLink.astro";
@@ -137,7 +136,7 @@ const round =
             >
               {project.cover && (
                 <Image
-                  src={mediaPath("proyectos", project.slug, project.cover)}
+                  src={project.cover.src}
                   alt=""
                   {...fitWidth(project.cover, 880)}
                   widths={[320, 480, 640, 880]}

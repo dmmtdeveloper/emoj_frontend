@@ -75,4 +75,17 @@ describe("sharePageUrl", () => {
       }),
     ).toBe("https://emoj.cl/nosotros");
   });
+
+  it("matches the canonical URL, without the trailing slash of the build", () => {
+    expect(
+      sharePageUrl("/proyectos/puente-llollito/", {
+        site,
+        origin: "https://emoj.cl",
+        prerendered: true,
+      }),
+    ).toBe("https://emoj.cl/proyectos/puente-llollito");
+    expect(
+      sharePageUrl("/", { site, origin: "https://emoj.cl", prerendered: true }),
+    ).toBe("https://emoj.cl/");
+  });
 });

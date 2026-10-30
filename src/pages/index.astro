@@ -11,19 +11,12 @@ import ReasonsChapter from "../components/home/chapters/ReasonsChapter.astro";
 import YearsChapter from "../components/home/chapters/YearsChapter.astro";
 import { organizationJsonLd } from "../lib/structured-data";
 import { SITE_NAME } from "../lib/site";
-import { contentSource } from "../lib/content";
+import { getProjects } from "../lib/content";
 import { railProjects } from "../lib/content/rail-projects";
 import { getServiceTitles } from "../lib/get-services";
 import { chapterNumbers } from "../lib/home-chapters";
 
-// Rendered on demand and cached; publishing refreshes it (src/pages/_revalidate.ts).
-export const prerender = false;
-
-const source = contentSource();
-const [projects, hero] = await Promise.all([
-  source.getProjects(),
-  source.findHomeHero(),
-]);
+const projects = await getProjects();
 /** The home reel shows every published project, the featured ones first. */
 const featured = railProjects(projects, 12);
 const serviceTitles = await getServiceTitles();
@@ -53,7 +46,7 @@ const n = chapterNumbers([
   jsonLd={[organizationJsonLd(Astro.site)]}
   headerOverlay
 >
-  <Hero hero={hero} />
+  <Hero />
   <ServicesChapter number={n.services} />
   <WorkChapter number={n.work} />
   <PlanChapter number={n.plan} />

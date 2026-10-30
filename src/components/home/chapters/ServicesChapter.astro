@@ -17,8 +17,7 @@
 import { ArrowRight, ArrowUpRight } from "@lucide/astro";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
-import { contentSource } from "../../../lib/content";
-import { mediaPath } from "../../../lib/content/media";
+import { getProjects } from "../../../lib/content";
 import { coversByService } from "../../../lib/content/service-covers";
 import { getServices } from "../../../lib/get-services";
 import { spanishNumberWord } from "../../../lib/number-words";
@@ -36,7 +35,7 @@ const services = await getServices();
 const specialties = spanishNumberWord(services.length, { capitalize: true });
 const covers = coversByService(
   services.map((s) => s.data.slug),
-  await contentSource().getProjects(),
+  await getProjects(),
 );
 
 type Photo =
@@ -46,7 +45,7 @@ const photoFor = (service: (typeof services)[number]): Photo | null => {
   const found = covers.get(service.data.slug);
   if (found)
     return {
-      src: mediaPath("proyectos", found.slug, found.cover),
+      src: found.cover.src,
       width: found.cover.width,
       height: found.cover.height,
     };
