@@ -2,9 +2,10 @@
 /**
  * Sticky site header: a full-width rectangular bar, its content aligned
  * with the page container: the EMOJ lockup (isotype over "Emoj
- * Consultora", HeaderLockup.astro), the primary navigation as pill links and a compact quote CTA. Over
- * the hero photo the quote CTA is an outlined cream pill (motion.css
- * `.header-cta`).
+ * Consultora", HeaderLockup.astro), the primary navigation as pill links
+ * and a compact quote CTA (the shared `.btn-primary` pill, global.css).
+ * Over the hero photo the CTA takes the on-dark tone, a cream pill
+ * (motion.css `.header-cta`).
  *
  * - The bar is frosted `surface` with a hairline bottom rule, on every page
  *   and at every scroll position.
@@ -110,10 +111,7 @@ const pathname = Astro.url.pathname;
         />
       </button>
       <div class="hidden sm:block">
-        <a
-          href="/contacto"
-          class="header-cta inline-flex min-h-10 items-center justify-center rounded-full px-5 py-2.5 text-[15px] leading-5 font-medium no-underline transition-[color,background-color,border-color,scale] duration-200 active:scale-[0.97]"
-        >
+        <a href="/contacto" class="btn-primary btn-primary--sm header-cta">
           Cotizar proyecto
         </a>
       </div>
@@ -186,7 +184,7 @@ const pathname = Astro.url.pathname;
         height="60"
         class="menu-mark h-auto w-40 self-end opacity-80"
       />
-      <ButtonLink href="/contacto" variant="on-inverse" class="w-full">
+      <ButtonLink href="/contacto" variant="on-inverse" pill class="w-full">
         Cotizar proyecto
       </ButtonLink>
       <a
@@ -218,9 +216,20 @@ const pathname = Astro.url.pathname;
     });
     closeButton.addEventListener("click", () => dialog.close());
     // Fires for the close button, Escape and navigation alike.
+    // Focus goes back to the toggle, unless the layout changed and the
+    // toggle is hidden (desktop): then to the current desktop nav link.
     dialog.addEventListener("close", () => {
       openButton.setAttribute("aria-expanded", "false");
-      openButton.focus();
+      if (openButton.checkVisibility?.() ?? openButton.offsetParent !== null) {
+        openButton.focus();
+        return;
+      }
+      const links = [
+        ...document.querySelectorAll<HTMLAnchorElement>("[data-nav-link]"),
+      ];
+      (
+        links.find((link) => link.hasAttribute("data-active")) ?? links[0]
+      )?.focus();
     });
     // Leaving the mobile layout with the menu open closes it.
     window.matchMedia("(min-width: 64rem)").addEventListener("change", (e) => {

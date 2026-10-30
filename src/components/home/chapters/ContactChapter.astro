@@ -20,6 +20,12 @@ import WhatsAppIcon from "../../ui/WhatsAppIcon.astro";
 import Chapter from "./Chapter.astro";
 import { OFFICE_MAP, STREETS } from "./office-map";
 
+interface Props {
+  /** Chapter number in the label ("08"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
 const f = (n: number) => Math.round(n * 10) / 10;
 const streets = STREETS.map((street) => {
   const name = labelAlong(
@@ -39,7 +45,7 @@ const phone = CONTACT.phones[0];
 
 <Chapter
   id="conversemos"
-  number="08"
+  number={chapterNumber}
   label="Contacto"
   navSection="/contacto"
   class="ch-contact"
@@ -169,7 +175,7 @@ const phone = CONTACT.phones[0];
     los plazos y los entregables de tu proyecto.
   </p>
   <div class="ch-actions">
-    <a href="/contacto" class="ch-button">
+    <a href="/contacto" class="btn-primary">
       Cotizar proyecto
       <ArrowRight size={18} stroke-width={1.75} aria-hidden="true" />
     </a>
@@ -183,7 +189,7 @@ const phone = CONTACT.phones[0];
       <span class="sr-only">(se abre en una pestaña nueva)</span>
     </a>
   </div>
-  <a href={`mailto:${CONTACT.email}`} class="ch-more">
+  <a href={`mailto:${CONTACT.email}`} class="ch-more ch-more--plain">
     {CONTACT.email}
   </a>
 </Chapter>

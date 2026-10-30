@@ -50,6 +50,12 @@ const REASONS = [
   },
 ] as const;
 
+interface Props {
+  /** Chapter number in the label ("07"), from the home's chapter order. */
+  number: string;
+}
+
+const { number: chapterNumber } = Astro.props;
 const number = (i: number) => String(i + 1).padStart(2, "0");
 ---
 
@@ -62,8 +68,8 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
 >
   <div class="stack-stage container-site" data-stage>
     <div class="stack-intro">
-      <p class="stack-eyebrow">
-        <span>07</span> Por qué EMOJ
+      <p class="ch-label">
+        <span class="ch-label__num">{chapterNumber}</span> Por qué EMOJ
       </p>
       <h2 id="por-que-emoj" class="stack-title">
         Ingeniería precisa, trato <em>cercano</em>.
