@@ -9,6 +9,10 @@ const complete: PrivacyPolicy = {
     representative: "Ana Pérez",
   },
   requestsEmail: "privacidad@emoj.cl",
+  activities: PRIVACY.activities.map((a) => ({
+    ...a,
+    retention: a.retention ?? "12 meses",
+  })),
   processors: PRIVACY.processors.map((p) => ({ ...p, agreement: true })),
 };
 
@@ -18,6 +22,9 @@ describe("privacyGaps", () => {
       ...complete,
       controller: { ...complete.controller, rut: null, representative: null },
       requestsEmail: null,
+      activities: complete.activities.map((a) =>
+        a.id === "contact" ? { ...a, retention: null } : a,
+      ),
       processors: complete.processors.map((p) =>
         p.name === "Railway" ? { ...p, agreement: false } : p,
       ),
@@ -26,6 +33,7 @@ describe("privacyGaps", () => {
       "RUT de EMOJ Consultora SpA",
       "Nombre del representante legal",
       "Correo para ejercer los derechos (por ejemplo privacidad@emoj.cl)",
+      "Plazo de conservación: Mensajes que nos envías",
       "Acuerdo de tratamiento de datos firmado con Railway",
     ]);
   });
@@ -41,7 +49,9 @@ describe("PRIVACY", () => {
     expect(PRIVACY.requestsEmail).toBe("coordinacion@emoj.cl");
     expect(PRIVACY.controller.representative).toBe("Eduardo Moisés Olguín Jil");
     expect(privacyGaps(PRIVACY)).toEqual([
+      "Plazo de conservación: Mensajes que nos envías",
       "Acuerdo de tratamiento de datos firmado con Railway",
+      "Acuerdo de tratamiento de datos firmado con WhatsApp (Meta)",
       "Acuerdo de tratamiento de datos firmado con Chilecom Datacenter",
     ]);
   });
@@ -77,11 +87,30 @@ describe("PRIVACY", () => {
   });
 
   it("gives every processing activity a purpose, a legal basis and a retention period", () => {
+    const gaps = privacyGaps(PRIVACY);
     for (const activity of PRIVACY.activities) {
       expect(activity.purpose.trim()).not.toBe("");
       expect(activity.basis.trim()).not.toBe("");
-      expect(activity.retention.trim()).not.toBe("");
+      if (activity.retention === null) {
+        // A missing period is a gap, so the page stays out of search engines.
+        expect(gaps).toContain(`Plazo de conservación: ${activity.source}`);
+      } else {
+        expect(activity.retention.trim()).not.toBe("");
+      }
     }
+  });
+
+  it("covers the messages received by WhatsApp, email or phone", () => {
+    const contact = PRIVACY.activities.find((a) => a.id === "contact");
+    expect(contact?.data).toMatch(/WhatsApp/);
+    expect(contact?.data).toMatch(/correo/);
+    expect(contact?.data).toMatch(/teléfono/);
+  });
+
+  it("names the hosting logs: the visitor's IP, kept 7 days by Railway", () => {
+    const hosting = PRIVACY.activities.find((a) => a.id === "hosting");
+    expect(hosting?.data).toMatch(/dirección IP/);
+    expect(hosting?.retention).toMatch(/7 días/);
   });
 
   it("keeps the log of data requests, which the law requires to prove the answer", () => {
@@ -92,7 +121,7 @@ describe("PRIVACY", () => {
   it("names every provider with its country and safeguard (art. 14 ter h)", () => {
     expect(PRIVACY.processors.map((p) => p.name)).toEqual([
       "Railway",
-      "Resend",
+      "WhatsApp (Meta)",
       "Chilecom Datacenter",
     ]);
     for (const p of PRIVACY.processors) {
@@ -101,9 +130,17 @@ describe("PRIVACY", () => {
     }
   });
 
-  it("names Railway as the host of the site itself, not only the API", () => {
+  it("names Railway as the host of the site", () => {
     const railway = PRIVACY.processors.find((p) => p.name === "Railway");
     expect(railway?.role).toMatch(/sitio web/);
+  });
+
+  it("describes no API, admin panel or staff accounts: the site is static", () => {
+    const text = JSON.stringify(PRIVACY);
+    expect(text).not.toMatch(/\bAPI\b/);
+    expect(text).not.toMatch(/panel/i);
+    expect(text).not.toMatch(/argon2|contraseña/i);
+    expect(text).not.toMatch(/Resend/);
   });
 
   it("says the site has no contact form and how to reach EMOJ instead", () => {
@@ -118,8 +155,8 @@ describe("PRIVACY", () => {
     expect(text).not.toMatch(/formulario/i);
     expect(text).not.toMatch(/turnstile|cloudflare/i);
     expect(PRIVACY.activities.map((a) => a.id)).toEqual([
-      "security",
-      "admin",
+      "contact",
+      "hosting",
       "requests",
     ]);
   });

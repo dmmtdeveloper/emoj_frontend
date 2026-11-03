@@ -1,10 +1,11 @@
 /**
  * Privacy policy content (Ley 21.719, in force from 2026-12-01), rendered by
  * src/pages/privacidad.astro. Plain data so the page and tests share one
- * source. The site has no contact form: visitors reach EMOJ by WhatsApp,
- * email or phone.
+ * source. The site is static: no contact form, accounts or database.
+ * Visitors reach EMOJ by WhatsApp, email or phone, and the host (Railway)
+ * keeps short-lived request logs.
  *
- * Built from what the site and the API really do, and checked item by item
+ * Built from what the site and EMOJ really do, and checked item by item
  * against art. 14 ter (duty to inform), art. 11 (request procedure) and the
  * transfer rules (arts. 27-28). `privacyGaps` lists the facts and agreements
  * EMOJ still has to provide; while anything is missing the page is kept out
@@ -14,13 +15,14 @@ import { CONTACT, LEGAL_NAME, RUT } from "./site";
 
 export interface ProcessingActivity {
   /** Stable key, used by the access export to pick its activities. */
-  id: "security" | "admin" | "requests";
+  id: "contact" | "hosting" | "requests";
   /** Where the data comes from, in the visitor's words. */
   source: string;
   data: string;
   purpose: string;
   basis: string;
-  retention: string;
+  /** How long the data is kept; null until EMOJ sets the period (a gap). */
+  retention: string | null;
 }
 
 export interface Processor {
@@ -79,8 +81,8 @@ const dpa =
   "Acuerdo de tratamiento de datos del proveedor, con cláusulas contractuales tipo de protección.";
 
 export const PRIVACY: PrivacyPolicy = {
-  version: "1.2",
-  updated: "2026-10-29",
+  version: "1.3",
+  updated: "2026-11-03",
   controller: {
     name: LEGAL_NAME,
     rut: RUT,
@@ -89,31 +91,30 @@ export const PRIVACY: PrivacyPolicy = {
   },
   requestsEmail: CONTACT.email,
   audience: [
+    "Personas que nos escriben por WhatsApp, correo o teléfono.",
     "Personas que nos piden ejercer sus derechos sobre sus datos.",
-    "Personal de EMOJ con acceso al panel de administración del sitio.",
-    "Visitantes del sitio, solo por las señales técnicas que se describen abajo, que no guardamos.",
+    "Visitantes del sitio, solo por los registros técnicos de visita que se describen abajo.",
   ],
   sources:
-    "El sitio no tiene formulario de contacto: para escribirnos o cotizar un proyecto, usa WhatsApp, el correo o el teléfono. Todos los datos los entregas tú al escribirnos, o los genera tu navegador al usar el sitio. No compramos datos ni los obtenemos de fuentes de acceso público.",
+    "El sitio no tiene formulario de contacto ni cuentas de usuario, y no guarda datos: para escribirnos o cotizar un proyecto, usa WhatsApp, el correo o el teléfono. Todos los datos los entregas tú al escribirnos, o los genera tu navegador al visitar el sitio. No compramos datos ni los obtenemos de fuentes de acceso público.",
   activities: [
     {
-      id: "security",
-      source: "Seguridad del sitio",
-      data: "Tu dirección IP, usada en el momento para limitar intentos repetidos.",
-      purpose: "Evitar abusos y ataques a la API y al panel.",
-      basis: "Interés legítimo: mantener el sitio seguro y disponible.",
-      retention:
-        "Solo en memoria mientras dura el límite; no la guardamos en registros.",
+      id: "contact",
+      source: "Mensajes que nos envías",
+      data: "Tu nombre, tu número o correo y lo que nos cuentas cuando nos escribes por WhatsApp o correo, o nos llamas por teléfono.",
+      purpose: "Responderte y, si lo pides, preparar una cotización.",
+      basis:
+        "Tu solicitud: los usamos para responder lo que nos preguntas, antes de cualquier contrato.",
+      retention: null,
     },
     {
-      id: "admin",
-      source: "Panel de administración (solo personal de EMOJ)",
-      data: "Nombre, correo, dirección IP, navegador y fecha del último acceso.",
-      purpose: "Dar acceso seguro a quien publica contenido en el sitio.",
-      basis:
-        "Relación laboral con EMOJ e interés legítimo en la seguridad del panel.",
+      id: "hosting",
+      source: "Visitas al sitio",
+      data: "Tu dirección IP, tu navegador, la página que visitas y la hora, que el proveedor de alojamiento registra en cada visita.",
+      purpose: "Mantener el sitio funcionando y detectar fallas o abusos.",
+      basis: "Interés legítimo: mantener el sitio seguro y disponible.",
       retention:
-        "Las sesiones se borran al expirar; la cuenta, cuando la persona deja de necesitar acceso.",
+        "7 días; luego el proveedor los borra. No los usamos para identificarte ni para analítica.",
     },
     {
       id: "requests",
@@ -129,17 +130,17 @@ export const PRIVACY: PrivacyPolicy = {
   processors: [
     {
       name: "Railway",
-      role: "Aloja el sitio web, la API, la base de datos y las imágenes.",
+      role: "Aloja el sitio web y registra las visitas por 7 días.",
       country: "Estados Unidos",
       safeguard: dpa,
       agreement: false,
     },
     {
-      name: "Resend",
-      role: "Envía los correos del panel de administración: invitaciones y cambios de contraseña.",
+      name: "WhatsApp (Meta)",
+      role: "Recibimos por WhatsApp los mensajes que nos envías.",
       country: "Estados Unidos",
       safeguard: dpa,
-      agreement: true,
+      agreement: false,
     },
     {
       name: "Chilecom Datacenter",
@@ -189,8 +190,9 @@ export const PRIVACY: PrivacyPolicy = {
   claim:
     "Si rechazamos tu solicitud o no te respondemos a tiempo, puedes reclamar ante la Agencia de Protección de Datos Personales dentro de los 30 días hábiles siguientes a nuestra respuesta o al vencimiento del plazo.",
   security: [
-    "Todo el sitio y la API funcionan con conexión cifrada (HTTPS).",
-    "Solo el personal autorizado de EMOJ entra al panel, con un usuario propio; las contraseñas se guardan cifradas con argon2id y las sesiones expiran.",
+    "Todo el sitio funciona con conexión cifrada (HTTPS) y cabeceras de seguridad estrictas.",
+    "El sitio no te pide datos ni los guarda: no tiene cuentas de usuario ni base de datos.",
+    "Solo el personal de EMOJ que atiende consultas accede al correo y al WhatsApp de la empresa.",
     "Revisamos estas medidas al menos una vez al año.",
   ],
 };
@@ -206,6 +208,9 @@ export function privacyGaps(policy: PrivacyPolicy): string[] {
     gaps.push(
       "Correo para ejercer los derechos (por ejemplo privacidad@emoj.cl)",
     );
+  }
+  for (const a of policy.activities) {
+    if (!a.retention) gaps.push(`Plazo de conservación: ${a.source}`);
   }
   for (const p of policy.processors) {
     if (!p.agreement) {
