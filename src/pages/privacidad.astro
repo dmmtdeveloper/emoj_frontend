@@ -117,7 +117,10 @@ const labelClass =
               </div>
               <div class="flex flex-col gap-1">
                 <dt class={labelClass}>Cuánto tiempo</dt>
-                <dd>{activity.retention}</dd>
+                <dd>
+                  {activity.retention ??
+                    "Estamos definiendo este plazo; lo publicaremos aquí."}
+                </dd>
               </div>
             </dl>
           </li>
