@@ -1,6 +1,6 @@
 # emoj_frontend — agent guide
 
-Astro site for emoj.cl: fully static (`output: "static"`, no adapter, no server), deployed on Vercel or Railway (Caddy). There is no backend, API or admin panel. Projects and news are content collections: content is edited in `src/content/*` (photos in `src/assets/...`) and published by a git push, which rebuilds the site. See README, "Content: editing and publishing".
+Astro site for emoj.cl: fully static (`output: "static"`, no adapter, no server), deployed on Railway (Caddy serves the build). There is no backend, API or admin panel. Projects and news are content collections: content is edited in `src/content/*` (photos in `src/assets/...`) and published by a git push, which rebuilds the site. See README, "Content: editing and publishing".
 
 ## Precedence
 

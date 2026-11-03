@@ -16,7 +16,7 @@ export default defineConfig({
   site,
   // Every page is built ahead of time: projects and news are content
   // collections in src/content, so publishing is a git push and a rebuild.
-  // No adapter and no server: `dist/` is plain files (vercel.ts, Caddyfile).
+  // No adapter and no server: `dist/` is plain files (served by Caddy).
   output: "static",
   trailingSlash: "ignore",
   integrations: [
@@ -47,7 +47,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     build: {
       // Never inline scripts or assets as data:/inline code: the CSP in
-      // vercel.ts allows only same-origin scripts (script-src 'self').
+      // the Caddyfile allows only same-origin scripts (script-src 'self').
       assetsInlineLimit: 0,
     },
   },

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * public/speculationrules.json (sent with the Speculation-Rules header,
- * Caddyfile and vercel.ts): pages are prerendered when a link is hovered or
+ * Caddyfile): pages are prerendered when a link is hovered or
  * pressed, so their photos are ready and the card-to-cover transition works
  * on the first visit too.
  */

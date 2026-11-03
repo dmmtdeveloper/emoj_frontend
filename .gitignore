@@ -1,6 +1,5 @@
 # build output
 dist/
-.vercel/
 .output/
 
 # generated types
@@ -32,6 +31,5 @@ graphify-out/
 Thumbs.db
 .idea/
 
-.vercel
 .env*
 !.env.example

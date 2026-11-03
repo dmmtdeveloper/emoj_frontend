@@ -8,17 +8,17 @@ The site is built with Astro and is fully static: every page, including every pr
 
 ## Stack
 
-| Concern         | Choice                                                                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework       | [Astro](https://astro.build) 7, `output: "static"`, no adapter (every page is built ahead of time)                                                                      |
-| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties                                                                                          |
-| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                                                                                                           |
-| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)                                                                                                      |
-| Language        | TypeScript, `astro/tsconfigs/strictest`                                                                                                                                 |
-| Tests           | Vitest                                                                                                                                                                  |
-| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier                                                                                              |
-| Hosting         | Vercel, configured in [`vercel.ts`](./vercel.ts) (`@vercel/config`); or Railway, Caddy serving the static files, see [docs/deploy-railway.md](./docs/deploy-railway.md) |
-| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)                                                                                                       |
+| Concern         | Choice                                                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Framework       | [Astro](https://astro.build) 7, `output: "static"`, no adapter (every page is built ahead of time)                           |
+| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`, design tokens as CSS custom properties                                               |
+| Font            | Urbanist 400/500/600, self-hosted with `@fontsource/urbanist`                                                                |
+| Icons           | [`@lucide/astro`](https://lucide.dev) (stroke 1.75, size 20 or 24)                                                           |
+| Language        | TypeScript, `astro/tsconfigs/strictest`                                                                                      |
+| Tests           | Vitest                                                                                                                       |
+| Lint / format   | ESLint (typescript-eslint, eslint-plugin-astro + jsx-a11y rules), Prettier                                                   |
+| Hosting         | Railway, Caddy serving the static files ([`Caddyfile`](./Caddyfile)), see [docs/deploy-railway.md](./docs/deploy-railway.md) |
+| Package manager | pnpm (see `packageManager` in `package.json`), Node 22 (`.nvmrc`)                                                            |
 
 ## Getting started
 
@@ -82,7 +82,7 @@ Projects and news are [content collections](https://docs.astro.build/en/guides/c
 | Service   | `src/content/servicios/<slug>.md` | `src/assets/photos/`           | `/servicios/<slug>` |
 | Home hero | `src/lib/content/home-hero.ts`    | `src/assets/photos/`           | `/`                 |
 
-To publish, edit or add the file (and its photos), run the checks in `CLAUDE.md`, commit and push. Vercel (or Railway) builds and deploys the new version; there is nothing else to refresh.
+To publish, edit or add the file (and its photos), run the checks in `CLAUDE.md`, commit and push. Railway builds and deploys the new version; there is nothing else to refresh.
 
 - **Projects** keep everything in the frontmatter: `title`, `slug`, `client`, `location`, `region`, optional `year`, `services` (service slugs), `summary`, optional `magnitude` (`label`, `value`, `unit`), `featured`, `publishedAt`, `cover`, `challenge`/`solution`/`result` (plain text, blank lines between paragraphs; empty hides the section), `gallery` and `seo` (`title`, `description`, optional `ogImage`). The body is unused.
 - **News** have `title`, `slug`, `excerpt`, `category` (empty for none), optional `location`, `publishedAt`, `cover`, `gallery` and `seo` in the frontmatter; the Markdown body is the article (headings `##` to `####`, lists, quotes, bold, italic, links).
@@ -99,7 +99,7 @@ The team on `/nosotros` is static data in `src/lib/team.ts` with photos in `src/
 
 ## Security headers
 
-`vercel.ts` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `img-src` and `connect-src` allow only the site's own origin: photos are optimised at build time and the site calls no API. The site loads no third-party scripts (`script-src 'self'`) and no frames (`frame-src 'none'`). Run `npx @vercel/config validate` after editing. The `Caddyfile` (Railway) must send the same headers and redirects; `tests/caddyfile.test.ts` checks it. `pnpm build` ends with `scripts/check-csp.mjs`, which fails if any built page has inline scripts or styles.
+The `Caddyfile` sets a strict Content-Security-Policy (no `'unsafe-inline'`, no `'unsafe-eval'`), HSTS with preload and the usual hardening headers. The CSP works because `astro.config.mjs` never inlines scripts or stylesheets (`build.inlineStylesheets: "never"`, `vite.build.assetsInlineLimit: 0`): keep it that way, and never add `is:inline` executable scripts. `img-src` and `connect-src` allow only the site's own origin: photos are optimised at build time and the site calls no API. The site loads no third-party scripts (`script-src 'self'`) and no frames (`frame-src 'none'`). `tests/caddyfile.test.ts` lists every header and redirect the `Caddyfile` must send: change both together. `pnpm build` ends with `scripts/check-csp.mjs`, which fails if any built page has inline scripts or styles.
 
 ## Project layout
 

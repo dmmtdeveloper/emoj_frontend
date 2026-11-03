@@ -1,9 +1,9 @@
 # Site image for Railway: the static build served by Caddy.
 #
-# Vercel ignores this file; it only matters on Railway, where the service's
-# builder is set to Dockerfile. `pnpm build` writes every page to dist/ (no
-# server, no API), and Caddy serves those files with the headers, redirects
-# and cache rules of vercel.ts (tests/caddyfile.test.ts keeps them in sync).
+# Railway builds it (the service's builder is set to Dockerfile). `pnpm
+# build` writes every page to dist/ (no server, no API), and Caddy serves
+# those files with the headers, redirects and cache rules of the Caddyfile
+# (tests/caddyfile.test.ts checks them).
 # See docs/deploy-railway.md.
 
 FROM node:22.23.2-alpine3.23 AS build

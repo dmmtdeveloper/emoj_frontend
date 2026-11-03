@@ -35,7 +35,6 @@
     "@astrojs/check": "^0.9.10",
     "@eslint/js": "^10.0.1",
     "@types/node": "^22",
-    "@vercel/config": "^0.7.2",
     "eslint": "^10.11.0",
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-jsx-a11y-x": "^0.2.0",
