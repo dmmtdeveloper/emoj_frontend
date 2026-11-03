@@ -1,16 +1,93 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import vercel from "../vercel";
 
 /**
- * The Caddyfile serves the site on Railway; vercel.ts configures Vercel.
- * Both must send the same headers and redirects, so a header added to one
- * and forgotten in the other fails here.
+ * The Caddyfile serves the site on Railway, its only host. The headers,
+ * cache rules and redirects it must send are written out here, so a rule
+ * dropped from (or slipped into) the Caddyfile fails.
  */
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const caddyfile = readFileSync(`${root}Caddyfile`, "utf8");
+
+/**
+ * Content Security Policy for the static Astro build.
+ *
+ * - Scripts: Astro emits every processed <script> as a same-origin module
+ *   (`build.inlineStylesheets: "never"` and `assetsInlineLimit: 0` in
+ *   astro.config.mjs keep CSS and JS out of the HTML), so `'self'` is
+ *   enough. JSON-LD blocks are data, not executed, so CSP does not apply to
+ *   them. No 'unsafe-inline', no 'unsafe-eval', no third-party scripts.
+ * - Styles: same-origin stylesheets only.
+ * - img-src / connect-src: the site's own origin. Photos are optimised at
+ *   build time (astro:assets) and the site calls no API.
+ * - Frames: none. The site embeds no third-party content.
+ */
+const csp = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "frame-src 'none'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+/** Response headers per Caddy path matcher ("*" is the site-wide block). */
+const expectedHeaders: Record<string, Record<string, string>> = {
+  "*": {
+    "content-security-policy": csp,
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+    "x-frame-options": "DENY",
+    // Prerender pages on hover or press (public/speculationrules.json), so
+    // the card-to-cover transition has its photo on the first visit.
+    "speculation-rules": '"/speculationrules.json"',
+  },
+  // Browsers only read speculation rules sent with their own type.
+  "/speculationrules.json": {
+    "content-type": "application/speculationrules+json",
+  },
+  // Hashed build assets never change, so they can be cached forever.
+  "/_astro/*": {
+    "cache-control": "public, max-age=31557600, immutable",
+  },
+};
+
+/**
+ * Old WordPress addresses (emoj.cl before the redesign) and where they live
+ * now, as the Caddyfile's `redir` rules in file order. Permanent (301) so
+ * search engines move their ranking to the new page. The four real articles
+ * keep their content under a new slug; placeholder posts, categories, tags
+ * and the author archive go to the news index; the old admin entry points
+ * go home (the site has no panel). `/old*` is the prefix and everything
+ * below it.
+ */
+const expectedRedirects: [path: string, to: string, status: string][] = [
+  ["/archivo/2939", "/noticias/visita-tecnica-canal-la-petaca", "301"],
+  [
+    "/archivo/2899",
+    "/noticias/de-sitios-abandonados-a-plazas-comunitarias",
+    "301",
+  ],
+  ["/archivo/2873", "/noticias/redisenar-para-evolucionar", "301"],
+  ["/archivo/2841", "/noticias/emojita-supervisora-felina", "301"],
+  ["/archivo*", "/noticias", "301"],
+  ["/jobs*", "/contacto", "301"],
+  ["/feed*", "/noticias", "301"],
+  ["/comments/feed", "/noticias", "301"],
+  ["/wp-admin*", "/", "301"],
+  ["/wp-login.php", "/", "301"],
+];
 
 interface HeaderBlock {
   /** Caddy path matcher, or "*" for the site-wide block. */
@@ -48,7 +125,7 @@ function parseHeaderBlocks(text: string): HeaderBlock[] {
         current = null;
         continue;
       }
-      // `-Name` deletes a response header (e.g. -Server); not a parity item.
+      // `-Name` deletes a response header (e.g. -Server); not a sent header.
       if (line.startsWith("-")) continue;
       const m = /^(\S+)\s+(.+)$/.exec(line);
       if (!m?.[1] || !m[2]) throw new Error(`Unparsed header line: ${line}`);
@@ -77,87 +154,63 @@ function parseHeaderBlocks(text: string): HeaderBlock[] {
   return blocks;
 }
 
-/** Vercel source pattern to the equivalent Caddy path matcher. */
-function caddyPath(source: string): string {
-  const path = source.replace("(.*)", "*");
-  return path === "/*" ? "*" : path;
-}
-
 /** Same CSP regardless of repeated sources within a directive. */
-function normalizeCsp(csp: string): string {
-  return csp
+function normalizeCsp(policy: string): string {
+  return policy
     .split(";")
     .map((directive) => [...new Set(directive.trim().split(/\s+/))].join(" "))
     .filter(Boolean)
     .join("; ");
 }
 
-function caddyHeaders(): Map<string, Map<string, string>> {
-  const byPath = new Map<string, Map<string, string>>();
+function caddyHeaders(): Record<string, Record<string, string>> {
+  const byPath: Record<string, Record<string, string>> = {};
   for (const block of parseHeaderBlocks(caddyfile)) {
-    const merged = byPath.get(block.path) ?? new Map<string, string>();
+    const merged = (byPath[block.path] ??= {});
     for (const [key, value] of block.headers) {
-      merged.set(
-        key,
-        key === "content-security-policy" ? normalizeCsp(value) : value,
-      );
+      merged[key] =
+        key === "content-security-policy" ? normalizeCsp(value) : value;
     }
-    byPath.set(block.path, merged);
   }
   return byPath;
 }
 
-function vercelHeaders(): Map<string, Map<string, string>> {
-  const byPath = new Map<string, Map<string, string>>();
-  for (const rule of vercel.headers ?? []) {
-    const merged = new Map<string, string>();
-    for (const { key, value } of rule.headers) {
-      const k = key.toLowerCase();
-      merged.set(
-        k,
-        k === "content-security-policy" ? normalizeCsp(value) : value,
-      );
-    }
-    byPath.set(caddyPath(rule.source), merged);
-  }
-  return byPath;
+function siteCsp(): string {
+  return caddyHeaders()["*"]?.["content-security-policy"] ?? "";
 }
 
-describe("Caddyfile (Railway) matches vercel.ts", () => {
-  it("sends the same headers on the same paths", () => {
-    const toObject = (m: Map<string, Map<string, string>>) =>
-      Object.fromEntries(
-        [...m].map(([path, headers]) => [path, Object.fromEntries(headers)]),
-      );
-    expect(toObject(caddyHeaders())).toEqual(toObject(vercelHeaders()));
+describe("Caddyfile (Railway)", () => {
+  it("sends exactly the expected headers on each path", () => {
+    expect(caddyHeaders()).toEqual(expectedHeaders);
   });
 
   it("points browsers at the speculation rules, served with their type", () => {
-    const headers = vercelHeaders();
-    expect(headers.get("*")?.get("speculation-rules")).toBe(
+    const headers = caddyHeaders();
+    expect(headers["*"]?.["speculation-rules"]).toBe(
       '"/speculationrules.json"',
     );
-    expect(headers.get("/speculationrules.json")?.get("content-type")).toBe(
+    expect(headers["/speculationrules.json"]?.["content-type"]).toBe(
       "application/speculationrules+json",
     );
   });
 
   it("loads no third-party scripts and no frames (there is no captcha)", () => {
-    for (const headers of [caddyHeaders(), vercelHeaders()]) {
-      const csp = headers.get("*")?.get("content-security-policy") ?? "";
-      expect(csp).toContain("script-src 'self';");
-      expect(csp).toContain("frame-src 'none';");
-      expect(csp).not.toContain("challenges.cloudflare.com");
-    }
+    expect(siteCsp()).toContain("script-src 'self';");
+    expect(siteCsp()).toContain("frame-src 'none';");
+    expect(siteCsp()).not.toContain("challenges.cloudflare.com");
+    expect(siteCsp()).not.toContain("'unsafe-inline'");
+    expect(siteCsp()).not.toContain("'unsafe-eval'");
   });
 
   it("connects to its own origin only (there is no API)", () => {
-    for (const headers of [caddyHeaders(), vercelHeaders()]) {
-      const csp = headers.get("*")?.get("content-security-policy") ?? "";
-      expect(csp).toContain("connect-src 'self';");
-      expect(csp).toContain("img-src 'self' data:;");
-    }
-    expect(vercel.rewrites ?? []).toEqual([]);
+    expect(siteCsp()).toContain("connect-src 'self';");
+    expect(siteCsp()).toContain("img-src 'self' data:;");
+  });
+
+  it("caches hashed build assets forever", () => {
+    expect(caddyHeaders()["/_astro/*"]?.["cache-control"]).toBe(
+      "public, max-age=31557600, immutable",
+    );
   });
 
   it("serves the built site from disk, with no server behind it", () => {
@@ -166,6 +219,13 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     expect(lines).toContain("try_files {path} {path}/index.html");
     expect(lines).toContain("file_server");
     expect(lines.some((line) => line.startsWith("reverse_proxy"))).toBe(false);
+  });
+
+  it("rewrites nothing but unknown paths to the 404 page", () => {
+    const rewrites = stripComments(caddyfile).filter((line) =>
+      line.startsWith("rewrite"),
+    );
+    expect(rewrites).toEqual(["rewrite * /404.html"]);
   });
 
   it("answers unknown paths with the 404 page and status 404", () => {
@@ -186,15 +246,10 @@ describe("Caddyfile (Railway) matches vercel.ts", () => {
     expect(stripComments(caddyfile)).toContain("respond /healthz 200");
   });
 
-  it("redirects the same legacy URLs to the same pages", () => {
-    expect(caddyRedirects()).toEqual(vercelRedirects());
+  it("redirects exactly the expected legacy URLs, in order", () => {
+    expect(caddyRedirects()).toEqual(expectedRedirects);
   });
 });
-
-/** `/old/:path*` (Vercel) is `/old*` in Caddy: the prefix and everything below. */
-function caddyRedirectPath(source: string): string {
-  return source.replace(/\/:path\*$/, "*");
-}
 
 function caddyRedirects(): string[][] {
   return stripComments(caddyfile)
@@ -202,28 +257,29 @@ function caddyRedirects(): string[][] {
     .map((line) => {
       const [, path = "", to = "", code = ""] = line.split(/\s+/);
       return [path, to, code];
-    })
-    .sort();
+    });
 }
 
-function vercelRedirects(): string[][] {
-  return (vercel.redirects ?? [])
-    .map((r) => [
-      caddyRedirectPath(r.source),
-      r.destination,
-      String(r.statusCode ?? (r.permanent === false ? 307 : 308)),
-    ])
-    .sort();
+/**
+ * Caddy's order for `redir` rules with one path each (directive sorting in
+ * httpcaddyfile): the longer path, without its trailing `*`, goes first; on
+ * a tie the exact path beats the prefix. File order breaks the rest.
+ */
+function caddyOrder(redirects: string[][]): string[][] {
+  return [...redirects].sort(([a = ""], [b = ""]) => {
+    const ta = a.replace(/\*$/, "");
+    const tb = b.replace(/\*$/, "");
+    return ta === tb ? a.length - b.length : tb.length - ta.length;
+  });
 }
 
-/** First vercel.ts redirect that matches `path`, in order, as Vercel does. */
+/** First Caddyfile redirect that matches `path`, as Caddy evaluates them. */
 function resolveRedirect(path: string): string | undefined {
-  for (const r of vercel.redirects ?? []) {
-    const prefix = /^(.*)\/:path\*$/.exec(r.source)?.[1];
-    const matches = prefix
-      ? path === prefix || path.startsWith(`${prefix}/`)
-      : path === r.source;
-    if (matches) return r.destination;
+  for (const [source = "", to] of caddyOrder(caddyRedirects())) {
+    const matches = source.endsWith("*")
+      ? path.startsWith(source.slice(0, -1))
+      : path === source;
+    if (matches) return to;
   }
   return undefined;
 }
@@ -260,6 +316,14 @@ describe("legacy WordPress URLs (emoj.cl before the redesign)", () => {
     expect(resolveRedirect(from)).toBe(to);
   });
 
+  it("tries the exact article paths before the /archivo* prefix", () => {
+    const order = caddyOrder(caddyRedirects()).map(([path]) => path);
+    const prefix = order.indexOf("/archivo*");
+    for (const article of ["2939", "2899", "2873", "2841"]) {
+      expect(order.indexOf(`/archivo/${article}`)).toBeLessThan(prefix);
+    }
+  });
+
   it("leaves the pages that kept their address alone", () => {
     for (const path of [
       "/",
@@ -273,12 +337,12 @@ describe("legacy WordPress URLs (emoj.cl before the redesign)", () => {
   });
 
   it("never redirects into a loop", () => {
-    for (const r of vercel.redirects ?? []) {
-      expect(resolveRedirect(r.destination)).toBeUndefined();
+    for (const [, to = ""] of caddyRedirects()) {
+      expect(resolveRedirect(to)).toBeUndefined();
     }
   });
 
   it("sends permanent redirects (301)", () => {
-    for (const r of vercel.redirects ?? []) expect(r.statusCode).toBe(301);
+    for (const [, , code] of caddyRedirects()) expect(code).toBe("301");
   });
 });

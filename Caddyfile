@@ -2,9 +2,9 @@
 # (`pnpm build` writes it to dist/) straight from disk. There is no server
 # behind it: every page, image and sitemap is a file.
 #
-# Mirrors vercel.ts: the same security headers, redirects and cache rules.
-# tests/caddyfile.test.ts fails when the two drift, so change both
-# together. See docs/deploy-railway.md.
+# The security headers, redirects and cache rules below are the site's
+# only ones; tests/caddyfile.test.ts lists them, so change both together.
+# See docs/deploy-railway.md.
 #
 # Environment (Railway service variables):
 #   PORT  set by Railway (8080 by default here).
@@ -20,6 +20,9 @@
 	@assets path /_astro/*
 	@speculation path /speculationrules.json
 
+	# Strict CSP: same-origin scripts and styles only (astro.config.mjs never
+	# inlines them), no third-party scripts, no frames, no API. The reasons
+	# for each directive are in tests/caddyfile.test.ts.
 	header {
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
@@ -43,8 +46,9 @@
 		Cache-Control "public, max-age=31557600, immutable"
 	}
 
-	# Old WordPress addresses -> new pages, 301 (same list as vercel.ts).
-	# Caddy tries exact paths before prefixes, like the order there.
+	# Old WordPress addresses -> new pages, 301. Caddy tries the longer path
+	# first and an exact path before a prefix, so /archivo/2939 wins over
+	# /archivo*.
 	redir /archivo/2939 /noticias/visita-tecnica-canal-la-petaca 301
 	redir /archivo/2899 /noticias/de-sitios-abandonados-a-plazas-comunitarias 301
 	redir /archivo/2873 /noticias/redisenar-para-evolucionar 301

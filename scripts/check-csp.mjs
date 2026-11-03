@@ -1,6 +1,6 @@
 /**
  * Fails the build if any page has inline JavaScript or CSS. Production
- * serves `script-src 'self'` and `style-src 'self'` (vercel.ts, Caddyfile),
+ * serves `script-src 'self'` and `style-src 'self'` (Caddyfile),
  * so an inline <script>, <style> or style="" attribute is silently blocked
  * in the browser while working fine in `astro dev` (no CSP there). JSON-LD
  * blocks are data, not executed, and are allowed.
